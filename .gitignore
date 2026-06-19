@@ -2,7 +2,7 @@
 node_modules/
 dist/
 coverage/
-.angular/cache/
+**/.angular/cache/
 
 # Java / Maven
 target/
