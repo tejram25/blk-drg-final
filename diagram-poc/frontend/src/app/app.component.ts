@@ -14,7 +14,7 @@ import { Keyboard } from '@antv/x6-plugin-keyboard';
 import { History } from '@antv/x6-plugin-history';
 import { Transform } from '@antv/x6-plugin-transform';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { BlockType, DiagramService, DiagramSummary } from './diagram.service';
+import { BlockType, DiagramService, DiagramSummary, ReviewData } from './diagram.service';
 import { AuthService } from './auth/auth.service';
 import { CollabService, ChatMessage } from './collab.service';
 import { TranslateService } from './i18n/translate.service';
@@ -186,6 +186,11 @@ const PORT_GROUPS = {
             <div class="dd-row" *ngFor="let d of savedDiagrams">
               <button type="button" class="dd-item dd-item-grow" [class.sel]="selectedDiagramId === d.id"
                       (click)="selectedDiagramId = d.id; openMenuOpen = false; load()">{{ d.name }}</button>
+              <button type="button" class="dd-rate" matTooltip="Reviews"
+                      (click)="openReviews(d, $event)">
+                <mat-icon>star</mat-icon>
+                <span>{{ d.reviewCount ? (d.avgRating | number:'1.1-1') : '–' }}</span>
+              </button>
               <button type="button" class="dd-del" matTooltip="Delete file"
                       (click)="askDeleteDiagram(d, $event)">
                 <mat-icon>delete_outline</mat-icon>
@@ -652,6 +657,79 @@ const PORT_GROUPS = {
           </div>
         </div>
       </div>
+
+      <!-- Reviews -->
+      <div class="confirm-backdrop" *ngIf="reviewTarget" (click)="closeReviews()">
+        <div class="review-card" (click)="$event.stopPropagation()">
+          <div class="review-head">
+            <div>
+              <h3 class="review-title">Reviews</h3>
+              <span class="review-sub">{{ reviewTarget.name }}</span>
+            </div>
+            <button type="button" class="review-x" (click)="closeReviews()"><mat-icon>close</mat-icon></button>
+          </div>
+
+          <div class="review-body" *ngIf="reviewData as rd">
+            <!-- summary -->
+            <div class="review-summary">
+              <div class="rs-avg">
+                <span class="rs-num">{{ rd.count ? (rd.average | number:'1.1-1') : '–' }}</span>
+                <div class="rs-stars">
+                  <mat-icon *ngFor="let g of avgStars(rd.average)">{{ g }}</mat-icon>
+                </div>
+                <span class="rs-count">{{ rd.count }} review{{ rd.count === 1 ? '' : 's' }}</span>
+              </div>
+              <div class="rs-dist">
+                <div class="rs-bar" *ngFor="let s of [5,4,3,2,1]">
+                  <span class="rs-bk">{{ s }}</span>
+                  <span class="rs-track"><span class="rs-fill"
+                        [style.width.%]="rd.count ? (rd.distribution[s] || 0) / rd.count * 100 : 0"></span></span>
+                  <span class="rs-bn">{{ rd.distribution[s] || 0 }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- your review -->
+            <div class="review-mine">
+              <span class="rm-label">{{ rd.mine ? 'Your review' : 'Rate this template' }}</span>
+              <div class="rate-stars">
+                <button *ngFor="let s of [1,2,3,4,5]" type="button" class="rate-star"
+                        [class.on]="s <= myRating" (click)="myRating = s"
+                        (mouseenter)="hoverRating = s" (mouseleave)="hoverRating = 0">
+                  <mat-icon>{{ s <= (hoverRating || myRating) ? 'star' : 'star_border' }}</mat-icon>
+                </button>
+              </div>
+              <textarea class="rm-text" [(ngModel)]="myComment" rows="2"
+                        placeholder="Share what's good (or what could be better)…" maxlength="2000"></textarea>
+              <div class="rm-actions">
+                <button type="button" mat-flat-button class="rm-submit"
+                        [disabled]="!myRating || reviewSaving" (click)="submitReview()">
+                  {{ rd.mine ? 'Update review' : 'Submit review' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- list -->
+            <div class="review-list">
+              <div class="rv" *ngFor="let r of rd.reviews">
+                <div class="rv-avatar">{{ (r.userName || '?').charAt(0).toUpperCase() }}</div>
+                <div class="rv-body">
+                  <div class="rv-head">
+                    <b class="rv-name">{{ r.userName }}<span class="rv-you" *ngIf="r.self"> (you)</span></b>
+                    <span class="rv-date">{{ r.updatedAt | date:'mediumDate' }}</span>
+                  </div>
+                  <div class="rv-stars">
+                    <mat-icon *ngFor="let s of [1,2,3,4,5]">{{ s <= r.rating ? 'star' : 'star_border' }}</mat-icon>
+                  </div>
+                  <div class="rv-comment" *ngIf="r.comment">{{ r.comment }}</div>
+                </div>
+              </div>
+              <p class="rv-empty" *ngIf="!rd.reviews.length">No reviews yet — be the first.</p>
+            </div>
+          </div>
+          <p class="review-loading" *ngIf="!reviewData">Loading reviews…</p>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
@@ -983,6 +1061,77 @@ const PORT_GROUPS = {
     .confirm-actions { display: flex; gap: 10px; justify-content: center; }
     .danger-btn { background: #dc2626; color: #fff; }
     .danger-btn:hover { background: #b91c1c; }
+    /* --- Open-list rating chip --- */
+    .dd-rate {
+      flex: none; display: inline-flex; align-items: center; gap: 2px;
+      height: 30px; padding: 0 7px; border: none; border-radius: 7px;
+      background: transparent; color: var(--muted); cursor: pointer;
+      font-size: 12px; font-family: inherit; transition: background .12s, color .12s;
+    }
+    .dd-rate mat-icon { font-size: 16px; width: 16px; height: 16px; color: #f5b400; }
+    .dd-rate:hover { background: rgba(245,180,0,.16); color: #fff; }
+    /* --- Reviews dialog --- */
+    .review-card {
+      width: 460px; max-width: calc(100vw - 32px); max-height: calc(100vh - 64px);
+      display: flex; flex-direction: column; overflow: hidden;
+      background: var(--bg-deep); border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,.6); animation: dd-in .15s ease;
+    }
+    .review-head {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 18px 20px 12px; border-bottom: 1px solid var(--border);
+    }
+    .review-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--text); }
+    .review-sub { font-size: 12px; color: var(--muted); }
+    .review-x { border: none; background: transparent; color: var(--muted); cursor: pointer; }
+    .review-body { padding: 16px 20px; overflow-y: auto; }
+    .review-loading { padding: 28px; text-align: center; color: var(--muted); }
+    .review-summary { display: flex; gap: 18px; align-items: center; margin-bottom: 16px; }
+    .rs-avg { text-align: center; flex: none; }
+    .rs-num { font-size: 34px; font-weight: 700; color: #f5b400; line-height: 1; }
+    .rs-stars { display: flex; justify-content: center; margin: 2px 0; }
+    .rs-stars mat-icon { font-size: 16px; width: 16px; height: 16px; color: #f5b400; }
+    .rs-count { font-size: 11px; color: var(--muted); }
+    .rs-dist { flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px; }
+    .rs-bar { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+    .rs-bk { width: 8px; text-align: right; }
+    .rs-track { flex: 1 1 auto; height: 6px; border-radius: 3px; background: rgba(148,163,184,.18); overflow: hidden; }
+    .rs-fill { display: block; height: 100%; background: #f5b400; border-radius: 3px; }
+    .rs-bn { width: 16px; text-align: right; }
+    .review-mine {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 16px;
+    }
+    .rm-label { font-size: 12px; font-weight: 600; color: var(--text); }
+    .rate-stars { display: flex; gap: 2px; margin: 6px 0 10px; }
+    .rate-star { border: none; background: transparent; cursor: pointer; padding: 2px; color: #6b7280; }
+    .rate-star mat-icon { font-size: 26px; width: 26px; height: 26px; }
+    .rate-star.on { color: #f5b400; }
+    .rate-star:hover { color: #f5b400; }
+    .rm-text {
+      width: 100%; box-sizing: border-box; resize: vertical; font-family: inherit; font-size: 13px;
+      color: var(--text); background: var(--bg-deep); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 10px;
+    }
+    .rm-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+    .rm-submit { background: var(--accent); color: #1a1303; }
+    .rm-submit[disabled] { opacity: .5; }
+    .review-list { display: flex; flex-direction: column; gap: 12px; }
+    .rv { display: flex; gap: 10px; }
+    .rv-avatar {
+      flex: none; width: 30px; height: 30px; border-radius: 50%;
+      background: #3730a3; color: #fff; font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rv-body { flex: 1 1 auto; min-width: 0; }
+    .rv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .rv-name { font-size: 13px; color: var(--text); }
+    .rv-you { color: var(--muted); font-weight: 400; }
+    .rv-date { font-size: 11px; color: var(--muted); flex: none; }
+    .rv-stars { display: flex; margin: 1px 0 2px; }
+    .rv-stars mat-icon { font-size: 14px; width: 14px; height: 14px; color: #f5b400; }
+    .rv-comment { font-size: 12.5px; color: var(--muted); line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+    .rv-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 12px 0; }
     .palette-grid {
       display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start;
     }
@@ -1239,6 +1388,13 @@ export class AppComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
   openMenuOpen = false;
   /** Saved diagram awaiting delete confirmation (drives the confirm dialog). */
   pendingDelete: DiagramSummary | null = null;
+  /** Saved diagram whose reviews dialog is open (null when closed). */
+  reviewTarget: DiagramSummary | null = null;
+  reviewData: ReviewData | null = null;
+  myRating = 0;
+  hoverRating = 0;
+  myComment = '';
+  reviewSaving = false;
   /** Compact-screen drawers: palette and properties auto-hide behind toolbar toggles. */
   paletteOpen = false;
   propsOpen = false;
@@ -1903,9 +2059,80 @@ export class AppComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
 
   refreshList(): void {
     this.api.list().subscribe({
-      next: (list) => (this.savedDiagrams = list),
+      next: (list) => {
+        this.savedDiagrams = list;
+        // Merge in rating badges (best-effort; failure just leaves them blank).
+        this.api.reviewSummary().subscribe({
+          next: (sums) => {
+            const byId = new Map(sums.map((s) => [s.diagramId, s]));
+            this.savedDiagrams.forEach((d) => {
+              const s = byId.get(d.id);
+              d.avgRating = s?.average ?? 0;
+              d.reviewCount = s?.count ?? 0;
+            });
+          },
+          error: () => {},
+        });
+      },
       error: () => {},
     });
+  }
+
+  // ---------- Reviews ----------
+
+  /** Open the reviews dialog for a saved diagram and load its reviews. */
+  openReviews(d: DiagramSummary, event?: Event): void {
+    event?.stopPropagation();
+    this.reviewTarget = d;
+    this.reviewData = null;
+    this.myRating = 0;
+    this.hoverRating = 0;
+    this.myComment = '';
+    this.openMenuOpen = false;
+    this.api.getReviews(d.id).subscribe({
+      next: (rd) => this.applyReviewData(rd),
+      error: () => (this.status = 'Could not load reviews'),
+    });
+  }
+
+  closeReviews(): void {
+    this.reviewTarget = null;
+    this.reviewData = null;
+  }
+
+  /** Save (create or update) the current user's review for the open diagram. */
+  submitReview(): void {
+    if (!this.reviewTarget || !this.myRating || this.reviewSaving) return;
+    this.reviewSaving = true;
+    this.api.postReview(this.reviewTarget.id, this.myRating, this.myComment).subscribe({
+      next: (rd) => {
+        this.applyReviewData(rd);
+        this.reviewSaving = false;
+        this.status = 'Review saved';
+        this.refreshList(); // refresh the Open-list badges
+      },
+      error: () => {
+        this.reviewSaving = false;
+        this.status = 'Could not save review';
+      },
+    });
+  }
+
+  private applyReviewData(rd: ReviewData): void {
+    this.reviewData = rd;
+    this.myRating = rd.mine?.rating ?? 0;
+    this.myComment = rd.mine?.comment ?? '';
+  }
+
+  /** Material icon names for a star row representing an average (full/half/empty). */
+  avgStars(avg: number): string[] {
+    const out: string[] = [];
+    for (let i = 1; i <= 5; i++) {
+      if (avg >= i) out.push('star');
+      else if (avg >= i - 0.5) out.push('star_half');
+      else out.push('star_border');
+    }
+    return out;
   }
 
   /** Open the confirmation dialog for deleting a saved file. */
