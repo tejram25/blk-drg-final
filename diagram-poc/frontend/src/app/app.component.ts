@@ -183,8 +183,14 @@ const PORT_GROUPS = {
           <div class="dd-menu" *ngIf="openMenuOpen">
             <button type="button" class="dd-item" [class.sel]="selectedDiagramId == null"
                     (click)="selectedDiagramId = null; openMenuOpen = false; load()">{{ 'open.saved' | translate }}</button>
-            <button type="button" class="dd-item" *ngFor="let d of savedDiagrams" [class.sel]="selectedDiagramId === d.id"
-                    (click)="selectedDiagramId = d.id; openMenuOpen = false; load()">{{ d.name }}</button>
+            <div class="dd-row" *ngFor="let d of savedDiagrams">
+              <button type="button" class="dd-item dd-item-grow" [class.sel]="selectedDiagramId === d.id"
+                      (click)="selectedDiagramId = d.id; openMenuOpen = false; load()">{{ d.name }}</button>
+              <button type="button" class="dd-del" matTooltip="Delete file"
+                      (click)="askDeleteDiagram(d, $event)">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
           </div>
         </div>
         <button mat-stroked-button (click)="newDiagram()"><span>{{ 'btn.new' | translate }}</span></button>
@@ -631,6 +637,21 @@ const PORT_GROUPS = {
         <span class="spacer"></span>
         <span class="kbd-hints">{{ 'footer.hints' | translate }}</span>
       </footer>
+
+      <!-- Delete confirmation -->
+      <div class="confirm-backdrop" *ngIf="pendingDelete" (click)="cancelDelete()">
+        <div class="confirm-card" (click)="$event.stopPropagation()">
+          <div class="confirm-icon"><mat-icon>warning</mat-icon></div>
+          <h3 class="confirm-title">Delete this file?</h3>
+          <p class="confirm-msg">
+            "{{ pendingDelete.name }}" will be permanently deleted. This can't be undone.
+          </p>
+          <div class="confirm-actions">
+            <button type="button" mat-stroked-button (click)="cancelDelete()">Cancel</button>
+            <button type="button" mat-flat-button class="danger-btn" (click)="confirmDelete()">Delete</button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
@@ -933,6 +954,35 @@ const PORT_GROUPS = {
     }
     .dd-item:hover { background: rgba(245,166,35,.16); color: #fff; }
     .dd-item.sel { background: var(--accent); color: #1a1303; font-weight: 600; }
+    .dd-row { display: flex; align-items: center; gap: 2px; }
+    .dd-item-grow { flex: 1 1 auto; min-width: 0; }
+    .dd-del {
+      flex: none; display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border: none; border-radius: 7px;
+      background: transparent; color: var(--muted); cursor: pointer;
+      transition: background .12s, color .12s;
+    }
+    .dd-del mat-icon { font-size: 18px; width: 18px; height: 18px; line-height: 18px; }
+    .dd-del:hover { background: rgba(239,68,68,.16); color: #f87171; }
+    .confirm-backdrop {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.55);
+    }
+    .confirm-card {
+      width: 340px; max-width: calc(100vw - 32px);
+      background: var(--bg-deep); border: 1px solid var(--border);
+      border-radius: 14px; padding: 22px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.6); text-align: center;
+      animation: dd-in .15s ease;
+    }
+    .confirm-icon { color: #f59e0b; }
+    .confirm-icon mat-icon { font-size: 34px; width: 34px; height: 34px; }
+    .confirm-title { margin: 6px 0 8px; font-size: 16px; font-weight: 600; color: var(--text); }
+    .confirm-msg { margin: 0 0 18px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+    .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+    .danger-btn { background: #dc2626; color: #fff; }
+    .danger-btn:hover { background: #b91c1c; }
     .palette-grid {
       display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start;
     }
@@ -1187,6 +1237,8 @@ export class AppComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
   activeCategory = 'Blocks';
   catMenuOpen = false;
   openMenuOpen = false;
+  /** Saved diagram awaiting delete confirmation (drives the confirm dialog). */
+  pendingDelete: DiagramSummary | null = null;
   /** Compact-screen drawers: palette and properties auto-hide behind toolbar toggles. */
   paletteOpen = false;
   propsOpen = false;
@@ -1853,6 +1905,40 @@ export class AppComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
     this.api.list().subscribe({
       next: (list) => (this.savedDiagrams = list),
       error: () => {},
+    });
+  }
+
+  /** Open the confirmation dialog for deleting a saved file. */
+  askDeleteDiagram(d: DiagramSummary, event?: Event): void {
+    event?.stopPropagation();
+    this.pendingDelete = d;
+    this.openMenuOpen = false;
+  }
+
+  /** Dismiss the delete confirmation without deleting. */
+  cancelDelete(): void {
+    this.pendingDelete = null;
+  }
+
+  /** Delete the file confirmed in the dialog, then refresh the saved list. */
+  confirmDelete(): void {
+    const target = this.pendingDelete;
+    this.pendingDelete = null;
+    if (!target) return;
+    this.api.delete(target.id).subscribe({
+      next: () => {
+        // If the deleted file is the one open on the canvas, drop to a blank
+        // diagram (this also leaves its collab room) so we're not editing a
+        // file that no longer exists.
+        if (this.currentId === target.id) {
+          this.newDiagram();
+        } else if (this.selectedDiagramId === target.id) {
+          this.selectedDiagramId = null;
+        }
+        this.refreshList();
+        this.status = `Deleted "${target.name}"`;
+      },
+      error: () => (this.status = 'Delete failed - is the backend running?'),
     });
   }
 
