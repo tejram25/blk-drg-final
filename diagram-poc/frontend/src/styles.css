@@ -1,0 +1,173 @@
+/* Angular Material base theme (dark) — component colors are
+   re-tokenized below to match the graphite/amber app theme. */
+@import '@angular/material/prebuilt-themes/purple-green.css';
+
+/* Global styles */
+* { box-sizing: border-box; }
+
+/* ---- Material token overrides → graphite/amber theme ---- */
+body {
+  --mdc-outlined-button-label-text-color: #ececef;
+  --mdc-outlined-button-outline-color: #34353c;
+  --mdc-filled-button-container-color: #f5a623;
+  --mdc-filled-button-label-text-color: #1a1303;
+  --mdc-text-button-label-text-color: #ececef;
+  --mdc-icon-button-icon-color: #ececef;
+  --mat-icon-button-state-layer-color: #f5a623;
+  --mat-outlined-button-state-layer-color: #f5a623;
+}
+.mat-mdc-outlined-button:hover { background: #2f3037; }
+.mdc-button { letter-spacing: normal; }
+
+/* Buttons shouldn't show a text-selection highlight when clicked (e.g. the
+   presence count "2" or labels getting selected on double/again clicks). */
+button { user-select: none; }
+
+/* Thin, themed scrollbars everywhere. Windows/Chrome otherwise shows chunky grey
+   bars; this matches the dark UI on every scroll area (canvas, panels, menus). */
+* { scrollbar-width: thin; scrollbar-color: #3a3b42 transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #3a3b42; border-radius: 6px;
+  border: 2px solid transparent; background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: #4c4d56; background-clip: padding-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #141518; /* graphite, not blue */
+  color: #ececef;
+}
+
+/* The FAST-style "flowing current" animation on connections.
+   Applied to edges via attrs.line.style.animation in the component. */
+@keyframes flowing-line {
+  to { stroke-dashoffset: -1000; }
+}
+
+/* ---- Animated component parts (palette previews + canvas nodes) ---- */
+
+@keyframes anim-spin { to { transform: rotate(360deg); } }
+@keyframes anim-sweep {
+  0%, 100% { transform: rotate(12deg); }
+  50%      { transform: rotate(-14deg); }
+}
+@keyframes anim-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .25; }
+}
+@keyframes anim-belt { to { stroke-dashoffset: -24; } }
+@keyframes anim-cycle {
+  0%, 27%   { opacity: 1; }
+  33%, 93%  { opacity: .15; }
+  100%      { opacity: 1; }
+}
+@keyframes anim-piston-move {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(-16px); }
+}
+@keyframes anim-level-move {
+  0%, 100% { transform: scaleY(1); }
+  50%      { transform: scaleY(.5); }
+}
+/* battery bars filling in sequence */
+@keyframes anim-charge1 { 0%, 100% { opacity: .15; } 20%, 90% { opacity: 1; } }
+@keyframes anim-charge2 { 0%, 35%, 100% { opacity: .15; } 55%, 90% { opacity: 1; } }
+@keyframes anim-charge3 { 0%, 65%, 100% { opacity: .15; } 85%, 90% { opacity: 1; } }
+/* relay lever clicking open/closed */
+@keyframes anim-toggle {
+  0%, 40%  { transform: rotate(0deg); }
+  50%, 90% { transform: rotate(-16deg); }
+  100%     { transform: rotate(0deg); }
+}
+/* slow warm glow (heater coils, filament) */
+@keyframes anim-glow-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+
+.anim-spin {
+  animation: anim-spin 1.2s linear infinite;
+  transform-box: fill-box; transform-origin: 50% 50%;
+}
+.anim-spin-slow {
+  animation: anim-spin 3s linear infinite;
+  transform-box: fill-box; transform-origin: 50% 50%;
+}
+.anim-arm-upper {
+  animation: anim-sweep 2.4s ease-in-out infinite;
+  transform-box: fill-box; transform-origin: 0% 92%;
+}
+.anim-pulse { animation: anim-pulse 1s ease-in-out infinite; }
+.anim-pulse-alt { animation: anim-pulse 1s ease-in-out .5s infinite; }
+.anim-belt { animation: anim-belt 1s linear infinite; }
+.anim-cycle-1 { animation: anim-cycle 2.4s linear infinite; }
+.anim-cycle-2 { animation: anim-cycle 2.4s linear .8s infinite; opacity: .15; }
+.anim-cycle-3 { animation: anim-cycle 2.4s linear 1.6s infinite; opacity: .15; }
+.anim-piston {
+  animation: anim-piston-move 1.6s ease-in-out infinite;
+  transform-box: fill-box; transform-origin: 50% 50%;
+}
+.anim-level {
+  animation: anim-level-move 3s ease-in-out infinite;
+  transform-box: fill-box; transform-origin: 50% 100%;
+}
+.anim-charge-1 { animation: anim-charge1 2.8s linear infinite; }
+.anim-charge-2 { animation: anim-charge2 2.8s linear infinite; }
+.anim-charge-3 { animation: anim-charge3 2.8s linear infinite; }
+.anim-relay-lever {
+  animation: anim-toggle 2s ease-in-out infinite;
+  transform-box: fill-box; transform-origin: 0% 100%;
+}
+.anim-spin-wind {
+  animation: anim-spin 2.4s linear infinite;
+  transform-box: fill-box; transform-origin: 50% 50%;
+}
+.anim-glow { animation: anim-glow-pulse 1.8s ease-in-out infinite; }
+
+/* Connection ports: hidden until the node is hovered, so diagrams read
+   clean like a poster but wiring still works the moment you mouse over. */
+.x6-node .x6-port { opacity: 0; transition: opacity .12s ease; }
+.x6-node:hover .x6-port { opacity: 1; }
+
+/* Selected wire: local-only DOM highlight (never synced to collaborators) */
+.wire-selected path {
+  filter: drop-shadow(0 0 3px rgba(245, 166, 35, .9));
+}
+
+/* ---- White canvas mode ----
+   Light strokes/fills (#e2e8f0) are invisible on white, so remap the
+   defaults to dark slate. Attribute selectors only match elements still
+   on their default color, so user-recolored nodes keep their color. */
+.canvas-light [stroke="#e2e8f0"] { stroke: #334155; }
+.canvas-light [fill="#e2e8f0"]   { fill: #334155; }
+.canvas-light text[fill="#94a3b8"] { fill: #475569; }
+.canvas-light [fill="#0f172a"]   { fill: #ffffff; }   /* port circles */
+.canvas-light [fill="#1e293b"]   { fill: #f1f5f9; }   /* pump volute, piston head bg */
+
+@media (prefers-reduced-motion: reduce) {
+  .x6-edge path,
+  .anim-spin, .anim-spin-slow, .anim-arm-upper,
+  .anim-pulse, .anim-pulse-alt, .anim-belt,
+  .anim-cycle-1, .anim-cycle-2, .anim-cycle-3,
+  .anim-piston, .anim-level,
+  .anim-charge-1, .anim-charge-2, .anim-charge-3,
+  .anim-relay-lever, .anim-spin-wind, .anim-glow { animation: none !important; }
+}
+
+/* ---- Signed-in user chip + sign out (topbar) ---- */
+.user-wrap { display: flex; align-items: center; gap: 4px; flex-shrink: 0; min-width: 0; }
+.user-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 6px; border-radius: 999px; height: 34px;
+  background: #1e1f25; border: 1px solid #34353c; color: #d7d8dc;
+  font-size: 13px; max-width: 190px; min-width: 0;
+  cursor: pointer; font-family: inherit;
+}
+.user-chip:hover { background: #26282f; border-color: #44454d; }
+.user-chip.on { border-color: #f5a623; }
+.user-chip mat-icon { font-size: 18px; width: 18px; height: 18px; color: #f5a623; flex: none; }
+.user-chip .caret { color: #9aa0a8; margin-left: -2px; }
+.user-chip .user-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 720px) { .user-chip .user-name { display: none; } }

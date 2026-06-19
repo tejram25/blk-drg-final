@@ -1,0 +1,791 @@
+<!doctype html>
+<!-- Standalone preview of the drag-and-drop canvas. No install needed:
+     just open this file in a browser (internet required for the X6 CDN script). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Block Diagram Builder - Standalone Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/@antv/x6@2.18.1/dist/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@antv/x6-plugin-transform@2.1.8/dist/index.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: 'Segoe UI', system-ui, sans-serif; background: #141518; color: #ececef; }
+  .layout { display: flex; height: 100vh; }
+  .palette {
+    width: clamp(185px, 18vw, 250px); padding: 12px; background: #1d1e23;
+    border-right: 1px solid #2b2c32; overflow-y: auto;
+  }
+  .logo-bar { display: flex; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid #f5a623; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; background: #0e0f11; border-radius: 8px; padding: 3px; }
+  .tab {
+    flex: 1; padding: 6px 2px; font-size: 11px; font-weight: 600; border: none;
+    border-radius: 6px; background: transparent; color: #9b9ca4; cursor: pointer;
+  }
+  .tab:hover { background: #26272d; }
+  .tab.active { background: #26272d; color: #f5a623; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+  #palette-items { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .palette-item {
+    padding: 9px 4px 7px; border-radius: 9px; color: #fff;
+    font-size: 13px; font-weight: 500; cursor: grab; user-select: none;
+    text-align: center; border: 1px solid #2b2c32; background: #0e0f11;
+    transition: border-color .15s, transform .1s;
+  }
+  .palette-item:hover { border-color: #f5a623; transform: translateY(-1px); }
+  .palette-item.block-chip { grid-column: 1 / -1; border: 1px solid rgba(255,255,255,.22); }
+  .hint { font-size: 11px; color: #6b6c74; line-height: 1.5; margin-top: 12px; }
+  #canvas { flex: 1; min-width: 0; }
+  @media (max-width: 680px) { .palette { width: 150px; padding: 8px; } #palette-items { grid-template-columns: 1fr; } }
+  @keyframes flowing-line { to { stroke-dashoffset: -1000; } }
+  .x6-node .x6-port { opacity: 0; transition: opacity .12s ease; }
+  .x6-node:hover .x6-port { opacity: 1; }
+  /* White canvas mode: remap default light strokes to dark slate */
+  .canvas-light [stroke="#e2e8f0"] { stroke: #334155; }
+  .canvas-light [fill="#e2e8f0"]   { fill: #334155; }
+  .canvas-light text[fill="#94a3b8"] { fill: #475569; }
+  .canvas-light [fill="#0f172a"]   { fill: #ffffff; }
+  .canvas-light [fill="#1e293b"]   { fill: #f1f5f9; }
+  @keyframes anim-spin { to { transform: rotate(360deg); } }
+  @keyframes anim-sweep { 0%,100% { transform: rotate(12deg); } 50% { transform: rotate(-14deg); } }
+  @keyframes anim-pulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+  @keyframes anim-belt { to { stroke-dashoffset: -24; } }
+  @keyframes anim-cycle { 0%,27% { opacity: 1; } 33%,93% { opacity: .15; } 100% { opacity: 1; } }
+  @keyframes anim-piston-move { 0%,100% { transform: translateX(0); } 50% { transform: translateX(-16px); } }
+  @keyframes anim-level-move { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(.5); } }
+  .anim-cycle-1 { animation: anim-cycle 2.4s linear infinite; }
+  .anim-cycle-2 { animation: anim-cycle 2.4s linear .8s infinite; opacity: .15; }
+  .anim-cycle-3 { animation: anim-cycle 2.4s linear 1.6s infinite; opacity: .15; }
+  .anim-piston { animation: anim-piston-move 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+  .anim-level { animation: anim-level-move 3s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+  @keyframes anim-charge1 { 0%,100% { opacity: .15; } 20%,90% { opacity: 1; } }
+  @keyframes anim-charge2 { 0%,35%,100% { opacity: .15; } 55%,90% { opacity: 1; } }
+  @keyframes anim-charge3 { 0%,65%,100% { opacity: .15; } 85%,90% { opacity: 1; } }
+  @keyframes anim-toggle { 0%,40% { transform: rotate(0deg); } 50%,90% { transform: rotate(-16deg); } 100% { transform: rotate(0deg); } }
+  @keyframes anim-glow-pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  .anim-charge-1 { animation: anim-charge1 2.8s linear infinite; }
+  .anim-charge-2 { animation: anim-charge2 2.8s linear infinite; }
+  .anim-charge-3 { animation: anim-charge3 2.8s linear infinite; }
+  .anim-relay-lever { animation: anim-toggle 2s ease-in-out infinite; transform-box: fill-box; transform-origin: 0% 100%; }
+  .anim-spin-wind { animation: anim-spin 2.4s linear infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+  .anim-glow { animation: anim-glow-pulse 1.8s ease-in-out infinite; }
+  .anim-spin { animation: anim-spin 1.2s linear infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+  .anim-spin-slow { animation: anim-spin 3s linear infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+  .anim-arm-upper { animation: anim-sweep 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: 0% 92%; }
+  .anim-pulse { animation: anim-pulse 1s ease-in-out infinite; }
+  .anim-pulse-alt { animation: anim-pulse 1s ease-in-out .5s infinite; }
+  .anim-belt { animation: anim-belt 1s linear infinite; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="palette">
+    <div class="logo-bar">
+      <span style="font-size:14px;font-weight:700;color:#ececef;">Block Diagram Builder</span>
+    </div>
+    <button id="theme-toggle" style="width:100%;margin-bottom:8px;background:#26272d;color:#ececef;border:1px solid #34353c;border-radius:7px;padding:6px 10px;font-size:13px;cursor:pointer;">Dark canvas</button>
+    <label id="wire-color-row" style="display:none;align-items:center;gap:8px;font-size:12px;color:#9b9ca4;margin-bottom:8px;">
+      Wire color <input type="color" id="wire-color" value="#22d3ee" style="border:none;background:none;width:36px;height:24px;cursor:pointer;">
+    </label>
+    <button id="add-image" style="width:100%;margin-bottom:12px;background:#26272d;color:#ececef;border:1px solid #34353c;border-radius:7px;padding:6px 10px;font-size:13px;cursor:pointer;">Add image</button>
+    <input type="file" id="image-file" accept="image/*" style="display:none;">
+    <div class="tabs" id="palette-tabs"></div>
+    <div id="palette-items"></div>
+    <p class="hint">Drag a component onto the canvas. Drag from a small circle (pin) to another block to connect. Del removes the selection.</p>
+  </aside>
+  <div id="canvas"></div>
+</div>
+
+<script>
+const { Graph } = window.X6;
+
+const BLOCKS = [
+  { key: 'processor', label: 'Main Processor',  color: '#1d4ed8' },
+  { key: 'ai',        label: 'AI Models',       color: '#3730a3' },
+  { key: 'sensor',    label: 'Sensor',          color: '#15803d' },
+  { key: 'camera',    label: 'Camera',          color: '#166534' },
+  { key: 'motor',     label: 'BLDC Motor Ctrl', color: '#b45309' },
+  { key: 'battery',   label: 'Battery / BMS',   color: '#a16207' },
+  { key: 'comms',     label: 'Comm Module',     color: '#6d28d9' },
+  // Basic geometric shapes (Excalidraw-style)
+  { key: 'rectangle',     label: 'Rectangle',     shape: 'basic-rectangle',     basic: true },
+  { key: 'square',        label: 'Square',        shape: 'basic-square',        basic: true },
+  { key: 'rounded',       label: 'Rounded',       shape: 'basic-rounded',       basic: true },
+  { key: 'circle',        label: 'Circle',        shape: 'basic-circle',        basic: true },
+  { key: 'ellipse',       label: 'Ellipse',       shape: 'basic-ellipse',       basic: true },
+  { key: 'diamond',       label: 'Diamond',       shape: 'basic-diamond',       basic: true },
+  { key: 'triangle',      label: 'Triangle',      shape: 'basic-triangle',      basic: true },
+  { key: 'parallelogram', label: 'Parallelogram', shape: 'basic-parallelogram', basic: true },
+  { key: 'cylinder',      label: 'Database',      shape: 'basic-cylinder',      basic: true },
+  // Electrical schematic symbols
+  { key: 'resistor',  label: 'Resistor',        shape: 'elec-resistor' },
+  { key: 'capacitor', label: 'Capacitor',       shape: 'elec-capacitor' },
+  { key: 'inductor',  label: 'Inductor',        shape: 'elec-inductor' },
+  { key: 'diode',     label: 'Diode',           shape: 'elec-diode' },
+  { key: 'led',       label: 'LED',             shape: 'elec-led' },
+  { key: 'npn',       label: 'NPN Transistor',  shape: 'elec-npn' },
+  { key: 'ground',    label: 'Ground',          shape: 'elec-ground' },
+  { key: 'vdc',       label: 'DC Source',       shape: 'elec-vdc' },
+  { key: 'vac',       label: 'AC Source',       shape: 'elec-vac' },
+  { key: 'switch',    label: 'Switch',          shape: 'elec-switch' },
+  { key: 'fuse',      label: 'Fuse',            shape: 'elec-fuse' },
+  // Animated components (FAST-style moving graphics)
+  { key: 'robot-arm', label: 'Robotic Arm',     shape: 'anim-robot-arm', animated: true },
+  { key: 'siren',     label: 'Siren Light',     shape: 'anim-siren',     animated: true },
+  { key: 'fan',       label: 'Fan',             shape: 'anim-fan',       animated: true },
+  { key: 'conveyor',  label: 'Conveyor',        shape: 'anim-conveyor',  animated: true },
+  { key: 'gear',      label: 'Gear Motor',      shape: 'anim-gear',      animated: true },
+  { key: 'antenna-t', label: 'Antenna Tower',   shape: 'anim-antenna',   animated: true },
+  { key: 'pump',      label: 'Pump',            shape: 'anim-pump',      animated: true },
+  { key: 'stack',     label: 'Stack Light',     shape: 'anim-stack-light', animated: true },
+  { key: 'piston',    label: 'Piston',          shape: 'anim-piston',    animated: true },
+  { key: 'tank',      label: 'Liquid Tank',     shape: 'anim-tank',      animated: true },
+  { key: 'drone',     label: 'Drone',           shape: 'anim-drone',     animated: true },
+  { key: 'glow-battery', label: 'Battery (Charging)', shape: 'anim-glow-battery', animated: true },
+  { key: 'inverter',  label: 'Inverter',        shape: 'anim-inverter',  animated: true },
+  { key: 'transformer', label: 'Transformer',   shape: 'anim-transformer', animated: true },
+  { key: 'solar',     label: 'Solar Panel',     shape: 'anim-solar',     animated: true },
+  { key: 'wind-turbine', label: 'Wind Turbine', shape: 'anim-wind-turbine', animated: true },
+  { key: 'generator', label: 'Generator',       shape: 'anim-generator', animated: true },
+  { key: 'ev-charger', label: 'EV Charger',     shape: 'anim-ev-charger', animated: true },
+  { key: 'pylon',     label: 'Power Pylon',     shape: 'anim-pylon',     animated: true },
+  { key: 'relay',     label: 'Relay',           shape: 'anim-relay',     animated: true },
+  { key: 'heater',    label: 'Heater',          shape: 'anim-heater',    animated: true },
+  { key: 'bulb',      label: 'Bulb',            shape: 'anim-bulb',      animated: true },
+];
+
+// ---- Electrical schematic symbol shapes (mirrors frontend/src/app/electrical-shapes.ts) ----
+const SYMBOLS = {
+  'elec-resistor': { width: 100, height: 40,
+    paths: [{ d: 'M 0 20 L 20 20 L 26 8 L 38 32 L 50 8 L 62 32 L 74 8 L 80 20 L 100 20' }],
+    pins: [{ x: 0, y: 20 }, { x: 100, y: 20 }] },
+  'elec-capacitor': { width: 100, height: 40,
+    paths: [{ d: 'M 0 20 L 44 20' }, { d: 'M 56 20 L 100 20' }, { d: 'M 44 6 L 44 34' }, { d: 'M 56 6 L 56 34' }],
+    pins: [{ x: 0, y: 20 }, { x: 100, y: 20 }] },
+  'elec-inductor': { width: 100, height: 40,
+    paths: [{ d: 'M 0 20 L 20 20 A 7.5 9 0 0 1 35 20 A 7.5 9 0 0 1 50 20 A 7.5 9 0 0 1 65 20 A 7.5 9 0 0 1 80 20 L 100 20' }],
+    pins: [{ x: 0, y: 20 }, { x: 100, y: 20 }] },
+  'elec-diode': { width: 100, height: 40,
+    paths: [{ d: 'M 0 20 L 38 20' }, { d: 'M 62 20 L 100 20' }, { d: 'M 62 8 L 62 32' }, { d: 'M 38 8 L 38 32 L 62 20 Z', fill: true }],
+    pins: [{ x: 0, y: 20 }, { x: 100, y: 20 }] },
+  'elec-led': { width: 100, height: 52,
+    paths: [{ d: 'M 0 32 L 38 32' }, { d: 'M 62 32 L 100 32' }, { d: 'M 62 20 L 62 44' },
+            { d: 'M 38 20 L 38 44 L 62 32 Z', fill: true },
+            { d: 'M 47 17 L 55 7 M 55 7 L 50 8 M 55 7 L 54 12' },
+            { d: 'M 56 20 L 64 10 M 64 10 L 59 11 M 64 10 L 63 15' }],
+    pins: [{ x: 0, y: 32 }, { x: 100, y: 32 }] },
+  'elec-npn': { width: 60, height: 60,
+    paths: [{ d: 'M 20 12 L 20 48' }, { d: 'M 0 30 L 20 30' }, { d: 'M 20 22 L 46 10 L 46 0' },
+            { d: 'M 20 38 L 46 50 L 46 60' }, { d: 'M 40 47.3 L 30.4 46.7 L 33.3 40.3 Z', fill: true }],
+    pins: [{ x: 0, y: 30 }, { x: 46, y: 0 }, { x: 46, y: 60 }] },
+  'elec-ground': { width: 40, height: 32,
+    paths: [{ d: 'M 20 0 L 20 14' }, { d: 'M 4 14 L 36 14' }, { d: 'M 10 21 L 30 21' }, { d: 'M 16 28 L 24 28' }],
+    pins: [{ x: 20, y: 0 }] },
+  'elec-vdc': { width: 60, height: 60,
+    paths: [{ d: 'M 12 30 a 18 18 0 1 0 36 0 a 18 18 0 1 0 -36 0' }, { d: 'M 30 0 L 30 12' }, { d: 'M 30 48 L 30 60' },
+            { d: 'M 30 19 L 30 27 M 26 23 L 34 23' }, { d: 'M 26 38 L 34 38' }],
+    pins: [{ x: 30, y: 0 }, { x: 30, y: 60 }] },
+  'elec-vac': { width: 60, height: 60,
+    paths: [{ d: 'M 12 30 a 18 18 0 1 0 36 0 a 18 18 0 1 0 -36 0' }, { d: 'M 30 0 L 30 12' }, { d: 'M 30 48 L 30 60' },
+            { d: 'M 20 30 Q 25 18 30 30 Q 35 42 40 30' }],
+    pins: [{ x: 30, y: 0 }, { x: 30, y: 60 }] },
+  'elec-switch': { width: 100, height: 40,
+    paths: [{ d: 'M 0 20 L 30 20' }, { d: 'M 70 20 L 100 20' }, { d: 'M 30 20 L 68 4' },
+            { d: 'M 27 20 a 3 3 0 1 0 6 0 a 3 3 0 1 0 -6 0', fill: true },
+            { d: 'M 67 20 a 3 3 0 1 0 6 0 a 3 3 0 1 0 -6 0', fill: true }],
+    pins: [{ x: 0, y: 20 }, { x: 100, y: 20 }] },
+  'elec-fuse': { width: 100, height: 40,
+    paths: [{ d: 'M 0 20 L 100 20' }, { d: 'M 30 12 L 70 12 L 70 28 L 30 28 Z' }],
+    pins: [{ x: 0, y: 20 }, { x: 100, y: 20 }] },
+};
+
+// ---- Animated components (mirrors frontend/src/app/animated-shapes.ts) ----
+const METAL = '#94a3b8', DARK = '#475569', LIGHT = '#e2e8f0';
+const ANIM = {
+  'anim-robot-arm': { width: 80, height: 80,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 24 80 L 56 80 L 52 68 L 28 68 Z', fill: DARK, stroke: METAL, 'stroke-width': '1.5' } },
+      { tag: 'path', attrs: { d: 'M 40 68 L 40 44', stroke: LIGHT, 'stroke-width': '6', 'stroke-linecap': 'round', fill: 'none' } },
+      { tag: 'g', attrs: { class: 'anim-arm-upper' }, children: [
+        { tag: 'path', attrs: { d: 'M 40 44 L 66 24', stroke: LIGHT, 'stroke-width': '5', 'stroke-linecap': 'round', fill: 'none' } },
+        { tag: 'circle', attrs: { cx: '66', cy: '24', r: '3', fill: METAL } },
+        { tag: 'path', attrs: { d: 'M 66 24 L 75 17 M 66 24 L 76 25', stroke: '#22d3ee', 'stroke-width': '3', 'stroke-linecap': 'round', fill: 'none' } },
+      ]},
+      { tag: 'circle', attrs: { cx: '40', cy: '44', r: '4.5', fill: METAL } },
+    ],
+    pins: [{ x: 0, y: 72 }, { x: 80, y: 72 }] },
+  'anim-siren': { width: 60, height: 56,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 14 46 A 16 16 0 0 1 46 46 Z', fill: '#ef4444', stroke: '#fca5a5', 'stroke-width': '1.5', class: 'anim-pulse' } },
+      { tag: 'path', attrs: { d: 'M 30 22 L 30 12 M 13 32 L 4 26 M 47 32 L 56 26', stroke: '#fbbf24', 'stroke-width': '2.5', 'stroke-linecap': 'round', fill: 'none', class: 'anim-pulse-alt' } },
+      { tag: 'path', attrs: { d: 'M 14 56 L 46 56 L 43 46 L 17 46 Z', fill: DARK, stroke: METAL, 'stroke-width': '1.5' } },
+    ],
+    pins: [{ x: 0, y: 50 }, { x: 60, y: 50 }] },
+  'anim-fan': { width: 60, height: 60,
+    parts: [
+      { tag: 'circle', attrs: { cx: '30', cy: '30', r: '26', fill: 'none', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'g', attrs: { class: 'anim-spin' }, children: [
+        { tag: 'path', attrs: { d: 'M 30 30 C 24 20 24 12 30 8 C 36 12 36 20 30 30 Z', fill: '#22d3ee' } },
+        { tag: 'path', attrs: { d: 'M 30 30 C 24 20 24 12 30 8 C 36 12 36 20 30 30 Z', fill: '#22d3ee', transform: 'rotate(120 30 30)' } },
+        { tag: 'path', attrs: { d: 'M 30 30 C 24 20 24 12 30 8 C 36 12 36 20 30 30 Z', fill: '#22d3ee', transform: 'rotate(240 30 30)' } },
+      ]},
+      { tag: 'circle', attrs: { cx: '30', cy: '30', r: '3.5', fill: LIGHT } },
+    ],
+    pins: [{ x: 0, y: 30 }, { x: 60, y: 30 }] },
+  'anim-conveyor': { width: 110, height: 48,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 15 20 L 95 20 A 12 12 0 1 1 95 44 L 15 44 A 12 12 0 1 1 15 20 Z', fill: 'none', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'path', attrs: { d: 'M 15 32 L 95 32', stroke: '#22d3ee', 'stroke-width': '2', 'stroke-dasharray': '6 6', fill: 'none', class: 'anim-belt' } },
+      { tag: 'g', attrs: { class: 'anim-spin' }, children: [
+        { tag: 'path', attrs: { d: 'M 15 25 L 15 39 M 8 32 L 22 32', stroke: METAL, 'stroke-width': '2', fill: 'none' } } ]},
+      { tag: 'g', attrs: { class: 'anim-spin' }, children: [
+        { tag: 'path', attrs: { d: 'M 95 25 L 95 39 M 88 32 L 102 32', stroke: METAL, 'stroke-width': '2', fill: 'none' } } ]},
+    ],
+    pins: [{ x: 0, y: 32 }, { x: 110, y: 32 }] },
+  'anim-gear': { width: 60, height: 60,
+    parts: [
+      { tag: 'g', attrs: { class: 'anim-spin-slow' }, children: [
+        { tag: 'circle', attrs: { cx: '30', cy: '30', r: '14', fill: 'none', stroke: LIGHT, 'stroke-width': '3' } },
+        { tag: 'path', attrs: { d: 'M 44 30 L 52 30 M 39.9 39.9 L 45.6 45.6 M 30 44 L 30 52 M 20.1 39.9 L 14.4 45.6 M 16 30 L 8 30 M 20.1 20.1 L 14.4 14.4 M 30 16 L 30 8 M 39.9 20.1 L 45.6 14.4', stroke: LIGHT, 'stroke-width': '5', 'stroke-linecap': 'round', fill: 'none' } },
+      ]},
+      { tag: 'circle', attrs: { cx: '30', cy: '30', r: '4', fill: '#22d3ee' } },
+    ],
+    pins: [{ x: 0, y: 30 }, { x: 60, y: 30 }] },
+  'anim-antenna': { width: 70, height: 70,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 30 64 L 35 20 L 40 64 Z M 31.5 50 L 38.5 50 M 32.5 36 L 37.5 36', fill: 'none', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'path', attrs: { d: 'M 22 70 L 48 70 L 44 64 L 26 64 Z', fill: DARK, stroke: METAL, 'stroke-width': '1.5' } },
+      { tag: 'circle', attrs: { cx: '35', cy: '18', r: '3', fill: '#f87171', class: 'anim-pulse' } },
+      { tag: 'path', attrs: { d: 'M 43 25 A 10 10 0 0 0 43 11 M 27 25 A 10 10 0 0 1 27 11', fill: 'none', stroke: '#22d3ee', 'stroke-width': '2.5', 'stroke-linecap': 'round', class: 'anim-pulse' } },
+      { tag: 'path', attrs: { d: 'M 49 30 A 17 17 0 0 0 49 6 M 21 30 A 17 17 0 0 1 21 6', fill: 'none', stroke: '#22d3ee', 'stroke-width': '2.5', 'stroke-linecap': 'round', class: 'anim-pulse-alt' } },
+    ],
+    pins: [{ x: 0, y: 64 }, { x: 70, y: 64 }] },
+  'anim-pump': { width: 80, height: 60,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 0 38 L 20 38', stroke: METAL, 'stroke-width': '7', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 53 23 L 68 8', stroke: METAL, 'stroke-width': '7', fill: 'none', 'stroke-linecap': 'round' } },
+      { tag: 'circle', attrs: { cx: '40', cy: '38', r: '20', fill: '#1e293b', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'g', attrs: { class: 'anim-spin' }, children: [
+        { tag: 'path', attrs: { d: 'M 40 38 L 40 23 M 40 38 L 53 45 M 40 38 L 27 45', stroke: '#22d3ee', 'stroke-width': '4', 'stroke-linecap': 'round', fill: 'none' } } ]},
+      { tag: 'circle', attrs: { cx: '40', cy: '38', r: '3.5', fill: LIGHT } },
+    ],
+    pins: [{ x: 0, y: 38 }, { x: 70, y: 6 }] },
+  'anim-stack-light': { width: 44, height: 64,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 10 64 L 34 64 L 31 56 L 13 56 Z', fill: DARK, stroke: METAL, 'stroke-width': '1.5' } },
+      { tag: 'path', attrs: { d: 'M 22 56 L 22 50', stroke: METAL, 'stroke-width': '4', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 12 14 Q 12 6 22 6 Q 32 6 32 14 Z', fill: METAL } },
+      { tag: 'rect', attrs: { x: '12', y: '14', width: '20', height: '12', fill: '#ef4444', class: 'anim-cycle-1' } },
+      { tag: 'rect', attrs: { x: '12', y: '26', width: '20', height: '12', fill: '#facc15', class: 'anim-cycle-2' } },
+      { tag: 'rect', attrs: { x: '12', y: '38', width: '20', height: '12', fill: '#22c55e', class: 'anim-cycle-3' } },
+      { tag: 'rect', attrs: { x: '12', y: '14', width: '20', height: '36', fill: 'none', stroke: '#1e293b', 'stroke-width': '1.5' } },
+    ],
+    pins: [{ x: 0, y: 58 }, { x: 44, y: 58 }] },
+  'anim-piston': { width: 80, height: 60,
+    parts: [
+      { tag: 'g', attrs: { class: 'anim-piston' }, children: [
+        { tag: 'path', attrs: { d: 'M 46 30 L 74 30', stroke: LIGHT, 'stroke-width': '5', 'stroke-linecap': 'round', fill: 'none' } },
+        { tag: 'rect', attrs: { x: '38', y: '20', width: '9', height: '20', fill: '#22d3ee', rx: '1.5' } } ]},
+      { tag: 'path', attrs: { d: 'M 50 18 L 8 18 L 8 42 L 50 42', fill: 'none', stroke: METAL, 'stroke-width': '2.5' } },
+      { tag: 'path', attrs: { d: 'M 14 42 L 14 50 M 42 42 L 42 50', stroke: METAL, 'stroke-width': '2.5', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 8 50 L 48 50', stroke: DARK, 'stroke-width': '3', fill: 'none' } },
+    ],
+    pins: [{ x: 0, y: 30 }, { x: 80, y: 30 }] },
+  'anim-tank': { width: 60, height: 70,
+    parts: [
+      { tag: 'rect', attrs: { x: '12', y: '28', width: '36', height: '32', fill: '#0ea5e9', opacity: '0.75', class: 'anim-level' } },
+      { tag: 'rect', attrs: { x: '10', y: '6', width: '40', height: '56', rx: '6', fill: 'none', stroke: METAL, 'stroke-width': '2.5' } },
+      { tag: 'path', attrs: { d: 'M 17 62 L 17 70 M 43 62 L 43 70', stroke: METAL, 'stroke-width': '3', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 26 6 L 34 6', stroke: DARK, 'stroke-width': '5', fill: 'none' } },
+    ],
+    pins: [{ x: 0, y: 34 }, { x: 60, y: 34 }] },
+  'anim-drone': { width: 80, height: 50,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 16 14 L 16 24 M 64 14 L 64 24', stroke: METAL, 'stroke-width': '3', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 16 24 L 32 30 M 64 24 L 48 30', stroke: METAL, 'stroke-width': '3', 'stroke-linecap': 'round', fill: 'none' } },
+      { tag: 'rect', attrs: { x: '28', y: '24', width: '24', height: '14', rx: '7', fill: DARK, stroke: METAL, 'stroke-width': '1.5' } },
+      { tag: 'circle', attrs: { cx: '40', cy: '38', r: '2.5', fill: '#22d3ee' } },
+      { tag: 'g', attrs: { class: 'anim-spin' }, children: [
+        { tag: 'path', attrs: { d: 'M 4 14 L 28 14', stroke: LIGHT, 'stroke-width': '3', 'stroke-linecap': 'round', fill: 'none' } } ]},
+      { tag: 'g', attrs: { class: 'anim-spin' }, children: [
+        { tag: 'path', attrs: { d: 'M 52 14 L 76 14', stroke: LIGHT, 'stroke-width': '3', 'stroke-linecap': 'round', fill: 'none' } } ]},
+    ],
+    pins: [{ x: 0, y: 28 }, { x: 80, y: 28 }] },
+  'anim-glow-battery': { width: 70, height: 44,
+    parts: [
+      { tag: 'rect', attrs: { x: '6', y: '8', width: '54', height: '28', rx: '5', fill: 'none', stroke: '#22c55e', 'stroke-width': '2', opacity: '0.4', class: 'anim-pulse' } },
+      { tag: 'rect', attrs: { x: '8', y: '10', width: '50', height: '24', rx: '3', fill: 'none', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'rect', attrs: { x: '58', y: '17', width: '6', height: '10', fill: METAL } },
+      { tag: 'rect', attrs: { x: '13', y: '15', width: '10', height: '14', fill: '#22c55e', class: 'anim-charge-1' } },
+      { tag: 'rect', attrs: { x: '27', y: '15', width: '10', height: '14', fill: '#22c55e', class: 'anim-charge-2' } },
+      { tag: 'rect', attrs: { x: '41', y: '15', width: '10', height: '14', fill: '#22c55e', class: 'anim-charge-3' } },
+    ],
+    pins: [{ x: 0, y: 22 }, { x: 70, y: 22 }] },
+  'anim-inverter': { width: 80, height: 60,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 0 30 L 10 30 M 70 30 L 80 30', stroke: METAL, 'stroke-width': '4', fill: 'none' } },
+      { tag: 'rect', attrs: { x: '10', y: '10', width: '60', height: '40', rx: '4', fill: '#1e293b', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'path', attrs: { d: 'M 10 50 L 70 10', stroke: METAL, 'stroke-width': '1.5', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 18 22 L 32 22 M 18 27 L 22 27 M 25 27 L 29 27', stroke: LIGHT, 'stroke-width': '2', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 44 40 Q 49 30 54 40 Q 59 50 64 40', stroke: '#22d3ee', 'stroke-width': '2.5', 'stroke-dasharray': '4 4', fill: 'none', class: 'anim-belt' } },
+    ],
+    pins: [{ x: 0, y: 30 }, { x: 80, y: 30 }] },
+  'anim-transformer': { width: 90, height: 60,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 0 30 L 27 30 M 63 30 L 90 30', stroke: METAL, 'stroke-width': '3', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 34 12 A 7 6 0 0 0 34 24 A 7 6 0 0 0 34 36 A 7 6 0 0 0 34 48', stroke: LIGHT, 'stroke-width': '2.5', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 56 12 A 7 6 0 0 1 56 24 A 7 6 0 0 1 56 36 A 7 6 0 0 1 56 48', stroke: LIGHT, 'stroke-width': '2.5', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 43 10 L 43 50 M 47 10 L 47 50', stroke: METAL, 'stroke-width': '2', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 40 7 A 6 4 0 0 1 50 7', stroke: '#22d3ee', 'stroke-width': '2', fill: 'none', 'stroke-linecap': 'round', class: 'anim-pulse' } },
+      { tag: 'path', attrs: { d: 'M 40 53 A 6 4 0 0 0 50 53', stroke: '#22d3ee', 'stroke-width': '2', fill: 'none', 'stroke-linecap': 'round', class: 'anim-pulse-alt' } },
+    ],
+    pins: [{ x: 0, y: 30 }, { x: 90, y: 30 }] },
+  'anim-solar': { width: 80, height: 60,
+    parts: [
+      { tag: 'circle', attrs: { cx: '62', cy: '11', r: '6', fill: '#facc15', class: 'anim-pulse' } },
+      { tag: 'path', attrs: { d: 'M 62 3 L 62 1 M 54 6 L 52.5 4.5 M 70 6 L 71.5 4.5', stroke: '#facc15', 'stroke-width': '2', 'stroke-linecap': 'round', fill: 'none', class: 'anim-pulse-alt' } },
+      { tag: 'path', attrs: { d: 'M 16 24 L 64 24 L 72 44 L 8 44 Z', fill: '#1d4ed8', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'path', attrs: { d: 'M 31 24 L 28 44 M 47 24 L 49 44 M 12 34 L 68 34', stroke: '#93c5fd', 'stroke-width': '1', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 40 44 L 40 54 M 28 54 L 52 54', stroke: METAL, 'stroke-width': '3', fill: 'none' } },
+    ],
+    pins: [{ x: 0, y: 40 }, { x: 80, y: 40 }] },
+  'anim-wind-turbine': { width: 70, height: 80,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 33 76 L 34.5 28 L 35.5 28 L 37 76 Z', fill: METAL } },
+      { tag: 'path', attrs: { d: 'M 24 80 L 46 80 L 43 76 L 27 76 Z', fill: DARK, stroke: METAL, 'stroke-width': '1.5' } },
+      { tag: 'g', attrs: { class: 'anim-spin-wind' }, children: [
+        { tag: 'path', attrs: { d: 'M 35 26 Q 38 16 35 4 Q 32 16 35 26 Z', fill: LIGHT } },
+        { tag: 'path', attrs: { d: 'M 35 26 Q 38 16 35 4 Q 32 16 35 26 Z', fill: LIGHT, transform: 'rotate(120 35 26)' } },
+        { tag: 'path', attrs: { d: 'M 35 26 Q 38 16 35 4 Q 32 16 35 26 Z', fill: LIGHT, transform: 'rotate(240 35 26)' } },
+      ]},
+      { tag: 'circle', attrs: { cx: '35', cy: '26', r: '3', fill: '#22d3ee' } },
+    ],
+    pins: [{ x: 0, y: 72 }, { x: 70, y: 72 }] },
+  'anim-generator': { width: 70, height: 60,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 0 30 L 13 30 M 57 30 L 70 30', stroke: METAL, 'stroke-width': '4', fill: 'none' } },
+      { tag: 'circle', attrs: { cx: '35', cy: '30', r: '22', fill: '#1e293b', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'g', attrs: { class: 'anim-spin-slow' }, children: [
+        { tag: 'path', attrs: { d: 'M 35 14 L 35 46 M 19 30 L 51 30 M 24 19 L 46 41 M 46 19 L 24 41', stroke: '#22d3ee', 'stroke-width': '3', 'stroke-linecap': 'round', fill: 'none' } } ]},
+      { tag: 'circle', attrs: { cx: '35', cy: '30', r: '4', fill: LIGHT } },
+    ],
+    pins: [{ x: 0, y: 30 }, { x: 70, y: 30 }] },
+  'anim-ev-charger': { width: 60, height: 70,
+    parts: [
+      { tag: 'rect', attrs: { x: '14', y: '10', width: '28', height: '52', rx: '4', fill: '#1e293b', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'rect', attrs: { x: '20', y: '16', width: '16', height: '10', fill: '#0ea5e9', opacity: '0.7' } },
+      { tag: 'path', attrs: { d: 'M 30 32 L 24 44 L 29 44 L 26 56 L 36 42 L 30 42 L 34 32 Z', fill: '#facc15', class: 'anim-pulse' } },
+      { tag: 'path', attrs: { d: 'M 42 30 Q 54 34 50 48', stroke: METAL, 'stroke-width': '3', fill: 'none' } },
+      { tag: 'circle', attrs: { cx: '50', cy: '51', r: '3', fill: METAL } },
+    ],
+    pins: [{ x: 0, y: 40 }, { x: 60, y: 40 }] },
+  'anim-pylon': { width: 80, height: 80,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 30 76 L 40 12 L 50 76 M 33 60 L 47 60 M 35 44 L 45 44 M 36 30 L 44 30 M 20 28 L 60 28', fill: 'none', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'path', attrs: { d: 'M 24 28 L 24 34 M 56 28 L 56 34', stroke: METAL, 'stroke-width': '2', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 0 36 Q 12 42 24 34 M 56 34 Q 68 42 80 36', stroke: '#22d3ee', 'stroke-width': '2', 'stroke-dasharray': '5 5', fill: 'none', class: 'anim-belt' } },
+    ],
+    pins: [{ x: 0, y: 36 }, { x: 80, y: 36 }] },
+  'anim-relay': { width: 90, height: 50,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 0 25 L 26 25 M 64 25 L 90 25', stroke: LIGHT, 'stroke-width': '2.5', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 23 25 a 3 3 0 1 0 6 0 a 3 3 0 1 0 -6 0 M 61 25 a 3 3 0 1 0 6 0 a 3 3 0 1 0 -6 0', fill: LIGHT } },
+      { tag: 'g', attrs: { class: 'anim-relay-lever' }, children: [
+        { tag: 'path', attrs: { d: 'M 26 25 L 62 12', stroke: LIGHT, 'stroke-width': '3', 'stroke-linecap': 'round', fill: 'none' } } ]},
+      { tag: 'rect', attrs: { x: '36', y: '32', width: '18', height: '12', fill: 'none', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'path', attrs: { d: 'M 36 44 L 54 32', stroke: METAL, 'stroke-width': '1.5', fill: 'none' } },
+    ],
+    pins: [{ x: 0, y: 25 }, { x: 90, y: 25 }] },
+  'anim-heater': { width: 70, height: 50,
+    parts: [
+      { tag: 'path', attrs: { d: 'M 0 25 L 8 25 M 62 25 L 70 25', stroke: METAL, 'stroke-width': '3', fill: 'none' } },
+      { tag: 'rect', attrs: { x: '8', y: '8', width: '54', height: '34', rx: '4', fill: 'none', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'path', attrs: { d: 'M 16 14 L 16 36 M 25 14 L 25 36 M 34 14 L 34 36 M 43 14 L 43 36 M 52 14 L 52 36', stroke: '#f87171', 'stroke-width': '4', 'stroke-linecap': 'round', fill: 'none', class: 'anim-glow' } },
+    ],
+    pins: [{ x: 0, y: 25 }, { x: 70, y: 25 }] },
+  'anim-bulb': { width: 50, height: 60,
+    parts: [
+      { tag: 'circle', attrs: { cx: '25', cy: '22', r: '17', fill: '#fde68a', opacity: '0.3', class: 'anim-pulse' } },
+      { tag: 'circle', attrs: { cx: '25', cy: '22', r: '12', fill: 'none', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'path', attrs: { d: 'M 19 26 L 22 19 L 25 26 L 28 19 L 31 26', stroke: '#f59e0b', 'stroke-width': '2', 'stroke-linecap': 'round', fill: 'none', class: 'anim-glow' } },
+      { tag: 'path', attrs: { d: 'M 19 38 L 31 38 M 20 42 L 30 42 M 21 46 L 29 46 M 23 50 L 27 50', stroke: METAL, 'stroke-width': '2.5', fill: 'none' } },
+      { tag: 'path', attrs: { d: 'M 20 34 L 30 34', stroke: METAL, 'stroke-width': '3', fill: 'none' } },
+    ],
+    pins: [{ x: 0, y: 42 }, { x: 50, y: 42 }] },
+};
+
+function partToMarkup(p) {
+  return { tagName: p.tag, attrs: p.attrs, children: (p.children || []).map(partToMarkup) };
+}
+function partToSvg(p) {
+  const a = Object.entries(p.attrs).map(([k, v]) => k + '="' + v + '"').join(' ');
+  return p.children && p.children.length
+    ? '<' + p.tag + ' ' + a + '>' + p.children.map(partToSvg).join('') + '</' + p.tag + '>'
+    : '<' + p.tag + ' ' + a + '/>';
+}
+
+Object.entries(ANIM).forEach(([name, def]) => {
+  Graph.registerNode(name, {
+    width: def.width, height: def.height,
+    markup: [
+      { tagName: 'rect', selector: 'body' },
+      { tagName: 'g', selector: 'wrap', children: def.parts.map(partToMarkup) },
+      { tagName: 'text', selector: 'label' },
+    ],
+    attrs: {
+      body: { refWidth: '100%', refHeight: '100%', fill: 'transparent', stroke: 'none' },
+      label: { textAnchor: 'middle', textVerticalAnchor: 'top', refX: 0.5, refY: '100%', refY2: 6, fontSize: 11, fill: '#94a3b8' },
+    },
+    ports: {
+      groups: { pin: { position: 'absolute', attrs: { circle: { r: 4, magnet: true, stroke: '#22d3ee', fill: '#0f172a', strokeWidth: 1.5 } } } },
+      items: def.pins.map((p, i) => ({ id: 'pin' + i, group: 'pin', args: { x: (p.x / def.width * 100) + '%', y: (p.y / def.height * 100) + '%' } })),
+    },
+  }, true);
+});
+
+// Node shape for imported images: picture + ports + caption
+Graph.registerNode('img-node', {
+  markup: [
+    { tagName: 'rect', selector: 'body' },
+    { tagName: 'image', selector: 'img' },
+    { tagName: 'text', selector: 'label' },
+  ],
+  attrs: {
+    body: { refWidth: '100%', refHeight: '100%', fill: 'transparent', stroke: 'none' },
+    img: { refWidth: '100%', refHeight: '100%', preserveAspectRatio: 'xMidYMid meet' },
+    label: { textAnchor: 'middle', textVerticalAnchor: 'top', refX: 0.5, refY: '100%', refY2: 6, fontSize: 11, fill: '#94a3b8' },
+  },
+  ports: PORTS,
+}, true);
+
+const STROKE = '#e2e8f0';
+Object.entries(SYMBOLS).forEach(([name, def]) => {
+  const markup = [
+    { tagName: 'rect', selector: 'body' },
+    { tagName: 'g', selector: 'wrap',
+      children: def.paths.map((_, i) => ({ tagName: 'path', selector: 'p' + i, groupSelector: 'sym' })) },
+    { tagName: 'text', selector: 'label' },
+  ];
+  const attrs = {
+    body: { refWidth: '100%', refHeight: '100%', fill: 'transparent', stroke: 'none' },
+    sym: { stroke: STROKE, strokeWidth: 2, fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' },
+    label: { textAnchor: 'middle', textVerticalAnchor: 'top', refX: 0.5, refY: '100%', refY2: 6, fontSize: 11, fill: '#94a3b8' },
+  };
+  def.paths.forEach((p, i) => { attrs['p' + i] = { d: p.d, ...(p.fill ? { fill: STROKE } : {}) }; });
+  Graph.registerNode(name, {
+    width: def.width, height: def.height, markup, attrs,
+    ports: {
+      groups: { pin: { position: 'absolute', attrs: { circle: { r: 4, magnet: true, stroke: '#22d3ee', fill: '#0f172a', strokeWidth: 1.5 } } } },
+      items: def.pins.map((p, i) => ({ id: 'pin' + i, group: 'pin', args: { x: (p.x / def.width * 100) + '%', y: (p.y / def.height * 100) + '%' } })),
+    },
+  }, true);
+});
+
+const PORTS = {
+  groups: {
+    top:    { position: 'top',    attrs: { circle: { r: 4, magnet: true, stroke: '#94a3b8', fill: '#0f172a', strokeWidth: 1.5 } } },
+    right:  { position: 'right',  attrs: { circle: { r: 4, magnet: true, stroke: '#94a3b8', fill: '#0f172a', strokeWidth: 1.5 } } },
+    bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#94a3b8', fill: '#0f172a', strokeWidth: 1.5 } } },
+    left:   { position: 'left',   attrs: { circle: { r: 4, magnet: true, stroke: '#94a3b8', fill: '#0f172a', strokeWidth: 1.5 } } },
+  },
+  items: [{ group: 'top' }, { group: 'right' }, { group: 'bottom' }, { group: 'left' }],
+};
+
+// ---- Basic geometric shapes (mirrors frontend/src/app/basic-shapes.ts) ----
+const BASIC = {
+  'basic-rectangle':     { label: 'Rectangle',     w: 140, h: 80,  tag: 'rect',    body: { refWidth: '100%', refHeight: '100%', rx: 2, ry: 2 },           preview: '<rect x="6" y="9" width="48" height="22" rx="2"/>' },
+  'basic-square':        { label: 'Square',        w: 100, h: 100, tag: 'rect',    body: { refWidth: '100%', refHeight: '100%', rx: 2, ry: 2 },           preview: '<rect x="14" y="6" width="28" height="28" rx="2"/>' },
+  'basic-rounded':       { label: 'Rounded',       w: 140, h: 80,  tag: 'rect',    body: { refWidth: '100%', refHeight: '100%', rx: 16, ry: 16 },         preview: '<rect x="6" y="9" width="48" height="22" rx="9"/>' },
+  'basic-circle':        { label: 'Circle',        w: 100, h: 100, tag: 'ellipse', body: { refCx: '50%', refCy: '50%', refRx: '50%', refRy: '50%' },     preview: '<circle cx="30" cy="20" r="15"/>' },
+  'basic-ellipse':       { label: 'Ellipse',       w: 140, h: 80,  tag: 'ellipse', body: { refCx: '50%', refCy: '50%', refRx: '50%', refRy: '50%' },     preview: '<ellipse cx="30" cy="20" rx="24" ry="13"/>' },
+  'basic-diamond':       { label: 'Diamond',       w: 120, h: 100, tag: 'path',    body: { refD: 'M 60 0 L 120 50 L 60 100 L 0 50 Z' },                  preview: '<path d="M 30 5 L 52 20 L 30 35 L 8 20 Z"/>' },
+  'basic-triangle':      { label: 'Triangle',      w: 120, h: 100, tag: 'path',    body: { refD: 'M 60 0 L 120 100 L 0 100 Z' },                         preview: '<path d="M 30 5 L 52 35 L 8 35 Z"/>' },
+  'basic-parallelogram': { label: 'Parallelogram', w: 150, h: 80,  tag: 'path',    body: { refD: 'M 30 0 L 150 0 L 120 80 L 0 80 Z' },                   preview: '<path d="M 16 9 L 54 9 L 44 31 L 6 31 Z"/>' },
+  'basic-cylinder':      { label: 'Database',      w: 110, h: 120, tag: 'path',    body: { refD: 'M 0 14 a 55 14 0 0 0 110 0 a 55 14 0 0 0 -110 0 v 92 a 55 14 0 0 0 110 0 v -92' }, preview: '<path d="M 18 8 a 12 4 0 0 0 24 0 a 12 4 0 0 0 -24 0 v 24 a 12 4 0 0 0 24 0 v -24"/>' },
+};
+Object.entries(BASIC).forEach(([name, def]) => {
+  Graph.registerNode(name, {
+    width: def.w, height: def.h,
+    markup: [
+      { tagName: def.tag, selector: 'body' },
+      { tagName: 'text', selector: 'label' },
+    ],
+    attrs: {
+      body: { ...def.body, fill: '#ffffff', stroke: '#334155', strokeWidth: 2 },
+      label: { text: def.label, refX: '50%', refY: '50%', textAnchor: 'middle', textVerticalAnchor: 'middle', fontSize: 13, fill: '#1f2937' },
+    },
+    ports: PORTS,
+  }, true);
+});
+
+const graph = new Graph({
+  container: document.getElementById('canvas'),
+  autoResize: true,
+  background: { color: '#ffffff' },
+  grid: { size: 10, visible: true, type: 'dot', args: { color: '#cbd5e1', thickness: 1 } },
+  mousewheel: { enabled: true, modifiers: ['ctrl', 'meta'] },
+  connecting: {
+    router: 'manhattan',
+    connector: { name: 'rounded', args: { radius: 8 } },
+    connectionPoint: 'boundary',
+    snap: { radius: 20 },
+    allowBlank: false,
+    allowLoop: false,
+    allowNode: false,
+    createEdge: () => graph.createEdge({
+      attrs: {
+        line: {
+          stroke: '#22d3ee',
+          strokeWidth: 2,
+          strokeDasharray: 6,
+          targetMarker: { name: 'block', width: 9, height: 7 },
+          style: { animation: 'flowing-line 30s infinite linear' },
+        },
+      },
+      zIndex: -1,
+    }),
+  },
+});
+
+// Resize: click a node to get drag handles
+const { Transform } = window.X6PluginTransform;
+graph.use(new Transform({
+  resizing: { enabled: true, minWidth: 30, minHeight: 24, preserveAspectRatio: false },
+  rotating: { enabled: true, grid: 15 },
+}));
+
+// White / dark canvas toggle (white by default)
+let lightCanvas = true;
+document.getElementById('canvas').classList.add('canvas-light');
+document.getElementById('theme-toggle').addEventListener('click', (e) => {
+  lightCanvas = !lightCanvas;
+  document.getElementById('canvas').classList.toggle('canvas-light', lightCanvas);
+  graph.drawBackground({ color: lightCanvas ? '#ffffff' : '#0f172a' });
+  graph.drawGrid({ type: 'dot', args: { color: lightCanvas ? '#cbd5e1' : '#334155', thickness: 1 } });
+  e.target.textContent = lightCanvas ? 'Dark canvas' : 'White canvas';
+});
+// Symbol drawings use fixed coordinates — scale the wrapper group on resize
+graph.on('node:change:size', ({ node }) => {
+  const def = SYMBOLS[node.shape] || ANIM[node.shape];
+  if (!def) return;
+  const s = node.getSize();
+  node.attr('wrap/transform', 'scale(' + (s.width / def.width) + ',' + (s.height / def.height) + ')');
+});
+
+function makeNode(block, x, y) {
+  if (block.shape) {
+    return graph.addNode({
+      shape: block.shape, x, y,
+      attrs: { label: { text: block.label } },
+    });
+  }
+  return graph.addNode({
+    x, y, width: 140, height: 56,
+    attrs: {
+      body:  { fill: block.color, stroke: 'rgba(255,255,255,.4)', strokeWidth: 1.5, rx: 8, ry: 8 },
+      label: { text: block.label, fill: '#fff', fontSize: 13, fontWeight: 600 },
+    },
+    ports: PORTS,
+  });
+}
+
+// Palette: category tabs + native HTML5 drag-and-drop
+const paletteEl = document.getElementById('palette-items');
+const tabsEl = document.getElementById('palette-tabs');
+const CATEGORIES = ['Blocks', 'Shapes', 'Electrical', 'Animated'];
+let activeCategory = 'Blocks';
+
+function categoryOf(b) {
+  if (b.animated) return 'Animated';
+  if (b.basic) return 'Shapes';
+  if (b.shape) return 'Electrical';
+  return 'Blocks';
+}
+
+function renderTabs() {
+  tabsEl.innerHTML = '';
+  CATEGORIES.forEach((cat) => {
+    const t = document.createElement('button');
+    t.className = 'tab' + (cat === activeCategory ? ' active' : '');
+    t.textContent = cat;
+    t.addEventListener('click', () => { activeCategory = cat; renderTabs(); renderPalette(); });
+    tabsEl.appendChild(t);
+  });
+}
+
+function renderPalette() {
+  paletteEl.innerHTML = '';
+  BLOCKS.filter((b) => categoryOf(b) === activeCategory).forEach((b) => {
+    const el = document.createElement('div');
+    el.className = 'palette-item';
+    if (b.animated) {
+      const def = ANIM[b.shape];
+      el.innerHTML =
+        '<svg viewBox="-4 -4 ' + (def.width + 8) + ' ' + (def.height + 8) + '" width="62" height="40">' +
+        def.parts.map(partToSvg).join('') +
+        '</svg><div style="font-size:10.5px;color:#9b9ca4;margin-top:4px">' + b.label + '</div>';
+    } else if (b.basic) {
+      const def = BASIC[b.shape];
+      el.innerHTML =
+        '<svg viewBox="0 0 60 40" width="62" height="40" fill="none" stroke="' + STROKE +
+        '" stroke-width="2" stroke-linejoin="round">' + def.preview + '</svg>' +
+        '<div style="font-size:10.5px;color:#9b9ca4;margin-top:4px">' + b.label + '</div>';
+    } else if (b.shape) {
+      const def = SYMBOLS[b.shape];
+      el.innerHTML =
+        '<svg viewBox="-4 -4 ' + (def.width + 8) + ' ' + (def.height + 8) + '" width="62" height="26">' +
+        def.paths.map((p) =>
+          '<path d="' + p.d + '" fill="' + (p.fill ? STROKE : 'none') + '" stroke="' + STROKE +
+          '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>').join('') +
+        '</svg><div style="font-size:10.5px;color:#9b9ca4;margin-top:4px">' + b.label + '</div>';
+    } else {
+      el.classList.add('block-chip');
+      el.style.background = b.color;
+      el.textContent = b.label;
+    }
+    el.draggable = true;
+    el.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', b.key));
+    paletteEl.appendChild(el);
+  });
+}
+
+renderTabs();
+renderPalette();
+
+const canvasEl = document.getElementById('canvas');
+canvasEl.addEventListener('dragover', (e) => e.preventDefault());
+canvasEl.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const p = graph.clientToLocal(e.clientX, e.clientY);
+  // image file dropped from the OS
+  const file = Array.from(e.dataTransfer.files || []).find((f) => f.type.startsWith('image/'));
+  if (file) { addImageNode(file, p.x, p.y); return; }
+  const block = BLOCKS.find((b) => b.key === e.dataTransfer.getData('text/plain'));
+  if (!block) return;
+  makeNode(block, p.x - 70, p.y - 28);
+});
+
+// Image import (button or drag-drop above)
+function addImageNode(file, cx, cy) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const url = reader.result;
+    const probe = new Image();
+    probe.onload = () => {
+      const max = 220;
+      const scale = Math.min(1, max / Math.max(probe.width, probe.height));
+      const w = Math.max(40, Math.round(probe.width * scale));
+      const h = Math.max(40, Math.round(probe.height * scale));
+      graph.addNode({
+        shape: 'img-node',
+        x: cx - w / 2, y: cy - h / 2, width: w, height: h,
+        attrs: {
+          img: { 'xlink:href': url },
+          label: { text: file.name.replace(/\.[^.]+$/, '') },
+        },
+      });
+    };
+    probe.src = url;
+  };
+  reader.readAsDataURL(file);
+}
+const imageFileInput = document.getElementById('image-file');
+document.getElementById('add-image').addEventListener('click', () => imageFileInput.click());
+imageFileInput.addEventListener('change', () => {
+  const file = imageFileInput.files[0];
+  if (file) {
+    const r = canvasEl.getBoundingClientRect();
+    const p = graph.clientToLocal(r.left + r.width / 2, r.top + r.height / 2);
+    addImageNode(file, p.x, p.y);
+  }
+  imageFileInput.value = '';
+});
+
+// Click to select, Del to remove; clicking a wire shows the color picker
+let selected = null;
+let selectedEdge = null;
+const wireRow = document.getElementById('wire-color-row');
+const wireColor = document.getElementById('wire-color');
+
+function clearEdgeSel() {
+  if (selectedEdge) selectedEdge.attr('line/strokeWidth', 2);
+  selectedEdge = null;
+  wireRow.style.display = 'none';
+}
+graph.on('node:click', ({ node }) => {
+  if (selected) selected.attr('body/strokeWidth', 1.5);
+  selected = node;
+  node.attr('body/strokeWidth', 3);
+  clearEdgeSel();
+});
+graph.on('edge:click', ({ edge }) => {
+  if (selected) selected.attr('body/strokeWidth', 1.5);
+  selected = null;
+  if (selectedEdge) selectedEdge.attr('line/strokeWidth', 2);
+  selectedEdge = edge;
+  edge.attr('line/strokeWidth', 3.5);
+  wireColor.value = edge.attr('line/stroke') || '#22d3ee';
+  wireRow.style.display = 'flex';
+});
+graph.on('blank:click', () => {
+  if (selected) selected.attr('body/strokeWidth', 1.5);
+  selected = null;
+  clearEdgeSel();
+});
+wireColor.addEventListener('input', () => {
+  if (selectedEdge) selectedEdge.attr('line/stroke', wireColor.value);
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+  if (selected) { graph.removeCell(selected); selected = null; }
+  else if (selectedEdge) { graph.removeCell(selectedEdge); clearEdgeSel(); }
+});
+
+// Seed a meaningful sample: Smart Microgrid powering a factory line
+const SAMPLE_NODES = [
+  ['n-solar',       'anim-solar',         60,  60, 'Solar Panel'],
+  ['n-wind',        'anim-wind-turbine',  60, 210, 'Wind Turbine'],
+  ['n-inverter',    'anim-inverter',     270, 160, 'Inverter'],
+  ['n-battery',     'anim-glow-battery', 280,  40, 'Battery Storage'],
+  ['n-transformer', 'anim-transformer',  450, 160, 'Transformer'],
+  ['n-pylon',       'anim-pylon',        630, 140, 'Power Pylon'],
+  ['n-relay',       'anim-relay',        810, 170, 'Main Relay'],
+  ['n-conveyor',    'anim-conveyor',    1000,  60, 'Conveyor'],
+  ['n-robot',       'anim-robot-arm',   1010, 190, 'Robotic Arm'],
+  ['n-stack',       'anim-stack-light', 1190,  48, 'Line Status'],
+  ['n-siren',       'anim-siren',       1190, 205, 'Fault Alarm'],
+  ['n-ev',          'anim-ev-charger',   810, 320, 'EV Charger'],
+  ['n-bulb',        'anim-bulb',        1010, 330, 'Floor Lighting'],
+];
+const SAMPLE_EDGES = [
+  ['n-solar', 'n-inverter', '#22d3ee'],
+  ['n-wind', 'n-inverter', '#22d3ee'],
+  ['n-inverter', 'n-battery', '#22c55e'],
+  ['n-inverter', 'n-transformer', '#22d3ee'],
+  ['n-transformer', 'n-pylon', '#22d3ee'],
+  ['n-pylon', 'n-relay', '#22d3ee'],
+  ['n-relay', 'n-conveyor', '#22d3ee'],
+  ['n-relay', 'n-robot', '#22d3ee'],
+  ['n-conveyor', 'n-stack', '#22d3ee'],
+  ['n-robot', 'n-siren', '#ef4444'],
+  ['n-pylon', 'n-ev', '#f59e0b'],
+  ['n-relay', 'n-bulb', '#f59e0b'],
+];
+const sampleById = {};
+SAMPLE_NODES.forEach(([id, shape, x, y, label]) => {
+  sampleById[id] = graph.addNode({ shape, x, y, attrs: { label: { text: label } } });
+});
+SAMPLE_EDGES.forEach(([src, tgt, color]) => {
+  graph.addEdge({
+    source: { cell: sampleById[src], port: 'pin1' },
+    target: { cell: sampleById[tgt], port: 'pin0' },
+    router: 'manhattan', connector: { name: 'rounded' }, zIndex: -1,
+    attrs: { line: {
+      stroke: color, strokeWidth: 2, strokeDasharray: 6,
+      targetMarker: { name: 'block', width: 9, height: 7 },
+      style: { animation: 'flowing-line 30s infinite linear' },
+    } },
+  });
+});
+graph.zoomToFit({ padding: 24, maxScale: 1 });
+</script>
+</body>
+</html>
