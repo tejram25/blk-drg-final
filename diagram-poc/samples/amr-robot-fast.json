@@ -1,0 +1,1643 @@
+{
+  "cells": [
+    {
+      "id": "box-1",
+      "shape": "basic-rounded",
+      "x": 195,
+      "y": 88,
+      "width": 1110,
+      "height": 600,
+      "zIndex": 1,
+      "attrs": {
+        "body": {
+          "fill": "#0c3b66",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-2",
+      "shape": "basic-rounded",
+      "x": 350,
+      "y": 30,
+      "width": 150,
+      "height": 52,
+      "zIndex": 1,
+      "attrs": {
+        "body": {
+          "fill": "#2b2f33",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Wheel",
+          "fill": "#8b9099",
+          "fontSize": 11,
+          "fontWeight": 400,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-3",
+      "shape": "basic-rounded",
+      "x": 1018,
+      "y": 30,
+      "width": 150,
+      "height": 52,
+      "zIndex": 1,
+      "attrs": {
+        "body": {
+          "fill": "#2b2f33",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Wheel",
+          "fill": "#8b9099",
+          "fontSize": 11,
+          "fontWeight": 400,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-4",
+      "shape": "basic-rounded",
+      "x": 350,
+      "y": 702,
+      "width": 150,
+      "height": 52,
+      "zIndex": 1,
+      "attrs": {
+        "body": {
+          "fill": "#2b2f33",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Wheel",
+          "fill": "#8b9099",
+          "fontSize": 11,
+          "fontWeight": 400,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-5",
+      "shape": "basic-rounded",
+      "x": 1018,
+      "y": 702,
+      "width": 150,
+      "height": 52,
+      "zIndex": 1,
+      "attrs": {
+        "body": {
+          "fill": "#2b2f33",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Wheel",
+          "fill": "#8b9099",
+          "fontSize": 11,
+          "fontWeight": 400,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-6",
+      "shape": "basic-rectangle",
+      "x": 735,
+      "y": 33,
+      "width": 130,
+      "height": 38,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Antenna",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "grp-7",
+      "shape": "basic-rectangle",
+      "x": 556,
+      "y": 124,
+      "width": 360,
+      "height": 98,
+      "zIndex": 2,
+      "attrs": {
+        "body": {
+          "fill": "#ffffff",
+          "stroke": "#c9d2dc",
+          "strokeWidth": 1.5
+        }
+      }
+    },
+    {
+      "id": "t-8",
+      "shape": "basic-text",
+      "x": 556,
+      "y": 198,
+      "width": 360,
+      "height": 20,
+      "zIndex": 6,
+      "attrs": {
+        "label": {
+          "text": "Connectivity",
+          "fill": "#1f2937",
+          "fontSize": 12.5,
+          "fontWeight": 700
+        }
+      }
+    },
+    {
+      "id": "box-9",
+      "shape": "basic-rectangle",
+      "x": 566,
+      "y": 134,
+      "width": 164,
+      "height": 70,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Communication Modules",
+          "fill": "#ffffff",
+          "fontSize": 12.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-10",
+      "shape": "basic-rectangle",
+      "x": 742,
+      "y": 134,
+      "width": 164,
+      "height": 70,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "GNSS Modules",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "grp-11",
+      "shape": "basic-rectangle",
+      "x": 700,
+      "y": 246,
+      "width": 224,
+      "height": 418,
+      "zIndex": 2,
+      "attrs": {
+        "body": {
+          "fill": "#34d3a6",
+          "stroke": "#c9d2dc",
+          "strokeWidth": 0
+        }
+      }
+    },
+    {
+      "id": "t-12",
+      "shape": "basic-text",
+      "x": 700,
+      "y": 640,
+      "width": 224,
+      "height": 20,
+      "zIndex": 6,
+      "attrs": {
+        "label": {
+          "text": "Central Processor",
+          "fill": "#08402f",
+          "fontSize": 12.5,
+          "fontWeight": 700
+        }
+      }
+    },
+    {
+      "id": "box-13",
+      "shape": "basic-rectangle",
+      "x": 712,
+      "y": 256,
+      "width": 200,
+      "height": 120,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Main Processor",
+          "fill": "#ffffff",
+          "fontSize": 15,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-14",
+      "shape": "basic-rectangle",
+      "x": 712,
+      "y": 388,
+      "width": 200,
+      "height": 60,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "AI Models",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-15",
+      "shape": "basic-rectangle",
+      "x": 712,
+      "y": 462,
+      "width": 200,
+      "height": 60,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Memory",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-16",
+      "shape": "basic-rectangle",
+      "x": 712,
+      "y": 540,
+      "width": 200,
+      "height": 64,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Robotics OS",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-17",
+      "shape": "basic-rectangle",
+      "x": 228,
+      "y": 120,
+      "width": 162,
+      "height": 152,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "BLDC Motor Control (Robotic Arm)",
+          "fill": "#ffffff",
+          "fontSize": 13,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "grp-18",
+      "shape": "basic-rectangle",
+      "x": 226,
+      "y": 328,
+      "width": 332,
+      "height": 70,
+      "zIndex": 2,
+      "attrs": {
+        "body": {
+          "fill": "#ffffff",
+          "stroke": "#c9d2dc",
+          "strokeWidth": 1.5
+        }
+      }
+    },
+    {
+      "id": "box-19",
+      "shape": "basic-rectangle",
+      "x": 238,
+      "y": 340,
+      "width": 100,
+      "height": 46,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "LED",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-20",
+      "shape": "basic-rectangle",
+      "x": 398,
+      "y": 340,
+      "width": 148,
+      "height": 46,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "LED Drivers",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "grp-21",
+      "shape": "basic-rectangle",
+      "x": 228,
+      "y": 440,
+      "width": 160,
+      "height": 222,
+      "zIndex": 2,
+      "attrs": {
+        "body": {
+          "fill": "#ffffff",
+          "stroke": "#c9d2dc",
+          "strokeWidth": 1.5
+        }
+      }
+    },
+    {
+      "id": "t-22",
+      "shape": "basic-text",
+      "x": 228,
+      "y": 638,
+      "width": 160,
+      "height": 20,
+      "zIndex": 6,
+      "attrs": {
+        "label": {
+          "text": "Sensors",
+          "fill": "#1f2937",
+          "fontSize": 12.5,
+          "fontWeight": 700
+        }
+      }
+    },
+    {
+      "id": "box-23",
+      "shape": "basic-rectangle",
+      "x": 240,
+      "y": 452,
+      "width": 136,
+      "height": 46,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Camera",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-24",
+      "shape": "basic-rectangle",
+      "x": 240,
+      "y": 510,
+      "width": 136,
+      "height": 46,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Sensors",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-25",
+      "shape": "basic-rectangle",
+      "x": 240,
+      "y": 568,
+      "width": 136,
+      "height": 56,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "RADAR / LIDAR",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "grp-26",
+      "shape": "basic-rectangle",
+      "x": 472,
+      "y": 440,
+      "width": 162,
+      "height": 222,
+      "zIndex": 2,
+      "attrs": {
+        "body": {
+          "fill": "#ffffff",
+          "stroke": "#c9d2dc",
+          "strokeWidth": 1.5
+        }
+      }
+    },
+    {
+      "id": "t-27",
+      "shape": "basic-text",
+      "x": 472,
+      "y": 638,
+      "width": 162,
+      "height": 20,
+      "zIndex": 6,
+      "attrs": {
+        "label": {
+          "text": "Sensor Processor",
+          "fill": "#1f2937",
+          "fontSize": 12.5,
+          "fontWeight": 700
+        }
+      }
+    },
+    {
+      "id": "box-28",
+      "shape": "basic-rectangle",
+      "x": 484,
+      "y": 452,
+      "width": 140,
+      "height": 54,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Signal Aggregation",
+          "fill": "#ffffff",
+          "fontSize": 12.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-29",
+      "shape": "basic-rectangle",
+      "x": 484,
+      "y": 516,
+      "width": 140,
+      "height": 48,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Analog",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-30",
+      "shape": "basic-rectangle",
+      "x": 484,
+      "y": 574,
+      "width": 140,
+      "height": 50,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Real Time Processor",
+          "fill": "#ffffff",
+          "fontSize": 12.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-31",
+      "shape": "basic-rectangle",
+      "x": 975,
+      "y": 120,
+      "width": 256,
+      "height": 192,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "BLDC Motor Control (Wheels)",
+          "fill": "#ffffff",
+          "fontSize": 15,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "grp-32",
+      "shape": "basic-rectangle",
+      "x": 964,
+      "y": 374,
+      "width": 288,
+      "height": 290,
+      "zIndex": 2,
+      "attrs": {
+        "body": {
+          "fill": "#f4a82e",
+          "stroke": "#c9d2dc",
+          "strokeWidth": 0
+        }
+      }
+    },
+    {
+      "id": "t-33",
+      "shape": "basic-text",
+      "x": 964,
+      "y": 640,
+      "width": 288,
+      "height": 20,
+      "zIndex": 6,
+      "attrs": {
+        "label": {
+          "text": "Power Management",
+          "fill": "#5a3b04",
+          "fontSize": 12.5,
+          "fontWeight": 700
+        }
+      }
+    },
+    {
+      "id": "box-34",
+      "shape": "basic-rectangle",
+      "x": 976,
+      "y": 386,
+      "width": 84,
+      "height": 66,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Smart FETs",
+          "fill": "#ffffff",
+          "fontSize": 12,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-35",
+      "shape": "basic-rectangle",
+      "x": 1068,
+      "y": 386,
+      "width": 88,
+      "height": 66,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Current Sensing",
+          "fill": "#ffffff",
+          "fontSize": 12,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-36",
+      "shape": "basic-rectangle",
+      "x": 1164,
+      "y": 386,
+      "width": 76,
+      "height": 66,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "eFuse",
+          "fill": "#ffffff",
+          "fontSize": 12,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-37",
+      "shape": "basic-rectangle",
+      "x": 976,
+      "y": 460,
+      "width": 120,
+      "height": 64,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "DC/DC Converters",
+          "fill": "#ffffff",
+          "fontSize": 12,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-38",
+      "shape": "basic-rectangle",
+      "x": 1104,
+      "y": 460,
+      "width": 136,
+      "height": 64,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "LDO",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-39",
+      "shape": "basic-rectangle",
+      "x": 976,
+      "y": 534,
+      "width": 120,
+      "height": 70,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "BMS",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-40",
+      "shape": "basic-rectangle",
+      "x": 1104,
+      "y": 534,
+      "width": 136,
+      "height": 70,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Battery",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "grp-41",
+      "shape": "basic-rectangle",
+      "x": 1330,
+      "y": 55,
+      "width": 342,
+      "height": 300,
+      "zIndex": 2,
+      "attrs": {
+        "body": {
+          "fill": "#e9ecef",
+          "stroke": "#c9d2dc",
+          "strokeWidth": 0
+        }
+      }
+    },
+    {
+      "id": "t-42",
+      "shape": "basic-text",
+      "x": 1330,
+      "y": 331,
+      "width": 342,
+      "height": 20,
+      "zIndex": 6,
+      "attrs": {
+        "label": {
+          "text": "Used everywhere",
+          "fill": "#1f2937",
+          "fontSize": 12.5,
+          "fontWeight": 700
+        }
+      }
+    },
+    {
+      "id": "box-43",
+      "shape": "basic-rectangle",
+      "x": 1342,
+      "y": 70,
+      "width": 150,
+      "height": 58,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Circuit protection",
+          "fill": "#ffffff",
+          "fontSize": 12.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-44",
+      "shape": "basic-rectangle",
+      "x": 1508,
+      "y": 70,
+      "width": 150,
+      "height": 58,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Relays / Contactors",
+          "fill": "#ffffff",
+          "fontSize": 12.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-45",
+      "shape": "basic-rectangle",
+      "x": 1342,
+      "y": 138,
+      "width": 150,
+      "height": 58,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "IO Connectors",
+          "fill": "#ffffff",
+          "fontSize": 12.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-46",
+      "shape": "basic-rectangle",
+      "x": 1508,
+      "y": 138,
+      "width": 150,
+      "height": 58,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Board to Board Connectors",
+          "fill": "#ffffff",
+          "fontSize": 12.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-47",
+      "shape": "basic-rectangle",
+      "x": 1342,
+      "y": 206,
+      "width": 150,
+      "height": 58,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Cable Assembly",
+          "fill": "#ffffff",
+          "fontSize": 12.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-48",
+      "shape": "basic-rectangle",
+      "x": 1508,
+      "y": 206,
+      "width": 150,
+      "height": 58,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "W-t-W/ W-t-B Connectors",
+          "fill": "#ffffff",
+          "fontSize": 12.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-49",
+      "shape": "basic-rectangle",
+      "x": 1342,
+      "y": 274,
+      "width": 150,
+      "height": 58,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Fans / Heatsinks",
+          "fill": "#ffffff",
+          "fontSize": 12.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-50",
+      "shape": "basic-rectangle",
+      "x": 1508,
+      "y": 274,
+      "width": 150,
+      "height": 58,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Buttons & Switches",
+          "fill": "#ffffff",
+          "fontSize": 12.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "grp-51",
+      "shape": "basic-rectangle",
+      "x": 1385,
+      "y": 472,
+      "width": 256,
+      "height": 226,
+      "zIndex": 2,
+      "attrs": {
+        "body": {
+          "fill": "#e9ecef",
+          "stroke": "#c9d2dc",
+          "strokeWidth": 0
+        }
+      }
+    },
+    {
+      "id": "t-52",
+      "shape": "basic-text",
+      "x": 1385,
+      "y": 674,
+      "width": 256,
+      "height": 20,
+      "zIndex": 6,
+      "attrs": {
+        "label": {
+          "text": "Charging Station",
+          "fill": "#1f2937",
+          "fontSize": 12.5,
+          "fontWeight": 700
+        }
+      }
+    },
+    {
+      "id": "box-53",
+      "shape": "basic-rectangle",
+      "x": 1400,
+      "y": 486,
+      "width": 226,
+      "height": 44,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Wireless Charging",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-54",
+      "shape": "basic-rectangle",
+      "x": 1400,
+      "y": 560,
+      "width": 226,
+      "height": 44,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "Power Connectors",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "id": "box-55",
+      "shape": "basic-rectangle",
+      "x": 1400,
+      "y": 636,
+      "width": 226,
+      "height": 44,
+      "zIndex": 5,
+      "attrs": {
+        "body": {
+          "fill": "#1c9bd7",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        "label": {
+          "text": "AC/DC Power Supply",
+          "fill": "#ffffff",
+          "fontSize": 13.5,
+          "fontWeight": 600,
+          "textWrap": {
+            "width": -12,
+            "height": -6,
+            "breakWord": true
+          }
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-13"
+      },
+      "target": {
+        "cell": "box-9"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#34d3a6",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-13"
+      },
+      "target": {
+        "cell": "box-10"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#34d3a6",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-13"
+      },
+      "target": {
+        "cell": "box-28"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#34d3a6",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-13"
+      },
+      "target": {
+        "cell": "box-17"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#34d3a6",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-13"
+      },
+      "target": {
+        "cell": "box-20"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#34d3a6",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-13"
+      },
+      "target": {
+        "cell": "box-31"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#34d3a6",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-13"
+      },
+      "target": {
+        "cell": "box-34"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#34d3a6",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-28"
+      },
+      "target": {
+        "cell": "box-23"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#34d3a6",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-40"
+      },
+      "target": {
+        "cell": "box-31"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#ff6b6b",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-40"
+      },
+      "target": {
+        "cell": "box-17"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#ff6b6b",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-6"
+      },
+      "target": {
+        "cell": "box-9"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#e2e8f0",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-40"
+      },
+      "target": {
+        "cell": "box-54"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#f4a82e",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    },
+    {
+      "shape": "edge",
+      "source": {
+        "cell": "box-38"
+      },
+      "target": {
+        "cell": "box-15"
+      },
+      "zIndex": 4,
+      "router": {
+        "name": "manhattan"
+      },
+      "connector": {
+        "name": "rounded"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#f4a82e",
+          "strokeWidth": 3,
+          "targetMarker": null,
+          "sourceMarker": null
+        }
+      }
+    }
+  ]
+}
