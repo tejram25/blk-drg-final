@@ -2033,26 +2033,42 @@ export class AppComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
     // Accept the exported { cells: [...] } shape, or a bare array of cells.
     const rawCells: any[] | null =
       Array.isArray(data?.cells) ? data.cells : (Array.isArray(data) ? data : null);
-    if (!rawCells) {
-      this.status = 'That file is not a valid diagram JSON';
-      return;
-    }
 
-    // X6's fromJSON throws on the FIRST cell whose `shape` isn't registered, which
-    // rejects the entire file. Keep only the cells this app knows how to render, so a
-    // file with a stray/foreign cell still imports everything else instead of nothing.
-    const isKnown = (shape: unknown): boolean => {
-      if (typeof shape !== 'string') return false;
-      try { return Node.registry.exist(shape) || Edge.registry.exist(shape); }
-      catch { return true; } // registry API unavailable: don't over-filter
-    };
-    const cells = rawCells.filter((c) => c && isKnown(c.shape));
-    const skipped = rawCells.length - cells.length;
-    if (cells.length === 0) {
-      this.status = rawCells.length
-        ? `Import failed: none of the ${rawCells.length} cells use a shape this app supports`
-        : 'That file contains no diagram cells';
-      return;
+    let cells: any[];
+    let skipped = 0;
+    let isPartsCatalog = false;
+
+    if (rawCells) {
+      // X6's fromJSON throws on the FIRST cell whose `shape` isn't registered, which
+      // rejects the entire file. Keep only the cells this app knows how to render, so a
+      // file with a stray/foreign cell still imports everything else instead of nothing.
+      const isKnown = (shape: unknown): boolean => {
+        if (typeof shape !== 'string') return false;
+        try { return Node.registry.exist(shape) || Edge.registry.exist(shape); }
+        catch { return true; } // registry API unavailable: don't over-filter
+      };
+      cells = rawCells.filter((c) => c && isKnown(c.shape));
+      skipped = rawCells.length - cells.length;
+      if (cells.length === 0) {
+        this.status = rawCells.length
+          ? `Import failed: none of the ${rawCells.length} cells use a shape this app supports`
+          : 'That file contains no diagram cells';
+        return;
+      }
+    } else {
+      // Not a diagram export — try a parts-catalog API response (partserviceresult),
+      // turning each catalogued part into a functional-block card on the canvas.
+      const partCells = this.partsResultToCells(data);
+      if (!partCells) {
+        this.status = 'That file is not a valid diagram JSON';
+        return;
+      }
+      if (partCells.length === 0) {
+        this.status = 'No parts found in this catalog file';
+        return;
+      }
+      cells = partCells;
+      isPartsCatalog = true;
     }
 
     // An imported diagram is a fresh, unsaved document. Leave any current collab room
@@ -2073,9 +2089,53 @@ export class AppComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
 
     this.diagramName = fileName.replace(/\.[^.]+$/, '') || 'Imported diagram';
     try { this.graph.zoomToFit({ padding: 24, maxScale: 1.5 }); } catch { /* framing is best-effort */ }
-    this.status = skipped
-      ? `Imported ${cells.length} cells (skipped ${skipped} with unsupported shapes)`
-      : `Imported ${cells.length} cells from JSON`;
+    if (isPartsCatalog) {
+      this.status = `Imported ${cells.length} part${cells.length === 1 ? '' : 's'} from catalog`;
+    } else {
+      this.status = skipped
+        ? `Imported ${cells.length} cells (skipped ${skipped} with unsupported shapes)`
+        : `Imported ${cells.length} cells from JSON`;
+    }
+  }
+
+  /**
+   * Convert a parts-catalog API response (the `partserviceresult` shape produced by
+   * the part-search service) into block-card node metadata, one card per part, laid
+   * out in a grid. Returns `null` when the payload isn't a parts catalog so the
+   * caller can fall through to its generic "not a diagram" handling.
+   */
+  private partsResultToCells(data: any): any[] | null {
+    const parts = data?.partserviceresult?.parts;
+    if (!Array.isArray(parts)) return null;
+
+    const CARD_W = 200;
+    const CARD_H = 64;
+    const GAP_X = 40;
+    const GAP_Y = 48;
+    const cols = Math.max(1, Math.min(parts.length, 4));
+
+    return parts.map((part: any, i: number) => {
+      const title =
+        part?.arwPartNum?.name || part?.suppPartNum?.name || part?.partKey || 'Part';
+      const subtitle =
+        part?.supp?.name || part?.mfr?.name || part?.icc?.name || 'Component';
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      return {
+        shape: 'block-card',
+        x: 40 + col * (CARD_W + GAP_X),
+        y: 40 + row * (CARD_H + GAP_Y),
+        width: CARD_W,
+        height: CARD_H,
+        data: { typeKey: 'part', part },
+        attrs: {
+          badge: { fill: '#1d4ed8' },
+          icon: { text: 'memory' },
+          title: { text: String(title) },
+          subtitle: { text: String(subtitle) },
+        },
+      };
+    });
   }
 
   // ---------- draw.io interop ----------
