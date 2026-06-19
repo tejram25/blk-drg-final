@@ -87,6 +87,54 @@ function registerBlockCard(): void {
   }, true);
 }
 
+/**
+ * Rich card for an imported catalogue part: package thumbnail, part number,
+ * supplier, and up to four key-spec lines. A native <title> gives a hover
+ * tooltip with the full part description. Spec/image text is filled in per
+ * part by the importer (see partsResultToCells).
+ */
+function registerPartCard(): void {
+  Graph.registerNode('part-card', {
+    width: 240, height: 140,
+    markup: [
+      { tagName: 'title', selector: 'tip' },
+      { tagName: 'rect', selector: 'body' },
+      { tagName: 'rect', selector: 'accent' },
+      { tagName: 'image', selector: 'img' },
+      { tagName: 'text', selector: 'title' },
+      { tagName: 'text', selector: 'supplier' },
+      { tagName: 'text', selector: 'spec0' },
+      { tagName: 'text', selector: 'spec1' },
+      { tagName: 'text', selector: 'spec2' },
+      { tagName: 'text', selector: 'spec3' },
+    ],
+    attrs: {
+      body: {
+        refWidth: '100%', refHeight: '100%', rx: 10, ry: 10,
+        fill: '#ffffff', stroke: '#d2d6dc', strokeWidth: 1.5,
+      },
+      accent: { x: 0, y: 0, refWidth: '100%', height: 6, rx: 3, fill: '#1d4ed8' },
+      img: {
+        refX: 1, refX2: -64, y: 16, width: 52, height: 52,
+        preserveAspectRatio: 'xMidYMid meet',
+      },
+      title: {
+        x: 14, y: 30, fontSize: 13, fontWeight: 700,
+        fill: '#111827', textAnchor: 'start', fontFamily: 'Roboto, sans-serif',
+      },
+      supplier: {
+        x: 14, y: 48, fontSize: 10.5,
+        fill: '#6b7280', textAnchor: 'start', fontFamily: 'Roboto, sans-serif',
+      },
+      spec0: { x: 14, y: 72, fontSize: 10.5, fill: '#374151', textAnchor: 'start', fontFamily: 'Roboto, sans-serif' },
+      spec1: { x: 14, y: 90, fontSize: 10.5, fill: '#374151', textAnchor: 'start', fontFamily: 'Roboto, sans-serif' },
+      spec2: { x: 14, y: 108, fontSize: 10.5, fill: '#374151', textAnchor: 'start', fontFamily: 'Roboto, sans-serif' },
+      spec3: { x: 14, y: 126, fontSize: 10.5, fill: '#374151', textAnchor: 'start', fontFamily: 'Roboto, sans-serif' },
+    },
+    ports: PORT_GROUPS,
+  }, true);
+}
+
 const PORT_GROUPS = {
   groups: {
     top:    { position: 'top',    attrs: { circle: { r: 4, magnet: true, stroke: '#94a3b8', fill: '#0f172a', strokeWidth: 1.5 } } },
@@ -1228,6 +1276,7 @@ export class AppComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
     registerBasicShapes();
     registerImageNode();
     registerBlockCard();
+    registerPartCard();
     this.initGraph();
     this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
     this.loadPalette();
@@ -2108,31 +2157,70 @@ export class AppComponent implements AfterViewInit, AfterViewChecked, OnDestroy 
     const parts = data?.partserviceresult?.parts;
     if (!Array.isArray(parts)) return null;
 
-    const CARD_W = 200;
-    const CARD_H = 64;
-    const GAP_X = 40;
-    const GAP_Y = 48;
+    const CARD_W = 240;
+    const CARD_H = 140;
+    const GAP_X = 32;
+    const GAP_Y = 40;
     const cols = Math.max(1, Math.min(parts.length, 4));
 
     return parts.map((part: any, i: number) => {
       const title =
         part?.arwPartNum?.name || part?.suppPartNum?.name || part?.partKey || 'Part';
-      const subtitle =
+      const supplier =
         part?.supp?.name || part?.mfr?.name || part?.icc?.name || 'Component';
+
+      // Index paramData by name so we can pull specs regardless of param slot order.
+      const byName: Record<string, { val: string; uom: string }> = {};
+      for (const p of Array.isArray(part?.paramData) ? part.paramData : []) {
+        if (p?.name) byName[String(p.name).trim()] = { val: String(p.val ?? '').trim(), uom: String(p.uom ?? '').trim() };
+      }
+      const spec = (name: string): string => {
+        const p = byName[name];
+        if (!p || !p.val || /^not required$/i.test(p.val)) return '';
+        return p.uom && p.uom !== ' ' ? `${p.val} ${p.uom}`.trim() : p.val;
+      };
+
+      // Build up to four labelled spec lines, skipping any that aren't present.
+      const supplyMin = spec('Single Supply Voltage (Min)');
+      const supplyMax = spec('Single Supply Voltage (Max)');
+      const supply =
+        supplyMin && supplyMax ? `${supplyMin} – ${supplyMax}`
+          : (supplyMin || supplyMax || spec('Single Supply Voltage (Typ)'));
+      const pkg = [spec('Pin Count') && `${spec('Pin Count')}-pin`, spec('Package Type')]
+        .filter(Boolean).join(' ');
+      const lines = [
+        spec('Type') && `Type: ${spec('Type')}`,
+        supply && `Supply: ${supply}`,
+        spec('Number of Channels') && `Channels: ${spec('Number of Channels')}`,
+        spec('Operating Temp Range') && `Temp: ${spec('Operating Temp Range')}`,
+        pkg && `Pkg: ${pkg}`,
+      ].filter(Boolean).slice(0, 4) as string[];
+
+      // Package thumbnail, if the catalogue supplies one.
+      const urls: any[] = Array.isArray(part?.urls) ? part.urls : [];
+      const imgUrl =
+        urls.find((u) => /image small/i.test(u?.type))?.URL ||
+        urls.find((u) => /image/i.test(u?.type))?.URL || '';
+
+      const tip = part?.invOrgs?.[0]?.desc || `${title} — ${supplier}`;
       const row = Math.floor(i / cols);
       const col = i % cols;
       return {
-        shape: 'block-card',
+        shape: 'part-card',
         x: 40 + col * (CARD_W + GAP_X),
         y: 40 + row * (CARD_H + GAP_Y),
         width: CARD_W,
         height: CARD_H,
         data: { typeKey: 'part', part },
         attrs: {
-          badge: { fill: '#1d4ed8' },
-          icon: { text: 'memory' },
+          tip: { text: String(tip) },
+          img: imgUrl ? { 'xlink:href': imgUrl } : { 'xlink:href': '', opacity: 0 },
           title: { text: String(title) },
-          subtitle: { text: String(subtitle) },
+          supplier: { text: String(supplier) },
+          spec0: { text: lines[0] || '' },
+          spec1: { text: lines[1] || '' },
+          spec2: { text: lines[2] || '' },
+          spec3: { text: lines[3] || '' },
         },
       };
     });
