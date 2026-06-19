@@ -1,6 +1,7 @@
 package com.example.diagram;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -13,6 +14,7 @@ import java.util.Map;
  * in place, so editing the bundled JSON + restarting refreshes them.
  */
 @Component
+@Order(1)
 public class SampleDiagramSeeder implements CommandLineRunner {
 
     private static final Map<String, String> SAMPLES = Map.of(
