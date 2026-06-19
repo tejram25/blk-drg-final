@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "concurrently -n app,collab -c cyan,green \"ng serve\" \"y-websocket\"",
+    "serve": "ng serve",
     "collab-server": "y-websocket",
     "start:all": "concurrently -n app,collab -c cyan,green \"ng serve\" \"y-websocket\"",
     "start:lan": "concurrently -n app,collab -c cyan,green \"ng serve --host 0.0.0.0\" \"HOST=0.0.0.0 y-websocket\"",
