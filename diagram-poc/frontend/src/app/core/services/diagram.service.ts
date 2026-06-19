@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { apiBaseUrl } from './app-config';
+import { apiBaseUrl } from '../app-config';
 
 export interface BlockType {
   key: string;

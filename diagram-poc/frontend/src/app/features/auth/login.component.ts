@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from './auth.service';
+import { Router } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
 type Mode = 'signin' | 'register';
 
@@ -146,7 +147,7 @@ export class LoginComponent implements OnInit {
   error = '';
   loading = false;
 
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService, private router: Router) {}
 
   async ngOnInit(): Promise<void> {
     this.inviteRequired = (await this.auth.getConfig()).inviteRequired;
@@ -195,7 +196,8 @@ export class LoginComponent implements OnInit {
       } else {
         await this.auth.login(email, this.password);
       }
-      // Success: AppShellComponent reacts to the auth.user() signal.
+      // Signed in — go to the editor.
+      await this.router.navigateByUrl('/editor');
     } catch (e: any) {
       this.error = e?.error?.message
         || (e?.status === 0

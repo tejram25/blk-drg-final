@@ -1,4 +1,4 @@
-import { environment } from '../environments/environment';
+import { environment } from '../../environments/environment';
 
 /**
  * Resolve the backend API base URL. Uses `environment.apiBase` when set

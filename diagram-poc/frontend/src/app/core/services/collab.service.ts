@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Cell, Graph } from '@antv/x6';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { collabServerUrl } from './app-config';
+import { collabServerUrl } from '../app-config';
 
 /**
  * Real-time collaboration via Yjs (CRDT) + y-websocket.

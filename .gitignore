@@ -1,0 +1,13 @@
+# Node / Angular
+node_modules/
+dist/
+coverage/
+.angular/cache/
+
+# Java / Maven
+target/
+
+# Logs & OS cruft
+*.log
+.DS_Store
+Thumbs.db
