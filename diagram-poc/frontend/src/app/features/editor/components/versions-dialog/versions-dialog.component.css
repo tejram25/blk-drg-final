@@ -1,0 +1,75 @@
+.ver-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.ver-card {
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-deep, #0e0f11);
+  border: 1px solid var(--border, #34353c);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  animation: ver-in 0.15s ease;
+}
+
+@keyframes ver-in {
+  from { opacity: 0; transform: translateY(-5px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.ver-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid var(--border, #34353c);
+}
+
+.ver-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--text, #e2e8f0); }
+.ver-sub { font-size: 12px; color: var(--muted, #94a3b8); }
+.ver-x { border: none; background: transparent; color: var(--muted, #94a3b8); cursor: pointer; }
+
+.ver-save {
+  display: flex;
+  gap: 8px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-soft, #2b2c32);
+}
+.ver-save input {
+  flex: 1 1 auto;
+  background: var(--bg, #141518);
+  border: 1px solid var(--border, #34353c);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text, #e2e8f0);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.ver-save-btn { background: var(--accent, #f5a623); color: #1a1303; white-space: nowrap; }
+.ver-save-btn mat-icon { font-size: 18px; width: 18px; height: 18px; vertical-align: text-bottom; }
+
+.ver-body { overflow-y: auto; padding: 8px 12px 12px; }
+.ver-loading, .ver-empty { padding: 20px; text-align: center; color: var(--muted, #94a3b8); font-size: 13px; }
+
+.ver-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border-soft, #2b2c32);
+}
+.ver-icon { color: var(--muted, #94a3b8); font-size: 20px; width: 20px; height: 20px; }
+.ver-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.ver-label { font-size: 13.5px; font-weight: 600; color: var(--text, #e2e8f0); }
+.ver-meta { font-size: 11.5px; color: var(--muted, #94a3b8); }

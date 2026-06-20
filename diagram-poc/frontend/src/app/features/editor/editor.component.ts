@@ -33,6 +33,8 @@ import { ReviewsDialogComponent } from './components/reviews-dialog/reviews-dial
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { ZoomDockComponent } from './components/zoom-dock/zoom-dock.component';
 import { BomDialogComponent } from './components/bom-dialog/bom-dialog.component';
+import { VersionsDialogComponent } from './components/versions-dialog/versions-dialog.component';
+import { CommentsPanelComponent } from './components/comments-panel/comments-panel.component';
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
 import { ANIMATED_SYMBOLS, partsToSvg, registerAnimatedShapes } from './animated-shapes';
@@ -167,7 +169,7 @@ const PORT_GROUPS = {
   imports: [
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe,
     ConfirmDialogComponent, ReviewsDialogComponent, StatusBarComponent, ZoomDockComponent,
-    BomDialogComponent, CommandPaletteComponent,
+    BomDialogComponent, CommandPaletteComponent, VersionsDialogComponent, CommentsPanelComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
@@ -190,6 +192,8 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       { label: 'Save', icon: 'save', hint: 'Ctrl+S', run: () => this.save() },
       { label: 'Tidy up layout', icon: 'auto_fix_high', run: () => this.tidyUp() },
       { label: 'Check diagram', icon: 'fact_check', run: () => this.runChecks() },
+      { label: 'Version history', icon: 'history', run: () => this.openVersions() },
+      { label: 'Comments', icon: 'comment', run: () => this.toggleComments() },
       { label: 'Zoom to fit', icon: 'fit_screen', run: () => this.zoomFit() },
       { label: 'Toggle minimap', icon: 'map', run: () => (this.minimapOpen = !this.minimapOpen) },
       { label: 'Undo', icon: 'undo', run: () => this.undo() },
@@ -236,6 +240,11 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   reviewTarget: DiagramSummary | null = null;
   /** Bill-of-materials rows for the open BOM dialog (null when closed). */
   bomRows: BomRow[] | null = null;
+  /** Version-history dialog state. */
+  versionsOpen = false;
+  versionsSnapshot = '';
+  /** Comments panel state. */
+  commentsOpen = false;
   /** Compact-screen drawers: palette and properties auto-hide behind toolbar toggles. */
   paletteOpen = false;
   propsOpen = false;
@@ -1318,6 +1327,67 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
 
   closeBom(): void {
     this.bomRows = null;
+  }
+
+  // ---------- Version history ----------
+
+  /** Open the version-history dialog (requires a saved diagram). */
+  openVersions(): void {
+    if (this.currentId == null) {
+      this.notify.info('Save the diagram first to use version history.');
+      return;
+    }
+    this.versionsSnapshot = JSON.stringify(this.graph.toJSON());
+    this.versionsOpen = true;
+  }
+
+  /** Load a restored snapshot's content onto the canvas. */
+  onRestoreVersion(contentJson: string): void {
+    try {
+      this.graph.fromJSON(JSON.parse(contentJson));
+      this.selectedNode = null;
+      this.selectedEdge = null;
+      try { this.graph.zoomToFit({ padding: 24, maxScale: 1.5 }); } catch { /* best effort */ }
+    } catch {
+      this.notify.error('That snapshot could not be loaded.');
+    }
+  }
+
+  // ---------- Comments ----------
+
+  /** Toggle the comments panel (requires a saved diagram). */
+  toggleComments(): void {
+    if (!this.commentsOpen && this.currentId == null) {
+      this.notify.info('Save the diagram first to add comments.');
+      return;
+    }
+    this.commentsOpen = !this.commentsOpen;
+  }
+
+  get selectedNodeId(): string | null {
+    return this.selectedNode?.id ?? null;
+  }
+
+  /** Best-effort display name for the selected block (for the comment target). */
+  get selectedNodeLabel(): string {
+    const node = this.selectedNode;
+    if (!node) return '';
+    return (
+      node.attr('label/text') as string ||
+      node.attr('title/text') as string ||
+      node.shape || 'block'
+    );
+  }
+
+  /** Select and center the block a comment is pinned to. */
+  onFocusNode(nodeId: string): void {
+    const cell = this.graph.getCellById(nodeId);
+    if (cell?.isNode()) {
+      this.graph.resetSelection([cell]);
+      try { this.graph.centerCell(cell); } catch { /* best effort */ }
+    } else {
+      this.notify.info('That block is no longer on the canvas.');
+    }
   }
 
   onJsonSelected(event: Event): void {

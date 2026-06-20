@@ -90,8 +90,9 @@ export class CollabService {
   messages: ChatMessage[] = [];
   private lastCursorSent = 0;
 
-  /** Tracks who's present so we can announce joiners (and not re-announce them). */
+  /** Tracks who's present so we can announce joiners/leavers (uid -> name). */
   private knownUids = new Set<string>();
+  private knownNames = new Map<string, string>();
   private presenceSeeded = false;
 
   constructor(private notify: NotificationService) {}
@@ -124,6 +125,7 @@ export class CollabService {
     this.seeded = false;
     this.presenceSeeded = false;
     this.knownUids = new Set();
+    this.knownNames = new Map();
     this.doc = new Y.Doc();
     this.provider = new WebsocketProvider(serverUrl, `diagram-${room}`, this.doc);
     this.cells = this.doc.getMap('cells');
@@ -196,6 +198,7 @@ export class CollabService {
       if (!this.presenceSeeded) {
         this.presenceSeeded = true;
       } else {
+        // joiners
         currentUids.forEach((uid) => {
           if (this.knownUids.has(uid)) return;
           const member = byUid.get(uid);
@@ -203,8 +206,14 @@ export class CollabService {
             this.notify.info(`${member.name || 'Someone'} joined the session`);
           }
         });
+        // leavers
+        this.knownUids.forEach((uid) => {
+          if (currentUids.has(uid) || uid === this.myUserId) return;
+          this.notify.info(`${this.knownNames.get(uid) || 'Someone'} left the session`);
+        });
       }
       this.knownUids = currentUids;
+      this.knownNames = new Map(Array.from(byUid.entries()).map(([uid, p]) => [uid, p.name]));
     });
 
     // Decide seed-vs-adopt once the initial sync completes: an empty room means

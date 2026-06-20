@@ -57,6 +57,12 @@
           <button mat-icon-button matTooltip="Check diagram (find unconnected blocks)" (click)="runChecks()">
             <mat-icon>fact_check</mat-icon>
           </button>
+          <button mat-icon-button matTooltip="Version history" (click)="openVersions()">
+            <mat-icon>history</mat-icon>
+          </button>
+          <button mat-icon-button [class.on]="commentsOpen" matTooltip="Comments" (click)="toggleComments()">
+            <mat-icon>comment</mat-icon>
+          </button>
         </div>
         <span class="vsep"></span>
 
@@ -512,6 +518,16 @@
       <app-bom-dialog *ngIf="bomRows"
         [rows]="bomRows" [diagramName]="diagramName"
         (close)="closeBom()"></app-bom-dialog>
+
+      <!-- Version history -->
+      <app-versions-dialog *ngIf="versionsOpen && currentId != null"
+        [diagramId]="currentId" [diagramName]="diagramName" [currentContentJson]="versionsSnapshot"
+        (restore)="onRestoreVersion($event)" (close)="versionsOpen = false"></app-versions-dialog>
+
+      <!-- Comments -->
+      <app-comments-panel *ngIf="commentsOpen && currentId != null"
+        [diagramId]="currentId" [selectedNodeId]="selectedNodeId" [selectedNodeLabel]="selectedNodeLabel"
+        (focusNode)="onFocusNode($event)" (close)="commentsOpen = false"></app-comments-panel>
 
       <!-- Command palette (Ctrl/Cmd+K) -->
       <app-command-palette *ngIf="commandPaletteOpen"

@@ -1,0 +1,41 @@
+<aside class="cm-dock">
+  <div class="cm-head">
+    <span class="cm-title"><mat-icon>comment</mat-icon> Comments</span>
+    <button type="button" class="cm-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <div class="cm-list">
+    <p class="cm-loading" *ngIf="loading">Loading…</p>
+    <p class="cm-empty" *ngIf="!loading && !comments.length">No comments yet. Select a block and add one below.</p>
+    <div class="cm-item" *ngFor="let c of comments">
+      <div class="cm-avatar">{{ (c.authorName || '?').charAt(0).toUpperCase() }}</div>
+      <div class="cm-body">
+        <div class="cm-row1">
+          <b class="cm-name">{{ c.authorName }}</b>
+          <span class="cm-time">{{ c.createdAt | date:'short' }}</span>
+          <button type="button" class="cm-del" *ngIf="c.self" (click)="remove(c)" title="Delete">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </div>
+        <div class="cm-text">{{ c.text }}</div>
+        <button type="button" class="cm-pin" *ngIf="c.nodeId" (click)="focus(c)">
+          <mat-icon>my_location</mat-icon> on a block
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cm-compose">
+    <div class="cm-target">
+      <mat-icon>{{ selectedNodeId ? 'push_pin' : 'public' }}</mat-icon>
+      <span>{{ selectedNodeId ? ('On: ' + (selectedNodeLabel || 'selected block')) : 'General comment' }}</span>
+    </div>
+    <div class="cm-input">
+      <input type="text" [(ngModel)]="draft" maxlength="2000"
+             placeholder="Write a comment…" (keyup.enter)="send()" />
+      <button type="button" class="cm-send" [disabled]="!draft.trim()" (click)="send()">
+        <mat-icon>send</mat-icon>
+      </button>
+    </div>
+  </div>
+</aside>
