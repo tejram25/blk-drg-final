@@ -15,6 +15,7 @@ import { Keyboard } from '@antv/x6-plugin-keyboard';
 import { History } from '@antv/x6-plugin-history';
 import { Transform } from '@antv/x6-plugin-transform';
 import { Export } from '@antv/x6-plugin-export';
+import { MiniMap } from '@antv/x6-plugin-minimap';
 import dagre from 'dagre';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BlockType, DiagramService, DiagramSummary } from '../../core/services/diagram.service';
@@ -174,6 +175,10 @@ const PORT_GROUPS = {
 export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLDivElement>;
   @ViewChild('chatLog') chatLogRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('minimap') minimapRef!: ElementRef<HTMLDivElement>;
+
+  /** Whether the minimap overlay is shown. */
+  minimapOpen = false;
 
   /** The X6 graph lives in GraphService (shared with child components via DI). */
   get graph(): Graph {
@@ -517,7 +522,13 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
         },
         rotating: { enabled: true, grid: 15 },
       }))
-      .use(new Export());
+      .use(new Export())
+      .use(new MiniMap({
+        container: this.minimapRef.nativeElement,
+        width: 200,
+        height: 140,
+        padding: 8,
+      }));
 
     // Symbol drawings (elec-*/anim-*) use fixed coordinates, so scale the
     // wrapper group whenever the node is resized.

@@ -66,6 +66,10 @@
                   (click)="toggleCanvasTheme()">
             <mat-icon>{{ lightCanvas ? 'dark_mode' : 'light_mode' }}</mat-icon>
           </button>
+          <button mat-icon-button [class.on]="minimapOpen" matTooltip="Toggle minimap"
+                  (click)="minimapOpen = !minimapOpen">
+            <mat-icon>map</mat-icon>
+          </button>
           <button mat-icon-button [matTooltip]="'tip.addImage' | translate" (click)="fileInput.click()">
             <mat-icon>image</mat-icon>
           </button>
@@ -268,6 +272,9 @@
                (drop)="onCanvasDrop($event)"
                (mousemove)="onCanvasMouseMove($event)"
                (mouseleave)="onCanvasMouseLeave()"></div>
+
+          <!-- Minimap (toggleable) -->
+          <div #minimap class="minimap" [class.hidden]="!minimapOpen"></div>
 
           <!-- Live cursors of other session members -->
           <div class="remote-cursor" *ngFor="let c of remoteCursors(); trackBy: cursorTrack"

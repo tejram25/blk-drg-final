@@ -439,6 +439,18 @@
     /* ---- Zoom dock (floating, bottom right) ---- */
     /* Zoom dock styles live in zoom-dock.component.css */
 
+    /* ---- Minimap ---- */
+    .minimap {
+      position: absolute; top: 12px; left: 12px; z-index: 30;
+      width: 200px; height: 140px;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,.45);
+    }
+    .minimap.hidden { display: none; }
+    .minimap .x6-widget-minimap { background: transparent; }
+    .minimap .x6-widget-minimap-viewport { border: 1.5px solid var(--accent); }
+
     /* ---- Remote collaborator cursors ---- */
     .remote-cursor {
       position: absolute; left: 0; top: 0; z-index: 35; pointer-events: none;
