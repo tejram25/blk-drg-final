@@ -1,4 +1,4 @@
-package com.example.diagram;
+package com.example.diagram.config;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 

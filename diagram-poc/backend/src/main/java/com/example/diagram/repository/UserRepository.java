@@ -1,4 +1,6 @@
-package com.example.diagram;
+package com.example.diagram.repository;
+
+import com.example.diagram.domain.User;
 
 import java.util.Optional;
 

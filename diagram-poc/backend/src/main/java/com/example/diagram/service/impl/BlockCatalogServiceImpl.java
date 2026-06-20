@@ -1,71 +1,21 @@
-package com.example.diagram;
+package com.example.diagram.service.impl;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+import com.example.diagram.service.BlockCatalogService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 
-@RestController
-@RequestMapping("/api")
-public class DiagramController {
+/**
+ * The block catalog that feeds the Angular palette.
+ * Hardcoded for the POC; move to a table later so the palette can be managed
+ * without redeploying (the {@link BlockCatalogService} interface keeps callers
+ * insulated from that change).
+ */
+@Service
+public class BlockCatalogServiceImpl implements BlockCatalogService {
 
-    private final DiagramRepository repository;
-
-    public DiagramController(DiagramRepository repository) {
-        this.repository = repository;
-    }
-
-    // ---------- Diagram CRUD ----------
-
-    /** List all saved diagrams (id, name, updatedAt only - not the heavy JSON). */
-    @GetMapping("/diagrams")
-    public List<Map<String, Object>> list() {
-        return repository.findAll().stream()
-                .map(d -> Map.<String, Object>of(
-                        "id", d.getId(),
-                        "name", d.getName(),
-                        "updatedAt", d.getUpdatedAt()))
-                .toList();
-    }
-
-    @GetMapping("/diagrams/{id}")
-    public Diagram get(@PathVariable Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Diagram not found"));
-    }
-
-    @PostMapping("/diagrams")
-    public ResponseEntity<Diagram> create(@RequestBody Diagram diagram) {
-        diagram.setId(null);
-        return ResponseEntity.status(HttpStatus.CREATED).body(repository.save(diagram));
-    }
-
-    @PutMapping("/diagrams/{id}")
-    public Diagram update(@PathVariable Long id, @RequestBody Diagram incoming) {
-        Diagram existing = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Diagram not found"));
-        existing.setName(incoming.getName());
-        existing.setContentJson(incoming.getContentJson());
-        return repository.save(existing);
-    }
-
-    @DeleteMapping("/diagrams/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        repository.deleteById(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    // ---------- Block palette (data-driven) ----------
-
-    /**
-     * The block catalog that feeds the Angular palette.
-     * Hardcoded for the POC; move to a table later so the palette
-     * can be managed without redeploying.
-     */
-    @GetMapping("/block-types")
+    @Override
     public List<Map<String, String>> blockTypes() {
         return List.of(
                 // Functional blocks (icon = Material Icons glyph name)

@@ -1,4 +1,4 @@
-package com.example.diagram;
+package com.example.diagram.domain;
 
 import jakarta.persistence.*;
 import java.time.Instant;

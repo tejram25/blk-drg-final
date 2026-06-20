@@ -1,4 +1,8 @@
-package com.example.diagram;
+package com.example.diagram.bootstrap;
+
+import com.example.diagram.domain.Review;
+import com.example.diagram.repository.DiagramRepository;
+import com.example.diagram.repository.ReviewRepository;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;

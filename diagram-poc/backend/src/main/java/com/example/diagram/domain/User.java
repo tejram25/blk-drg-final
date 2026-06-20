@@ -1,4 +1,4 @@
-package com.example.diagram;
+package com.example.diagram.domain;
 
 import java.time.Instant;
 

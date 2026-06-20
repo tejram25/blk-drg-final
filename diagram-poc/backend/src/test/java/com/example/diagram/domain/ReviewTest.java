@@ -1,4 +1,6 @@
-package com.example.diagram;
+package com.example.diagram.domain;
+
+import com.example.diagram.domain.Review;
 
 import org.junit.jupiter.api.Test;
 

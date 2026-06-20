@@ -1,4 +1,7 @@
-package com.example.diagram;
+package com.example.diagram.web;
+
+import com.example.diagram.domain.User;
+import com.example.diagram.repository.UserRepository;
 
 import java.util.Map;
 import java.util.Optional;
