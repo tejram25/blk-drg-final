@@ -14,6 +14,7 @@ import { Selection } from '@antv/x6-plugin-selection';
 import { Keyboard } from '@antv/x6-plugin-keyboard';
 import { History } from '@antv/x6-plugin-history';
 import { Transform } from '@antv/x6-plugin-transform';
+import { Export } from '@antv/x6-plugin-export';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BlockType, DiagramService, DiagramSummary } from '../../core/services/diagram.service';
 import { ReviewService } from '../../core/services/review.service';
@@ -514,7 +515,8 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
             node.shape === 'img-node' || !!BASIC_SHAPES[node.shape]?.keepRatio,
         },
         rotating: { enabled: true, grid: 15 },
-      }));
+      }))
+      .use(new Export());
 
     // Symbol drawings (elec-*/anim-*) use fixed coordinates, so scale the
     // wrapper group whenever the node is resized.
@@ -1158,6 +1160,34 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     a.download = `${this.diagramName || 'diagram'}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
+  }
+
+  /** Export the canvas as a PNG image (white background, trimmed to content). */
+  exportPng(): void {
+    const name = `${this.diagramName || 'diagram'}.png`;
+    (this.graph as any).toPNG((dataUri: string) => this.downloadDataUri(dataUri, name), {
+      padding: 20,
+      backgroundColor: this.lightCanvas ? '#ffffff' : '#0f172a',
+      quality: 1,
+    });
+  }
+
+  /** Export the canvas as a vector SVG. */
+  exportSvg(): void {
+    const name = `${this.diagramName || 'diagram'}.svg`;
+    (this.graph as any).toSVG((svg: string) => {
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      this.downloadDataUri(url, name);
+      URL.revokeObjectURL(url);
+    }, { preserveDimensions: true });
+  }
+
+  private downloadDataUri(href: string, filename: string): void {
+    const a = document.createElement('a');
+    a.href = href;
+    a.download = filename;
+    a.click();
   }
 
   /** Build a Bill of Materials from catalogue part cards on the canvas. */

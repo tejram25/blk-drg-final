@@ -98,6 +98,12 @@
               <button type="button" class="menu-item" (click)="exportDrawioFile(); exportMenuOpen = false">
                 <mat-icon>account_tree</mat-icon><span>Export to draw.io</span>
               </button>
+              <button type="button" class="menu-item" (click)="exportPng(); exportMenuOpen = false">
+                <mat-icon>image</mat-icon><span>Export as PNG</span>
+              </button>
+              <button type="button" class="menu-item" (click)="exportSvg(); exportMenuOpen = false">
+                <mat-icon>shape_line</mat-icon><span>Export as SVG</span>
+              </button>
               <button type="button" class="menu-item" (click)="exportBom(); exportMenuOpen = false">
                 <mat-icon>receipt_long</mat-icon><span>Bill of Materials (CSV)</span>
               </button>
