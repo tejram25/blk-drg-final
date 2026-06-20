@@ -19,7 +19,8 @@
             "tsConfig": "tsconfig.app.json",
             "assets": ["src/assets"],
             "styles": ["src/styles.css"],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": ["dagre", "mousetrap"]
           },
           "configurations": {
             "production": {

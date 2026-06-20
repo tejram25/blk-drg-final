@@ -15,6 +15,7 @@ import { Keyboard } from '@antv/x6-plugin-keyboard';
 import { History } from '@antv/x6-plugin-history';
 import { Transform } from '@antv/x6-plugin-transform';
 import { Export } from '@antv/x6-plugin-export';
+import dagre from 'dagre';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BlockType, DiagramService, DiagramSummary } from '../../core/services/diagram.service';
 import { ReviewService } from '../../core/services/review.service';
@@ -962,6 +963,48 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
 
   undo(): void { this.graph.canUndo() && this.graph.undo(); }
   redo(): void { this.graph.canRedo() && this.graph.redo(); }
+
+  /**
+   * Auto-arrange the diagram with a left-to-right hierarchical (dagre) layout
+   * that follows the connections. One undo step; reframes the canvas after.
+   */
+  tidyUp(): void {
+    const nodes = this.graph.getNodes();
+    if (!nodes.length) {
+      this.notify.info('Nothing to tidy up.');
+      return;
+    }
+    const g = new dagre.graphlib.Graph();
+    g.setGraph({ rankdir: 'LR', nodesep: 40, ranksep: 80, marginx: 20, marginy: 20 });
+    g.setDefaultEdgeLabel(() => ({}));
+
+    nodes.forEach((node) => {
+      const { width, height } = node.getBBox();
+      g.setNode(node.id, { width, height });
+    });
+    this.graph.getEdges().forEach((edge) => {
+      const source = edge.getSourceCellId();
+      const target = edge.getTargetCellId();
+      if (source && target && g.hasNode(source) && g.hasNode(target)) {
+        g.setEdge(source, target);
+      }
+    });
+
+    dagre.layout(g);
+
+    this.graph.startBatch('tidy-up');
+    g.nodes().forEach((id) => {
+      const node = this.graph.getCellById(id);
+      const pos = g.node(id);
+      if (node?.isNode() && pos) {
+        // dagre positions are centres; X6 positions are top-left.
+        node.setPosition(pos.x - pos.width / 2, pos.y - pos.height / 2);
+      }
+    });
+    this.graph.stopBatch('tidy-up');
+    try { this.graph.zoomToFit({ padding: 24, maxScale: 1.5 }); } catch { /* best effort */ }
+    this.notify.success('Tidied up the layout');
+  }
 
   // ---------- Zoom ----------
 
