@@ -17,6 +17,7 @@ import { Transform } from '@antv/x6-plugin-transform';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BlockType, DiagramService, DiagramSummary } from '../../core/services/diagram.service';
 import { ReviewService } from '../../core/services/review.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CollabService, ChatMessage } from '../../core/services/collab.service';
 import { TranslateService } from '../../core/services/i18n/translate.service';
@@ -193,6 +194,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   constructor(
     private api: DiagramService,
     private reviews: ReviewService,
+    private notify: NotificationService,
     private sanitizer: DomSanitizer,
     public collab: CollabService,
     public i18n: TranslateService,
@@ -823,11 +825,12 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       next: (saved) => {
         this.currentId = saved.id ?? this.currentId;
         this.status = `Saved "${saved.name}"`;
+        this.notify.success(`Saved "${saved.name}"`);
         this.refreshList();
         // A brand-new diagram now has an id — connect it to its room.
         this.syncCollab();
       },
-      error: () => (this.status = 'Save failed - is the backend running?'),
+      error: () => (this.status = 'Save failed'), // error toast shown globally
     });
   }
 
@@ -936,8 +939,9 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
         }
         this.refreshList();
         this.status = `Deleted "${target.name}"`;
+        this.notify.success(`Deleted "${target.name}"`);
       },
-      error: () => (this.status = 'Delete failed - is the backend running?'),
+      error: () => (this.status = 'Delete failed'), // error toast shown globally
     });
   }
 

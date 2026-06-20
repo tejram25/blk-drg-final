@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { ReviewData, ReviewService } from '../../../../core/services/review.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { StarRatingComponent } from '../../../../shared/components/star-rating/star-rating.component';
 
 /**
@@ -30,7 +31,7 @@ export class ReviewsDialogComponent implements OnInit {
   saving = false;
   readonly distKeys = [5, 4, 3, 2, 1];
 
-  constructor(private reviews: ReviewService) {}
+  constructor(private reviews: ReviewService, private notify: NotificationService) {}
 
   ngOnInit(): void {
     this.reviews.forDiagram(this.diagramId).subscribe({
@@ -46,9 +47,10 @@ export class ReviewsDialogComponent implements OnInit {
       next: (d) => {
         this.apply(d);
         this.saving = false;
+        this.notify.success('Review saved');
         this.saved.emit();
       },
-      error: () => (this.saving = false),
+      error: () => (this.saving = false), // error toast handled globally
     });
   }
 
