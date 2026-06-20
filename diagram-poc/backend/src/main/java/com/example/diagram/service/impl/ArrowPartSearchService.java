@@ -2,35 +2,44 @@ package com.example.diagram.service.impl;
 
 import com.example.diagram.config.ArrowProperties;
 import com.example.diagram.service.PartSearchService;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Server-side proxy for the Arrow Part Search API. Obtains and caches an OAuth2
  * client-credentials Bearer token, then forwards searches. The client secret
- * never leaves the server.
+ * never leaves the server. Upstream failures are logged with their real cause
+ * (status + body), while the caller gets a generic message.
  */
 @Service
 public class ArrowPartSearchService implements PartSearchService {
 
+    private static final Logger log = LoggerFactory.getLogger(ArrowPartSearchService.class);
+
     private final ArrowProperties props;
+    private final ObjectMapper objectMapper;
     private final RestClient http;
 
     private String cachedToken;
     private Instant tokenExpiry = Instant.EPOCH;
 
-    public ArrowPartSearchService(ArrowProperties props) {
+    public ArrowPartSearchService(ArrowProperties props, ObjectMapper objectMapper) {
         this.props = props;
+        this.objectMapper = objectMapper;
         this.http = RestClient.create();
     }
 
@@ -45,9 +54,9 @@ public class ArrowPartSearchService implements PartSearchService {
         }
         String url = UriComponentsBuilder.fromHttpUrl(props.getBaseUrl() + props.getSearchPath())
                 .queryParam("srchtxt", query)
-                .queryParamIfPresent("suppname", java.util.Optional.ofNullable(
-                        supplier != null && !supplier.isBlank() ? supplier : null))
-                .queryParamIfPresent("dw", java.util.Optional.ofNullable(designWin ? "true" : null))
+                .queryParamIfPresent("suppname",
+                        Optional.ofNullable(supplier != null && !supplier.isBlank() ? supplier : null))
+                .queryParamIfPresent("dw", Optional.ofNullable(designWin ? "true" : null))
                 .build()
                 .toUriString();
         try {
@@ -56,7 +65,11 @@ public class ArrowPartSearchService implements PartSearchService {
                     .header("Authorization", "Bearer " + token())
                     .retrieve()
                     .body(String.class);
+        } catch (RestClientResponseException ex) {
+            log.error("Arrow part search failed: HTTP {} - {}", ex.getStatusCode().value(), ex.getResponseBodyAsString());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Could not reach the parts service.");
         } catch (RestClientException ex) {
+            log.error("Arrow part search could not be sent: {}", ex.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Could not reach the parts service.");
         }
     }
@@ -66,8 +79,9 @@ public class ArrowPartSearchService implements PartSearchService {
         if (cachedToken != null && Instant.now().isBefore(tokenExpiry)) {
             return cachedToken;
         }
+        String body;
         try {
-            TokenResponse tr = http.post()
+            body = http.post()
                     .uri(props.getBaseUrl() + props.getTokenPath())
                     .header("version", props.getVersion())
                     .contentType(MediaType.APPLICATION_JSON)
@@ -76,19 +90,48 @@ public class ArrowPartSearchService implements PartSearchService {
                             "client_id", props.getClientId(),
                             "client_secret", props.getClientSecret()))
                     .retrieve()
-                    .body(TokenResponse.class);
-            if (tr == null || tr.accessToken() == null) {
+                    .body(String.class);
+        } catch (RestClientResponseException ex) {
+            log.error("Arrow token request rejected: HTTP {} - {}", ex.getStatusCode().value(), ex.getResponseBodyAsString());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Parts authentication failed.");
+        } catch (RestClientException ex) {
+            // Connection/DNS/timeout — e.g. the internal Arrow host isn't reachable from here.
+            log.error("Arrow token request could not be sent (is the host reachable?): {}", ex.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Parts authentication failed.");
+        }
+
+        try {
+            JsonNode node = objectMapper.readTree(body == null ? "" : body);
+            String token = firstNonBlank(
+                    node.path("access_token").asText(null),
+                    node.at("/data/access_token").asText(null),
+                    node.path("accessToken").asText(null),
+                    node.path("token").asText(null));
+            if (token == null) {
+                log.error("Arrow token response had no recognizable token field: {}", truncate(body));
                 throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Parts authentication failed.");
             }
-            cachedToken = tr.accessToken();
-            tokenExpiry = Instant.now().plusSeconds(Math.max(60, tr.expiresIn() - 60));
+            long expiresIn = node.path("expires_in").asLong(node.path("expiresIn").asLong(3600));
+            cachedToken = token;
+            tokenExpiry = Instant.now().plusSeconds(Math.max(60, expiresIn - 60));
             return cachedToken;
-        } catch (RestClientException ex) {
+        } catch (ResponseStatusException ex) {
+            throw ex; // already a clean failure (no token field)
+        } catch (Exception ex) {
+            log.error("Arrow token response was not valid JSON: {}", truncate(body));
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Parts authentication failed.");
         }
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record TokenResponse(@JsonProperty("access_token") String accessToken,
-                         @JsonProperty("expires_in") long expiresIn) {}
+    private static String firstNonBlank(String... values) {
+        for (String v : values) {
+            if (v != null && !v.isBlank()) return v;
+        }
+        return null;
+    }
+
+    private static String truncate(String s) {
+        if (s == null) return "<empty>";
+        return s.length() > 500 ? s.substring(0, 500) + "…" : s;
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.diagram.service.impl;
 
 import com.example.diagram.config.ArrowProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -19,7 +20,7 @@ class ArrowPartSearchServiceTest {
             props.setClientId("id");
             props.setClientSecret("secret");
         }
-        return new ArrowPartSearchService(props);
+        return new ArrowPartSearchService(props, new ObjectMapper());
     }
 
     @Test
