@@ -1,0 +1,9 @@
+<span class="stars" [class.sm]="size === 'sm'" [class.lg]="size === 'lg'">
+  <ng-container *ngFor="let s of stars">
+    <button *ngIf="!readonly" type="button" class="star" [class.on]="s <= (hover || rating)"
+            (click)="pick(s)" (mouseenter)="hover = s" (mouseleave)="hover = 0">
+      <mat-icon>{{ icon(s) }}</mat-icon>
+    </button>
+    <mat-icon *ngIf="readonly" class="star-icon">{{ icon(s) }}</mat-icon>
+  </ng-container>
+</span>

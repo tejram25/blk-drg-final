@@ -19,32 +19,10 @@ export interface DiagramSummary {
   id: number;
   name: string;
   updatedAt: string;
-  /** Average star rating (0 when no reviews yet), merged in from /reviews/summary. */
+  /** Average star rating (0 when no reviews yet), merged in from ReviewService. */
   avgRating?: number;
   /** Number of reviews. */
   reviewCount?: number;
-}
-
-export interface ReviewItem {
-  userName: string;
-  rating: number;
-  comment: string;
-  updatedAt: string;
-  self: boolean;
-}
-
-export interface ReviewData {
-  average: number;
-  count: number;
-  distribution: Record<string, number>;
-  mine: { rating: number; comment: string } | null;
-  reviews: ReviewItem[];
-}
-
-export interface ReviewSummary {
-  diagramId: number;
-  average: number;
-  count: number;
 }
 
 export interface DiagramDto {
@@ -83,22 +61,5 @@ export class DiagramService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${API}/diagrams/${id}`);
-  }
-
-  // ---------- Reviews ----------
-
-  /** Average rating + count for every diagram, for the Open-list badges. */
-  reviewSummary(): Observable<ReviewSummary[]> {
-    return this.http.get<ReviewSummary[]>(`${API}/reviews/summary`);
-  }
-
-  /** Full review data (aggregate + your review + list) for one diagram. */
-  getReviews(id: number): Observable<ReviewData> {
-    return this.http.get<ReviewData>(`${API}/diagrams/${id}/reviews`);
-  }
-
-  /** Create or update the current user's review for a diagram. */
-  postReview(id: number, rating: number, comment: string): Observable<ReviewData> {
-    return this.http.post<ReviewData>(`${API}/diagrams/${id}/reviews`, { rating, comment });
   }
 }

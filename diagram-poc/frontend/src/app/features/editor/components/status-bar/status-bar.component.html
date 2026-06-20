@@ -1,0 +1,7 @@
+<footer class="statusbar">
+  <span class="status-dot" [class.busy]="!!status"></span>
+  <span class="status-text" *ngIf="status">{{ status }}</span>
+  <span class="status-text" *ngIf="!status">{{ 'status.ready' | translate }}</span>
+  <span class="spacer"></span>
+  <span class="kbd-hints">{{ 'footer.hints' | translate }}</span>
+</footer>

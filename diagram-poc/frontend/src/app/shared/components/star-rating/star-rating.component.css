@@ -1,0 +1,40 @@
+.stars {
+  display: inline-flex;
+  align-items: center;
+  color: #f5b400;
+}
+
+.star-icon,
+.star mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.stars.sm .star-icon,
+.stars.sm .star mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.stars.lg .star-icon,
+.stars.lg .star mat-icon {
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+}
+
+.star {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 1px;
+  color: #6b7280;
+  display: inline-flex;
+}
+
+.star.on,
+.star:hover {
+  color: #f5b400;
+}

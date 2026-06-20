@@ -26,18 +26,18 @@ describe('DiagramService', () => {
     req.flush([]);
   });
 
-  it('posts a review with the rating and comment in the body', () => {
-    service.postReview(7, 5, 'great template').subscribe();
-    const req = http.expectOne(`${API}/diagrams/7/reviews`);
+  it('creates a diagram via POST /diagrams', () => {
+    service.create({ name: 'n', contentJson: '{}' }).subscribe();
+    const req = http.expectOne(`${API}/diagrams`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ rating: 5, comment: 'great template' });
-    req.flush({ average: 5, count: 1, distribution: {}, mine: { rating: 5, comment: 'great template' }, reviews: [] });
+    expect(req.request.body).toEqual({ name: 'n', contentJson: '{}' });
+    req.flush({ id: 1, name: 'n', contentJson: '{}' });
   });
 
-  it('fetches the review summary via GET /reviews/summary', () => {
-    service.reviewSummary().subscribe();
-    const req = http.expectOne(`${API}/reviews/summary`);
-    expect(req.request.method).toBe('GET');
-    req.flush([]);
+  it('deletes a diagram via DELETE /diagrams/:id', () => {
+    service.delete(5).subscribe();
+    const req = http.expectOne(`${API}/diagrams/5`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
   });
 });
