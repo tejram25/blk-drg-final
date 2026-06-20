@@ -1,5 +1,5 @@
 import {
-  AfterViewChecked, AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild,
+  AfterViewChecked, AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -33,6 +33,7 @@ import { ReviewsDialogComponent } from './components/reviews-dialog/reviews-dial
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { ZoomDockComponent } from './components/zoom-dock/zoom-dock.component';
 import { BomDialogComponent } from './components/bom-dialog/bom-dialog.component';
+import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
 import { ANIMATED_SYMBOLS, partsToSvg, registerAnimatedShapes } from './animated-shapes';
 import { BASIC_SHAPES, isBasic, registerBasicShapes } from './basic-shapes';
@@ -166,7 +167,7 @@ const PORT_GROUPS = {
   imports: [
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe,
     ConfirmDialogComponent, ReviewsDialogComponent, StatusBarComponent, ZoomDockComponent,
-    BomDialogComponent,
+    BomDialogComponent, CommandPaletteComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
@@ -179,6 +180,36 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
 
   /** Whether the minimap overlay is shown. */
   minimapOpen = false;
+  /** Whether the Ctrl/Cmd+K command palette is open. */
+  commandPaletteOpen = false;
+
+  /** Actions exposed in the command palette. */
+  get commands(): Command[] {
+    return [
+      { label: 'New diagram', icon: 'note_add', run: () => this.newDiagram() },
+      { label: 'Save', icon: 'save', hint: 'Ctrl+S', run: () => this.save() },
+      { label: 'Tidy up layout', icon: 'auto_fix_high', run: () => this.tidyUp() },
+      { label: 'Check diagram', icon: 'fact_check', run: () => this.runChecks() },
+      { label: 'Zoom to fit', icon: 'fit_screen', run: () => this.zoomFit() },
+      { label: 'Toggle minimap', icon: 'map', run: () => (this.minimapOpen = !this.minimapOpen) },
+      { label: 'Undo', icon: 'undo', run: () => this.undo() },
+      { label: 'Redo', icon: 'redo', run: () => this.redo() },
+      { label: 'Export as PNG', icon: 'image', run: () => this.exportPng() },
+      { label: 'Export as SVG', icon: 'shape_line', run: () => this.exportSvg() },
+      { label: 'Export as JSON', icon: 'data_object', run: () => this.exportJson() },
+      { label: 'Export to draw.io', icon: 'account_tree', run: () => this.exportDrawioFile() },
+      { label: 'Bill of Materials (CSV)', icon: 'receipt_long', run: () => this.exportBom() },
+    ];
+  }
+
+  /** Open/close the command palette with Ctrl/Cmd+K. */
+  @HostListener('document:keydown', ['$event'])
+  onGlobalKeydown(event: KeyboardEvent): void {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.commandPaletteOpen = !this.commandPaletteOpen;
+    }
+  }
 
   /** The X6 graph lives in GraphService (shared with child components via DI). */
   get graph(): Graph {

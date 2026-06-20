@@ -512,5 +512,9 @@
       <app-bom-dialog *ngIf="bomRows"
         [rows]="bomRows" [diagramName]="diagramName"
         (close)="closeBom()"></app-bom-dialog>
+
+      <!-- Command palette (Ctrl/Cmd+K) -->
+      <app-command-palette *ngIf="commandPaletteOpen"
+        [commands]="commands" (close)="commandPaletteOpen = false"></app-command-palette>
     </div>
   
