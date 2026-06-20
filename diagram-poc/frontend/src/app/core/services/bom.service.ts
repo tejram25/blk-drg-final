@@ -1,0 +1,55 @@
+import { Injectable } from '@angular/core';
+
+/** One line of a Bill of Materials (one distinct part, with its quantity). */
+export interface BomRow {
+  partNumber: string;
+  manufacturer: string;
+  supplier: string;
+  description: string;
+  quantity: number;
+}
+
+/**
+ * Builds a Bill of Materials from catalogue part-card data placed on the canvas.
+ * Pure/stateless: callers pass the raw `data.part` objects from part-card nodes.
+ */
+@Injectable({ providedIn: 'root' })
+export class BomService {
+  /** Group part objects by part number and tally quantities. */
+  build(parts: any[]): BomRow[] {
+    const byKey = new Map<string, BomRow>();
+    for (const part of parts) {
+      const partNumber =
+        part?.arwPartNum?.name || part?.suppPartNum?.name || part?.partKey || 'Unknown';
+      const existing = byKey.get(partNumber);
+      if (existing) {
+        existing.quantity += 1;
+        continue;
+      }
+      byKey.set(partNumber, {
+        partNumber,
+        manufacturer: part?.mfr?.name || '',
+        supplier: part?.supp?.name || '',
+        description: part?.invOrgs?.[0]?.desc || part?.icc?.name || '',
+        quantity: 1,
+      });
+    }
+    return [...byKey.values()].sort((a, b) => a.partNumber.localeCompare(b.partNumber));
+  }
+
+  /** Render rows as CSV (with a leading line-item number column). */
+  toCsv(rows: BomRow[]): string {
+    const header = ['#', 'Part Number', 'Manufacturer', 'Supplier', 'Description', 'Qty'];
+    const lines = [header.join(',')];
+    rows.forEach((r, i) => {
+      lines.push([i + 1, r.partNumber, r.manufacturer, r.supplier, r.description, r.quantity]
+        .map((v) => this.escape(String(v)))
+        .join(','));
+    });
+    return lines.join('\n');
+  }
+
+  private escape(value: string): string {
+    return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+  }
+}

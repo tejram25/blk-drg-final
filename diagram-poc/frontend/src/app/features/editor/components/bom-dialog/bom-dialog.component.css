@@ -1,0 +1,74 @@
+.bom-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.bom-card {
+  width: 640px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-deep, #0e0f11);
+  border: 1px solid var(--border, #34353c);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  animation: bom-in 0.15s ease;
+}
+
+@keyframes bom-in {
+  from { opacity: 0; transform: translateY(-5px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.bom-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid var(--border, #34353c);
+}
+
+.bom-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--text, #e2e8f0); }
+.bom-sub { font-size: 12px; color: var(--muted, #94a3b8); }
+.bom-x { border: none; background: transparent; color: var(--muted, #94a3b8); cursor: pointer; }
+
+.bom-body { overflow-y: auto; padding: 8px 20px; }
+
+.bom-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bom-table th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  padding: 8px 8px;
+  color: var(--muted, #94a3b8);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border, #34353c);
+  background: var(--bg-deep, #0e0f11);
+}
+.bom-table td {
+  padding: 8px 8px;
+  color: var(--text, #e2e8f0);
+  border-bottom: 1px solid var(--border-soft, #2b2c32);
+  vertical-align: top;
+}
+.bom-table .num { width: 30px; color: var(--muted, #94a3b8); }
+.bom-table .qty { width: 48px; text-align: right; }
+.bom-table .pn { font-weight: 600; }
+.bom-table .desc { display: block; font-weight: 400; font-size: 11.5px; color: var(--muted, #94a3b8); margin-top: 2px; }
+
+.bom-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border, #34353c);
+}
+.bom-download { background: var(--accent, #f5a623); color: #1a1303; }
+.bom-download mat-icon { font-size: 18px; width: 18px; height: 18px; vertical-align: text-bottom; }

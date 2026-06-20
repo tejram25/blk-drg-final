@@ -98,6 +98,9 @@
               <button type="button" class="menu-item" (click)="exportDrawioFile(); exportMenuOpen = false">
                 <mat-icon>account_tree</mat-icon><span>Export to draw.io</span>
               </button>
+              <button type="button" class="menu-item" (click)="exportBom(); exportMenuOpen = false">
+                <mat-icon>receipt_long</mat-icon><span>Bill of Materials (CSV)</span>
+              </button>
             </div>
           </span>
         </div>
@@ -487,5 +490,10 @@
       <app-reviews-dialog *ngIf="reviewTarget"
         [diagramId]="reviewTarget.id" [diagramName]="reviewTarget.name"
         (saved)="refreshList()" (close)="closeReviews()"></app-reviews-dialog>
+
+      <!-- Bill of Materials -->
+      <app-bom-dialog *ngIf="bomRows"
+        [rows]="bomRows" [diagramName]="diagramName"
+        (close)="closeBom()"></app-bom-dialog>
     </div>
   

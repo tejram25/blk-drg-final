@@ -1,0 +1,42 @@
+<div class="bom-backdrop" (click)="close.emit()">
+  <div class="bom-card" (click)="$event.stopPropagation()">
+    <div class="bom-head">
+      <div>
+        <h3 class="bom-title">Bill of Materials</h3>
+        <span class="bom-sub">{{ rows.length }} line item{{ rows.length === 1 ? '' : 's' }} ·
+          {{ totalQuantity }} part{{ totalQuantity === 1 ? '' : 's' }}</span>
+      </div>
+      <button type="button" class="bom-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="bom-body">
+      <table class="bom-table">
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Part Number</th>
+            <th>Manufacturer</th>
+            <th>Supplier</th>
+            <th class="qty">Qty</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of rows; let i = index">
+            <td class="num">{{ i + 1 }}</td>
+            <td class="pn">{{ r.partNumber }}<span class="desc" *ngIf="r.description">{{ r.description }}</span></td>
+            <td>{{ r.manufacturer || '—' }}</td>
+            <td>{{ r.supplier || '—' }}</td>
+            <td class="qty">{{ r.quantity }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bom-actions">
+      <button type="button" mat-stroked-button (click)="close.emit()">Close</button>
+      <button type="button" mat-flat-button class="bom-download" (click)="downloadCsv()">
+        <mat-icon>download</mat-icon> Download CSV
+      </button>
+    </div>
+  </div>
+</div>

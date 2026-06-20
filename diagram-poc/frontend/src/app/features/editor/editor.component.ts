@@ -19,6 +19,7 @@ import { BlockType, DiagramService, DiagramSummary } from '../../core/services/d
 import { ReviewService } from '../../core/services/review.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { GraphService } from '../../core/services/graph.service';
+import { BomRow, BomService } from '../../core/services/bom.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CollabService, ChatMessage } from '../../core/services/collab.service';
 import { TranslateService } from '../../core/services/i18n/translate.service';
@@ -28,6 +29,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 import { ReviewsDialogComponent } from './components/reviews-dialog/reviews-dialog.component';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
 import { ZoomDockComponent } from './components/zoom-dock/zoom-dock.component';
+import { BomDialogComponent } from './components/bom-dialog/bom-dialog.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
 import { ANIMATED_SYMBOLS, partsToSvg, registerAnimatedShapes } from './animated-shapes';
 import { BASIC_SHAPES, isBasic, registerBasicShapes } from './basic-shapes';
@@ -161,6 +163,7 @@ const PORT_GROUPS = {
   imports: [
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe,
     ConfirmDialogComponent, ReviewsDialogComponent, StatusBarComponent, ZoomDockComponent,
+    BomDialogComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
@@ -193,6 +196,8 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   pendingDelete: DiagramSummary | null = null;
   /** Saved diagram whose reviews dialog is open (null when closed). */
   reviewTarget: DiagramSummary | null = null;
+  /** Bill-of-materials rows for the open BOM dialog (null when closed). */
+  bomRows: BomRow[] | null = null;
   /** Compact-screen drawers: palette and properties auto-hide behind toolbar toggles. */
   paletteOpen = false;
   propsOpen = false;
@@ -202,6 +207,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     private reviews: ReviewService,
     private notify: NotificationService,
     private graphSvc: GraphService,
+    private bomService: BomService,
     private sanitizer: DomSanitizer,
     public collab: CollabService,
     public i18n: TranslateService,
@@ -1152,6 +1158,23 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     a.download = `${this.diagramName || 'diagram'}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
+  }
+
+  /** Build a Bill of Materials from catalogue part cards on the canvas. */
+  exportBom(): void {
+    const parts = this.graph.getNodes()
+      .filter((n) => n.shape === 'part-card')
+      .map((n) => (n.getData() as { part?: unknown } | undefined)?.part)
+      .filter((p): p is object => !!p);
+    if (!parts.length) {
+      this.notify.info('No catalogue parts on the canvas to build a BOM from. Import a parts file first.');
+      return;
+    }
+    this.bomRows = this.bomService.build(parts);
+  }
+
+  closeBom(): void {
+    this.bomRows = null;
   }
 
   onJsonSelected(event: Event): void {
