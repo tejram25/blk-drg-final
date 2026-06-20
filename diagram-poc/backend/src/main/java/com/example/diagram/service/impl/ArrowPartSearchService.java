@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -24,8 +25,12 @@ import java.util.Optional;
  * client-credentials Bearer token, then forwards searches. The client secret
  * never leaves the server. Upstream failures are logged with their real cause
  * (status + body), while the caller gets a generic message.
+ *
+ * <p>Disabled when {@code arrow.mock=true} (the {@link MockPartSearchService}
+ * takes over so the flow can be tried offline).
  */
 @Service
+@ConditionalOnProperty(name = "arrow.mock", havingValue = "false", matchIfMissing = true)
 public class ArrowPartSearchService implements PartSearchService {
 
     private static final Logger log = LoggerFactory.getLogger(ArrowPartSearchService.class);
