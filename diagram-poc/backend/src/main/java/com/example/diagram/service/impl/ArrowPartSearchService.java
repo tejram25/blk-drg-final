@@ -41,7 +41,7 @@ public class ArrowPartSearchService implements PartSearchService {
         }
         if (!props.isConfigured()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "Parts search isn't configured. Set ARROW_CLIENT_ID and ARROW_CLIENT_SECRET.");
+                    "Parts search is currently unavailable. Please try again later.");
         }
         String url = UriComponentsBuilder.fromHttpUrl(props.getBaseUrl() + props.getSearchPath())
                 .queryParam("srchtxt", query)
