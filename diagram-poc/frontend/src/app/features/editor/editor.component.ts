@@ -18,6 +18,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BlockType, DiagramService, DiagramSummary } from '../../core/services/diagram.service';
 import { ReviewService } from '../../core/services/review.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { GraphService } from '../../core/services/graph.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CollabService, ChatMessage } from '../../core/services/collab.service';
 import { TranslateService } from '../../core/services/i18n/translate.service';
@@ -163,12 +164,16 @@ const PORT_GROUPS = {
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
+  providers: [GraphService],
 })
 export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLDivElement>;
   @ViewChild('chatLog') chatLogRef?: ElementRef<HTMLDivElement>;
 
-  graph!: Graph;
+  /** The X6 graph lives in GraphService (shared with child components via DI). */
+  get graph(): Graph {
+    return this.graphSvc.graph;
+  }
   dnd!: Dnd;
 
   blockTypes: BlockType[] = [];
@@ -196,6 +201,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     private api: DiagramService,
     private reviews: ReviewService,
     private notify: NotificationService,
+    private graphSvc: GraphService,
     private sanitizer: DomSanitizer,
     public collab: CollabService,
     public i18n: TranslateService,
@@ -307,7 +313,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
 
   ngOnDestroy(): void {
     this.collab.leave();
-    this.graph?.dispose();
+    this.graphSvc.dispose();
   }
 
   // ---------- Collaboration (automatic, per file) ----------
@@ -443,7 +449,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   // ---------- Graph setup ----------
 
   private initGraph(): void {
-    this.graph = new Graph({
+    this.graphSvc.graph = new Graph({
       container: this.canvasRef.nativeElement,
       autoResize: true,
       background: { color: '#ffffff' },
