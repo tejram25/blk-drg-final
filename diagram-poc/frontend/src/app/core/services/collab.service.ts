@@ -3,6 +3,7 @@ import { Cell, Graph } from '@antv/x6';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { collabServerUrl } from '../app-config';
+import { NotificationService } from './notification.service';
 
 /**
  * Real-time collaboration via Yjs (CRDT) + y-websocket.
@@ -89,6 +90,12 @@ export class CollabService {
   messages: ChatMessage[] = [];
   private lastCursorSent = 0;
 
+  /** Tracks who's present so we can announce joiners (and not re-announce them). */
+  private knownUids = new Set<string>();
+  private presenceSeeded = false;
+
+  constructor(private notify: NotificationService) {}
+
   get active(): boolean {
     return this.provider != null;
   }
@@ -115,6 +122,8 @@ export class CollabService {
     this.leave();
     this.graph = graph;
     this.seeded = false;
+    this.presenceSeeded = false;
+    this.knownUids = new Set();
     this.doc = new Y.Doc();
     this.provider = new WebsocketProvider(serverUrl, `diagram-${room}`, this.doc);
     this.cells = this.doc.getMap('cells');
@@ -180,6 +189,22 @@ export class CollabService {
       this.peers = roster.length;
       this.cursors = cursors;
       this.participants = roster;
+
+      // Announce people who joined AFTER our initial presence sync (not the
+      // roster that was already here when we arrived, and never ourselves).
+      const currentUids = new Set(byUid.keys());
+      if (!this.presenceSeeded) {
+        this.presenceSeeded = true;
+      } else {
+        currentUids.forEach((uid) => {
+          if (this.knownUids.has(uid)) return;
+          const member = byUid.get(uid);
+          if (member && !member.isSelf) {
+            this.notify.info(`${member.name || 'Someone'} joined the session`);
+          }
+        });
+      }
+      this.knownUids = currentUids;
     });
 
     // Decide seed-vs-adopt once the initial sync completes: an empty room means

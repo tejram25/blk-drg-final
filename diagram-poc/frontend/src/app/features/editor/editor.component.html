@@ -114,8 +114,10 @@
         <!-- Presence (automatic, per file) -->
         <div class="menu-wrap" *ngIf="collab.active">
           <button type="button" mat-stroked-button class="presence-btn"
+                  [class.live]="collab.connected"
                   (click)="presenceOpen = !presenceOpen"
                   [matTooltip]="collab.peers + ' viewing this file'">
+            <span class="live-dot"></span>
             <mat-icon>group</mat-icon>
             <span>{{ collab.peers }}</span>
           </button>
