@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Edge, Graph, Node } from '@antv/x6';
+import { Cell, Edge, Graph, Node } from '@antv/x6';
 import { Dnd } from '@antv/x6-plugin-dnd';
 import { Snapline } from '@antv/x6-plugin-snapline';
 import { Selection } from '@antv/x6-plugin-selection';
@@ -194,6 +194,15 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       { label: 'Check diagram', icon: 'fact_check', run: () => this.runChecks() },
       { label: 'Version history', icon: 'history', run: () => this.openVersions() },
       { label: 'Comments', icon: 'comment', run: () => this.toggleComments() },
+      { label: 'Duplicate selection', icon: 'content_copy', hint: 'Ctrl+D', run: () => this.duplicateSelection() },
+      { label: 'Align left', icon: 'align_horizontal_left', run: () => this.align('left') },
+      { label: 'Align right', icon: 'align_horizontal_right', run: () => this.align('right') },
+      { label: 'Align horizontal centers', icon: 'align_horizontal_center', run: () => this.align('center') },
+      { label: 'Align top', icon: 'align_vertical_top', run: () => this.align('top') },
+      { label: 'Align bottom', icon: 'align_vertical_bottom', run: () => this.align('bottom') },
+      { label: 'Align vertical centers', icon: 'align_vertical_center', run: () => this.align('middle') },
+      { label: 'Distribute horizontally', icon: 'horizontal_distribute', run: () => this.distribute('h') },
+      { label: 'Distribute vertically', icon: 'vertical_distribute', run: () => this.distribute('v') },
       { label: 'Zoom to fit', icon: 'fit_screen', run: () => this.zoomFit() },
       { label: 'Toggle minimap', icon: 'map', run: () => (this.minimapOpen = !this.minimapOpen) },
       { label: 'Undo', icon: 'undo', run: () => this.undo() },
@@ -605,6 +614,16 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.graph.bindKey(['ctrl+=', 'meta+='], () => { this.zoomIn(); return false; });
     this.graph.bindKey(['ctrl+-', 'meta+-'], () => { this.zoomOut(); return false; });
 
+    // Clipboard + duplicate
+    this.graph.bindKey(['ctrl+c', 'meta+c'], () => { this.copySelection(); return false; });
+    this.graph.bindKey(['ctrl+x', 'meta+x'], () => { this.cutSelection(); return false; });
+    this.graph.bindKey(['ctrl+v', 'meta+v'], () => { this.pasteClipboard(); return false; });
+    this.graph.bindKey(['ctrl+d', 'meta+d'], () => { this.duplicateSelection(); return false; });
+
+    // Share our viewport so followers can mirror it (follow-mode).
+    this.graph.on('scale', () => this.broadcastViewport());
+    this.graph.on('translate', () => this.broadcastViewport());
+
     // Track selection for the property panels
     this.graph.on('node:click', ({ node }) => {
       this.selectedNode = node;
@@ -1015,6 +1034,106 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   undo(): void { this.graph.canUndo() && this.graph.undo(); }
   redo(): void { this.graph.canRedo() && this.graph.redo(); }
 
+  // ---------- Clipboard & duplicate ----------
+
+  /** Snapshot copies of the cut/copied cells (simple in-app clipboard). */
+  private clipboardCells: Cell[] = [];
+
+  copySelection(): void {
+    const cells = this.graph.getSelectedCells();
+    if (cells.length) this.clipboardCells = cells.map((c) => c.clone());
+  }
+
+  cutSelection(): void {
+    const cells = this.graph.getSelectedCells();
+    if (!cells.length) return;
+    this.clipboardCells = cells.map((c) => c.clone());
+    this.graph.removeCells(cells);
+  }
+
+  pasteClipboard(): void {
+    if (!this.clipboardCells.length) return;
+    const copies = this.clipboardCells.map((c) => {
+      const k = c.clone();
+      k.translate(24, 24);
+      return k;
+    });
+    this.graph.addCell(copies);
+    this.graph.resetSelection(copies);
+  }
+
+  /** Clone the selected blocks in place (offset slightly). */
+  duplicateSelection(): void {
+    const nodes = this.graph.getSelectedCells().filter((c): c is Node => c.isNode());
+    if (!nodes.length) {
+      this.notify.info('Select a block to duplicate.');
+      return;
+    }
+    this.graph.startBatch('duplicate');
+    const clones = nodes.map((n) => {
+      const clone = n.clone();
+      clone.translate(24, 24);
+      this.graph.addCell(clone);
+      return clone;
+    });
+    this.graph.stopBatch('duplicate');
+    this.graph.resetSelection(clones);
+  }
+
+  // ---------- Alignment ----------
+
+  /** Align the selected blocks along an edge or centre. */
+  align(mode: 'left' | 'right' | 'top' | 'bottom' | 'center' | 'middle'): void {
+    const nodes = this.graph.getSelectedCells().filter((c): c is Node => c.isNode());
+    if (nodes.length < 2) {
+      this.notify.info('Select at least two blocks to align.');
+      return;
+    }
+    const boxes = nodes.map((n) => ({ n, b: n.getBBox() }));
+    const minX = Math.min(...boxes.map((o) => o.b.x));
+    const maxX = Math.max(...boxes.map((o) => o.b.x + o.b.width));
+    const minY = Math.min(...boxes.map((o) => o.b.y));
+    const maxY = Math.max(...boxes.map((o) => o.b.y + o.b.height));
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+
+    this.graph.startBatch('align');
+    boxes.forEach(({ n, b }) => {
+      switch (mode) {
+        case 'left': n.setPosition(minX, b.y); break;
+        case 'right': n.setPosition(maxX - b.width, b.y); break;
+        case 'top': n.setPosition(b.x, minY); break;
+        case 'bottom': n.setPosition(b.x, maxY - b.height); break;
+        case 'center': n.setPosition(cx - b.width / 2, b.y); break;
+        case 'middle': n.setPosition(b.x, cy - b.height / 2); break;
+      }
+    });
+    this.graph.stopBatch('align');
+  }
+
+  /** Distribute the selected blocks so the gaps between their centres are equal. */
+  distribute(axis: 'h' | 'v'): void {
+    const nodes = this.graph.getSelectedCells().filter((c): c is Node => c.isNode());
+    if (nodes.length < 3) {
+      this.notify.info('Select at least three blocks to distribute.');
+      return;
+    }
+    const boxes = nodes
+      .map((n) => ({ n, b: n.getBBox() }))
+      .sort((a, b) => (axis === 'h' ? a.b.center.x - b.b.center.x : a.b.center.y - b.b.center.y));
+    const first = boxes[0].b.center;
+    const last = boxes[boxes.length - 1].b.center;
+    const step = (axis === 'h' ? last.x - first.x : last.y - first.y) / (boxes.length - 1);
+
+    this.graph.startBatch('distribute');
+    boxes.forEach(({ n, b }, i) => {
+      if (i === 0 || i === boxes.length - 1) return;
+      if (axis === 'h') n.setPosition(first.x + step * i - b.width / 2, b.y);
+      else n.setPosition(b.x, first.y + step * i - b.height / 2);
+    });
+    this.graph.stopBatch('distribute');
+  }
+
   /**
    * Lightweight design check: find blocks with no connections and select them
    * so they're easy to spot. Text labels are ignored (they aren't wired).
@@ -1108,6 +1227,13 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   zoomReset(): void {
     this.graph.zoomTo(1);
     this.graph.centerContent();
+  }
+
+  /** Publish our current pan/zoom to the session for follow-mode. */
+  private broadcastViewport(): void {
+    if (!this.collab.active) return;
+    const { tx, ty } = this.graph.translate();
+    this.collab.setLocalViewport({ tx, ty, zoom: this.graph.zoom() });
   }
 
   toggleCanvasTheme(): void {

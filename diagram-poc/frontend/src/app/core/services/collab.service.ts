@@ -29,6 +29,8 @@ export interface RemoteCursor {
 /** A member of the current session (includes you), for the roster UI. */
 export interface Participant {
   id: number;
+  /** Stable account id (email) shared across a user's tabs. */
+  uid: string;
   name: string;
   color: string;
   isHost: boolean;
@@ -95,6 +97,13 @@ export class CollabService {
   private knownNames = new Map<string, string>();
   private presenceSeeded = false;
 
+  /** Latest shared viewport per participant (uid -> {tx,ty,zoom}). */
+  private viewports = new Map<string, { tx: number; ty: number; zoom: number }>();
+  /** uid currently being followed (their viewport drives ours), or null. */
+  followUid: string | null = null;
+  /** True while we're applying a followed viewport (so we don't re-broadcast). */
+  applyingViewport = false;
+
   constructor(private notify: NotificationService) {}
 
   get active(): boolean {
@@ -126,6 +135,8 @@ export class CollabService {
     this.presenceSeeded = false;
     this.knownUids = new Set();
     this.knownNames = new Map();
+    this.followUid = null;
+    this.viewports = new Map();
     this.doc = new Y.Doc();
     this.provider = new WebsocketProvider(serverUrl, `diagram-${room}`, this.doc);
     this.cells = this.doc.getMap('cells');
@@ -160,13 +171,17 @@ export class CollabService {
       // Collapse all of a user's tabs (same uid) into one roster entry / cursor.
       const byUid = new Map<string, Participant>();
       const cursorUids = new Set<string>();
+      const freshViewports = new Map<string, { tx: number; ty: number; zoom: number }>();
       states.forEach((state: any, id: number) => {
         if (!state?.user) return;
+        const vpUid = state.user.uid || `client-${id}`;
+        if (state.viewport) freshViewports.set(vpUid, state.viewport);
         const uid = state.user.uid || `client-${id}`;
         const isSelf = uid === this.myUserId || id === awareness.clientID;
         if (!byUid.has(uid)) {
           byUid.set(uid, {
             id,
+            uid,
             name: state.user.name,
             color: state.user.color,
             isHost: !!state.user.isHost,
@@ -214,6 +229,16 @@ export class CollabService {
       }
       this.knownUids = currentUids;
       this.knownNames = new Map(Array.from(byUid.entries()).map(([uid, p]) => [uid, p.name]));
+
+      // Follow mode: mirror the followed participant's viewport onto our graph.
+      this.viewports = freshViewports;
+      if (this.followUid) {
+        if (!currentUids.has(this.followUid)) {
+          this.followUid = null; // they left
+        } else {
+          this.applyViewport(freshViewports.get(this.followUid));
+        }
+      }
     });
 
     // Decide seed-vs-adopt once the initial sync completes: an empty room means
@@ -273,6 +298,32 @@ export class CollabService {
     this.provider.awareness.setLocalStateField('cursor', point);
   }
 
+  // ---- follow mode (shared viewports) ----
+
+  /** Broadcast our current viewport so followers can mirror it. */
+  setLocalViewport(viewport: { tx: number; ty: number; zoom: number }): void {
+    if (!this.provider || this.applyingViewport) return;
+    this.provider.awareness.setLocalStateField('viewport', viewport);
+  }
+
+  /** Follow (or unfollow, if already following) a participant's viewport. */
+  toggleFollow(uid: string): void {
+    if (!uid || uid === this.myUserId) return;
+    this.followUid = this.followUid === uid ? null : uid;
+    if (this.followUid) this.applyViewport(this.viewports.get(this.followUid));
+  }
+
+  private applyViewport(vp?: { tx: number; ty: number; zoom: number }): void {
+    if (!vp || !this.graph) return;
+    this.applyingViewport = true;
+    try {
+      this.graph.zoomTo(vp.zoom);
+      this.graph.translate(vp.tx, vp.ty);
+    } finally {
+      this.applyingViewport = false;
+    }
+  }
+
   /** Append a chat message to the shared log (broadcast to everyone in the room). */
   sendChat(text: string, lang = ''): void {
     const body = (text || '').trim();
@@ -323,6 +374,8 @@ export class CollabService {
     this.seeded = false;
     this.connected = false;
     this.peers = 0;
+    this.followUid = null;
+    this.viewports = new Map();
   }
 
   /**

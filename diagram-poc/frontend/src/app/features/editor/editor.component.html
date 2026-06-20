@@ -151,6 +151,10 @@
               <span class="roster-dot" [style.background]="p.color"></span>
               <span class="roster-name">{{ p.name }}</span>
               <span class="roster-tag you" *ngIf="p.isSelf">You</span>
+              <button type="button" class="roster-follow" *ngIf="!p.isSelf"
+                      [class.on]="collab.followUid === p.uid" (click)="collab.toggleFollow(p.uid)">
+                {{ collab.followUid === p.uid ? 'Following' : 'Follow' }}
+              </button>
             </div>
           </div>
         </div>
