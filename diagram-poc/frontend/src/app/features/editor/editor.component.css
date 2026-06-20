@@ -139,22 +139,26 @@
     .roster-tag.you { background: rgba(56,189,248,.18); color: #38bdf8; }
 
     /* ---- Presence (auto collaboration) ---- */
-    .presence-btn { display: inline-flex; align-items: center; gap: 6px; }
-    /* Live "online" indicator: a green dot that pulses while connected. */
+    .presence-btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; }
     .live-dot {
       width: 9px; height: 9px; border-radius: 50%;
-      background: #6b7280; flex-shrink: 0;
-      transition: background .2s;
+      background: #6b7280; flex-shrink: 0; transition: background .2s;
     }
-    .presence-btn.live .live-dot {
-      background: #22c55e;
-      box-shadow: 0 0 0 0 rgba(34, 197, 94, .7);
-      animation: live-pulse 1.8s ease-out infinite;
+    /* Live "online" state: the whole button glows and pulses green. */
+    .presence-btn.live .live-dot { background: #22c55e; }
+    .presence-btn.live {
+      color: #34d399;
+      animation: live-btn-pulse 1.6s ease-in-out infinite;
     }
-    @keyframes live-pulse {
-      0%   { box-shadow: 0 0 0 0 rgba(34, 197, 94, .6); }
-      70%  { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    @keyframes live-btn-pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+        background: rgba(34, 197, 94, 0.04);
+      }
+      50% {
+        box-shadow: 0 0 14px 2px rgba(34, 197, 94, 0.55);
+        background: rgba(34, 197, 94, 0.16);
+      }
     }
     .presence-menu { min-width: 200px; }
     .presence-menu .roster-title { margin-bottom: 6px; }
