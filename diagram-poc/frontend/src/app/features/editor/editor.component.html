@@ -1,0 +1,498 @@
+    <div class="layout">
+      <!-- Top bar -->
+      <header class="topbar">
+        <!-- Palette toggle (compact screens) -->
+        <span class="panel-toggle">
+          <button mat-icon-button [class.on]="paletteOpen" (click)="paletteOpen = !paletteOpen"
+                  [matTooltip]="'palette.components' | translate">
+            <mat-icon>widgets</mat-icon>
+          </button>
+        </span>
+
+        <!-- Brand -->
+        <div class="brand">
+          <span class="brand-mark"><mat-icon>schema</mat-icon></span>
+          <span class="brand-name">{{ 'app.brand' | translate }}</span>
+        </div>
+        <span class="vsep"></span>
+
+        <!-- Document -->
+        <input class="doc-name" [(ngModel)]="diagramName"
+               [placeholder]="'doc.placeholder' | translate"
+               [matTooltip]="'doc.tooltip' | translate" />
+        <div class="dd open-dd">
+          <button type="button" class="dd-trigger" [class.open]="openMenuOpen"
+                  (click)="openMenuOpen = !openMenuOpen" [matTooltip]="'open.tooltip' | translate">
+            <span class="dd-val">{{ selectedDiagramId != null ? selectedDiagramName : ('open.saved' | translate) }}</span>
+            <svg class="dd-caret" width="11" height="7" viewBox="0 0 12 8"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="dd-menu" *ngIf="openMenuOpen">
+            <button type="button" class="dd-item" [class.sel]="selectedDiagramId == null"
+                    (click)="selectedDiagramId = null; openMenuOpen = false; load()">{{ 'open.saved' | translate }}</button>
+            <div class="dd-row" *ngFor="let d of savedDiagrams">
+              <button type="button" class="dd-item dd-item-grow" [class.sel]="selectedDiagramId === d.id"
+                      (click)="selectedDiagramId = d.id; openMenuOpen = false; load()">{{ d.name }}</button>
+              <button type="button" class="dd-rate" matTooltip="Reviews"
+                      (click)="openReviews(d, $event)">
+                <mat-icon>star</mat-icon>
+                <span>{{ d.reviewCount ? (d.avgRating | number:'1.1-1') : '–' }}</span>
+              </button>
+              <button type="button" class="dd-del" matTooltip="Delete file"
+                      (click)="askDeleteDiagram(d, $event)">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+        <button mat-stroked-button (click)="newDiagram()"><span>{{ 'btn.new' | translate }}</span></button>
+        <button mat-flat-button (click)="save()"><span>{{ 'btn.save' | translate }}</span></button>
+
+        <span class="spacer"></span>
+
+        <!-- History -->
+        <div class="tool-group">
+          <button mat-icon-button [matTooltip]="'tip.undo' | translate" (click)="undo()"><mat-icon>undo</mat-icon></button>
+          <button mat-icon-button [matTooltip]="'tip.redo' | translate" (click)="redo()"><mat-icon>redo</mat-icon></button>
+        </div>
+        <span class="vsep"></span>
+
+        <!-- View & insert -->
+        <div class="tool-group">
+          <button mat-icon-button [matTooltip]="lightCanvas ? 'Dark canvas' : 'White canvas'"
+                  (click)="toggleCanvasTheme()">
+            <mat-icon>{{ lightCanvas ? 'dark_mode' : 'light_mode' }}</mat-icon>
+          </button>
+          <button mat-icon-button [matTooltip]="'tip.addImage' | translate" (click)="fileInput.click()">
+            <mat-icon>image</mat-icon>
+          </button>
+          <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
+          <input #jsonInput type="file" accept=".json,application/json" hidden
+                 (change)="onJsonSelected($event)" />
+          <input #drawioInput type="file" accept=".drawio,.xml,application/xml,text/xml" hidden
+                 (change)="onDrawioSelected($event)" />
+          <!-- Import (JSON / draw.io) -->
+          <span class="menu-wrap">
+            <button type="button" mat-icon-button [class.on]="importMenuOpen"
+                    (click)="importMenuOpen = !importMenuOpen" matTooltip="Import">
+              <mat-icon>upload</mat-icon>
+            </button>
+            <div class="dropdown-menu" *ngIf="importMenuOpen">
+              <button type="button" class="menu-item" (click)="jsonInput.click(); importMenuOpen = false">
+                <mat-icon>data_object</mat-icon><span>{{ 'tip.importJson' | translate }}</span>
+              </button>
+              <button type="button" class="menu-item" (click)="drawioInput.click(); importMenuOpen = false">
+                <mat-icon>account_tree</mat-icon><span>Import from draw.io</span>
+              </button>
+            </div>
+          </span>
+          <!-- Export (JSON / draw.io) -->
+          <span class="menu-wrap">
+            <button type="button" mat-icon-button [class.on]="exportMenuOpen"
+                    (click)="exportMenuOpen = !exportMenuOpen" matTooltip="Export">
+              <mat-icon>download</mat-icon>
+            </button>
+            <div class="dropdown-menu" *ngIf="exportMenuOpen">
+              <button type="button" class="menu-item" (click)="exportJson(); exportMenuOpen = false">
+                <mat-icon>data_object</mat-icon><span>{{ 'tip.exportJson' | translate }}</span>
+              </button>
+              <button type="button" class="menu-item" (click)="exportDrawioFile(); exportMenuOpen = false">
+                <mat-icon>account_tree</mat-icon><span>Export to draw.io</span>
+              </button>
+            </div>
+          </span>
+        </div>
+        <span class="vsep"></span>
+
+        <!-- Properties toggle (compact screens) -->
+        <span class="panel-toggle" *ngIf="selectedNode">
+          <button mat-icon-button [class.on]="propsOpen" (click)="propsOpen = !propsOpen"
+                  [matTooltip]="'props.title' | translate">
+            <mat-icon>tune</mat-icon>
+          </button>
+        </span>
+
+        <!-- Presence (automatic, per file) -->
+        <div class="menu-wrap" *ngIf="collab.active">
+          <button type="button" mat-stroked-button class="presence-btn"
+                  (click)="presenceOpen = !presenceOpen"
+                  [matTooltip]="collab.peers + ' viewing this file'">
+            <mat-icon>group</mat-icon>
+            <span>{{ collab.peers }}</span>
+          </button>
+
+          <div class="dropdown-menu presence-menu" *ngIf="presenceOpen">
+            <div class="roster-title">Viewing this file ({{ collab.participants.length }})</div>
+            <div class="roster-row" *ngFor="let p of collab.participants; trackBy: participantTrack">
+              <span class="roster-dot" [style.background]="p.color"></span>
+              <span class="roster-name">{{ p.name }}</span>
+              <span class="roster-tag you" *ngIf="p.isSelf">You</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat toggle (only during a session) -->
+        <button class="chat-toggle" mat-stroked-button *ngIf="collab.active"
+                [class.chat-on]="chatOpen" (click)="toggleChat()"
+                [matTooltip]="'chat.tip' | translate">
+          <span>{{ 'chat.label' | translate }}</span>
+          <span class="chat-badge" *ngIf="unreadChat > 0">{{ unreadChat }}</span>
+        </button>
+
+        <!-- Language switcher -->
+        <div class="lang-wrap">
+          <button mat-stroked-button (click)="langMenuOpen = !langMenuOpen"
+                  [matTooltip]="'lang.tooltip' | translate">
+            <mat-icon>language</mat-icon>
+            {{ currentLangLabel }}
+            <mat-icon class="lang-caret">arrow_drop_down</mat-icon>
+          </button>
+          <div class="lang-menu" *ngIf="langMenuOpen">
+            <button *ngFor="let l of languages" class="lang-item"
+                    [class.active]="l.code === currentLang" (click)="switchLang(l.code)">
+              <span>{{ l.label }}</span>
+              <mat-icon *ngIf="l.code === currentLang">check</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Signed-in user + account menu -->
+        <div class="menu-wrap user-wrap" *ngIf="auth.user() as u">
+          <button type="button" class="user-chip" [class.on]="accountMenuOpen"
+                  (click)="accountMenuOpen = !accountMenuOpen" [matTooltip]="u.name || u.email">
+            <mat-icon>account_circle</mat-icon>
+            <span class="user-name">{{ u.name || u.email }}</span>
+            <mat-icon class="caret">arrow_drop_down</mat-icon>
+          </button>
+          <div class="dropdown-menu account-menu" *ngIf="accountMenuOpen">
+            <div class="account-head">
+              <mat-icon>account_circle</mat-icon>
+              <div class="account-id">
+                <span class="account-name">{{ u.name || u.email }}</span>
+                <span class="account-email" *ngIf="u.name">{{ u.email }}</span>
+              </div>
+            </div>
+            <div class="menu-sep"></div>
+            <button type="button" class="menu-item" (click)="accountMenuOpen = false; logout()">
+              <mat-icon>logout</mat-icon><span>Sign out</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="body">
+        <!-- Palette -->
+        <aside class="palette" [class.open]="paletteOpen">
+          <div class="panel-title">{{ 'palette.components' | translate }}</div>
+          <div class="search-wrap">
+            <mat-icon>search</mat-icon>
+            <input class="search" [(ngModel)]="paletteQuery" [placeholder]="'palette.search' | translate" />
+          </div>
+
+          <div class="dd cat-dd" *ngIf="!paletteQuery">
+            <button type="button" class="dd-trigger" [class.open]="catMenuOpen" (click)="catMenuOpen = !catMenuOpen">
+              <span class="dd-val">{{ i18n.td(activeCategory) }}</span>
+              <svg class="dd-caret" width="11" height="7" viewBox="0 0 12 8"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dd-menu" *ngIf="catMenuOpen">
+              <button type="button" class="dd-item" *ngFor="let cat of categories" [class.sel]="cat === activeCategory"
+                      (click)="activeCategory = cat; catMenuOpen = false">{{ i18n.td(cat) }}</button>
+            </div>
+          </div>
+
+          <div class="palette-grid">
+            <ng-container *ngFor="let b of visibleItems">
+              <!-- Schematic symbol item -->
+              <div *ngIf="b.shape && isElectrical(b.shape)" class="symbol-item" (mousedown)="startDrag(b, $event)">
+                <svg [attr.viewBox]="symbolViewBox(b.shape)" width="62"
+                     [attr.height]="isIc(b.shape) ? 40 : 26">
+                  <path *ngFor="let p of symbolPaths(b.shape)"
+                        [attr.d]="p.d"
+                        [attr.fill]="p.fill ? '#e2e8f0' : 'none'"
+                        stroke="#e2e8f0" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                  <text *ngFor="let t of symbolTitleTexts(b.shape)"
+                        [attr.x]="t.x" [attr.y]="t.y" text-anchor="middle"
+                        fill="#e2e8f0" font-weight="700"
+                        [attr.font-size]="t.size ? t.size * 1.6 : 16">{{ t.text }}</text>
+                </svg>
+                <span>{{ i18n.td(b.label) }}</span>
+              </div>
+              <!-- Basic geometric shape item -->
+              <div *ngIf="b.shape && isBasic(b.shape)" class="symbol-item" (mousedown)="startDrag(b, $event)">
+                <svg viewBox="0 0 60 40" width="62" height="40"
+                     fill="none" stroke="#e2e8f0" stroke-width="2"
+                     stroke-linejoin="round" [innerHTML]="basicPreview(b.shape)"></svg>
+                <span>{{ i18n.td(b.label) }}</span>
+              </div>
+              <!-- Animated component item (live preview) -->
+              <div *ngIf="b.shape && !isElectrical(b.shape) && !isBasic(b.shape)" class="symbol-item" (mousedown)="startDrag(b, $event)">
+                <svg [attr.viewBox]="symbolViewBox(b.shape)" width="62" height="40"
+                     [innerHTML]="animatedPreview(b.shape)"></svg>
+                <span>{{ i18n.td(b.label) }}</span>
+              </div>
+              <!-- Card block item -->
+              <div *ngIf="!b.shape" class="block-chip" (mousedown)="startDrag(b, $event)">
+                <span class="chip-badge" [style.background]="b.color">
+                  <span class="material-icons">{{ b.icon || 'widgets' }}</span>
+                </span>
+                <span class="chip-label">{{ i18n.td(b.label) }}</span>
+              </div>
+            </ng-container>
+            <p class="empty" *ngIf="paletteQuery && visibleItems.length === 0">
+              <span>{{ 'palette.noMatch' | translate }}</span> "{{ paletteQuery }}"
+            </p>
+          </div>
+
+          <p class="hint">{{ 'palette.hint' | translate }}</p>
+        </aside>
+
+        <!-- Canvas -->
+        <main class="canvas-wrap">
+          <div #canvas class="canvas"
+               (dragover)="$event.preventDefault()"
+               (drop)="onCanvasDrop($event)"
+               (mousemove)="onCanvasMouseMove($event)"
+               (mouseleave)="onCanvasMouseLeave()"></div>
+
+          <!-- Live cursors of other session members -->
+          <div class="remote-cursor" *ngFor="let c of remoteCursors(); trackBy: cursorTrack"
+               [style.transform]="'translate3d(' + c.sx + 'px,' + c.sy + 'px,0)'">
+            <svg width="16" height="20" viewBox="0 0 16 20">
+              <path d="M 1 1 L 1 15 L 4.8 11.8 L 7.4 18.4 L 10.2 17.2 L 7.6 10.8 L 12.6 10.4 Z"
+                    [attr.fill]="c.color" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round"/>
+            </svg>
+            <span class="cursor-name" [style.background]="c.color">{{ c.name }}</span>
+          </div>
+
+          <!-- Zoom controls -->
+          <div class="zoom-dock">
+            <button mat-icon-button [matTooltip]="'zoom.out' | translate" (click)="zoomOut()">
+              <mat-icon>remove</mat-icon>
+            </button>
+            <span class="zoom-pct" [matTooltip]="'zoom.reset' | translate" (click)="zoomReset()">{{ zoomPct }}%</span>
+            <button mat-icon-button [matTooltip]="'zoom.in' | translate" (click)="zoomIn()">
+              <mat-icon>add</mat-icon>
+            </button>
+            <button mat-icon-button [matTooltip]="'zoom.fit' | translate" (click)="zoomFit()">
+              <mat-icon>fit_screen</mat-icon>
+            </button>
+          </div>
+
+          <!-- Click-away backdrop for the wire popovers -->
+          <div class="dock-backdrop" *ngIf="wirePop" (click)="wirePop = null"></div>
+
+          <!-- Wire dock: compact; each trigger opens a popover to choose from -->
+          <div class="wire-dock">
+            <span class="dock-label">
+              <ng-container *ngIf="selectedEdge">{{ 'wire.selected' | translate }}</ng-container>
+              <ng-container *ngIf="!selectedEdge">{{ 'wire.label' | translate }}</ng-container>
+            </span>
+
+            <!-- color trigger -->
+            <button class="dock-trigger" [matTooltip]="'wire.tipColor' | translate"
+                    [class.active]="wirePop === 'color'" (click)="toggleWirePop('color')">
+              <span class="trigger-swatch" [style.background]="wireColor"></span>
+              <mat-icon class="trigger-caret">expand_more</mat-icon>
+            </button>
+
+            <!-- style trigger -->
+            <button class="dock-trigger" [matTooltip]="'wire.tipStyle' | translate"
+                    [class.active]="wirePop === 'style'" (click)="toggleWirePop('style')">
+              <svg viewBox="0 0 36 12" width="26" height="9">
+                <path d="M 1 6 H 35" stroke="currentColor" stroke-width="2"
+                      [attr.stroke-dasharray]="wireStyle === 'solid' ? null : '5 3'"
+                      [class.dock-flow]="wireStyle === 'flow'"/>
+              </svg>
+              <mat-icon class="trigger-caret">expand_more</mat-icon>
+            </button>
+
+            <ng-container *ngIf="selectedEdge">
+              <span class="dock-sep"></span>
+              <button mat-icon-button [matTooltip]="'wire.delete' | translate" class="dock-del" (click)="deleteSelectedEdge()">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </ng-container>
+
+            <!-- Color popover -->
+            <div class="dock-pop" *ngIf="wirePop === 'color'">
+              <span class="pop-title">{{ 'wire.popColor' | translate }}</span>
+              <div class="swatches">
+                <button *ngFor="let c of wireColors" class="swatch" [style.background]="c"
+                        [class.active]="wireColor === c" (click)="setWireColor(c); wirePop = null"></button>
+                <input type="color" class="swatch custom" matTooltip="Custom color"
+                       [ngModel]="wireColor" (ngModelChange)="setWireColor($event)" />
+              </div>
+            </div>
+
+            <!-- Style / width / routing popover -->
+            <div class="dock-pop" *ngIf="wirePop === 'style'">
+              <div class="pop-section">
+                <span class="pop-title">{{ 'wire.popStyle' | translate }}</span>
+                <div class="dock-group">
+                  <button class="dock-btn" [matTooltip]="'wire.flow' | translate"
+                          [class.active]="wireStyle === 'flow'" (click)="setWireStyle('flow')">
+                    <svg viewBox="0 0 36 12" width="30" height="10"><path d="M 1 6 H 35" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3" class="dock-flow"/></svg>
+                  </button>
+                  <button class="dock-btn" [matTooltip]="'wire.dashed' | translate"
+                          [class.active]="wireStyle === 'dashed'" (click)="setWireStyle('dashed')">
+                    <svg viewBox="0 0 36 12" width="30" height="10"><path d="M 1 6 H 35" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3"/></svg>
+                  </button>
+                  <button class="dock-btn" [matTooltip]="'wire.solid' | translate"
+                          [class.active]="wireStyle === 'solid'" (click)="setWireStyle('solid')">
+                    <svg viewBox="0 0 36 12" width="30" height="10"><path d="M 1 6 H 35" stroke="currentColor" stroke-width="2"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="pop-section">
+                <span class="pop-title">{{ 'wire.popWidth' | translate }}</span>
+                <div class="dock-group">
+                  <button class="dock-btn" [matTooltip]="'wire.thin' | translate" [class.active]="wireWidth === 1.5" (click)="setWireWidth(1.5)">
+                    <svg viewBox="0 0 24 12" width="20" height="10"><path d="M 2 6 H 22" stroke="currentColor" stroke-width="1.2"/></svg>
+                  </button>
+                  <button class="dock-btn" [matTooltip]="'wire.medium' | translate" [class.active]="wireWidth === 2" (click)="setWireWidth(2)">
+                    <svg viewBox="0 0 24 12" width="20" height="10"><path d="M 2 6 H 22" stroke="currentColor" stroke-width="2.4"/></svg>
+                  </button>
+                  <button class="dock-btn" [matTooltip]="'wire.thick' | translate" [class.active]="wireWidth === 3" (click)="setWireWidth(3)">
+                    <svg viewBox="0 0 24 12" width="20" height="10"><path d="M 2 6 H 22" stroke="currentColor" stroke-width="4"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="pop-section">
+                <span class="pop-title">{{ 'wire.popRouting' | translate }}</span>
+                <div class="dock-group">
+                  <button class="dock-btn" [matTooltip]="'wire.rightAngle' | translate" [class.active]="wireRouter === 'manhattan'" (click)="setWireRouter('manhattan')">
+                    <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 14 H 12 V 2 H 22" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                  </button>
+                  <button class="dock-btn" [matTooltip]="'wire.straight' | translate" [class.active]="wireRouter === 'normal'" (click)="setWireRouter('normal')">
+                    <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 14 L 22 2" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                  </button>
+                  <button class="dock-btn" [matTooltip]="'wire.curved' | translate" [class.active]="wireRouter === 'smooth'" (click)="setWireRouter('smooth')">
+                    <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 14 C 10 14 14 2 22 2" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- Property panel -->
+        <aside class="props" *ngIf="selectedNode" [class.open]="propsOpen">
+          <h3>{{ 'props.title' | translate }}</h3>
+          <div class="prop-type">
+            <mat-icon>category</mat-icon>{{ nodeTypeName }}
+          </div>
+
+          <label><span>{{ 'props.name' | translate }}</span>
+            <input [ngModel]="selectedNode.attr(labelAttrPath)"
+                   (ngModelChange)="selectedNode.attr(labelAttrPath, $event)" />
+          </label>
+          <label><span>{{ 'props.partNumber' | translate }}</span>
+            <input [ngModel]="dataField('partNumber')"
+                   (ngModelChange)="setDataField('partNumber', $event)"
+                   [placeholder]="'props.partPlaceholder' | translate" />
+          </label>
+          <label><span>{{ 'props.category' | translate }}</span>
+            <input [ngModel]="dataField('category') || defaultCategory"
+                   (ngModelChange)="setDataField('category', $event)" />
+          </label>
+          <label><span>{{ 'props.notes' | translate }}</span>
+            <textarea rows="2" [ngModel]="dataField('notes')"
+                      (ngModelChange)="setDataField('notes', $event)"
+                      [placeholder]="'props.notesPlaceholder' | translate"></textarea>
+          </label>
+
+          <div class="prop-section">{{ 'props.appearance' | translate }}</div>
+          <ng-container *ngIf="!isSymbol">
+            <div class="prop-row">
+              <label><span>{{ 'props.fill' | translate }}</span>
+                <input type="color"
+                       [ngModel]="selectedNode.attr('body/fill')"
+                       (ngModelChange)="selectedNode.attr('body/fill', $event)" />
+              </label>
+              <label><span>{{ 'props.border' | translate }}</span>
+                <input type="color"
+                       [ngModel]="selectedNode.attr('body/stroke')"
+                       (ngModelChange)="selectedNode.attr('body/stroke', $event)" />
+              </label>
+            </div>
+            <label *ngIf="isCard"><span>{{ 'props.badgeColor' | translate }}</span>
+              <input type="color"
+                     [ngModel]="selectedNode.attr('badge/fill')"
+                     (ngModelChange)="selectedNode.attr('badge/fill', $event)" />
+            </label>
+          </ng-container>
+          <label *ngIf="isSymbol"><span>{{ 'props.symbolColor' | translate }}</span>
+            <input type="color"
+                   [ngModel]="selectedNode.attr(colorAttrPath)"
+                   (ngModelChange)="setNodeColor($event)" />
+          </label>
+
+          <button mat-stroked-button color="warn" (click)="deleteSelected()">
+            <mat-icon>delete</mat-icon><span>{{ 'props.delete' | translate }}</span>
+          </button>
+        </aside>
+
+        <!-- Session chat: right-side dock (Teams-style), toggled from the header -->
+        <aside class="chat-dock" *ngIf="collab.active && chatOpen">
+          <div class="chat-head">
+            <span class="chat-title">{{ 'chat.session' | translate }}</span>
+            <span class="chat-count">{{ collab.participants.length }} <span>{{ 'common.online' | translate }}</span></span>
+            <button class="chat-close" [matTooltip]="'chat.close' | translate" (click)="toggleChat()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <div class="chat-log" #chatLog>
+            <p class="chat-empty" *ngIf="collab.messages.length === 0">{{ 'chat.empty' | translate }}</p>
+            <div class="chat-msg" *ngFor="let m of collab.messages; trackBy: chatTrack"
+                 [class.mine]="m.isSelf">
+              <div class="chat-meta" *ngIf="!m.isSelf">
+                <span class="roster-dot" [style.background]="m.color"></span>
+                <span class="chat-from">{{ m.name }}</span>
+                <span class="chat-time">{{ fmtTime(m.ts) }}</span>
+              </div>
+              <div class="chat-bubble">{{ msgState(m.id)?.state === 'done' && !msgState(m.id)?.showOriginal ? msgState(m.id)!.text : m.text }}</div>
+              <div class="chat-actions" *ngIf="!m.isSelf" [ngSwitch]="msgState(m.id)?.state">
+                <span *ngSwitchCase="'loading'" class="chat-act muted">{{ 'chat.translating' | translate }}</span>
+                <span *ngSwitchCase="'same'" class="chat-act muted">{{ 'chat.sameLang' | translate }}</span>
+                <span *ngSwitchCase="'error'" class="chat-act muted">{{ 'chat.translateError' | translate }}</span>
+                <span *ngSwitchCase="'unsupported'" class="chat-act muted">{{ 'chat.translateUnsupported' | translate }}</span>
+                <ng-container *ngSwitchCase="'done'">
+                  <button class="chat-act" *ngIf="!msgState(m.id)?.showOriginal" (click)="revertMessage(m)">{{ 'chat.showOriginal' | translate }}</button>
+                  <button class="chat-act" *ngIf="msgState(m.id)?.showOriginal" (click)="translateMessage(m)">{{ 'chat.showTranslation' | translate }}</button>
+                </ng-container>
+                <button *ngSwitchDefault class="chat-act" (click)="translateMessage(m)">{{ 'chat.translate' | translate }}</button>
+              </div>
+              <span class="chat-time" *ngIf="m.isSelf">{{ fmtTime(m.ts) }}</span>
+            </div>
+          </div>
+
+          <div class="chat-input">
+            <input [(ngModel)]="chatDraft" [placeholder]="'chat.placeholder' | translate" maxlength="500"
+                   (keyup.enter)="sendChat()" />
+            <button mat-icon-button [matTooltip]="'chat.send' | translate" (click)="sendChat()" [disabled]="!chatDraft.trim()">
+              <mat-icon>send</mat-icon>
+            </button>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Status bar -->
+      <app-status-bar [status]="status"></app-status-bar>
+
+      <!-- Delete confirmation -->
+      <app-confirm-dialog *ngIf="pendingDelete"
+        title="Delete this file?"
+        [message]="deleteMessage"
+        confirmLabel="Delete" [danger]="true"
+        (confirm)="confirmDelete()" (cancel)="cancelDelete()"></app-confirm-dialog>
+
+      <!-- Reviews -->
+      <app-reviews-dialog *ngIf="reviewTarget"
+        [diagramId]="reviewTarget.id" [diagramName]="reviewTarget.name"
+        (saved)="refreshList()" (close)="closeReviews()"></app-reviews-dialog>
+    </div>
+  

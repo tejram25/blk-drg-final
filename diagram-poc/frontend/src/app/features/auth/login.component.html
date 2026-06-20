@@ -1,0 +1,71 @@
+    <div class="login-wrap">
+      <form class="login-card" (ngSubmit)="submit()" autocomplete="on">
+        <div class="brand">
+          <span class="material-icons brand-glyph">schema</span>
+          <span class="brand-name">Block Diagram Builder</span>
+        </div>
+
+        <!-- Mode tabs -->
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab" [class.active]="mode === 'signin'"
+                  (click)="setMode('signin')" [disabled]="loading">Sign in</button>
+          <button type="button" class="tab" [class.active]="mode === 'register'"
+                  (click)="setMode('register')" [disabled]="loading">Create account</button>
+        </div>
+
+        <p class="sub">
+          {{ mode === 'signin'
+              ? 'Sign in to open the diagram workspace.'
+              : 'Create an account to get started.' }}
+        </p>
+
+        <ng-container *ngIf="mode === 'register'">
+          <label for="login-name">Name</label>
+          <input id="login-name" name="name" type="text" autocomplete="name"
+                 [(ngModel)]="name" [disabled]="loading" />
+        </ng-container>
+
+        <label for="login-email">Email</label>
+        <input id="login-email" name="email" type="email" autocomplete="email"
+               [(ngModel)]="email" [disabled]="loading" autofocus />
+
+        <label for="login-password">Password</label>
+        <input id="login-password" name="password" type="password"
+               [autocomplete]="mode === 'register' ? 'new-password' : 'current-password'"
+               [(ngModel)]="password" [disabled]="loading" />
+
+        <ng-container *ngIf="mode === 'register'">
+          <label for="login-confirm">Confirm password</label>
+          <input id="login-confirm" name="confirm" type="password" autocomplete="new-password"
+                 [(ngModel)]="confirm" [disabled]="loading" />
+
+          <ng-container *ngIf="inviteRequired">
+            <label for="login-invite">Invite code</label>
+            <input id="login-invite" name="invite" type="text" autocomplete="off"
+                   [(ngModel)]="inviteCode" [disabled]="loading" />
+          </ng-container>
+
+          <p class="hint">At least 8 characters.</p>
+        </ng-container>
+
+        <p class="error" *ngIf="error">{{ error }}</p>
+
+        <button type="submit" class="signin" [disabled]="loading">
+          {{ loading
+              ? (mode === 'signin' ? 'Signing in…' : 'Creating account…')
+              : (mode === 'signin' ? 'Sign in' : 'Create account') }}
+        </button>
+
+        <p class="switch">
+          <ng-container *ngIf="mode === 'signin'">
+            New here?
+            <button type="button" class="link" (click)="setMode('register')" [disabled]="loading">Create an account</button>
+          </ng-container>
+          <ng-container *ngIf="mode === 'register'">
+            Already have an account?
+            <button type="button" class="link" (click)="setMode('signin')" [disabled]="loading">Sign in</button>
+          </ng-container>
+        </p>
+      </form>
+    </div>
+  
