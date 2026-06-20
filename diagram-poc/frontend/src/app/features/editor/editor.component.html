@@ -53,6 +53,10 @@
         <div class="tool-group">
           <button mat-icon-button [matTooltip]="'tip.undo' | translate" (click)="undo()"><mat-icon>undo</mat-icon></button>
           <button mat-icon-button [matTooltip]="'tip.redo' | translate" (click)="redo()"><mat-icon>redo</mat-icon></button>
+          <button mat-icon-button [class.on]="partSearchOpen" matTooltip="Search parts catalogue"
+                  (click)="partSearchOpen = !partSearchOpen">
+            <mat-icon>travel_explore</mat-icon>
+          </button>
           <button mat-icon-button matTooltip="Version history" (click)="openVersions()">
             <mat-icon>history</mat-icon>
           </button>
@@ -523,6 +527,10 @@
       <app-versions-dialog *ngIf="versionsOpen && currentId != null"
         [diagramId]="currentId" [diagramName]="diagramName" [currentContentJson]="versionsSnapshot"
         (restore)="onRestoreVersion($event)" (close)="versionsOpen = false"></app-versions-dialog>
+
+      <!-- Parts search -->
+      <app-part-search-panel *ngIf="partSearchOpen"
+        (addPart)="addPartToCanvas($event)" (close)="partSearchOpen = false"></app-part-search-panel>
 
       <!-- Comments -->
       <app-comments-panel *ngIf="commentsOpen && currentId != null"

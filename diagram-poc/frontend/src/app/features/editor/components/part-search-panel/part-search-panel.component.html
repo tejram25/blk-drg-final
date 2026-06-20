@@ -1,0 +1,31 @@
+<aside class="ps-dock">
+  <div class="ps-head">
+    <span class="ps-title"><mat-icon>travel_explore</mat-icon> Search parts</span>
+    <button type="button" class="ps-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <div class="ps-search">
+    <input #box type="text" [(ngModel)]="query" (keyup.enter)="search()"
+           placeholder="Part number or keyword…" />
+    <button type="button" class="ps-go" [disabled]="!query.trim() || loading" (click)="search()">
+      <mat-icon>search</mat-icon>
+    </button>
+  </div>
+
+  <div class="ps-results">
+    <p class="ps-msg" *ngIf="loading">Searching…</p>
+    <p class="ps-msg" *ngIf="!loading && searched && !results.length">No matching parts.</p>
+    <p class="ps-msg" *ngIf="!loading && !searched">Search the catalogue, then add a part to the canvas.</p>
+
+    <div class="ps-item" *ngFor="let hit of results">
+      <div class="ps-info">
+        <span class="ps-pn">{{ hit.partNumber }}</span>
+        <span class="ps-supp">{{ hit.manufacturer || hit.supplier }}</span>
+        <span class="ps-desc" *ngIf="hit.description">{{ hit.description }}</span>
+      </div>
+      <button type="button" class="ps-add" (click)="add(hit)" title="Add to canvas">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+  </div>
+</aside>

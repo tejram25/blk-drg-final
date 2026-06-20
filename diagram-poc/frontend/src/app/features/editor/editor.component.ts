@@ -34,6 +34,7 @@ import { ZoomDockComponent } from './components/zoom-dock/zoom-dock.component';
 import { BomDialogComponent } from './components/bom-dialog/bom-dialog.component';
 import { VersionsDialogComponent } from './components/versions-dialog/versions-dialog.component';
 import { CommentsPanelComponent } from './components/comments-panel/comments-panel.component';
+import { PartSearchPanelComponent } from './components/part-search-panel/part-search-panel.component';
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
 import { ANIMATED_SYMBOLS, partsToSvg, registerAnimatedShapes } from './animated-shapes';
@@ -169,6 +170,7 @@ const PORT_GROUPS = {
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe,
     ConfirmDialogComponent, ReviewsDialogComponent, StatusBarComponent, ZoomDockComponent,
     BomDialogComponent, CommandPaletteComponent, VersionsDialogComponent, CommentsPanelComponent,
+    PartSearchPanelComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
@@ -189,6 +191,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     return [
       { label: 'New diagram', icon: 'note_add', run: () => this.newDiagram() },
       { label: 'Save', icon: 'save', hint: 'Ctrl+S', run: () => this.save() },
+      { label: 'Search parts', icon: 'travel_explore', run: () => (this.partSearchOpen = true) },
       { label: 'Version history', icon: 'history', run: () => this.openVersions() },
       { label: 'Comments', icon: 'comment', run: () => this.toggleComments() },
       { label: 'Duplicate selection', icon: 'content_copy', hint: 'Ctrl+D', run: () => this.duplicateSelection() },
@@ -251,6 +254,8 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   versionsSnapshot = '';
   /** Comments panel state. */
   commentsOpen = false;
+  /** Parts search panel state. */
+  partSearchOpen = false;
   /** Compact-screen drawers: palette and properties auto-hide behind toolbar toggles. */
   paletteOpen = false;
   propsOpen = false;
@@ -1549,66 +1554,76 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     const cols = Math.max(1, Math.min(parts.length, 4));
 
     return parts.map((part: any, i: number) => {
-      const title =
-        part?.arwPartNum?.name || part?.suppPartNum?.name || part?.partKey || 'Part';
-      const supplier =
-        part?.supp?.name || part?.mfr?.name || part?.icc?.name || 'Component';
-
-      // Index paramData by name so we can pull specs regardless of param slot order.
-      const byName: Record<string, { val: string; uom: string }> = {};
-      for (const p of Array.isArray(part?.paramData) ? part.paramData : []) {
-        if (p?.name) byName[String(p.name).trim()] = { val: String(p.val ?? '').trim(), uom: String(p.uom ?? '').trim() };
-      }
-      const spec = (name: string): string => {
-        const p = byName[name];
-        if (!p || !p.val || /^not required$/i.test(p.val)) return '';
-        return p.uom && p.uom !== ' ' ? `${p.val} ${p.uom}`.trim() : p.val;
-      };
-
-      // Build up to four labelled spec lines, skipping any that aren't present.
-      const supplyMin = spec('Single Supply Voltage (Min)');
-      const supplyMax = spec('Single Supply Voltage (Max)');
-      const supply =
-        supplyMin && supplyMax ? `${supplyMin} – ${supplyMax}`
-          : (supplyMin || supplyMax || spec('Single Supply Voltage (Typ)'));
-      const pkg = [spec('Pin Count') && `${spec('Pin Count')}-pin`, spec('Package Type')]
-        .filter(Boolean).join(' ');
-      const lines = [
-        spec('Type') && `Type: ${spec('Type')}`,
-        supply && `Supply: ${supply}`,
-        spec('Number of Channels') && `Channels: ${spec('Number of Channels')}`,
-        spec('Operating Temp Range') && `Temp: ${spec('Operating Temp Range')}`,
-        pkg && `Pkg: ${pkg}`,
-      ].filter(Boolean).slice(0, 4) as string[];
-
-      // Package thumbnail, if the catalogue supplies one.
-      const urls: any[] = Array.isArray(part?.urls) ? part.urls : [];
-      const imgUrl =
-        urls.find((u) => /image small/i.test(u?.type))?.URL ||
-        urls.find((u) => /image/i.test(u?.type))?.URL || '';
-
-      const tip = part?.invOrgs?.[0]?.desc || `${title} — ${supplier}`;
       const row = Math.floor(i / cols);
       const col = i % cols;
-      return {
-        shape: 'part-card',
-        x: 40 + col * (CARD_W + GAP_X),
-        y: 40 + row * (CARD_H + GAP_Y),
-        width: CARD_W,
-        height: CARD_H,
-        data: { typeKey: 'part', part },
-        attrs: {
-          tip: { text: String(tip) },
-          img: imgUrl ? { 'xlink:href': imgUrl } : { 'xlink:href': '', opacity: 0 },
-          title: { text: String(title) },
-          supplier: { text: String(supplier) },
-          spec0: { text: lines[0] || '' },
-          spec1: { text: lines[1] || '' },
-          spec2: { text: lines[2] || '' },
-          spec3: { text: lines[3] || '' },
-        },
-      };
+      return this.buildPartCardCell(part, 40 + col * (CARD_W + GAP_X), 40 + row * (CARD_H + GAP_Y));
     });
+  }
+
+  /** Build a single part-card cell (shape + attrs) for a catalogue part object. */
+  private buildPartCardCell(part: any, x: number, y: number): any {
+    const CARD_W = 240;
+    const CARD_H = 140;
+    const title = part?.arwPartNum?.name || part?.suppPartNum?.name || part?.partKey || 'Part';
+    const supplier = part?.supp?.name || part?.mfr?.name || part?.icc?.name || 'Component';
+
+    // Index paramData by name so we can pull specs regardless of param slot order.
+    const byName: Record<string, { val: string; uom: string }> = {};
+    for (const p of Array.isArray(part?.paramData) ? part.paramData : []) {
+      if (p?.name) byName[String(p.name).trim()] = { val: String(p.val ?? '').trim(), uom: String(p.uom ?? '').trim() };
+    }
+    const spec = (name: string): string => {
+      const p = byName[name];
+      if (!p || !p.val || /^not required$/i.test(p.val)) return '';
+      return p.uom && p.uom !== ' ' ? `${p.val} ${p.uom}`.trim() : p.val;
+    };
+
+    const supplyMin = spec('Single Supply Voltage (Min)');
+    const supplyMax = spec('Single Supply Voltage (Max)');
+    const supply =
+      supplyMin && supplyMax ? `${supplyMin} – ${supplyMax}`
+        : (supplyMin || supplyMax || spec('Single Supply Voltage (Typ)'));
+    const pkg = [spec('Pin Count') && `${spec('Pin Count')}-pin`, spec('Package Type')]
+      .filter(Boolean).join(' ');
+    const lines = [
+      spec('Type') && `Type: ${spec('Type')}`,
+      supply && `Supply: ${supply}`,
+      spec('Number of Channels') && `Channels: ${spec('Number of Channels')}`,
+      spec('Operating Temp Range') && `Temp: ${spec('Operating Temp Range')}`,
+      pkg && `Pkg: ${pkg}`,
+    ].filter(Boolean).slice(0, 4) as string[];
+
+    const urls: any[] = Array.isArray(part?.urls) ? part.urls : [];
+    const imgUrl =
+      urls.find((u) => /image small/i.test(u?.type))?.URL ||
+      urls.find((u) => /image/i.test(u?.type))?.URL || '';
+
+    const tip = part?.invOrgs?.[0]?.desc || `${title} — ${supplier}`;
+    return {
+      shape: 'part-card',
+      x, y, width: CARD_W, height: CARD_H,
+      data: { typeKey: 'part', part },
+      attrs: {
+        tip: { text: String(tip) },
+        img: imgUrl ? { 'xlink:href': imgUrl } : { 'xlink:href': '', opacity: 0 },
+        title: { text: String(title) },
+        supplier: { text: String(supplier) },
+        spec0: { text: lines[0] || '' },
+        spec1: { text: lines[1] || '' },
+        spec2: { text: lines[2] || '' },
+        spec3: { text: lines[3] || '' },
+      },
+    };
+  }
+
+  /** Drop a single searched part onto the canvas as a part card (at the centre). */
+  addPartToCanvas(part: any): void {
+    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+    const p = this.graph.clientToLocal(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    const node = this.graph.addNode(this.buildPartCardCell(part, p.x - 120, p.y - 70));
+    this.graph.resetSelection([node]);
+    const name = part?.arwPartNum?.name || part?.suppPartNum?.name || 'part';
+    this.notify.success(`Added "${name}"`);
   }
 
   // ---------- draw.io interop ----------
