@@ -26,6 +26,7 @@ import { MessageTranslateService } from '../../core/services/i18n/message-transl
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { ReviewsDialogComponent } from './components/reviews-dialog/reviews-dialog.component';
 import { StatusBarComponent } from './components/status-bar/status-bar.component';
+import { ZoomDockComponent } from './components/zoom-dock/zoom-dock.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
 import { ANIMATED_SYMBOLS, partsToSvg, registerAnimatedShapes } from './animated-shapes';
 import { BASIC_SHAPES, isBasic, registerBasicShapes } from './basic-shapes';
@@ -158,7 +159,7 @@ const PORT_GROUPS = {
   standalone: true,
   imports: [
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe,
-    ConfirmDialogComponent, ReviewsDialogComponent, StatusBarComponent,
+    ConfirmDialogComponent, ReviewsDialogComponent, StatusBarComponent, ZoomDockComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],

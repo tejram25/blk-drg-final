@@ -265,18 +265,9 @@
           </div>
 
           <!-- Zoom controls -->
-          <div class="zoom-dock">
-            <button mat-icon-button [matTooltip]="'zoom.out' | translate" (click)="zoomOut()">
-              <mat-icon>remove</mat-icon>
-            </button>
-            <span class="zoom-pct" [matTooltip]="'zoom.reset' | translate" (click)="zoomReset()">{{ zoomPct }}%</span>
-            <button mat-icon-button [matTooltip]="'zoom.in' | translate" (click)="zoomIn()">
-              <mat-icon>add</mat-icon>
-            </button>
-            <button mat-icon-button [matTooltip]="'zoom.fit' | translate" (click)="zoomFit()">
-              <mat-icon>fit_screen</mat-icon>
-            </button>
-          </div>
+          <app-zoom-dock [zoom]="zoomPct"
+            (zoomOut)="zoomOut()" (zoomIn)="zoomIn()" (fit)="zoomFit()" (reset)="zoomReset()">
+          </app-zoom-dock>
 
           <!-- Click-away backdrop for the wire popovers -->
           <div class="dock-backdrop" *ngIf="wirePop" (click)="wirePop = null"></div>

@@ -1,0 +1,12 @@
+<div class="zoom-dock">
+  <button mat-icon-button [matTooltip]="'zoom.out' | translate" (click)="zoomOut.emit()">
+    <mat-icon>remove</mat-icon>
+  </button>
+  <span class="zoom-pct" [matTooltip]="'zoom.reset' | translate" (click)="reset.emit()">{{ zoom }}%</span>
+  <button mat-icon-button [matTooltip]="'zoom.in' | translate" (click)="zoomIn.emit()">
+    <mat-icon>add</mat-icon>
+  </button>
+  <button mat-icon-button [matTooltip]="'zoom.fit' | translate" (click)="fit.emit()">
+    <mat-icon>fit_screen</mat-icon>
+  </button>
+</div>

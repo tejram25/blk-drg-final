@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+import { catchError, retry, throwError, timer } from 'rxjs';
 import { NotificationService } from '../services/notification.service';
 
 /**
@@ -15,6 +15,16 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
 
   return next(req).pipe(
+    // Transient network blips on safe reads: retry a couple of times with backoff.
+    retry({
+      count: 2,
+      delay: (err: HttpErrorResponse, attempt) => {
+        if (req.method === 'GET' && err.status === 0) {
+          return timer(attempt * 500);
+        }
+        return throwError(() => err); // anything else: fail immediately
+      },
+    }),
     catchError((err: HttpErrorResponse) => {
       if (!req.url.includes('/auth/')) {
         notify.error(friendlyMessage(err));

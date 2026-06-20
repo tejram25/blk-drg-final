@@ -24,5 +24,9 @@ export const routes: Routes = [
       import('./features/editor/editor.component').then((m) => m.EditorComponent),
   },
   { path: '', pathMatch: 'full', redirectTo: 'editor' },
-  { path: '**', redirectTo: 'editor' },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/errors/not-found.component').then((m) => m.NotFoundComponent),
+  },
 ];
