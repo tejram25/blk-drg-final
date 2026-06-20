@@ -16,7 +16,6 @@ import { History } from '@antv/x6-plugin-history';
 import { Transform } from '@antv/x6-plugin-transform';
 import { Export } from '@antv/x6-plugin-export';
 import { MiniMap } from '@antv/x6-plugin-minimap';
-import dagre from 'dagre';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BlockType, DiagramService, DiagramSummary } from '../../core/services/diagram.service';
 import { ReviewService } from '../../core/services/review.service';
@@ -190,8 +189,6 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     return [
       { label: 'New diagram', icon: 'note_add', run: () => this.newDiagram() },
       { label: 'Save', icon: 'save', hint: 'Ctrl+S', run: () => this.save() },
-      { label: 'Tidy up layout', icon: 'auto_fix_high', run: () => this.tidyUp() },
-      { label: 'Check diagram', icon: 'fact_check', run: () => this.runChecks() },
       { label: 'Version history', icon: 'history', run: () => this.openVersions() },
       { label: 'Comments', icon: 'comment', run: () => this.toggleComments() },
       { label: 'Duplicate selection', icon: 'content_copy', hint: 'Ctrl+D', run: () => this.duplicateSelection() },
@@ -1132,76 +1129,6 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       else n.setPosition(b.x, first.y + step * i - b.height / 2);
     });
     this.graph.stopBatch('distribute');
-  }
-
-  /**
-   * Lightweight design check: find blocks with no connections and select them
-   * so they're easy to spot. Text labels are ignored (they aren't wired).
-   */
-  runChecks(): void {
-    const nodes = this.graph.getNodes().filter((n) => n.shape !== 'basic-text');
-    if (!nodes.length) {
-      this.notify.info('Nothing to check.');
-      return;
-    }
-    const connected = new Set<string>();
-    this.graph.getEdges().forEach((edge) => {
-      const source = edge.getSourceCellId();
-      const target = edge.getTargetCellId();
-      if (source) connected.add(source);
-      if (target) connected.add(target);
-    });
-    const isolated = nodes.filter((n) => !connected.has(n.id));
-    if (!isolated.length) {
-      this.graph.cleanSelection();
-      this.notify.success('Design check passed — every block is connected.');
-      return;
-    }
-    this.graph.resetSelection(isolated);
-    const n = isolated.length;
-    this.notify.error(`${n} block${n === 1 ? '' : 's'} ${n === 1 ? 'is' : 'are'} not connected to anything (highlighted).`);
-  }
-
-  /**
-   * Auto-arrange the diagram with a left-to-right hierarchical (dagre) layout
-   * that follows the connections. One undo step; reframes the canvas after.
-   */
-  tidyUp(): void {
-    const nodes = this.graph.getNodes();
-    if (!nodes.length) {
-      this.notify.info('Nothing to tidy up.');
-      return;
-    }
-    const g = new dagre.graphlib.Graph();
-    g.setGraph({ rankdir: 'LR', nodesep: 40, ranksep: 80, marginx: 20, marginy: 20 });
-    g.setDefaultEdgeLabel(() => ({}));
-
-    nodes.forEach((node) => {
-      const { width, height } = node.getBBox();
-      g.setNode(node.id, { width, height });
-    });
-    this.graph.getEdges().forEach((edge) => {
-      const source = edge.getSourceCellId();
-      const target = edge.getTargetCellId();
-      if (source && target && g.hasNode(source) && g.hasNode(target)) {
-        g.setEdge(source, target);
-      }
-    });
-
-    dagre.layout(g);
-
-    this.graph.startBatch('tidy-up');
-    g.nodes().forEach((id) => {
-      const node = this.graph.getCellById(id);
-      const pos = g.node(id);
-      if (node?.isNode() && pos) {
-        // dagre positions are centres; X6 positions are top-left.
-        node.setPosition(pos.x - pos.width / 2, pos.y - pos.height / 2);
-      }
-    });
-    this.graph.stopBatch('tidy-up');
-    try { this.graph.zoomToFit({ padding: 24, maxScale: 1.5 }); } catch { /* best effort */ }
-    this.notify.success('Tidied up the layout');
   }
 
   // ---------- Zoom ----------

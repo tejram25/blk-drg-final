@@ -53,10 +53,6 @@
         <div class="tool-group">
           <button mat-icon-button [matTooltip]="'tip.undo' | translate" (click)="undo()"><mat-icon>undo</mat-icon></button>
           <button mat-icon-button [matTooltip]="'tip.redo' | translate" (click)="redo()"><mat-icon>redo</mat-icon></button>
-          <button mat-icon-button matTooltip="Tidy up layout" (click)="tidyUp()"><mat-icon>auto_fix_high</mat-icon></button>
-          <button mat-icon-button matTooltip="Check diagram (find unconnected blocks)" (click)="runChecks()">
-            <mat-icon>fact_check</mat-icon>
-          </button>
           <button mat-icon-button matTooltip="Version history" (click)="openVersions()">
             <mat-icon>history</mat-icon>
           </button>
