@@ -965,6 +965,34 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   redo(): void { this.graph.canRedo() && this.graph.redo(); }
 
   /**
+   * Lightweight design check: find blocks with no connections and select them
+   * so they're easy to spot. Text labels are ignored (they aren't wired).
+   */
+  runChecks(): void {
+    const nodes = this.graph.getNodes().filter((n) => n.shape !== 'basic-text');
+    if (!nodes.length) {
+      this.notify.info('Nothing to check.');
+      return;
+    }
+    const connected = new Set<string>();
+    this.graph.getEdges().forEach((edge) => {
+      const source = edge.getSourceCellId();
+      const target = edge.getTargetCellId();
+      if (source) connected.add(source);
+      if (target) connected.add(target);
+    });
+    const isolated = nodes.filter((n) => !connected.has(n.id));
+    if (!isolated.length) {
+      this.graph.cleanSelection();
+      this.notify.success('Design check passed — every block is connected.');
+      return;
+    }
+    this.graph.resetSelection(isolated);
+    const n = isolated.length;
+    this.notify.error(`${n} block${n === 1 ? '' : 's'} ${n === 1 ? 'is' : 'are'} not connected to anything (highlighted).`);
+  }
+
+  /**
    * Auto-arrange the diagram with a left-to-right hierarchical (dagre) layout
    * that follows the connections. One undo step; reframes the canvas after.
    */
