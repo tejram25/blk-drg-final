@@ -1,0 +1,6 @@
+# Copy this file to "application-local.properties" (same folder) and put your
+# real Arrow credentials here. application-local.properties is gitignored, so it
+# will NOT be committed. These values override the ones in application.properties.
+
+arrow.client-id=your-client-id-here
+arrow.client-secret=your-client-secret-here

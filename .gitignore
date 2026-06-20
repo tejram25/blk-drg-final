@@ -11,3 +11,6 @@ target/
 *.log
 .DS_Store
 Thumbs.db
+
+# Local secret overrides (never commit real credentials)
+**/application-local.properties
