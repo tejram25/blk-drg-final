@@ -195,6 +195,8 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       { label: 'Version history', icon: 'history', run: () => this.openVersions() },
       { label: 'Comments', icon: 'comment', run: () => this.toggleComments() },
       { label: 'Duplicate selection', icon: 'content_copy', hint: 'Ctrl+D', run: () => this.duplicateSelection() },
+      { label: 'Bring to front', icon: 'flip_to_front', run: () => this.bringToFront() },
+      { label: 'Send to back', icon: 'flip_to_back', run: () => this.sendToBack() },
       { label: 'Align left', icon: 'align_horizontal_left', run: () => this.align('left') },
       { label: 'Align right', icon: 'align_horizontal_right', run: () => this.align('right') },
       { label: 'Align horizontal centers', icon: 'align_horizontal_center', run: () => this.align('center') },
@@ -566,7 +568,10 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       }))
       .use(new Transform({
         resizing: {
-          enabled: true, minWidth: 30, minHeight: 24,
+          // Structured cards (part-card / block-card) have fixed text layouts,
+          // so resizing them just clips the text — keep them at their set size.
+          enabled: (node: Node) => node.shape !== 'part-card' && node.shape !== 'block-card',
+          minWidth: 30, minHeight: 24,
           // keep imported pictures (and squares/circles) from being squashed
           preserveAspectRatio: (node: Node) =>
             node.shape === 'img-node' || !!BASIC_SHAPES[node.shape]?.keepRatio,
@@ -621,6 +626,8 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.graph.bindKey(['ctrl+x', 'meta+x'], () => { this.cutSelection(); return false; });
     this.graph.bindKey(['ctrl+v', 'meta+v'], () => { this.pasteClipboard(); return false; });
     this.graph.bindKey(['ctrl+d', 'meta+d'], () => { this.duplicateSelection(); return false; });
+    this.graph.bindKey(['ctrl+shift+f', 'meta+shift+f'], () => { this.bringToFront(); return false; });
+    this.graph.bindKey(['ctrl+shift+b', 'meta+shift+b'], () => { this.sendToBack(); return false; });
 
     // Share our viewport so followers can mirror it (follow-mode).
     this.graph.on('scale', () => this.broadcastViewport());
@@ -875,11 +882,11 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
 
   startDrag(block: BlockType, e: MouseEvent): void {
     if (block.shape) {
-      // Electrical schematic symbol — geometry/ports come from the registered shape
+      // Schematic symbol / basic shape — no default name label (start blank).
       const node = this.graph.createNode({
         shape: block.shape,
         data: { typeKey: block.key },
-        attrs: { label: { text: block.label } },
+        attrs: { label: { text: '' } },
       });
       this.dnd.start(node, e);
       return;
@@ -1621,9 +1628,20 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     const rect = this.canvasRef.nativeElement.getBoundingClientRect();
     const p = this.graph.clientToLocal(rect.left + rect.width / 2, rect.top + rect.height / 2);
     const node = this.graph.addNode(this.buildPartCardCell(part, p.x - 120, p.y - 70));
+    node.toFront(); // keep it on top of any block it's dropped over
     this.graph.resetSelection([node]);
     const name = part?.arwPartNum?.name || part?.suppPartNum?.name || 'part';
     this.notify.success(`Added "${name}"`);
+  }
+
+  /** Raise the selected cells above everything else. */
+  bringToFront(): void {
+    this.graph.getSelectedCells().forEach((c) => c.toFront());
+  }
+
+  /** Drop the selected cells behind everything else. */
+  sendToBack(): void {
+    this.graph.getSelectedCells().forEach((c) => c.toBack());
   }
 
   // ---------- draw.io interop ----------
