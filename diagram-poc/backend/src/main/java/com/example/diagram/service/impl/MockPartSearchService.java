@@ -6,6 +6,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +23,8 @@ import java.io.InputStream;
 @ConditionalOnProperty(name = "arrow.mock", havingValue = "true")
 public class MockPartSearchService implements PartSearchService {
 
+    private static final Logger log = LoggerFactory.getLogger(MockPartSearchService.class);
+
     private final ObjectMapper objectMapper;
     private final JsonNode catalogue;
 
@@ -30,6 +35,11 @@ public class MockPartSearchService implements PartSearchService {
         } catch (Exception ex) {
             throw new IllegalStateException("Could not load sample-parts.json", ex);
         }
+    }
+
+    @PostConstruct
+    void announce() {
+        log.info("Parts search: MOCK mode — serving the bundled sample catalogue (arrow.mock=true).");
     }
 
     @Override
