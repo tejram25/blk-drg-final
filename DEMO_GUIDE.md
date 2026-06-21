@@ -237,3 +237,12 @@ If the dev server shows `504 (Outdated Optimize Dep)`, clear the Vite cache:
 
 > Have `arrow.mock=true` set so parts search works offline. Sample parts to search:
 > `INA250A3PWR`, `LM317`, `ESP32`, or keywords `amplifier`, `regulator`, `capacitor`, `diode`.
+
+### Ready-made BOM sample (no setup)
+For a zero-setup BOM demo, import `diagram-poc/samples/bom-demo.json`
+(**Import → JSON**). It's a finished diagram: 12 catalogue **part cards** arranged
+inside three labelled group shapes (*Power Supply*, *Sensing & Comms*,
+*Compute & Motor Control*), with deliberate duplicates. **Export → Bill of
+Materials (CSV)** then shows **6 grouped lines** — e.g. the 0.1µF capacitor at
+**Qty 4**, INA250 / DS91C176 / LM317 at **Qty 2** — demonstrating the quantity
+tally. Regenerate it any time with `node diagram-poc/samples/gen-bom-demo.mjs`.

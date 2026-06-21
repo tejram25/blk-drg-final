@@ -1,0 +1,1196 @@
+{
+  "cells": [
+    {
+      "id": "text-1",
+      "shape": "basic-text",
+      "x": 40,
+      "y": 24,
+      "width": 760,
+      "height": 36,
+      "zIndex": 1,
+      "attrs": {
+        "label": {
+          "text": "AMR Robot — Bill of Materials demo",
+          "fill": "#0f172a",
+          "fontSize": 22,
+          "fontWeight": 700,
+          "textAnchor": "start",
+          "refX": 0
+        }
+      }
+    },
+    {
+      "id": "group-2",
+      "shape": "basic-rounded",
+      "x": 40,
+      "y": 84,
+      "width": 560,
+      "height": 400,
+      "zIndex": 1,
+      "attrs": {
+        "body": {
+          "fill": "#eef6ff",
+          "stroke": "#cbd5e1",
+          "strokeWidth": 1.5
+        },
+        "label": {
+          "text": "Power Supply",
+          "fill": "#0f172a",
+          "fontSize": 16,
+          "fontWeight": 700,
+          "refY": 24,
+          "refY2": 0,
+          "textVerticalAnchor": "middle"
+        }
+      }
+    },
+    {
+      "id": "part-3",
+      "shape": "part-card",
+      "x": 68,
+      "y": 140,
+      "width": 240,
+      "height": 140,
+      "zIndex": 20,
+      "data": {
+        "typeKey": "part",
+        "part": {
+          "partKey": "300220088",
+          "arwPartNum": {
+            "name": "LM317T"
+          },
+          "suppPartNum": {
+            "name": "LM317T"
+          },
+          "supp": {
+            "cd": "Arrow",
+            "name": "Arrow"
+          },
+          "mfr": {
+            "cd": "STM",
+            "name": "STMicroelectronics"
+          },
+          "icc": {
+            "name": "Linear Regulator"
+          },
+          "invOrgs": [
+            {
+              "desc": "Adjustable Positive Voltage Regulator, 1.5A, TO-220"
+            }
+          ],
+          "paramData": [
+            {
+              "name": "Type",
+              "val": "Adjustable LDO Regulator",
+              "uom": " "
+            },
+            {
+              "name": "Single Supply Voltage (Min)",
+              "val": "1.25",
+              "uom": "V"
+            },
+            {
+              "name": "Single Supply Voltage (Max)",
+              "val": "37",
+              "uom": "V"
+            },
+            {
+              "name": "Pin Count",
+              "val": "3",
+              "uom": " "
+            },
+            {
+              "name": "Package Type",
+              "val": "TO-220",
+              "uom": " "
+            }
+          ]
+        }
+      },
+      "attrs": {
+        "tip": {
+          "text": "Adjustable Positive Voltage Regulator, 1.5A, TO-220"
+        },
+        "img": {
+          "xlink:href": "",
+          "opacity": 0
+        },
+        "title": {
+          "text": "LM317T"
+        },
+        "supplier": {
+          "text": "Arrow"
+        },
+        "spec0": {
+          "text": "Type: Adjustable LDO Regulator"
+        },
+        "spec1": {
+          "text": "Supply: 1.25 V – 37 V"
+        },
+        "spec2": {
+          "text": "Pkg: 3-pin TO-220"
+        },
+        "spec3": {
+          "text": ""
+        }
+      }
+    },
+    {
+      "id": "part-4",
+      "shape": "part-card",
+      "x": 332,
+      "y": 140,
+      "width": 240,
+      "height": 140,
+      "zIndex": 20,
+      "data": {
+        "typeKey": "part",
+        "part": {
+          "partKey": "300220088",
+          "arwPartNum": {
+            "name": "LM317T"
+          },
+          "suppPartNum": {
+            "name": "LM317T"
+          },
+          "supp": {
+            "cd": "Arrow",
+            "name": "Arrow"
+          },
+          "mfr": {
+            "cd": "STM",
+            "name": "STMicroelectronics"
+          },
+          "icc": {
+            "name": "Linear Regulator"
+          },
+          "invOrgs": [
+            {
+              "desc": "Adjustable Positive Voltage Regulator, 1.5A, TO-220"
+            }
+          ],
+          "paramData": [
+            {
+              "name": "Type",
+              "val": "Adjustable LDO Regulator",
+              "uom": " "
+            },
+            {
+              "name": "Single Supply Voltage (Min)",
+              "val": "1.25",
+              "uom": "V"
+            },
+            {
+              "name": "Single Supply Voltage (Max)",
+              "val": "37",
+              "uom": "V"
+            },
+            {
+              "name": "Pin Count",
+              "val": "3",
+              "uom": " "
+            },
+            {
+              "name": "Package Type",
+              "val": "TO-220",
+              "uom": " "
+            }
+          ]
+        }
+      },
+      "attrs": {
+        "tip": {
+          "text": "Adjustable Positive Voltage Regulator, 1.5A, TO-220"
+        },
+        "img": {
+          "xlink:href": "",
+          "opacity": 0
+        },
+        "title": {
+          "text": "LM317T"
+        },
+        "supplier": {
+          "text": "Arrow"
+        },
+        "spec0": {
+          "text": "Type: Adjustable LDO Regulator"
+        },
+        "spec1": {
+          "text": "Supply: 1.25 V – 37 V"
+        },
+        "spec2": {
+          "text": "Pkg: 3-pin TO-220"
+        },
+        "spec3": {
+          "text": ""
+        }
+      }
+    },
+    {
+      "id": "part-5",
+      "shape": "part-card",
+      "x": 68,
+      "y": 304,
+      "width": 240,
+      "height": 140,
+      "zIndex": 20,
+      "data": {
+        "typeKey": "part",
+        "part": {
+          "partKey": "500440022",
+          "arwPartNum": {
+            "name": "GRM188R71H104KA93D"
+          },
+          "suppPartNum": {
+            "name": "GRM188R71H104KA93D"
+          },
+          "supp": {
+            "cd": "Digi-Key",
+            "name": "Digi-Key"
+          },
+          "mfr": {
+            "cd": "MUR",
+            "name": "Murata"
+          },
+          "icc": {
+            "name": "Ceramic Capacitor"
+          },
+          "invOrgs": [
+            {
+              "desc": "0.1uF 50V X7R 0603 Ceramic Capacitor"
+            }
+          ],
+          "paramData": [
+            {
+              "name": "Type",
+              "val": "MLCC Capacitor",
+              "uom": " "
+            },
+            {
+              "name": "Package Type",
+              "val": "0603",
+              "uom": " "
+            }
+          ]
+        }
+      },
+      "attrs": {
+        "tip": {
+          "text": "0.1uF 50V X7R 0603 Ceramic Capacitor"
+        },
+        "img": {
+          "xlink:href": "",
+          "opacity": 0
+        },
+        "title": {
+          "text": "GRM188R71H104KA93D"
+        },
+        "supplier": {
+          "text": "Digi-Key"
+        },
+        "spec0": {
+          "text": "Type: MLCC Capacitor"
+        },
+        "spec1": {
+          "text": "Pkg: 0603"
+        },
+        "spec2": {
+          "text": ""
+        },
+        "spec3": {
+          "text": ""
+        }
+      }
+    },
+    {
+      "id": "part-6",
+      "shape": "part-card",
+      "x": 332,
+      "y": 304,
+      "width": 240,
+      "height": 140,
+      "zIndex": 20,
+      "data": {
+        "typeKey": "part",
+        "part": {
+          "partKey": "600550033",
+          "arwPartNum": {
+            "name": "BAV23S"
+          },
+          "suppPartNum": {
+            "name": "BAV23S"
+          },
+          "supp": {
+            "cd": "Arrow",
+            "name": "Arrow"
+          },
+          "mfr": {
+            "cd": "ONSEMI",
+            "name": "onsemi"
+          },
+          "icc": {
+            "name": "Switching Diode"
+          },
+          "invOrgs": [
+            {
+              "desc": "Dual Series Switching Diode, 200V, SOT-23"
+            }
+          ],
+          "paramData": [
+            {
+              "name": "Type",
+              "val": "Switching Diode",
+              "uom": " "
+            },
+            {
+              "name": "Pin Count",
+              "val": "3",
+              "uom": " "
+            },
+            {
+              "name": "Package Type",
+              "val": "SOT-23",
+              "uom": " "
+            }
+          ]
+        }
+      },
+      "attrs": {
+        "tip": {
+          "text": "Dual Series Switching Diode, 200V, SOT-23"
+        },
+        "img": {
+          "xlink:href": "",
+          "opacity": 0
+        },
+        "title": {
+          "text": "BAV23S"
+        },
+        "supplier": {
+          "text": "Arrow"
+        },
+        "spec0": {
+          "text": "Type: Switching Diode"
+        },
+        "spec1": {
+          "text": "Pkg: 3-pin SOT-23"
+        },
+        "spec2": {
+          "text": ""
+        },
+        "spec3": {
+          "text": ""
+        }
+      }
+    },
+    {
+      "id": "group-7",
+      "shape": "basic-rounded",
+      "x": 660,
+      "y": 84,
+      "width": 560,
+      "height": 400,
+      "zIndex": 1,
+      "attrs": {
+        "body": {
+          "fill": "#f3fbf6",
+          "stroke": "#cbd5e1",
+          "strokeWidth": 1.5
+        },
+        "label": {
+          "text": "Sensing & Comms",
+          "fill": "#0f172a",
+          "fontSize": 16,
+          "fontWeight": 700,
+          "refY": 24,
+          "refY2": 0,
+          "textVerticalAnchor": "middle"
+        }
+      }
+    },
+    {
+      "id": "part-8",
+      "shape": "part-card",
+      "x": 688,
+      "y": 140,
+      "width": 240,
+      "height": 140,
+      "zIndex": 20,
+      "data": {
+        "typeKey": "part",
+        "part": {
+          "partKey": "104677992",
+          "arwPartNum": {
+            "name": "INA250A3PWR"
+          },
+          "suppPartNum": {
+            "name": "INA250A3PWR"
+          },
+          "supp": {
+            "cd": "Texas Instruments|TI",
+            "name": "Texas Instruments"
+          },
+          "mfr": {
+            "cd": "TI",
+            "name": "Texas Instruments"
+          },
+          "icc": {
+            "name": "Amplifier - Special Purpose"
+          },
+          "invOrgs": [
+            {
+              "desc": "Current Sense Amplifier, Single, 36V, Automotive, 16-Pin TSSOP"
+            }
+          ],
+          "paramData": [
+            {
+              "name": "Type",
+              "val": "Current Sense Amplifier",
+              "uom": " "
+            },
+            {
+              "name": "Number of Channels",
+              "val": "1",
+              "uom": " "
+            },
+            {
+              "name": "Single Supply Voltage (Min)",
+              "val": "2.7",
+              "uom": "V"
+            },
+            {
+              "name": "Single Supply Voltage (Max)",
+              "val": "36",
+              "uom": "V"
+            },
+            {
+              "name": "Operating Temp Range",
+              "val": "-40C to 125C",
+              "uom": " "
+            },
+            {
+              "name": "Pin Count",
+              "val": "16",
+              "uom": " "
+            },
+            {
+              "name": "Package Type",
+              "val": "TSSOP",
+              "uom": " "
+            }
+          ]
+        }
+      },
+      "attrs": {
+        "tip": {
+          "text": "Current Sense Amplifier, Single, 36V, Automotive, 16-Pin TSSOP"
+        },
+        "img": {
+          "xlink:href": "",
+          "opacity": 0
+        },
+        "title": {
+          "text": "INA250A3PWR"
+        },
+        "supplier": {
+          "text": "Texas Instruments"
+        },
+        "spec0": {
+          "text": "Type: Current Sense Amplifier"
+        },
+        "spec1": {
+          "text": "Supply: 2.7 V – 36 V"
+        },
+        "spec2": {
+          "text": "Channels: 1"
+        },
+        "spec3": {
+          "text": "Temp: -40C to 125C"
+        }
+      }
+    },
+    {
+      "id": "part-9",
+      "shape": "part-card",
+      "x": 952,
+      "y": 140,
+      "width": 240,
+      "height": 140,
+      "zIndex": 20,
+      "data": {
+        "typeKey": "part",
+        "part": {
+          "partKey": "104677992",
+          "arwPartNum": {
+            "name": "INA250A3PWR"
+          },
+          "suppPartNum": {
+            "name": "INA250A3PWR"
+          },
+          "supp": {
+            "cd": "Texas Instruments|TI",
+            "name": "Texas Instruments"
+          },
+          "mfr": {
+            "cd": "TI",
+            "name": "Texas Instruments"
+          },
+          "icc": {
+            "name": "Amplifier - Special Purpose"
+          },
+          "invOrgs": [
+            {
+              "desc": "Current Sense Amplifier, Single, 36V, Automotive, 16-Pin TSSOP"
+            }
+          ],
+          "paramData": [
+            {
+              "name": "Type",
+              "val": "Current Sense Amplifier",
+              "uom": " "
+            },
+            {
+              "name": "Number of Channels",
+              "val": "1",
+              "uom": " "
+            },
+            {
+              "name": "Single Supply Voltage (Min)",
+              "val": "2.7",
+              "uom": "V"
+            },
+            {
+              "name": "Single Supply Voltage (Max)",
+              "val": "36",
+              "uom": "V"
+            },
+            {
+              "name": "Operating Temp Range",
+              "val": "-40C to 125C",
+              "uom": " "
+            },
+            {
+              "name": "Pin Count",
+              "val": "16",
+              "uom": " "
+            },
+            {
+              "name": "Package Type",
+              "val": "TSSOP",
+              "uom": " "
+            }
+          ]
+        }
+      },
+      "attrs": {
+        "tip": {
+          "text": "Current Sense Amplifier, Single, 36V, Automotive, 16-Pin TSSOP"
+        },
+        "img": {
+          "xlink:href": "",
+          "opacity": 0
+        },
+        "title": {
+          "text": "INA250A3PWR"
+        },
+        "supplier": {
+          "text": "Texas Instruments"
+        },
+        "spec0": {
+          "text": "Type: Current Sense Amplifier"
+        },
+        "spec1": {
+          "text": "Supply: 2.7 V – 36 V"
+        },
+        "spec2": {
+          "text": "Channels: 1"
+        },
+        "spec3": {
+          "text": "Temp: -40C to 125C"
+        }
+      }
+    },
+    {
+      "id": "part-10",
+      "shape": "part-card",
+      "x": 688,
+      "y": 304,
+      "width": 240,
+      "height": 140,
+      "zIndex": 20,
+      "data": {
+        "typeKey": "part",
+        "part": {
+          "partKey": "200110045",
+          "arwPartNum": {
+            "name": "DS91C176TMA/NOPB"
+          },
+          "suppPartNum": {
+            "name": "DS91C176TMA"
+          },
+          "supp": {
+            "cd": "Texas Instruments|TI",
+            "name": "Texas Instruments"
+          },
+          "mfr": {
+            "cd": "TI",
+            "name": "Texas Instruments"
+          },
+          "icc": {
+            "name": "Transceiver"
+          },
+          "invOrgs": [
+            {
+              "desc": "Multipoint LVDS Transceiver, 8-Pin SOIC"
+            }
+          ],
+          "paramData": [
+            {
+              "name": "Type",
+              "val": "LVDS Transceiver",
+              "uom": " "
+            },
+            {
+              "name": "Number of Channels",
+              "val": "1",
+              "uom": " "
+            },
+            {
+              "name": "Single Supply Voltage (Min)",
+              "val": "3",
+              "uom": "V"
+            },
+            {
+              "name": "Single Supply Voltage (Max)",
+              "val": "3.6",
+              "uom": "V"
+            },
+            {
+              "name": "Pin Count",
+              "val": "8",
+              "uom": " "
+            },
+            {
+              "name": "Package Type",
+              "val": "SOIC",
+              "uom": " "
+            }
+          ]
+        }
+      },
+      "attrs": {
+        "tip": {
+          "text": "Multipoint LVDS Transceiver, 8-Pin SOIC"
+        },
+        "img": {
+          "xlink:href": "",
+          "opacity": 0
+        },
+        "title": {
+          "text": "DS91C176TMA/NOPB"
+        },
+        "supplier": {
+          "text": "Texas Instruments"
+        },
+        "spec0": {
+          "text": "Type: LVDS Transceiver"
+        },
+        "spec1": {
+          "text": "Supply: 3 V – 3.6 V"
+        },
+        "spec2": {
+          "text": "Channels: 1"
+        },
+        "spec3": {
+          "text": "Pkg: 8-pin SOIC"
+        }
+      }
+    },
+    {
+      "id": "part-11",
+      "shape": "part-card",
+      "x": 952,
+      "y": 304,
+      "width": 240,
+      "height": 140,
+      "zIndex": 20,
+      "data": {
+        "typeKey": "part",
+        "part": {
+          "partKey": "500440022",
+          "arwPartNum": {
+            "name": "GRM188R71H104KA93D"
+          },
+          "suppPartNum": {
+            "name": "GRM188R71H104KA93D"
+          },
+          "supp": {
+            "cd": "Digi-Key",
+            "name": "Digi-Key"
+          },
+          "mfr": {
+            "cd": "MUR",
+            "name": "Murata"
+          },
+          "icc": {
+            "name": "Ceramic Capacitor"
+          },
+          "invOrgs": [
+            {
+              "desc": "0.1uF 50V X7R 0603 Ceramic Capacitor"
+            }
+          ],
+          "paramData": [
+            {
+              "name": "Type",
+              "val": "MLCC Capacitor",
+              "uom": " "
+            },
+            {
+              "name": "Package Type",
+              "val": "0603",
+              "uom": " "
+            }
+          ]
+        }
+      },
+      "attrs": {
+        "tip": {
+          "text": "0.1uF 50V X7R 0603 Ceramic Capacitor"
+        },
+        "img": {
+          "xlink:href": "",
+          "opacity": 0
+        },
+        "title": {
+          "text": "GRM188R71H104KA93D"
+        },
+        "supplier": {
+          "text": "Digi-Key"
+        },
+        "spec0": {
+          "text": "Type: MLCC Capacitor"
+        },
+        "spec1": {
+          "text": "Pkg: 0603"
+        },
+        "spec2": {
+          "text": ""
+        },
+        "spec3": {
+          "text": ""
+        }
+      }
+    },
+    {
+      "id": "group-12",
+      "shape": "basic-rounded",
+      "x": 1280,
+      "y": 84,
+      "width": 560,
+      "height": 400,
+      "zIndex": 1,
+      "attrs": {
+        "body": {
+          "fill": "#fff7ed",
+          "stroke": "#cbd5e1",
+          "strokeWidth": 1.5
+        },
+        "label": {
+          "text": "Compute & Motor Control",
+          "fill": "#0f172a",
+          "fontSize": 16,
+          "fontWeight": 700,
+          "refY": 24,
+          "refY2": 0,
+          "textVerticalAnchor": "middle"
+        }
+      }
+    },
+    {
+      "id": "part-13",
+      "shape": "part-card",
+      "x": 1308,
+      "y": 140,
+      "width": 240,
+      "height": 140,
+      "zIndex": 20,
+      "data": {
+        "typeKey": "part",
+        "part": {
+          "partKey": "400330011",
+          "arwPartNum": {
+            "name": "ESP32-WROOM-32"
+          },
+          "suppPartNum": {
+            "name": "ESP32-WROOM-32"
+          },
+          "supp": {
+            "cd": "Mouser",
+            "name": "Mouser"
+          },
+          "mfr": {
+            "cd": "ESP",
+            "name": "Espressif Systems"
+          },
+          "icc": {
+            "name": "Wireless Module"
+          },
+          "invOrgs": [
+            {
+              "desc": "Wi-Fi + Bluetooth/BLE MCU Module, PCB Antenna"
+            }
+          ],
+          "paramData": [
+            {
+              "name": "Type",
+              "val": "Wi-Fi/BLE MCU Module",
+              "uom": " "
+            },
+            {
+              "name": "Single Supply Voltage (Min)",
+              "val": "3.0",
+              "uom": "V"
+            },
+            {
+              "name": "Single Supply Voltage (Max)",
+              "val": "3.6",
+              "uom": "V"
+            },
+            {
+              "name": "Pin Count",
+              "val": "38",
+              "uom": " "
+            },
+            {
+              "name": "Package Type",
+              "val": "SMD Module",
+              "uom": " "
+            }
+          ]
+        }
+      },
+      "attrs": {
+        "tip": {
+          "text": "Wi-Fi + Bluetooth/BLE MCU Module, PCB Antenna"
+        },
+        "img": {
+          "xlink:href": "",
+          "opacity": 0
+        },
+        "title": {
+          "text": "ESP32-WROOM-32"
+        },
+        "supplier": {
+          "text": "Mouser"
+        },
+        "spec0": {
+          "text": "Type: Wi-Fi/BLE MCU Module"
+        },
+        "spec1": {
+          "text": "Supply: 3.0 V – 3.6 V"
+        },
+        "spec2": {
+          "text": "Pkg: 38-pin SMD Module"
+        },
+        "spec3": {
+          "text": ""
+        }
+      }
+    },
+    {
+      "id": "part-14",
+      "shape": "part-card",
+      "x": 1572,
+      "y": 140,
+      "width": 240,
+      "height": 140,
+      "zIndex": 20,
+      "data": {
+        "typeKey": "part",
+        "part": {
+          "partKey": "500440022",
+          "arwPartNum": {
+            "name": "GRM188R71H104KA93D"
+          },
+          "suppPartNum": {
+            "name": "GRM188R71H104KA93D"
+          },
+          "supp": {
+            "cd": "Digi-Key",
+            "name": "Digi-Key"
+          },
+          "mfr": {
+            "cd": "MUR",
+            "name": "Murata"
+          },
+          "icc": {
+            "name": "Ceramic Capacitor"
+          },
+          "invOrgs": [
+            {
+              "desc": "0.1uF 50V X7R 0603 Ceramic Capacitor"
+            }
+          ],
+          "paramData": [
+            {
+              "name": "Type",
+              "val": "MLCC Capacitor",
+              "uom": " "
+            },
+            {
+              "name": "Package Type",
+              "val": "0603",
+              "uom": " "
+            }
+          ]
+        }
+      },
+      "attrs": {
+        "tip": {
+          "text": "0.1uF 50V X7R 0603 Ceramic Capacitor"
+        },
+        "img": {
+          "xlink:href": "",
+          "opacity": 0
+        },
+        "title": {
+          "text": "GRM188R71H104KA93D"
+        },
+        "supplier": {
+          "text": "Digi-Key"
+        },
+        "spec0": {
+          "text": "Type: MLCC Capacitor"
+        },
+        "spec1": {
+          "text": "Pkg: 0603"
+        },
+        "spec2": {
+          "text": ""
+        },
+        "spec3": {
+          "text": ""
+        }
+      }
+    },
+    {
+      "id": "part-15",
+      "shape": "part-card",
+      "x": 1308,
+      "y": 304,
+      "width": 240,
+      "height": 140,
+      "zIndex": 20,
+      "data": {
+        "typeKey": "part",
+        "part": {
+          "partKey": "500440022",
+          "arwPartNum": {
+            "name": "GRM188R71H104KA93D"
+          },
+          "suppPartNum": {
+            "name": "GRM188R71H104KA93D"
+          },
+          "supp": {
+            "cd": "Digi-Key",
+            "name": "Digi-Key"
+          },
+          "mfr": {
+            "cd": "MUR",
+            "name": "Murata"
+          },
+          "icc": {
+            "name": "Ceramic Capacitor"
+          },
+          "invOrgs": [
+            {
+              "desc": "0.1uF 50V X7R 0603 Ceramic Capacitor"
+            }
+          ],
+          "paramData": [
+            {
+              "name": "Type",
+              "val": "MLCC Capacitor",
+              "uom": " "
+            },
+            {
+              "name": "Package Type",
+              "val": "0603",
+              "uom": " "
+            }
+          ]
+        }
+      },
+      "attrs": {
+        "tip": {
+          "text": "0.1uF 50V X7R 0603 Ceramic Capacitor"
+        },
+        "img": {
+          "xlink:href": "",
+          "opacity": 0
+        },
+        "title": {
+          "text": "GRM188R71H104KA93D"
+        },
+        "supplier": {
+          "text": "Digi-Key"
+        },
+        "spec0": {
+          "text": "Type: MLCC Capacitor"
+        },
+        "spec1": {
+          "text": "Pkg: 0603"
+        },
+        "spec2": {
+          "text": ""
+        },
+        "spec3": {
+          "text": ""
+        }
+      }
+    },
+    {
+      "id": "part-16",
+      "shape": "part-card",
+      "x": 1572,
+      "y": 304,
+      "width": 240,
+      "height": 140,
+      "zIndex": 20,
+      "data": {
+        "typeKey": "part",
+        "part": {
+          "partKey": "200110045",
+          "arwPartNum": {
+            "name": "DS91C176TMA/NOPB"
+          },
+          "suppPartNum": {
+            "name": "DS91C176TMA"
+          },
+          "supp": {
+            "cd": "Texas Instruments|TI",
+            "name": "Texas Instruments"
+          },
+          "mfr": {
+            "cd": "TI",
+            "name": "Texas Instruments"
+          },
+          "icc": {
+            "name": "Transceiver"
+          },
+          "invOrgs": [
+            {
+              "desc": "Multipoint LVDS Transceiver, 8-Pin SOIC"
+            }
+          ],
+          "paramData": [
+            {
+              "name": "Type",
+              "val": "LVDS Transceiver",
+              "uom": " "
+            },
+            {
+              "name": "Number of Channels",
+              "val": "1",
+              "uom": " "
+            },
+            {
+              "name": "Single Supply Voltage (Min)",
+              "val": "3",
+              "uom": "V"
+            },
+            {
+              "name": "Single Supply Voltage (Max)",
+              "val": "3.6",
+              "uom": "V"
+            },
+            {
+              "name": "Pin Count",
+              "val": "8",
+              "uom": " "
+            },
+            {
+              "name": "Package Type",
+              "val": "SOIC",
+              "uom": " "
+            }
+          ]
+        }
+      },
+      "attrs": {
+        "tip": {
+          "text": "Multipoint LVDS Transceiver, 8-Pin SOIC"
+        },
+        "img": {
+          "xlink:href": "",
+          "opacity": 0
+        },
+        "title": {
+          "text": "DS91C176TMA/NOPB"
+        },
+        "supplier": {
+          "text": "Texas Instruments"
+        },
+        "spec0": {
+          "text": "Type: LVDS Transceiver"
+        },
+        "spec1": {
+          "text": "Supply: 3 V – 3.6 V"
+        },
+        "spec2": {
+          "text": "Channels: 1"
+        },
+        "spec3": {
+          "text": "Pkg: 8-pin SOIC"
+        }
+      }
+    },
+    {
+      "id": "edge-17",
+      "shape": "edge",
+      "zIndex": 2,
+      "source": {
+        "cell": "group-2"
+      },
+      "target": {
+        "cell": "group-7"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#64748b",
+          "strokeWidth": 2,
+          "strokeDasharray": "6 4",
+          "targetMarker": {
+            "name": "block",
+            "width": 10,
+            "height": 8
+          }
+        }
+      }
+    },
+    {
+      "id": "edge-18",
+      "shape": "edge",
+      "zIndex": 2,
+      "source": {
+        "cell": "group-7"
+      },
+      "target": {
+        "cell": "group-12"
+      },
+      "attrs": {
+        "line": {
+          "stroke": "#64748b",
+          "strokeWidth": 2,
+          "strokeDasharray": "6 4",
+          "targetMarker": {
+            "name": "block",
+            "width": 10,
+            "height": 8
+          }
+        }
+      }
+    }
+  ]
+}
