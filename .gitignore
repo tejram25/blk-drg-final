@@ -7,6 +7,10 @@ coverage/
 # Java / Maven
 target/
 
+# H2 database files (generated at runtime; never commit DB state or its lock file)
+data/
+**/data/*.db
+
 # Logs & OS cruft
 *.log
 .DS_Store
