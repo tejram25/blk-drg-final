@@ -568,10 +568,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       }))
       .use(new Transform({
         resizing: {
-          // Structured cards (part-card / block-card) have fixed text layouts,
-          // so resizing them just clips the text — keep them at their set size.
-          enabled: (node: Node) => node.shape !== 'part-card' && node.shape !== 'block-card',
-          minWidth: 30, minHeight: 24,
+          enabled: true, minWidth: 30, minHeight: 24,
           // keep imported pictures (and squares/circles) from being squashed
           preserveAspectRatio: (node: Node) =>
             node.shape === 'img-node' || !!BASIC_SHAPES[node.shape]?.keepRatio,
@@ -588,7 +585,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
 
     // Symbol drawings (elec-*/anim-*) use fixed coordinates, so scale the
     // wrapper group whenever the node is resized.
-    this.graph.on('node:change:size', ({ node }) => this.syncSymbolScale(node));
+    this.graph.on('node:change:size', ({ node }) => { this.syncSymbolScale(node); this.scaleCard(node); });
 
     this.dnd = new Dnd({ target: this.graph });
 
@@ -761,6 +758,37 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     if (!def) return;
     const { width, height } = node.getSize();
     node.attr('wrap/transform', `scale(${width / def.width},${height / def.height})`);
+  }
+
+  /**
+   * Scale a structured card's text/image with the box so resizing grows the
+   * content too, instead of clipping it. Positions/sizes are derived from the
+   * card's design size (part-card 240x140, block-card 160x56).
+   */
+  private scaleCard(node: Node): void {
+    const { width, height } = node.getSize();
+    if (node.shape === 'part-card') {
+      const sx = width / 240, sy = height / 140, s = Math.min(sx, sy);
+      node.attr('accent/height', 6 * sy);
+      node.attr('img/y', 16 * sy);
+      node.attr('img/width', 52 * s);
+      node.attr('img/height', 52 * s);
+      node.attr('img/refX2', -64 * sx);
+      node.attr('title/x', 14 * sx); node.attr('title/y', 30 * sy); node.attr('title/fontSize', 13 * s);
+      node.attr('supplier/x', 14 * sx); node.attr('supplier/y', 48 * sy); node.attr('supplier/fontSize', 10.5 * s);
+      [72, 90, 108, 126].forEach((y, i) => {
+        node.attr(`spec${i}/x`, 14 * sx);
+        node.attr(`spec${i}/y`, y * sy);
+        node.attr(`spec${i}/fontSize`, 10.5 * s);
+      });
+    } else if (node.shape === 'block-card') {
+      const sx = width / 160, sy = height / 56, s = Math.min(sx, sy);
+      node.attr('badge/x', 10 * sx); node.attr('badge/y', 10 * sy);
+      node.attr('badge/width', 36 * s); node.attr('badge/height', 36 * s);
+      node.attr('icon/x', 28 * sx); node.attr('icon/y', 35 * sy); node.attr('icon/fontSize', 20 * s);
+      node.attr('title/x', 56 * sx); node.attr('title/y', 27 * sy); node.attr('title/fontSize', 12.5 * s);
+      node.attr('subtitle/x', 56 * sx); node.attr('subtitle/y', 42 * sy); node.attr('subtitle/fontSize', 10 * s);
+    }
   }
 
   symbolViewBox(shape: string): string {
