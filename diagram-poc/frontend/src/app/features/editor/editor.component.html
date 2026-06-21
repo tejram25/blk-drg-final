@@ -44,8 +44,8 @@
             </div>
           </div>
         </div>
-        <button mat-stroked-button (click)="newDiagram()"><span>{{ 'btn.new' | translate }}</span></button>
-        <button mat-flat-button (click)="save()"><span>{{ 'btn.save' | translate }}</span></button>
+        <button mat-stroked-button class="lbl-btn" (click)="newDiagram()"><span>{{ 'btn.new' | translate }}</span></button>
+        <button mat-flat-button class="lbl-btn" (click)="save()"><span>{{ 'btn.save' | translate }}</span></button>
 
         <span class="spacer"></span>
 
@@ -172,7 +172,7 @@
           <button mat-stroked-button (click)="langMenuOpen = !langMenuOpen"
                   [matTooltip]="'lang.tooltip' | translate">
             <mat-icon>language</mat-icon>
-            {{ currentLangLabel }}
+            <span class="lang-label">{{ currentLangLabel }}</span>
             <mat-icon class="lang-caret">arrow_drop_down</mat-icon>
           </button>
           <div class="lang-menu" *ngIf="langMenuOpen">
