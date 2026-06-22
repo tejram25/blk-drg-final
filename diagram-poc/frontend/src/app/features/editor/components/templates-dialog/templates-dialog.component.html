@@ -82,7 +82,7 @@
               <mat-icon>edit</mat-icon> Improve
             </button>
             <button type="button" class="tpl-del" matTooltip="Delete template"
-                    (click)="deleteTemplate(t, $event)">
+                    (click)="askDelete(t, $event)">
               <mat-icon>delete_outline</mat-icon>
             </button>
           </div>
@@ -91,3 +91,9 @@
     </div>
   </div>
 </div>
+
+<!-- Delete confirmation (separate root so its events don't close the gallery) -->
+<app-confirm-dialog *ngIf="pendingDelete"
+  title="Delete template?" [message]="deleteMessage"
+  confirmLabel="Delete" [danger]="true"
+  (confirm)="confirmDelete()" (cancel)="cancelDelete()"></app-confirm-dialog>

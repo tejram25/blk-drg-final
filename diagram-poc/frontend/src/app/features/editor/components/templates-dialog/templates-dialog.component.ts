@@ -7,6 +7,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { TemplateDetail, TemplateService, TemplateSummary } from '../../../../core/services/template.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { StarRatingComponent } from '../../../../shared/components/star-rating/star-rating.component';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 /**
  * The shared template repository, in a dialog. Three things you can do:
@@ -19,7 +20,10 @@ import { StarRatingComponent } from '../../../../shared/components/star-rating/s
 @Component({
   selector: 'app-templates-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, StarRatingComponent],
+  imports: [
+    CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule,
+    StarRatingComponent, ConfirmDialogComponent,
+  ],
   templateUrl: './templates-dialog.component.html',
   styleUrls: ['./templates-dialog.component.css'],
 })
@@ -36,6 +40,8 @@ export class TemplatesDialogComponent implements OnInit {
   templates: TemplateSummary[] = [];
   loading = true;
   busyId: number | null = null;
+  /** Template awaiting delete confirmation (drives the shared confirm dialog). */
+  pendingDelete: TemplateSummary | null = null;
   /** Free-text filter across name / description / category. */
   query = '';
 
@@ -110,9 +116,27 @@ export class TemplatesDialogComponent implements OnInit {
     });
   }
 
-  deleteTemplate(t: TemplateSummary, event: MouseEvent): void {
+  /** Open the shared confirmation dialog for deleting a template. */
+  askDelete(t: TemplateSummary, event: MouseEvent): void {
     event.stopPropagation();
-    if (!confirm(`Delete the template "${t.name}"? This cannot be undone.`)) return;
+    this.pendingDelete = t;
+  }
+
+  /** Message for the confirm dialog. */
+  get deleteMessage(): string {
+    return `"${this.pendingDelete?.name}" will be permanently removed from the template repository. This can't be undone.`;
+  }
+
+  /** Dismiss the confirmation without deleting. */
+  cancelDelete(): void {
+    this.pendingDelete = null;
+  }
+
+  /** Delete the template confirmed in the dialog. */
+  confirmDelete(): void {
+    const t = this.pendingDelete;
+    this.pendingDelete = null;
+    if (!t) return;
     this.api.delete(t.id).subscribe({
       next: () => {
         this.templates = this.templates.filter((x) => x.id !== t.id);
