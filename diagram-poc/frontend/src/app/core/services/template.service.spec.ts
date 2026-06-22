@@ -54,6 +54,21 @@ describe('TemplateService', () => {
       contentJson: '{"cells":[]}', updatedAt: '', createdAt: '' });
   });
 
+  it('loads full reviews via GET /reviews', () => {
+    service.reviews(5).subscribe();
+    const req = http.expectOne(`${API}/templates/5/reviews`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ average: 0, count: 0, distribution: {}, mine: null, reviews: [] });
+  });
+
+  it('submits a review via POST /reviews', () => {
+    service.submitReview(5, 4, 'nice').subscribe();
+    const req = http.expectOne(`${API}/templates/5/reviews`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ rating: 4, comment: 'nice' });
+    req.flush({ average: 4, count: 1, distribution: { '4': 1 }, mine: { rating: 4, comment: 'nice' }, reviews: [] });
+  });
+
   it('deletes a template', () => {
     service.delete(9).subscribe();
     const req = http.expectOne(`${API}/templates/9`);

@@ -25,6 +25,16 @@ export interface ReviewSummary {
   count: number;
 }
 
+/**
+ * A pluggable backing for the reviews modal so the same component can show
+ * reviews for any subject (diagrams, templates, …) — Dependency Inversion: the
+ * dialog depends on this abstraction, not on a concrete service.
+ */
+export interface ReviewSource {
+  load(): Observable<ReviewData>;
+  submit(rating: number, comment: string): Observable<ReviewData>;
+}
+
 const API = apiBaseUrl();
 
 /** Ratings & comments for saved diagrams (kept separate from diagram CRUD). */

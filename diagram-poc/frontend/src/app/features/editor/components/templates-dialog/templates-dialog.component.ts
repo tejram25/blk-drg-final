@@ -8,6 +8,8 @@ import { TemplateDetail, TemplateService, TemplateSummary } from '../../../../co
 import { NotificationService } from '../../../../core/services/notification.service';
 import { StarRatingComponent } from '../../../../shared/components/star-rating/star-rating.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ReviewsDialogComponent } from '../reviews-dialog/reviews-dialog.component';
+import { ReviewSource } from '../../../../core/services/review.service';
 
 /**
  * The shared template repository, in a dialog. Three things you can do:
@@ -22,7 +24,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
   standalone: true,
   imports: [
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule,
-    StarRatingComponent, ConfirmDialogComponent,
+    StarRatingComponent, ConfirmDialogComponent, ReviewsDialogComponent,
   ],
   templateUrl: './templates-dialog.component.html',
   styleUrls: ['./templates-dialog.component.css'],
@@ -42,6 +44,9 @@ export class TemplatesDialogComponent implements OnInit {
   busyId: number | null = null;
   /** Template awaiting delete confirmation (drives the shared confirm dialog). */
   pendingDelete: TemplateSummary | null = null;
+  /** Reviews modal: the open template + its data source (reuses the diagram modal). */
+  reviewTarget: TemplateSummary | null = null;
+  reviewSource: ReviewSource | null = null;
   /** Free-text filter across name / description / category. */
   query = '';
 
@@ -103,7 +108,7 @@ export class TemplatesDialogComponent implements OnInit {
     });
   }
 
-  /** Submit/replace the current user's star rating for a template. */
+  /** Submit/replace the current user's star rating for a template (quick rate). */
   rate(t: TemplateSummary, stars: number): void {
     this.api.rate(t.id, stars).subscribe({
       next: (detail) => {
@@ -112,6 +117,34 @@ export class TemplatesDialogComponent implements OnInit {
         t.ratingCount = detail.ratingCount;
         t.myRating = detail.myRating;
         this.notify.success(`You rated "${t.name}" ${stars}★`);
+      },
+    });
+  }
+
+  /** Open the full reviews modal for a template (reuses the diagram reviews dialog). */
+  openReviews(t: TemplateSummary, event?: Event): void {
+    event?.stopPropagation();
+    this.reviewTarget = t;
+    this.reviewSource = {
+      load: () => this.api.reviews(t.id),
+      submit: (rating, comment) => this.api.submitReview(t.id, rating, comment),
+    };
+  }
+
+  closeReviews(): void {
+    this.reviewTarget = null;
+    this.reviewSource = null;
+  }
+
+  /** After a review is submitted, refresh the cards so averages/counts update. */
+  onReviewSaved(): void {
+    const t = this.reviewTarget;
+    if (!t) return;
+    this.api.get(t.id).subscribe({
+      next: (d) => {
+        t.avgRating = d.avgRating;
+        t.ratingCount = d.ratingCount;
+        t.myRating = d.myRating;
       },
     });
   }

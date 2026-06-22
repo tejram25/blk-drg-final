@@ -143,7 +143,20 @@
   gap: 6px 10px;
 }
 .tpl-rating-val { font-size: 11.5px; color: var(--muted, #94a3b8); }
-.tpl-unrated { color: var(--faint, #6b7280); font-style: italic; }
+.tpl-reviews-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--accent, #f5a623);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.tpl-reviews-link:hover { filter: brightness(1.15); }
+.tpl-unrated { color: var(--faint, #6b7280); font-style: italic; text-decoration: none; }
+.tpl-unrated:hover { color: var(--accent, #f5a623); }
 .tpl-rate { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; }
 .tpl-rate-label { font-size: 10.5px; color: var(--faint, #6b7280); white-space: nowrap; }
 

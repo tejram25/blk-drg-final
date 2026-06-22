@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { apiBaseUrl } from '../app-config';
+import { ReviewData } from './review.service';
 
 /** Lightweight template listing for the gallery (no heavy contentJson). */
 export interface TemplateSummary {
@@ -69,9 +70,19 @@ export class TemplateService {
     return this.http.put<TemplateDetail>(`${API}/templates/${id}`, request);
   }
 
-  /** Rate a template 1-5 stars (create or update the caller's rating). */
+  /** Rate a template 1-5 stars (quick rate, no comment). */
   rate(id: number, rating: number): Observable<TemplateDetail> {
     return this.http.post<TemplateDetail>(`${API}/templates/${id}/rating`, { rating });
+  }
+
+  /** Full review data (aggregate + your review + list) for one template. */
+  reviews(id: number): Observable<ReviewData> {
+    return this.http.get<ReviewData>(`${API}/templates/${id}/reviews`);
+  }
+
+  /** Create or update the current user's review (rating + comment) of a template. */
+  submitReview(id: number, rating: number, comment: string): Observable<ReviewData> {
+    return this.http.post<ReviewData>(`${API}/templates/${id}/reviews`, { rating, comment });
   }
 
   delete(id: number): Observable<void> {

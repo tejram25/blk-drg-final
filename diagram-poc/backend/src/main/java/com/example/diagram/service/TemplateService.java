@@ -3,6 +3,8 @@ package com.example.diagram.service;
 import com.example.diagram.web.dto.TemplateDetail;
 import com.example.diagram.web.dto.TemplateRequest;
 import com.example.diagram.web.dto.TemplateSummary;
+import com.example.diagram.web.dto.ReviewRequest;
+import com.example.diagram.web.dto.ReviewResponse;
 
 import java.util.List;
 
@@ -28,8 +30,14 @@ public interface TemplateService {
     /** Fetch a template's content and increment its usage count. */
     TemplateDetail use(Long id, String viewerEmail);
 
-    /** Create or update the viewer's 1-5 star rating of a template. */
+    /** Create or update the viewer's 1-5 star rating of a template (quick rate). */
     TemplateDetail rate(Long id, int stars, String viewerEmail);
+
+    /** Aggregate review data for a template (average, distribution, mine, list). */
+    ReviewResponse getReviews(Long id, String viewerEmail);
+
+    /** Create or update the viewer's full review (rating + comment) of a template. */
+    ReviewResponse submitReview(Long id, ReviewRequest request, String viewerEmail);
 
     void delete(Long id);
 }

@@ -531,6 +531,7 @@
       <!-- Reviews -->
       <app-reviews-dialog *ngIf="reviewTarget"
         [diagramId]="reviewTarget.id" [diagramName]="reviewTarget.name"
+        rateLabel="Rate this diagram"
         (saved)="refreshList()" (close)="closeReviews()"></app-reviews-dialog>
 
       <!-- Bill of Materials -->

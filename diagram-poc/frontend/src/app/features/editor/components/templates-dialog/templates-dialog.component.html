@@ -54,13 +54,15 @@
           </div>
           <p class="tpl-desc" *ngIf="t.description">{{ t.description }}</p>
 
-          <!-- Rating: community average + your own (click to rate) -->
+          <!-- Rating: community average (click the count to read all reviews) + quick rate -->
           <div class="tpl-rating">
             <app-star-rating [rating]="t.avgRating" [readonly]="true" size="sm"></app-star-rating>
-            <span class="tpl-rating-val" *ngIf="t.ratingCount">
-              {{ t.avgRating | number:'1.1-1' }} ({{ t.ratingCount }})
-            </span>
-            <span class="tpl-rating-val tpl-unrated" *ngIf="!t.ratingCount">Not rated</span>
+            <button type="button" class="tpl-reviews-link" *ngIf="t.ratingCount"
+                    matTooltip="Read reviews" (click)="openReviews(t, $event)">
+              {{ t.avgRating | number:'1.1-1' }} · {{ t.ratingCount }} review{{ t.ratingCount === 1 ? '' : 's' }}
+            </button>
+            <button type="button" class="tpl-reviews-link tpl-unrated" *ngIf="!t.ratingCount"
+                    (click)="openReviews(t, $event)">Be the first to review</button>
             <span class="tpl-rate">
               <span class="tpl-rate-label">{{ t.myRating ? 'Your rating' : 'Rate' }}</span>
               <app-star-rating [rating]="t.myRating" [readonly]="false" size="sm"
@@ -91,6 +93,11 @@
     </div>
   </div>
 </div>
+
+<!-- Reviews modal (separate root so it layers above the gallery) -->
+<app-reviews-dialog *ngIf="reviewTarget as t"
+  [source]="reviewSource!" [diagramName]="t.name" rateLabel="Review this template"
+  (saved)="onReviewSaved()" (close)="closeReviews()"></app-reviews-dialog>
 
 <!-- Delete confirmation (separate root so its events don't close the gallery) -->
 <app-confirm-dialog *ngIf="pendingDelete"

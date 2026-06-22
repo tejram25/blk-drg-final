@@ -1,6 +1,8 @@
 package com.example.diagram.web;
 
 import com.example.diagram.service.TemplateService;
+import com.example.diagram.web.dto.ReviewRequest;
+import com.example.diagram.web.dto.ReviewResponse;
 import com.example.diagram.web.dto.TemplateDetail;
 import com.example.diagram.web.dto.TemplateRatingRequest;
 import com.example.diagram.web.dto.TemplateRequest;
@@ -50,6 +52,20 @@ public class TemplateController {
                                Authentication auth) {
         int stars = request.rating() == null ? 0 : request.rating();
         return templates.rate(id, stars, email(auth));
+    }
+
+    /** Full reviews (average, distribution, the caller's own, and the list). */
+    @GetMapping("/{id}/reviews")
+    public ReviewResponse reviews(@PathVariable Long id, Authentication auth) {
+        return templates.getReviews(id, email(auth));
+    }
+
+    /** Create or update the caller's review (rating + comment) of a template. */
+    @PostMapping("/{id}/reviews")
+    public ReviewResponse review(@PathVariable Long id,
+                                 @RequestBody ReviewRequest request,
+                                 Authentication auth) {
+        return templates.submitReview(id, request, email(auth));
     }
 
     /** Publish the current canvas as a new template. */

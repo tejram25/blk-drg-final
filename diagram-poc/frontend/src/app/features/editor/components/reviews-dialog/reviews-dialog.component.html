@@ -28,7 +28,7 @@
 
       <!-- your review -->
       <div class="review-mine">
-        <span class="rm-label">{{ rd.mine ? 'Your review' : 'Rate this template' }}</span>
+        <span class="rm-label">{{ rd.mine ? 'Your review' : rateLabel }}</span>
         <app-star-rating [rating]="myRating" [readonly]="false" size="lg"
                          (ratingChange)="myRating = $event"></app-star-rating>
         <textarea class="rm-text" [(ngModel)]="myComment" rows="2"

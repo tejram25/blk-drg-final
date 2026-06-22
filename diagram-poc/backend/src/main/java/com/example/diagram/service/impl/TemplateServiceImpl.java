@@ -7,12 +7,17 @@ import com.example.diagram.repository.TemplateRatingRepository;
 import com.example.diagram.repository.TemplateRepository;
 import com.example.diagram.repository.UserRepository;
 import com.example.diagram.service.TemplateService;
+import com.example.diagram.web.dto.ReviewItemDto;
+import com.example.diagram.web.dto.ReviewRequest;
+import com.example.diagram.web.dto.ReviewResponse;
 import com.example.diagram.web.dto.TemplateDetail;
 import com.example.diagram.web.dto.TemplateRequest;
 import com.example.diagram.web.dto.TemplateSummary;
 import com.example.diagram.web.error.NotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -83,22 +88,87 @@ public class TemplateServiceImpl implements TemplateService {
         if (viewerEmail == null || viewerEmail.isBlank()) {
             throw new IllegalArgumentException("You must be signed in to rate a template.");
         }
-        TemplateRating rating = ratings.findByTemplateIdAndUserEmail(id, viewerEmail)
-                .orElseGet(() -> {
-                    TemplateRating r = new TemplateRating();
-                    r.setTemplateId(id);
-                    r.setUserEmail(viewerEmail);
-                    return r;
-                });
+        TemplateRating rating = upsert(id, viewerEmail);
         rating.setRating(stars);
+        rating.setUserName(displayName(viewerEmail));
         ratings.save(rating);
         return toDetail(template, viewerEmail);
+    }
+
+    @Override
+    public ReviewResponse getReviews(Long id, String viewerEmail) {
+        require(id); // 404 if the template is gone
+        return aggregate(id, viewerEmail);
+    }
+
+    @Override
+    public ReviewResponse submitReview(Long id, ReviewRequest request, String viewerEmail) {
+        require(id);
+        if (viewerEmail == null || viewerEmail.isBlank()) {
+            throw new IllegalArgumentException("You must be signed in to review a template.");
+        }
+        int stars = request.rating() == null ? 0 : request.rating();
+        if (stars < 1 || stars > 5) {
+            throw new IllegalArgumentException("Rating must be between 1 and 5.");
+        }
+        TemplateRating rating = upsert(id, viewerEmail);
+        rating.setRating(stars);
+        rating.setUserName(displayName(viewerEmail));
+        rating.setComment(trimComment(request.comment()));
+        ratings.save(rating);
+        return aggregate(id, viewerEmail);
     }
 
     @Override
     public void delete(Long id) {
         ratings.findByTemplateId(id).forEach(ratings::delete); // tidy up orphan ratings
         repository.deleteById(id);
+    }
+
+    /** Find the caller's existing rating row, or a new one stamped with identity. */
+    private TemplateRating upsert(Long templateId, String email) {
+        return ratings.findByTemplateIdAndUserEmail(templateId, email)
+                .orElseGet(() -> {
+                    TemplateRating r = new TemplateRating();
+                    r.setTemplateId(templateId);
+                    r.setUserEmail(email);
+                    return r;
+                });
+    }
+
+    /** Build ReviewResponse (reused from the diagram reviews) from rating rows. */
+    private ReviewResponse aggregate(Long templateId, String email) {
+        List<TemplateRating> list = ratings.findByTemplateId(templateId).stream()
+                .sorted((a, b) -> b.getUpdatedAt().compareTo(a.getUpdatedAt()))
+                .toList();
+        int sum = 0;
+        Map<String, Integer> dist = new LinkedHashMap<>();
+        for (int s = 5; s >= 1; s--) {
+            dist.put(String.valueOf(s), 0);
+        }
+        List<ReviewItemDto> items = new ArrayList<>();
+        ReviewResponse.Mine mine = null;
+        for (TemplateRating r : list) {
+            sum += r.getRating();
+            dist.merge(String.valueOf(r.getRating()), 1, Integer::sum);
+            boolean self = email != null && email.equalsIgnoreCase(r.getUserEmail());
+            String name = r.getUserName() != null && !r.getUserName().isBlank()
+                    ? r.getUserName() : displayName(r.getUserEmail());
+            items.add(new ReviewItemDto(name, r.getRating(),
+                    r.getComment() == null ? "" : r.getComment(), r.getUpdatedAt(), self));
+            if (self) {
+                mine = new ReviewResponse.Mine(r.getRating(), r.getComment() == null ? "" : r.getComment());
+            }
+        }
+        int count = list.size();
+        double avg = count == 0 ? 0.0 : Math.round((double) sum / count * 10.0) / 10.0;
+        return new ReviewResponse(avg, count, dist, mine, items);
+    }
+
+    private String trimComment(String comment) {
+        if (comment == null) return "";
+        String t = comment.trim();
+        return t.length() > 2000 ? t.substring(0, 2000) : t;
     }
 
     // --- helpers ---

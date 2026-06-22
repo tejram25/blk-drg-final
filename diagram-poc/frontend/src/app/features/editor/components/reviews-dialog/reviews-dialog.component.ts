@@ -3,14 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { ReviewData, ReviewService } from '../../../../core/services/review.service';
+import { ReviewData, ReviewService, ReviewSource } from '../../../../core/services/review.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { StarRatingComponent } from '../../../../shared/components/star-rating/star-rating.component';
 
 /**
- * Reviews modal for a saved diagram: average + distribution, an editable
- * "your review" form, and the list of reviews. Self-contained — it loads and
- * submits via ReviewService and emits `saved` so the parent can refresh badges.
+ * Reviews modal: average + distribution, an editable "your review" form, and the
+ * list of reviews. Data‑source‑agnostic — it works against a {@link ReviewSource},
+ * so the same modal serves diagrams and templates. For backwards compatibility it
+ * falls back to a diagram source built from `diagramId` when no `source` is given.
+ * Emits `saved` so the parent can refresh any badges.
  */
 @Component({
   selector: 'app-reviews-dialog',
@@ -20,8 +22,14 @@ import { StarRatingComponent } from '../../../../shared/components/star-rating/s
   styleUrls: ['./reviews-dialog.component.css'],
 })
 export class ReviewsDialogComponent implements OnInit {
-  @Input({ required: true }) diagramId!: number;
+  /** Diagram backing (legacy/default). Ignored when an explicit `source` is set. */
+  @Input() diagramId?: number;
+  /** Subject name shown under the title (diagram or template name). */
   @Input() diagramName = '';
+  /** Explicit data source (e.g. a template). Wins over `diagramId`. */
+  @Input() source?: ReviewSource;
+  /** Label for the empty "rate" state. */
+  @Input() rateLabel = 'Rate this';
   @Output() close = new EventEmitter<void>();
   @Output() saved = new EventEmitter<void>();
 
@@ -34,7 +42,7 @@ export class ReviewsDialogComponent implements OnInit {
   constructor(private reviews: ReviewService, private notify: NotificationService) {}
 
   ngOnInit(): void {
-    this.reviews.forDiagram(this.diagramId).subscribe({
+    this.resolved().load().subscribe({
       next: (d) => this.apply(d),
       error: () => { /* keep the loading state */ },
     });
@@ -43,7 +51,7 @@ export class ReviewsDialogComponent implements OnInit {
   submit(): void {
     if (!this.myRating || this.saving) return;
     this.saving = true;
-    this.reviews.submit(this.diagramId, this.myRating, this.myComment).subscribe({
+    this.resolved().submit(this.myRating, this.myComment).subscribe({
       next: (d) => {
         this.apply(d);
         this.saving = false;
@@ -52,6 +60,16 @@ export class ReviewsDialogComponent implements OnInit {
       },
       error: () => (this.saving = false), // error toast handled globally
     });
+  }
+
+  /** The active source: the explicit one, or a diagram source from `diagramId`. */
+  private resolved(): ReviewSource {
+    if (this.source) return this.source;
+    const id = this.diagramId!;
+    return {
+      load: () => this.reviews.forDiagram(id),
+      submit: (rating, comment) => this.reviews.submit(id, rating, comment),
+    };
   }
 
   private apply(d: ReviewData): void {

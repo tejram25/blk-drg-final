@@ -40,6 +40,7 @@ class TemplateServiceImplTest {
         r.setTemplateId(templateId);
         r.setUserEmail(email);
         r.setRating(stars);
+        r.setUpdatedAt(java.time.Instant.now());
         return r;
     }
 
@@ -159,6 +160,46 @@ class TemplateServiceImplTest {
         verify(ratings).save(any(TemplateRating.class));
 
         assertThrows(IllegalArgumentException.class, () -> service.rate(8L, 6, "u@e.com"));
+    }
+
+    @Test
+    void getReviews_buildsDistributionMineAndList() {
+        Template t = new Template();
+        t.setId(6L);
+        t.setName("Reviewed");
+        when(repository.findById(6L)).thenReturn(Optional.of(t));
+        TemplateRating mine = rating(6L, "me@e.com", 5);
+        mine.setUserName("Me");
+        mine.setComment("love it");
+        when(ratings.findByTemplateId(6L)).thenReturn(List.of(mine, rating(6L, "other@e.com", 3)));
+
+        var res = service.getReviews(6L, "me@e.com");
+
+        assertThat(res.count()).isEqualTo(2);
+        assertThat(res.average()).isEqualTo(4.0);
+        assertThat(res.distribution().get("5")).isEqualTo(1);
+        assertThat(res.distribution().get("3")).isEqualTo(1);
+        assertThat(res.mine()).isNotNull();
+        assertThat(res.mine().rating()).isEqualTo(5);
+        assertThat(res.mine().comment()).isEqualTo("love it");
+        assertThat(res.reviews()).hasSize(2);
+    }
+
+    @Test
+    void submitReview_savesRatingPlusCommentAndRejectsOutOfRange() {
+        Template t = new Template();
+        t.setId(7L);
+        t.setName("X");
+        lenient().when(repository.findById(7L)).thenReturn(Optional.of(t));
+        when(ratings.findByTemplateIdAndUserEmail(7L, "u@e.com")).thenReturn(Optional.empty());
+        when(ratings.findByTemplateId(7L)).thenReturn(List.of());
+        when(users.findByEmail("u@e.com")).thenReturn(Optional.empty());
+
+        service.submitReview(7L, new com.example.diagram.web.dto.ReviewRequest(4, "nice"), "u@e.com");
+        verify(ratings).save(any(TemplateRating.class));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.submitReview(7L, new com.example.diagram.web.dto.ReviewRequest(9, "x"), "u@e.com"));
     }
 
     @Test
