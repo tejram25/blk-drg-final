@@ -92,10 +92,20 @@ export class CollabService {
   messages: ChatMessage[] = [];
   private lastCursorSent = 0;
 
-  /** Tracks who's present so we can announce joiners/leavers (uid -> name). */
-  private knownUids = new Set<string>();
+  /** Names by uid, kept fresh so a delayed "left" toast can still name them. */
   private knownNames = new Map<string, string>();
+  /** Uids we currently consider present (and have already announced). */
+  private presentUids = new Set<string>();
+  /** Uids that just disappeared, on probation before we announce "left". */
+  private pendingLeave = new Map<string, any>();
   private presenceSeeded = false;
+  /**
+   * Grace period before announcing a departure. y-websocket awareness routinely
+   * drops a peer's state for a moment (idle/outdated/reconnect) and re-adds it,
+   * which would otherwise read as an instant leave+rejoin. Waiting this out — and
+   * cancelling if they reappear — stops the spurious join/left toasts.
+   */
+  private readonly leaveGraceMs = 6000;
 
   /** Latest shared viewport per participant (uid -> {tx,ty,zoom}). */
   private viewports = new Map<string, { tx: number; ty: number; zoom: number }>();
@@ -133,8 +143,9 @@ export class CollabService {
     this.graph = graph;
     this.seeded = false;
     this.presenceSeeded = false;
-    this.knownUids = new Set();
     this.knownNames = new Map();
+    this.presentUids = new Set();
+    this.clearPendingLeave();
     this.followUid = null;
     this.viewports = new Map();
     this.doc = new Y.Doc();
@@ -207,28 +218,41 @@ export class CollabService {
       this.cursors = cursors;
       this.participants = roster;
 
-      // Announce people who joined AFTER our initial presence sync (not the
-      // roster that was already here when we arrived, and never ourselves).
+      // Keep names fresh so a delayed "left" toast can still name the person.
+      this.knownNames = new Map(Array.from(byUid.entries()).map(([uid, p]) => [uid, p.name]));
+
+      // Announce joiners/leavers relative to who we last considered present.
+      // Departures are debounced (see leaveGraceMs): a peer that disappears and
+      // reappears within the grace window produces no toast at all.
       const currentUids = new Set(byUid.keys());
       if (!this.presenceSeeded) {
+        // The roster already here when we arrived isn't "joining".
         this.presenceSeeded = true;
+        this.presentUids = new Set(currentUids);
       } else {
-        // joiners
+        // Joiners — and cancel any pending "left" for a peer that came back.
         currentUids.forEach((uid) => {
-          if (this.knownUids.has(uid)) return;
+          const timer = this.pendingLeave.get(uid);
+          if (timer) { clearTimeout(timer); this.pendingLeave.delete(uid); }
+          if (this.presentUids.has(uid)) return;
+          this.presentUids.add(uid);
           const member = byUid.get(uid);
           if (member && !member.isSelf) {
             this.notify.info(`${member.name || 'Someone'} joined the session`);
           }
         });
-        // leavers
-        this.knownUids.forEach((uid) => {
-          if (currentUids.has(uid) || uid === this.myUserId) return;
-          this.notify.info(`${this.knownNames.get(uid) || 'Someone'} left the session`);
+        // Leavers — schedule, don't announce immediately. A transient awareness
+        // drop is the common case and will be cancelled above when they return.
+        this.presentUids.forEach((uid) => {
+          if (currentUids.has(uid) || uid === this.myUserId || this.pendingLeave.has(uid)) return;
+          const timer = setTimeout(() => {
+            this.pendingLeave.delete(uid);
+            this.presentUids.delete(uid);
+            this.notify.info(`${this.knownNames.get(uid) || 'Someone'} left the session`);
+          }, this.leaveGraceMs);
+          this.pendingLeave.set(uid, timer);
         });
       }
-      this.knownUids = currentUids;
-      this.knownNames = new Map(Array.from(byUid.entries()).map(([uid, p]) => [uid, p.name]));
 
       // Follow mode: mirror the followed participant's viewport onto our graph.
       this.viewports = freshViewports;
@@ -355,6 +379,9 @@ export class CollabService {
 
   leave(): void {
     if (this.flushTimer) { clearTimeout(this.flushTimer); this.flushTimer = null; }
+    this.clearPendingLeave();
+    this.presentUids = new Set();
+    this.presenceSeeded = false;
     this.pending.clear();
     this.cursors = [];
     this.participants = [];
@@ -395,6 +422,12 @@ export class CollabService {
   }
 
   // ---- helpers ----
+
+  /** Cancel any in-flight "left" probation timers. */
+  private clearPendingLeave(): void {
+    this.pendingLeave.forEach((t) => clearTimeout(t));
+    this.pendingLeave.clear();
+  }
 
   private pushCell(cell: Cell): void {
     if (this.applyingRemote || !this.cells) return;
