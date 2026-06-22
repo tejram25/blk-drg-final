@@ -560,6 +560,12 @@
         (use)="onUseTemplate($event)" (improve)="onImproveTemplate($event)"
         (close)="templatesOpen = false"></app-templates-dialog>
 
+      <!-- Unsaved template edits: prompt before switching to another template -->
+      <app-confirm-dialog *ngIf="pendingTemplate"
+        title="Save changes to template?" [message]="templateSwitchMessage"
+        confirmLabel="Save &amp; switch" cancelLabel="Discard &amp; switch"
+        (confirm)="saveAndSwitch()" (cancel)="discardAndSwitch()"></app-confirm-dialog>
+
       <!-- Command palette (Ctrl/Cmd+K) -->
       <app-command-palette *ngIf="commandPaletteOpen"
         [commands]="commands" (close)="commandPaletteOpen = false"></app-command-palette>

@@ -307,6 +307,10 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   templatesSnapshot = '';
   /** The template currently being improved (Improve flow), or null. */
   editingTemplate: TemplateDetail | null = null;
+  /** Clean snapshot of the template being improved, for unsaved-change detection. */
+  editingTemplateBaseline = '';
+  /** A pending template switch awaiting the "save changes?" prompt. */
+  pendingTemplate: { mode: 'use' | 'improve'; detail: TemplateDetail } | null = null;
   /** True while an "Update template" save is in flight. */
   savingTemplate = false;
   /** Compact-screen drawers: palette and properties auto-hide behind toolbar toggles. */
@@ -1486,18 +1490,77 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
 
   /** Use a template: start a fresh, unsaved diagram from its content. */
   onUseTemplate(detail: TemplateDetail): void {
+    if (this.guardTemplateSwitch('use', detail)) return;
     this.editingTemplate = null; // a "use" is a new diagram, not a template edit
+    this.editingTemplateBaseline = '';
     this.loadTemplateContent(detail);
   }
 
   /** Improve a template: load it onto the canvas and remember it for update. */
   onImproveTemplate(detail: TemplateDetail): void {
+    if (this.guardTemplateSwitch('improve', detail)) return;
+    this.applyImprove(detail);
+  }
+
+  /** Load a template for improvement and capture a clean baseline for change detection. */
+  private applyImprove(detail: TemplateDetail): void {
     this.loadTemplateContent(detail);
     this.editingTemplate = detail; // show the "Update template" banner
+    this.editingTemplateBaseline = JSON.stringify(this.graph.toJSON());
+  }
+
+  /** True if the template being improved has unsaved edits on the canvas. */
+  private hasTemplateChanges(): boolean {
+    return !!this.editingTemplate
+      && this.editingTemplateBaseline !== JSON.stringify(this.graph.toJSON());
+  }
+
+  /**
+   * When leaving the template being improved for another one, intercept if there
+   * are unsaved changes: stash the requested action and raise the save prompt.
+   * Returns true when it intercepted (the caller must not proceed).
+   */
+  private guardTemplateSwitch(mode: 'use' | 'improve', detail: TemplateDetail): boolean {
+    if (this.hasTemplateChanges()) {
+      this.pendingTemplate = { mode, detail };
+      return true;
+    }
+    return false;
+  }
+
+  /** Message for the "save changes before switching" prompt. */
+  get templateSwitchMessage(): string {
+    return `You've made changes to the template "${this.editingTemplate?.name}". `
+      + `Save them before opening another template?`;
+  }
+
+  /** Prompt → Save: update the current template, then open the requested one. */
+  saveAndSwitch(): void {
+    const pending = this.pendingTemplate;
+    this.pendingTemplate = null;
+    this.saveTemplateUpdate(() => this.proceedPending(pending));
+  }
+
+  /** Prompt → Discard: drop the edits and open the requested template. */
+  discardAndSwitch(): void {
+    const pending = this.pendingTemplate;
+    this.pendingTemplate = null;
+    this.proceedPending(pending);
+  }
+
+  private proceedPending(pending: { mode: 'use' | 'improve'; detail: TemplateDetail } | null): void {
+    if (!pending) return;
+    if (pending.mode === 'use') {
+      this.editingTemplate = null;
+      this.editingTemplateBaseline = '';
+      this.loadTemplateContent(pending.detail);
+    } else {
+      this.applyImprove(pending.detail);
+    }
   }
 
   /** Save the current canvas back over the template being improved. */
-  saveTemplateUpdate(): void {
+  saveTemplateUpdate(then?: () => void): void {
     const t = this.editingTemplate;
     if (!t || this.savingTemplate) return;
     this.savingTemplate = true;
@@ -1510,7 +1573,9 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       next: (updated) => {
         this.savingTemplate = false;
         this.editingTemplate = updated;
+        this.editingTemplateBaseline = JSON.stringify(this.graph.toJSON()); // now clean
         this.notify.success(`Updated template "${updated.name}"`);
+        then?.();
       },
       error: () => (this.savingTemplate = false),
     });
@@ -1519,6 +1584,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   /** Stop editing the template (leaves the canvas as-is). */
   cancelTemplateEdit(): void {
     this.editingTemplate = null;
+    this.editingTemplateBaseline = '';
   }
 
   /** Load template content as a brand-new, unsaved diagram (like an import). */
