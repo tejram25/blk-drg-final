@@ -566,6 +566,12 @@
         confirmLabel="Save &amp; switch" cancelLabel="Discard &amp; switch"
         (confirm)="saveAndSwitch()" (cancel)="discardAndSwitch()"></app-confirm-dialog>
 
+      <!-- Unsaved diagram edits: prompt before opening another file -->
+      <app-confirm-dialog *ngIf="pendingLoadId != null"
+        title="Save changes?" [message]="switchFileMessage"
+        confirmLabel="Save &amp; open" cancelLabel="Discard &amp; open"
+        (confirm)="saveAndOpen()" (cancel)="discardAndOpen()"></app-confirm-dialog>
+
       <!-- Command palette (Ctrl/Cmd+K) -->
       <app-command-palette *ngIf="commandPaletteOpen"
         [commands]="commands" (close)="commandPaletteOpen = false"></app-command-palette>

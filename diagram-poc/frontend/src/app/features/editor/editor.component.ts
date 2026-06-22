@@ -311,6 +311,10 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   editingTemplateBaseline = '';
   /** A pending template switch awaiting the "save changes?" prompt. */
   pendingTemplate: { mode: 'use' | 'improve'; detail: TemplateDetail } | null = null;
+  /** JSON of the canvas as last saved/loaded, for unsaved-change detection. */
+  private diagramBaseline = '';
+  /** A saved-file id awaiting the "save changes?" prompt before opening it. */
+  pendingLoadId: number | null = null;
   /** True while an "Update template" save is in flight. */
   savingTemplate = false;
   /** Compact-screen drawers: palette and properties auto-hide behind toolbar toggles. */
@@ -423,6 +427,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     registerBlockCard();
     registerPartCard();
     this.initGraph();
+    this.markClean(); // a blank canvas is the clean baseline
     this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
     this.loadPalette();
     this.refreshList();
@@ -991,7 +996,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
 
   // ---------- Toolbar actions ----------
 
-  save(): void {
+  save(then?: () => void): void {
     const dto = {
       name: this.diagramName || 'Untitled diagram',
       contentJson: JSON.stringify(this.graph.toJSON()),
@@ -1005,9 +1010,11 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
         this.currentId = saved.id ?? this.currentId;
         this.status = `Saved "${saved.name}"`;
         this.notify.success(`Saved "${saved.name}"`);
+        this.markClean();
         this.refreshList();
         // A brand-new diagram now has an id — connect it to its room.
         this.syncCollab();
+        then?.();
       },
       error: () => (this.status = 'Save failed'), // error toast shown globally
     });
@@ -1015,7 +1022,18 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
 
   load(): void {
     if (this.selectedDiagramId == null) return;
-    this.api.get(this.selectedDiagramId).subscribe({
+    const targetId = this.selectedDiagramId;
+    // Switching files with unsaved edits would silently lose them — prompt first.
+    if (this.hasUnsavedChanges()) {
+      this.pendingLoadId = targetId;
+      return;
+    }
+    this.doLoad(targetId);
+  }
+
+  /** Actually open a saved diagram by id (after any unsaved-change prompt). */
+  private doLoad(id: number): void {
+    this.api.get(id).subscribe({
       next: (d) => {
         // Leave the previously open file's room FIRST: drops our presence there
         // immediately and prevents the incoming canvas from bleeding into the old
@@ -1027,12 +1045,49 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
         this.selectedNode = null;
         this.selectedEdge = null;
         this.editingTemplate = null;
+        this.editingTemplateBaseline = '';
+        this.markClean();
         this.status = `Opened "${d.name}"`;
         // Connect to this file's collaboration room (seeds it or adopts live state).
         this.syncCollab();
       },
       error: () => (this.status = 'Load failed'),
     });
+  }
+
+  /** Prompt → Save: persist the current file (or template), then open the target. */
+  saveAndOpen(): void {
+    const id = this.pendingLoadId;
+    this.pendingLoadId = null;
+    const proceed = () => { if (id != null) this.doLoad(id); };
+    if (this.editingTemplate) this.saveTemplateUpdate(proceed);
+    else this.save(proceed);
+  }
+
+  /** Prompt → Discard: drop the unsaved edits and open the target file. */
+  discardAndOpen(): void {
+    const id = this.pendingLoadId;
+    this.pendingLoadId = null;
+    if (id != null) this.doLoad(id);
+  }
+
+  /** Message for the unsaved-changes-before-switching-file prompt. */
+  get switchFileMessage(): string {
+    return `You have unsaved changes in "${this.diagramName}". `
+      + `Save them before opening another file?`;
+  }
+
+  /** Record the canvas as "saved" (baseline for unsaved-change detection). */
+  private markClean(): void {
+    this.diagramBaseline = this.graph ? JSON.stringify(this.graph.toJSON()) : '';
+  }
+
+  /** True if the canvas differs from the last saved/loaded baseline. */
+  private hasUnsavedChanges(): boolean {
+    if (!this.graph) return false;
+    // Template edits have their own guard/baseline; here we cover diagram edits.
+    if (this.editingTemplate) return this.editingTemplateBaseline !== JSON.stringify(this.graph.toJSON());
+    return this.diagramBaseline !== JSON.stringify(this.graph.toJSON());
   }
 
   newDiagram(): void {
@@ -1050,6 +1105,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.selectedEdge = null;
     this.status = '';
     this.editingTemplate = null;
+    this.markClean();
   }
 
   refreshList(): void {
@@ -1601,6 +1657,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       return;
     }
     this.diagramName = detail.name;
+    this.markClean();
     try { this.graph.zoomToFit({ padding: 24, maxScale: 1.5 }); } catch { /* best effort */ }
   }
 
@@ -1745,6 +1802,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     }
 
     this.diagramName = fileName.replace(/\.[^.]+$/, '') || 'Imported diagram';
+    this.markClean();
     try { this.graph.zoomToFit({ padding: 24, maxScale: 1.5 }); } catch { /* framing is best-effort */ }
     if (isPartsCatalog) {
       this.status = `Imported ${cells.length} part${cells.length === 1 ? '' : 's'} from catalog`;
