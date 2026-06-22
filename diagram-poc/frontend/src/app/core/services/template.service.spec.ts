@@ -1,0 +1,54 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { TemplateService } from './template.service';
+import { apiBaseUrl } from '../app-config';
+
+describe('TemplateService', () => {
+  let service: TemplateService;
+  let http: HttpTestingController;
+  const API = apiBaseUrl();
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [HttpClientTestingModule], providers: [TemplateService] });
+    service = TestBed.inject(TemplateService);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  it('lists templates', () => {
+    service.list().subscribe();
+    const req = http.expectOne(`${API}/templates`);
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
+
+  it('uses a template via POST /use', () => {
+    service.use(7).subscribe();
+    const req = http.expectOne(`${API}/templates/7/use`);
+    expect(req.request.method).toBe('POST');
+    req.flush({ id: 7, name: 'T', usageCount: 1, contentJson: '{"cells":[]}', updatedAt: '', createdAt: '' });
+  });
+
+  it('creates a template with the request body', () => {
+    service.create({ name: 'My T', description: 'd', category: 'Power', contentJson: '{"cells":[]}' }).subscribe();
+    const req = http.expectOne(`${API}/templates`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ name: 'My T', description: 'd', category: 'Power', contentJson: '{"cells":[]}' });
+    req.flush({ id: 1, name: 'My T', usageCount: 0, contentJson: '{"cells":[]}', updatedAt: '', createdAt: '' });
+  });
+
+  it('updates (improves) a template via PUT', () => {
+    service.update(3, { name: 'New', contentJson: '{"cells":[]}' }).subscribe();
+    const req = http.expectOne(`${API}/templates/3`);
+    expect(req.request.method).toBe('PUT');
+    req.flush({ id: 3, name: 'New', usageCount: 2, contentJson: '{"cells":[]}', updatedAt: '', createdAt: '' });
+  });
+
+  it('deletes a template', () => {
+    service.delete(9).subscribe();
+    const req = http.expectOne(`${API}/templates/9`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
+});

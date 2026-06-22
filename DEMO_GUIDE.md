@@ -16,7 +16,7 @@ drop parts onto the canvas, and generate a **Bill of Materials**.
 | **Backend** | **Spring Boot 3.2** — Spring Web, Spring Security (session auth), Spring Data JPA |
 | **Database** | **H2** (file‑based, `./data/diagrams`) — swap for PostgreSQL in prod |
 | **External integration** | **Arrow “Design Win” Part Search API** (OAuth2 client‑credentials) via a backend proxy |
-| **Tests** | Frontend: Jasmine + Karma. Backend: JUnit 5 + Mockito (24 tests). |
+| **Tests** | Frontend: Jasmine + Karma. Backend: JUnit 5 + Mockito (32 tests). |
 
 **Two processes in dev:** `npm start` runs the Angular app **and** the y‑websocket collab
 server together (`concurrently`). The Spring backend runs separately (`mvn spring-boot:run`).
@@ -131,6 +131,15 @@ user’s **viewport** for follow‑mode. Chat is a shared `Y.Array`.
 - **Version history** — save labelled **snapshots** of the canvas and **restore** any of them.
 - **Canvas comments** — pin a comment to a specific block; clicking it focuses/centres the block.
 
+### Template repository (reusable, improvable)
+- A shared, **dynamic library of starting points** (toolbar 🧩 *Template repository*, or Ctrl+K).
+  Three actions: **Use** a template (starts a fresh diagram from it and bumps its usage count),
+  **Improve** a template (load it, edit, and **Update template** in place — the change is shared),
+  and **Save current as template** (publish your canvas with a name/category/description).
+- Gallery sorts by **most-used**, shows author + who last improved it. Seeded with starters
+  (AMR Robot, Smart Microgrid, 555 Blinker, Parts & BOM). Backend: `Template` entity +
+  `/api/templates` CRUD + `/use`; author/editor resolved from the session, not the body.
+
 ### Error handling (production‑grade)
 - A global **HTTP error interceptor** maps failures to friendly messages (backend message
   wins; sensible fallbacks per status), shows a **toast**, retries transient GET network
@@ -195,7 +204,7 @@ booted in.
   `features` (everything new). `restructure` is the safe baseline.
 - **Bundle size**: routing + lazy loading dropped the **initial bundle from ~1.1 MB to ~444 KB**
   (the heavy editor loads on demand).
-- **Tests**: backend `mvn test` → **24/24 green** (services, validation, aggregation, mock,
+- **Tests**: backend `mvn test` → **32/32 green** (services, validation, aggregation, mock,
   entity lifecycle). Frontend Karma/Jasmine specs for services & components.
 - **Security**: secrets via env / gitignored file; session cookies HttpOnly + SameSite=Lax;
   BCrypt; the parts proxy keeps the client secret server‑side.

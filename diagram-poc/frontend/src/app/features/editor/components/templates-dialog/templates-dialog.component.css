@@ -1,0 +1,139 @@
+.tpl-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.tpl-card {
+  width: 860px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-deep, #0e0f11);
+  border: 1px solid var(--border, #34353c);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  animation: tpl-in 0.15s ease;
+}
+
+@keyframes tpl-in {
+  from { opacity: 0; transform: translateY(-5px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.tpl-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border, #34353c);
+}
+.tpl-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--text, #e2e8f0); }
+.tpl-sub { font-size: 12px; color: var(--muted, #94a3b8); }
+.tpl-head-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.tpl-x { border: none; background: transparent; color: var(--muted, #94a3b8); cursor: pointer; }
+.tpl-publish-btn { background: var(--accent, #f5a623); color: #1a1303; white-space: nowrap; }
+.tpl-publish-btn mat-icon { font-size: 18px; width: 18px; height: 18px; vertical-align: text-bottom; }
+
+/* Publish form */
+.tpl-save {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-soft, #2b2c32);
+  background: rgba(245, 166, 35, 0.05);
+}
+.tpl-save-row { display: flex; gap: 8px; }
+.tpl-save input, .tpl-save textarea {
+  flex: 1 1 auto;
+  background: var(--bg, #141518);
+  border: 1px solid var(--border, #34353c);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text, #e2e8f0);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  resize: vertical;
+}
+.tpl-save input:focus, .tpl-save textarea:focus { border-color: var(--accent, #f5a623); }
+.tpl-save-actions { display: flex; justify-content: flex-end; }
+
+/* Gallery */
+.tpl-body { overflow-y: auto; padding: 16px 20px 20px; }
+.tpl-msg { padding: 28px; text-align: center; color: var(--muted, #94a3b8); font-size: 13px; }
+
+.tpl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.tpl-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--panel, #16171a);
+  border: 1px solid var(--border-soft, #2b2c32);
+  border-radius: 12px;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.tpl-item:hover { border-color: var(--accent, #f5a623); }
+
+.tpl-item-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tpl-name { font-size: 14px; font-weight: 600; color: var(--text, #e2e8f0); }
+.tpl-chip {
+  flex: none;
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(245, 166, 35, 0.15);
+  color: var(--accent, #f5a623);
+  white-space: nowrap;
+}
+.tpl-desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted, #94a3b8);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tpl-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--faint, #6b7280);
+  margin-top: auto;
+}
+.tpl-uses { display: inline-flex; align-items: center; gap: 2px; color: var(--muted, #94a3b8); }
+.tpl-uses mat-icon { font-size: 14px; width: 14px; height: 14px; }
+
+.tpl-actions { display: flex; align-items: center; gap: 6px; padding-top: 4px; }
+.tpl-actions .mdc-button { height: 30px; min-width: 0; padding: 0 10px; font-size: 12.5px; }
+.tpl-actions .mat-icon { font-size: 16px; width: 16px; height: 16px; }
+.tpl-use { background: var(--accent, #f5a623); color: #1a1303; }
+.tpl-del {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--muted, #94a3b8);
+  cursor: pointer;
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 6px;
+}
+.tpl-del:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+.tpl-del mat-icon { font-size: 18px; width: 18px; height: 18px; }

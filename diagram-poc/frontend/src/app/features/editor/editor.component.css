@@ -13,6 +13,20 @@
       font-family: Roboto, 'Segoe UI', system-ui, sans-serif;
     }
 
+    /* ---- Template "improving" banner ---- */
+    .tpl-edit-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 14px; flex-shrink: 0;
+      background: rgba(245, 166, 35, .12);
+      border-bottom: 1px solid var(--accent, #f5a623);
+      color: var(--text, #e2e8f0); font-size: 13px;
+    }
+    .tpl-edit-bar > mat-icon { color: var(--accent, #f5a623); font-size: 20px; width: 20px; height: 20px; }
+    .tpl-edit-text { flex: 1; min-width: 0; }
+    .tpl-edit-bar .tpl-edit-save { background: var(--accent, #f5a623); color: #1a1303; }
+    .tpl-edit-bar .mdc-button { height: 30px; min-width: 0; }
+    .tpl-edit-bar .mat-icon { font-size: 17px; width: 17px; height: 17px; vertical-align: text-bottom; }
+
     /* ---- Top bar ---- */
     .topbar {
       display: flex; align-items: center; flex-wrap: wrap;

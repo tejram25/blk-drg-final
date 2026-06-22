@@ -35,6 +35,8 @@ import { BomDialogComponent } from './components/bom-dialog/bom-dialog.component
 import { VersionsDialogComponent } from './components/versions-dialog/versions-dialog.component';
 import { CommentsPanelComponent } from './components/comments-panel/comments-panel.component';
 import { PartSearchPanelComponent } from './components/part-search-panel/part-search-panel.component';
+import { TemplatesDialogComponent } from './components/templates-dialog/templates-dialog.component';
+import { TemplateDetail, TemplateService } from '../../core/services/template.service';
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
 import { ANIMATED_SYMBOLS, partsToSvg, registerAnimatedShapes } from './animated-shapes';
@@ -170,7 +172,7 @@ const PORT_GROUPS = {
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe,
     ConfirmDialogComponent, ReviewsDialogComponent, StatusBarComponent, ZoomDockComponent,
     BomDialogComponent, CommandPaletteComponent, VersionsDialogComponent, CommentsPanelComponent,
-    PartSearchPanelComponent,
+    PartSearchPanelComponent, TemplatesDialogComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
@@ -191,6 +193,8 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     return [
       { label: 'New diagram', icon: 'note_add', run: () => this.newDiagram() },
       { label: 'Save', icon: 'save', hint: 'Ctrl+S', run: () => this.save() },
+      { label: 'Template repository', icon: 'dashboard_customize', run: () => this.openTemplates() },
+      { label: 'Save as template', icon: 'bookmark_add', run: () => this.openTemplates() },
       { label: 'Search parts', icon: 'travel_explore', run: () => (this.partSearchOpen = true) },
       { label: 'Version history', icon: 'history', run: () => this.openVersions() },
       { label: 'Comments', icon: 'comment', run: () => this.toggleComments() },
@@ -258,6 +262,14 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   commentsOpen = false;
   /** Parts search panel state. */
   partSearchOpen = false;
+  /** Template repository dialog state. */
+  templatesOpen = false;
+  /** Canvas snapshot captured when the templates dialog opens (for "Save as template"). */
+  templatesSnapshot = '';
+  /** The template currently being improved (Improve flow), or null. */
+  editingTemplate: TemplateDetail | null = null;
+  /** True while an "Update template" save is in flight. */
+  savingTemplate = false;
   /** Compact-screen drawers: palette and properties auto-hide behind toolbar toggles. */
   paletteOpen = false;
   propsOpen = false;
@@ -268,6 +280,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     private notify: NotificationService,
     private graphSvc: GraphService,
     private bomService: BomService,
+    private templateApi: TemplateService,
     private sanitizer: DomSanitizer,
     public collab: CollabService,
     public i18n: TranslateService,
@@ -970,6 +983,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
         this.diagramName = d.name;
         this.selectedNode = null;
         this.selectedEdge = null;
+        this.editingTemplate = null;
         this.status = `Opened "${d.name}"`;
         // Connect to this file's collaboration room (seeds it or adopts live state).
         this.syncCollab();
@@ -992,6 +1006,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.selectedNode = null;
     this.selectedEdge = null;
     this.status = '';
+    this.editingTemplate = null;
   }
 
   refreshList(): void {
@@ -1422,6 +1437,68 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.bomRows = null;
   }
 
+  // ---------- Template repository ----------
+
+  /** Open the shared template repository dialog. */
+  openTemplates(): void {
+    this.templatesSnapshot = JSON.stringify(this.graph.toJSON());
+    this.templatesOpen = true;
+  }
+
+  /** Use a template: start a fresh, unsaved diagram from its content. */
+  onUseTemplate(detail: TemplateDetail): void {
+    this.editingTemplate = null; // a "use" is a new diagram, not a template edit
+    this.loadTemplateContent(detail);
+  }
+
+  /** Improve a template: load it onto the canvas and remember it for update. */
+  onImproveTemplate(detail: TemplateDetail): void {
+    this.loadTemplateContent(detail);
+    this.editingTemplate = detail; // show the "Update template" banner
+  }
+
+  /** Save the current canvas back over the template being improved. */
+  saveTemplateUpdate(): void {
+    const t = this.editingTemplate;
+    if (!t || this.savingTemplate) return;
+    this.savingTemplate = true;
+    this.templateApi.update(t.id, {
+      name: t.name,
+      description: t.description,
+      category: t.category,
+      contentJson: JSON.stringify(this.graph.toJSON()),
+    }).subscribe({
+      next: (updated) => {
+        this.savingTemplate = false;
+        this.editingTemplate = updated;
+        this.notify.success(`Updated template "${updated.name}"`);
+      },
+      error: () => (this.savingTemplate = false),
+    });
+  }
+
+  /** Stop editing the template (leaves the canvas as-is). */
+  cancelTemplateEdit(): void {
+    this.editingTemplate = null;
+  }
+
+  /** Load template content as a brand-new, unsaved diagram (like an import). */
+  private loadTemplateContent(detail: TemplateDetail): void {
+    this.resetCollab();
+    this.currentId = null;
+    this.selectedDiagramId = null;
+    this.selectedNode = null;
+    this.selectedEdge = null;
+    try {
+      this.graph.fromJSON(JSON.parse(detail.contentJson));
+    } catch {
+      this.notify.error('That template could not be loaded.');
+      return;
+    }
+    this.diagramName = detail.name;
+    try { this.graph.zoomToFit({ padding: 24, maxScale: 1.5 }); } catch { /* best effort */ }
+  }
+
   // ---------- Version history ----------
 
   /** Open the version-history dialog (requires a saved diagram). */
@@ -1553,6 +1630,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.selectedDiagramId = null;
     this.selectedNode = null;
     this.selectedEdge = null;
+    this.editingTemplate = null;
 
     try {
       this.graph.fromJSON({ cells });
