@@ -228,6 +228,45 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       event.preventDefault();
       this.commandPaletteOpen = !this.commandPaletteOpen;
     }
+    if (event.key === 'Escape') {
+      this.closeMenus();
+    }
+  }
+
+  /** A click anywhere else closes any open header dropdown. Toggles and menu
+   * panels stopPropagation, so this only fires for "outside" clicks. */
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.closeMenus();
+  }
+
+  /** Close every header dropdown. */
+  closeMenus(): void {
+    this.openMenuOpen = false;
+    this.importMenuOpen = false;
+    this.exportMenuOpen = false;
+    this.langMenuOpen = false;
+    this.accountMenuOpen = false;
+    this.presenceOpen = false;
+  }
+
+  /** Toggle a header dropdown, closing any other that was open. */
+  toggleMenu(menu: 'open' | 'import' | 'export' | 'lang' | 'account' | 'presence', event: Event): void {
+    event.stopPropagation();
+    const isOpen = {
+      open: this.openMenuOpen, import: this.importMenuOpen, export: this.exportMenuOpen,
+      lang: this.langMenuOpen, account: this.accountMenuOpen, presence: this.presenceOpen,
+    }[menu];
+    this.closeMenus();
+    if (isOpen) return; // it was open → leave it closed
+    switch (menu) {
+      case 'open': this.openMenuOpen = true; break;
+      case 'import': this.importMenuOpen = true; break;
+      case 'export': this.exportMenuOpen = true; break;
+      case 'lang': this.langMenuOpen = true; break;
+      case 'account': this.accountMenuOpen = true; break;
+      case 'presence': this.presenceOpen = true; break;
+    }
   }
 
   /** The X6 graph lives in GraphService (shared with child components via DI). */

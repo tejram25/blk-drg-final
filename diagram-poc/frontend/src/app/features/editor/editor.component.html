@@ -22,11 +22,11 @@
                [matTooltip]="'doc.tooltip' | translate" />
         <div class="dd open-dd">
           <button type="button" class="dd-trigger" [class.open]="openMenuOpen"
-                  (click)="openMenuOpen = !openMenuOpen" [matTooltip]="'open.tooltip' | translate">
+                  (click)="toggleMenu('open', $event)" [matTooltip]="'open.tooltip' | translate">
             <span class="dd-val">{{ selectedDiagramId != null ? selectedDiagramName : ('open.saved' | translate) }}</span>
             <svg class="dd-caret" width="11" height="7" viewBox="0 0 12 8"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <div class="dd-menu" *ngIf="openMenuOpen">
+          <div class="dd-menu" *ngIf="openMenuOpen" (click)="$event.stopPropagation()">
             <button type="button" class="dd-item" [class.sel]="selectedDiagramId == null"
                     (click)="selectedDiagramId = null; openMenuOpen = false; load()">{{ 'open.saved' | translate }}</button>
             <div class="dd-row" *ngFor="let d of savedDiagrams">
@@ -91,10 +91,10 @@
           <!-- Import (JSON / draw.io) -->
           <span class="menu-wrap">
             <button type="button" mat-icon-button [class.on]="importMenuOpen"
-                    (click)="importMenuOpen = !importMenuOpen" matTooltip="Import">
+                    (click)="toggleMenu('import', $event)" matTooltip="Import">
               <mat-icon>upload</mat-icon>
             </button>
-            <div class="dropdown-menu" *ngIf="importMenuOpen">
+            <div class="dropdown-menu" *ngIf="importMenuOpen" (click)="$event.stopPropagation()">
               <button type="button" class="menu-item" (click)="jsonInput.click(); importMenuOpen = false">
                 <mat-icon>data_object</mat-icon><span>{{ 'tip.importJson' | translate }}</span>
               </button>
@@ -106,10 +106,10 @@
           <!-- Export (JSON / draw.io) -->
           <span class="menu-wrap">
             <button type="button" mat-icon-button [class.on]="exportMenuOpen"
-                    (click)="exportMenuOpen = !exportMenuOpen" matTooltip="Export">
+                    (click)="toggleMenu('export', $event)" matTooltip="Export">
               <mat-icon>download</mat-icon>
             </button>
-            <div class="dropdown-menu" *ngIf="exportMenuOpen">
+            <div class="dropdown-menu" *ngIf="exportMenuOpen" (click)="$event.stopPropagation()">
               <button type="button" class="menu-item" (click)="exportJson(); exportMenuOpen = false">
                 <mat-icon>data_object</mat-icon><span>{{ 'tip.exportJson' | translate }}</span>
               </button>
@@ -142,14 +142,14 @@
         <div class="menu-wrap" *ngIf="collab.active">
           <button type="button" mat-stroked-button class="presence-btn"
                   [class.live]="collab.connected"
-                  (click)="presenceOpen = !presenceOpen"
+                  (click)="toggleMenu('presence', $event)"
                   [matTooltip]="collab.peers + ' viewing this file'">
             <span class="live-dot"></span>
             <mat-icon>group</mat-icon>
             <span>{{ collab.peers }}</span>
           </button>
 
-          <div class="dropdown-menu presence-menu" *ngIf="presenceOpen">
+          <div class="dropdown-menu presence-menu" *ngIf="presenceOpen" (click)="$event.stopPropagation()">
             <div class="roster-title">Viewing this file ({{ collab.participants.length }})</div>
             <div class="roster-row" *ngFor="let p of collab.participants; trackBy: participantTrack">
               <span class="roster-dot" [style.background]="p.color"></span>
@@ -173,13 +173,13 @@
 
         <!-- Language switcher -->
         <div class="lang-wrap">
-          <button mat-stroked-button (click)="langMenuOpen = !langMenuOpen"
+          <button mat-stroked-button (click)="toggleMenu('lang', $event)"
                   [matTooltip]="'lang.tooltip' | translate">
             <mat-icon>language</mat-icon>
             <span class="lang-label">{{ currentLangLabel }}</span>
             <mat-icon class="lang-caret">arrow_drop_down</mat-icon>
           </button>
-          <div class="lang-menu" *ngIf="langMenuOpen">
+          <div class="lang-menu" *ngIf="langMenuOpen" (click)="$event.stopPropagation()">
             <button *ngFor="let l of languages" class="lang-item"
                     [class.active]="l.code === currentLang" (click)="switchLang(l.code)">
               <span>{{ l.label }}</span>
@@ -191,12 +191,12 @@
         <!-- Signed-in user + account menu -->
         <div class="menu-wrap user-wrap" *ngIf="auth.user() as u">
           <button type="button" class="user-chip" [class.on]="accountMenuOpen"
-                  (click)="accountMenuOpen = !accountMenuOpen" [matTooltip]="u.name || u.email">
+                  (click)="toggleMenu('account', $event)" [matTooltip]="u.name || u.email">
             <mat-icon>account_circle</mat-icon>
             <span class="user-name">{{ u.name || u.email }}</span>
             <mat-icon class="caret">arrow_drop_down</mat-icon>
           </button>
-          <div class="dropdown-menu account-menu" *ngIf="accountMenuOpen">
+          <div class="dropdown-menu account-menu" *ngIf="accountMenuOpen" (click)="$event.stopPropagation()">
             <div class="account-head">
               <mat-icon>account_circle</mat-icon>
               <div class="account-id">
