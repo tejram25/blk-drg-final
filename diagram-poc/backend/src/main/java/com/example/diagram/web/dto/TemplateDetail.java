@@ -12,5 +12,8 @@ public record TemplateDetail(
         String authorName,
         String updatedByName,
         int usageCount,
+        double avgRating,
+        int ratingCount,
+        int myRating,
         Instant createdAt,
         Instant updatedAt) {}

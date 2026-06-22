@@ -10,13 +10,14 @@ import java.util.List;
  * The shared template repository. Controllers depend on this abstraction, not
  * on JPA. The author/editor identity is supplied by the controller as the
  * authenticated email; the display name is resolved server-side, so it's never
- * trusted from the request body.
+ * trusted from the request body. The viewer's email is used to surface their
+ * own rating ({@code myRating}) on each template.
  */
 public interface TemplateService {
 
-    List<TemplateSummary> listAll();
+    List<TemplateSummary> listAll(String viewerEmail);
 
-    TemplateDetail get(Long id);
+    TemplateDetail get(Long id, String viewerEmail);
 
     /** Publish the current canvas as a new template. */
     TemplateDetail create(TemplateRequest request, String authorEmail);
@@ -25,7 +26,10 @@ public interface TemplateService {
     TemplateDetail update(Long id, TemplateRequest request, String editorEmail);
 
     /** Fetch a template's content and increment its usage count. */
-    TemplateDetail use(Long id);
+    TemplateDetail use(Long id, String viewerEmail);
+
+    /** Create or update the viewer's 1-5 star rating of a template. */
+    TemplateDetail rate(Long id, int stars, String viewerEmail);
 
     void delete(Long id);
 }

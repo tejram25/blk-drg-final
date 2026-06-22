@@ -45,6 +45,15 @@ describe('TemplateService', () => {
     req.flush({ id: 3, name: 'New', usageCount: 2, contentJson: '{"cells":[]}', updatedAt: '', createdAt: '' });
   });
 
+  it('rates a template via POST /rating', () => {
+    service.rate(5, 4).subscribe();
+    const req = http.expectOne(`${API}/templates/5/rating`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ rating: 4 });
+    req.flush({ id: 5, name: 'T', usageCount: 0, avgRating: 4, ratingCount: 1, myRating: 4,
+      contentJson: '{"cells":[]}', updatedAt: '', createdAt: '' });
+  });
+
   it('deletes a template', () => {
     service.delete(9).subscribe();
     const req = http.expectOne(`${API}/templates/9`);

@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TemplateDetail, TemplateService, TemplateSummary } from '../../../../core/services/template.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { StarRatingComponent } from '../../../../shared/components/star-rating/star-rating.component';
 
 /**
  * The shared template repository, in a dialog. Three things you can do:
@@ -18,7 +19,7 @@ import { NotificationService } from '../../../../core/services/notification.serv
 @Component({
   selector: 'app-templates-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, StarRatingComponent],
   templateUrl: './templates-dialog.component.html',
   styleUrls: ['./templates-dialog.component.css'],
 })
@@ -35,6 +36,16 @@ export class TemplatesDialogComponent implements OnInit {
   templates: TemplateSummary[] = [];
   loading = true;
   busyId: number | null = null;
+  /** Free-text filter across name / description / category. */
+  query = '';
+
+  /** Templates matching the current search query (case-insensitive). */
+  get filtered(): TemplateSummary[] {
+    const q = this.query.trim().toLowerCase();
+    if (!q) return this.templates;
+    return this.templates.filter((t) =>
+      `${t.name} ${t.description ?? ''} ${t.category ?? ''}`.toLowerCase().includes(q));
+  }
 
   /** Publish ("save as template") form. */
   showSave = false;
@@ -83,6 +94,19 @@ export class TemplatesDialogComponent implements OnInit {
         this.close.emit();
       },
       error: () => (this.busyId = null),
+    });
+  }
+
+  /** Submit/replace the current user's star rating for a template. */
+  rate(t: TemplateSummary, stars: number): void {
+    this.api.rate(t.id, stars).subscribe({
+      next: (detail) => {
+        // Reflect the new aggregate + the user's own rating on the card in place.
+        t.avgRating = detail.avgRating;
+        t.ratingCount = detail.ratingCount;
+        t.myRating = detail.myRating;
+        this.notify.success(`You rated "${t.name}" ${stars}★`);
+      },
     });
   }
 

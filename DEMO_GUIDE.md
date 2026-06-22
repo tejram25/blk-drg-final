@@ -16,7 +16,7 @@ drop parts onto the canvas, and generate a **Bill of Materials**.
 | **Backend** | **Spring Boot 3.2** — Spring Web, Spring Security (session auth), Spring Data JPA |
 | **Database** | **H2** (file‑based, `./data/diagrams`) — swap for PostgreSQL in prod |
 | **External integration** | **Arrow “Design Win” Part Search API** (OAuth2 client‑credentials) via a backend proxy |
-| **Tests** | Frontend: Jasmine + Karma. Backend: JUnit 5 + Mockito (32 tests). |
+| **Tests** | Frontend: Jasmine + Karma. Backend: JUnit 5 + Mockito (33 tests). |
 
 **Two processes in dev:** `npm start` runs the Angular app **and** the y‑websocket collab
 server together (`concurrently`). The Spring backend runs separately (`mvn spring-boot:run`).
@@ -131,14 +131,18 @@ user’s **viewport** for follow‑mode. Chat is a shared `Y.Array`.
 - **Version history** — save labelled **snapshots** of the canvas and **restore** any of them.
 - **Canvas comments** — pin a comment to a specific block; clicking it focuses/centres the block.
 
-### Template repository (reusable, improvable)
+### Template repository (reusable, improvable, searchable)
 - A shared, **dynamic library of starting points** (toolbar 🧩 *Template repository*, or Ctrl+K).
   Three actions: **Use** a template (starts a fresh diagram from it and bumps its usage count),
   **Improve** a template (load it, edit, and **Update template** in place — the change is shared),
   and **Save current as template** (publish your canvas with a name/category/description).
+- **Search** box filters by name/description/category (scales to hundreds of templates), and each
+  card shows a **star rating** — the community average + count, plus interactive *click-to-rate*
+  for your own score (one editable rating per user).
 - Gallery sorts by **most-used**, shows author + who last improved it. Seeded with starters
-  (AMR Robot, Smart Microgrid, 555 Blinker, Parts & BOM). Backend: `Template` entity +
-  `/api/templates` CRUD + `/use`; author/editor resolved from the session, not the body.
+  (AMR Robot, Smart Microgrid, 555 Blinker, Parts & BOM) and demo ratings. Backend: `Template`
+  + `TemplateRating` entities, `/api/templates` CRUD + `/use` + `/rating`; author/editor/rater
+  resolved from the session, not the body.
 
 ### Error handling (production‑grade)
 - A global **HTTP error interceptor** maps failures to friendly messages (backend message
@@ -204,7 +208,7 @@ booted in.
   `features` (everything new). `restructure` is the safe baseline.
 - **Bundle size**: routing + lazy loading dropped the **initial bundle from ~1.1 MB to ~444 KB**
   (the heavy editor loads on demand).
-- **Tests**: backend `mvn test` → **32/32 green** (services, validation, aggregation, mock,
+- **Tests**: backend `mvn test` → **33/33 green** (services, validation, aggregation, mock,
   entity lifecycle). Frontend Karma/Jasmine specs for services & components.
 - **Security**: secrets via env / gitignored file; session cookies HttpOnly + SameSite=Lax;
   BCrypt; the parts proxy keeps the client secret server‑side.

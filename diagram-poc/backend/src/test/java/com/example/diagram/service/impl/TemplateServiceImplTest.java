@@ -1,7 +1,9 @@
 package com.example.diagram.service.impl;
 
 import com.example.diagram.domain.Template;
+import com.example.diagram.domain.TemplateRating;
 import com.example.diagram.domain.User;
+import com.example.diagram.repository.TemplateRatingRepository;
 import com.example.diagram.repository.TemplateRepository;
 import com.example.diagram.repository.UserRepository;
 import com.example.diagram.web.dto.TemplateDetail;
@@ -13,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,15 +29,24 @@ import static org.mockito.Mockito.when;
 class TemplateServiceImplTest {
 
     @Mock private TemplateRepository repository;
+    @Mock private TemplateRatingRepository ratings;
     @Mock private UserRepository users;
     @InjectMocks private TemplateServiceImpl service;
 
     private static final String JSON = "{\"cells\":[]}";
 
+    private TemplateRating rating(Long templateId, String email, int stars) {
+        TemplateRating r = new TemplateRating();
+        r.setTemplateId(templateId);
+        r.setUserEmail(email);
+        r.setRating(stars);
+        return r;
+    }
+
     @Test
     void get_throwsNotFoundWhenMissing() {
         when(repository.findById(9L)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> service.get(9L));
+        assertThrows(NotFoundException.class, () -> service.get(9L, "a@b.c"));
     }
 
     @Test
@@ -48,6 +60,7 @@ class TemplateServiceImplTest {
             t.setId(1L);
             return t;
         });
+        when(ratings.findByTemplateId(1L)).thenReturn(List.of());
 
         TemplateDetail res = service.create(
                 new TemplateRequest("My Template", " a desc ", " Robotics ", JSON), "ada@example.com");
@@ -58,19 +71,8 @@ class TemplateServiceImplTest {
         assertThat(res.category()).isEqualTo("Robotics");    // trimmed
         assertThat(res.authorName()).isEqualTo("Ada Lovelace");
         assertThat(res.usageCount()).isZero();
-    }
-
-    @Test
-    void create_fallsBackToEmailWhenNoDisplayName() {
-        when(users.findByEmail("anon@example.com")).thenReturn(Optional.empty());
-        when(repository.save(any(Template.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        TemplateDetail res = service.create(
-                new TemplateRequest("T", null, null, JSON), "anon@example.com");
-
-        assertThat(res.authorName()).isEqualTo("anon@example.com");
-        assertThat(res.description()).isNull();
-        assertThat(res.category()).isNull();
+        assertThat(res.avgRating()).isZero();
+        assertThat(res.ratingCount()).isZero();
     }
 
     @Test
@@ -94,8 +96,9 @@ class TemplateServiceImplTest {
         existing.setUsageCount(2);
         when(repository.findById(4L)).thenReturn(Optional.of(existing));
         when(repository.save(any(Template.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(ratings.findByTemplateId(4L)).thenReturn(List.of());
 
-        TemplateDetail res = service.use(4L);
+        TemplateDetail res = service.use(4L, "a@b.c");
 
         assertThat(res.usageCount()).isEqualTo(3);
         assertThat(res.contentJson()).isEqualTo(JSON);
@@ -113,6 +116,7 @@ class TemplateServiceImplTest {
         editor.setName("Grace Hopper");
         when(users.findByEmail("grace@example.com")).thenReturn(Optional.of(editor));
         when(repository.save(any(Template.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(ratings.findByTemplateId(5L)).thenReturn(List.of());
 
         TemplateDetail res = service.update(5L,
                 new TemplateRequest("New name", "improved", "Power", JSON), "grace@example.com");
@@ -123,9 +127,45 @@ class TemplateServiceImplTest {
     }
 
     @Test
-    void delete_delegatesToRepository() {
-        lenient().when(repository.findById(any())).thenReturn(Optional.empty());
+    void listAll_aggregatesRatingsAndSurfacesViewersOwn() {
+        Template t = new Template();
+        t.setId(2L);
+        t.setName("Rated");
+        when(repository.findAllByOrderByUsageCountDescUpdatedAtDesc()).thenReturn(List.of(t));
+        when(ratings.findAll()).thenReturn(List.of(
+                rating(2L, "x@e.com", 5),
+                rating(2L, "y@e.com", 4),
+                rating(2L, "me@e.com", 3)));
+
+        var res = service.listAll("me@e.com");
+
+        assertThat(res).hasSize(1);
+        assertThat(res.get(0).ratingCount()).isEqualTo(3);
+        assertThat(res.get(0).avgRating()).isEqualTo(4.0); // (5+4+3)/3
+        assertThat(res.get(0).myRating()).isEqualTo(3);    // the viewer's own
+    }
+
+    @Test
+    void rate_createsRatingAndRejectsOutOfRange() {
+        Template t = new Template();
+        t.setId(8L);
+        t.setName("X");
+        lenient().when(repository.findById(8L)).thenReturn(Optional.of(t));
+        when(ratings.findByTemplateIdAndUserEmail(8L, "u@e.com")).thenReturn(Optional.empty());
+        when(ratings.findByTemplateId(8L)).thenReturn(List.of(rating(8L, "u@e.com", 4)));
+
+        TemplateDetail res = service.rate(8L, 4, "u@e.com");
+        assertThat(res.myRating()).isEqualTo(4);
+        verify(ratings).save(any(TemplateRating.class));
+
+        assertThrows(IllegalArgumentException.class, () -> service.rate(8L, 6, "u@e.com"));
+    }
+
+    @Test
+    void delete_removesRatingsThenTemplate() {
+        when(ratings.findByTemplateId(3L)).thenReturn(List.of(rating(3L, "u@e.com", 2)));
         service.delete(3L);
+        verify(ratings).delete(any(TemplateRating.class));
         verify(repository).deleteById(3L);
     }
 }

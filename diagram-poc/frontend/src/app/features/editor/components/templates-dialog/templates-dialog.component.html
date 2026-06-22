@@ -29,20 +29,45 @@
       </div>
     </div>
 
+    <!-- Search -->
+    <div class="tpl-search" *ngIf="!loading && templates.length">
+      <mat-icon>search</mat-icon>
+      <input type="text" [(ngModel)]="query" placeholder="Search templates by name, description or category…" />
+      <span class="tpl-count">{{ filtered.length }} / {{ templates.length }}</span>
+    </div>
+
     <!-- Gallery -->
     <div class="tpl-body">
       <p class="tpl-msg" *ngIf="loading">Loading templates…</p>
       <p class="tpl-msg" *ngIf="!loading && !templates.length">
         No templates yet — design something and “Save current as template”.
       </p>
+      <p class="tpl-msg" *ngIf="!loading && templates.length && !filtered.length">
+        No templates match “{{ query }}”.
+      </p>
 
-      <div class="tpl-grid" *ngIf="!loading && templates.length">
-        <div class="tpl-item" *ngFor="let t of templates; trackBy: trackById">
+      <div class="tpl-grid" *ngIf="!loading && filtered.length">
+        <div class="tpl-item" *ngFor="let t of filtered; trackBy: trackById">
           <div class="tpl-item-top">
             <span class="tpl-name">{{ t.name }}</span>
             <span class="tpl-chip" *ngIf="t.category">{{ t.category }}</span>
           </div>
           <p class="tpl-desc" *ngIf="t.description">{{ t.description }}</p>
+
+          <!-- Rating: community average + your own (click to rate) -->
+          <div class="tpl-rating">
+            <app-star-rating [rating]="t.avgRating" [readonly]="true" size="sm"></app-star-rating>
+            <span class="tpl-rating-val" *ngIf="t.ratingCount">
+              {{ t.avgRating | number:'1.1-1' }} ({{ t.ratingCount }})
+            </span>
+            <span class="tpl-rating-val tpl-unrated" *ngIf="!t.ratingCount">Not rated</span>
+            <span class="tpl-rate">
+              <span class="tpl-rate-label">{{ t.myRating ? 'Your rating' : 'Rate' }}</span>
+              <app-star-rating [rating]="t.myRating" [readonly]="false" size="sm"
+                               (ratingChange)="rate(t, $event)"></app-star-rating>
+            </span>
+          </div>
+
           <div class="tpl-meta">
             <span class="tpl-uses"><mat-icon>bolt</mat-icon>{{ t.usageCount }} use{{ t.usageCount === 1 ? '' : 's' }}</span>
             <span class="tpl-by" *ngIf="t.authorName">by {{ t.authorName }}</span>

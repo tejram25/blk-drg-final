@@ -12,6 +12,12 @@ export interface TemplateSummary {
   authorName?: string;
   updatedByName?: string;
   usageCount: number;
+  /** Average star rating (0 when unrated). */
+  avgRating: number;
+  /** Number of ratings. */
+  ratingCount: number;
+  /** The current user's own rating (0 if they haven't rated it). */
+  myRating: number;
   updatedAt: string;
 }
 
@@ -61,6 +67,11 @@ export class TemplateService {
   /** Improve an existing template in place. */
   update(id: number, request: TemplateRequest): Observable<TemplateDetail> {
     return this.http.put<TemplateDetail>(`${API}/templates/${id}`, request);
+  }
+
+  /** Rate a template 1-5 stars (create or update the caller's rating). */
+  rate(id: number, rating: number): Observable<TemplateDetail> {
+    return this.http.post<TemplateDetail>(`${API}/templates/${id}/rating`, { rating });
   }
 
   delete(id: number): Observable<void> {
