@@ -117,6 +117,9 @@ user’s **viewport** for follow‑mode. Chat is a shared `Y.Array`.
 - **Import**: app JSON (X6 graph), **draw.io** XML, **images**, and **parts‑catalogue JSON**
   (`partserviceresult`) → rendered as rich **part cards**.
 - **Export**: JSON, **draw.io**, **PNG**, **SVG** (X6 export plugin), and **Bill of Materials (CSV)**.
+- **Hide components for export**: PNG/SVG open a popup listing every component with a visibility
+  toggle, so you can leave parts out of the picture. You can also **right‑click any component → Hide
+  from export** (and *Show all hidden*); hidden components and their wires are dropped from the image.
 
 ### Collaboration
 - **Live presence** — the "viewing this file" button **pulses green** while connected.

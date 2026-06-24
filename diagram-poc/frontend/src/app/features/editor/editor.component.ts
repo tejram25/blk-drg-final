@@ -36,6 +36,7 @@ import { VersionsDialogComponent } from './components/versions-dialog/versions-d
 import { CommentsPanelComponent } from './components/comments-panel/comments-panel.component';
 import { PartSearchPanelComponent } from './components/part-search-panel/part-search-panel.component';
 import { TemplatesDialogComponent } from './components/templates-dialog/templates-dialog.component';
+import { ExportDialogComponent, ExportNode } from './components/export-dialog/export-dialog.component';
 import { TemplateDetail, TemplateService } from '../../core/services/template.service';
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
@@ -172,7 +173,7 @@ const PORT_GROUPS = {
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe,
     ConfirmDialogComponent, ReviewsDialogComponent, StatusBarComponent, ZoomDockComponent,
     BomDialogComponent, CommandPaletteComponent, VersionsDialogComponent, CommentsPanelComponent,
-    PartSearchPanelComponent, TemplatesDialogComponent,
+    PartSearchPanelComponent, TemplatesDialogComponent, ExportDialogComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
@@ -213,8 +214,8 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       { label: 'Toggle minimap', icon: 'map', run: () => (this.minimapOpen = !this.minimapOpen) },
       { label: 'Undo', icon: 'undo', run: () => this.undo() },
       { label: 'Redo', icon: 'redo', run: () => this.redo() },
-      { label: 'Export as PNG', icon: 'image', run: () => this.exportPng() },
-      { label: 'Export as SVG', icon: 'shape_line', run: () => this.exportSvg() },
+      { label: 'Export as PNG', icon: 'image', run: () => this.openExport('png') },
+      { label: 'Export as SVG', icon: 'shape_line', run: () => this.openExport('svg') },
       { label: 'Export as JSON', icon: 'data_object', run: () => this.exportJson() },
       { label: 'Export to draw.io', icon: 'account_tree', run: () => this.exportDrawioFile() },
       { label: 'Bill of Materials (CSV)', icon: 'receipt_long', run: () => this.exportBom() },
@@ -240,7 +241,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.closeMenus();
   }
 
-  /** Close every header dropdown. */
+  /** Close every header dropdown (and the canvas context menu). */
   closeMenus(): void {
     this.openMenuOpen = false;
     this.importMenuOpen = false;
@@ -248,6 +249,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.langMenuOpen = false;
     this.accountMenuOpen = false;
     this.presenceOpen = false;
+    this.ctxMenu = null;
   }
 
   /** Toggle a header dropdown, closing any other that was open. */
@@ -713,6 +715,18 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.graph.on('cell:removed', ({ cell }) => {
       if (cell === this.selectedNode) this.selectedNode = null;
       if (cell === this.selectedEdge) this.selectedEdge = null;
+    });
+
+    // Right-click a node → context menu (Hide, layering). preventDefault stops
+    // the browser's own menu; blank right-click just closes ours.
+    this.graph.on('node:contextmenu', ({ e, node }) => {
+      e.preventDefault();
+      this.selectedNode = node;
+      this.ctxMenu = { x: e.clientX, y: e.clientY, nodeId: node.id };
+    });
+    this.graph.on('blank:contextmenu', ({ e }) => {
+      e.preventDefault();
+      this.ctxMenu = null;
     });
   }
 
@@ -1489,6 +1503,91 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     a.download = `${this.diagramName || 'diagram'}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
+  }
+
+  // ---------- Export with component hiding ----------
+
+  /** Right-click context-menu state (screen coords + target node), or null. */
+  ctxMenu: { x: number; y: number; nodeId: string } | null = null;
+  /** Pre-export dialog state. */
+  exportOpen = false;
+  exportFormat: 'png' | 'svg' = 'png';
+
+  /** Open the export popup (lists components so you can hide some first). */
+  openExport(format: 'png' | 'svg'): void {
+    this.exportFormat = format;
+    this.exportOpen = true;
+  }
+
+  /** Component list for the export dialog (every node + its visibility). */
+  get exportNodes(): ExportNode[] {
+    if (!this.graph) return [];
+    return this.graph.getNodes().map((n) => ({
+      id: n.id,
+      label: this.labelOf(n),
+      visible: n.isVisible(),
+    }));
+  }
+
+  /** Toggle one component's visibility from the export dialog. */
+  onExportToggle(nodeId: string): void {
+    const node = this.graph.getCellById(nodeId);
+    if (node?.isNode()) (node.isVisible() ? this.hideNode(nodeId) : this.showNode(nodeId));
+  }
+
+  /** Run the chosen export, then close the dialog. */
+  runExport(format: 'png' | 'svg'): void {
+    this.exportOpen = false;
+    if (format === 'svg') this.exportSvg();
+    else this.exportPng();
+  }
+
+  /** Hide a node (and its connected wires) from the canvas and any export. */
+  hideNode(nodeId: string): void {
+    const node = this.graph.getCellById(nodeId);
+    if (!node || !node.isNode()) return;
+    node.setVisible(false);
+    this.graph.getConnectedEdges(node).forEach((edge) => edge.setVisible(false));
+    if (this.selectedNode === node) this.selectedNode = null;
+    this.ctxMenu = null;
+  }
+
+  /** Show a hidden node again (and wires whose endpoints are all visible). */
+  showNode(nodeId: string): void {
+    const node = this.graph.getCellById(nodeId);
+    if (!node || !node.isNode()) return;
+    node.setVisible(true);
+    this.graph.getConnectedEdges(node).forEach((edge) => {
+      const s = edge.getSourceCell();
+      const t = edge.getTargetCell();
+      if ((!s || s.isVisible()) && (!t || t.isVisible())) edge.setVisible(true);
+    });
+  }
+
+  /** Reveal every hidden component. */
+  showAllHidden(): void {
+    this.graph.getNodes().forEach((n) => { if (!n.isVisible()) this.showNode(n.id); });
+  }
+
+  /** Whether any component is currently hidden. */
+  get hasHidden(): boolean {
+    return !!this.graph && this.graph.getNodes().some((n) => !n.isVisible());
+  }
+
+  // ---- context-menu actions ----
+  ctxHide(): void { if (this.ctxMenu) this.hideNode(this.ctxMenu.nodeId); }
+  ctxBringToFront(): void { this.ctxNode()?.toFront(); this.ctxMenu = null; }
+  ctxSendToBack(): void { this.ctxNode()?.toBack(); this.ctxMenu = null; }
+  private ctxNode(): Node | null {
+    const c = this.ctxMenu ? this.graph.getCellById(this.ctxMenu.nodeId) : null;
+    return c && c.isNode() ? c : null;
+  }
+
+  /** Best-effort display label for a node. */
+  private labelOf(node: Node): string {
+    return (node.attr('label/text') as string)
+      || (node.attr('title/text') as string)
+      || node.shape || 'block';
   }
 
   /** Export the canvas as a PNG image (white background, trimmed to content). */

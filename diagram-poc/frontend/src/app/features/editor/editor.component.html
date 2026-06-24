@@ -116,11 +116,11 @@
               <button type="button" class="menu-item" (click)="exportDrawioFile(); exportMenuOpen = false">
                 <mat-icon>account_tree</mat-icon><span>Export to draw.io</span>
               </button>
-              <button type="button" class="menu-item" (click)="exportPng(); exportMenuOpen = false">
-                <mat-icon>image</mat-icon><span>Export as PNG</span>
+              <button type="button" class="menu-item" (click)="openExport('png'); exportMenuOpen = false">
+                <mat-icon>image</mat-icon><span>Export as PNG…</span>
               </button>
-              <button type="button" class="menu-item" (click)="exportSvg(); exportMenuOpen = false">
-                <mat-icon>shape_line</mat-icon><span>Export as SVG</span>
+              <button type="button" class="menu-item" (click)="openExport('svg'); exportMenuOpen = false">
+                <mat-icon>shape_line</mat-icon><span>Export as SVG…</span>
               </button>
               <button type="button" class="menu-item" (click)="exportBom(); exportMenuOpen = false">
                 <mat-icon>receipt_long</mat-icon><span>Bill of Materials (CSV)</span>
@@ -571,6 +571,30 @@
         title="Save changes?" [message]="switchFileMessage"
         confirmLabel="Save &amp; open" cancelLabel="Discard &amp; open"
         (confirm)="saveAndOpen()" (cancel)="discardAndOpen()"></app-confirm-dialog>
+
+      <!-- Export image: pick format + hide components first -->
+      <app-export-dialog *ngIf="exportOpen"
+        [nodes]="exportNodes" [format]="exportFormat"
+        (toggle)="onExportToggle($event)" (showAll)="showAllHidden()"
+        (run)="runExport($event)" (close)="exportOpen = false"></app-export-dialog>
+
+      <!-- Right-click context menu (Hide / layering) -->
+      <div class="ctx-menu" *ngIf="ctxMenu" [style.left.px]="ctxMenu.x" [style.top.px]="ctxMenu.y"
+           (click)="$event.stopPropagation()">
+        <button type="button" class="ctx-item" (click)="ctxHide()">
+          <mat-icon>visibility_off</mat-icon><span>Hide from export</span>
+        </button>
+        <button type="button" class="ctx-item" (click)="ctxBringToFront()">
+          <mat-icon>flip_to_front</mat-icon><span>Bring to front</span>
+        </button>
+        <button type="button" class="ctx-item" (click)="ctxSendToBack()">
+          <mat-icon>flip_to_back</mat-icon><span>Send to back</span>
+        </button>
+        <div class="ctx-sep" *ngIf="hasHidden"></div>
+        <button type="button" class="ctx-item" *ngIf="hasHidden" (click)="showAllHidden(); ctxMenu = null">
+          <mat-icon>visibility</mat-icon><span>Show all hidden</span>
+        </button>
+      </div>
 
       <!-- Command palette (Ctrl/Cmd+K) -->
       <app-command-palette *ngIf="commandPaletteOpen"

@@ -1,0 +1,42 @@
+<div class="exp-backdrop" (click)="close.emit()">
+  <div class="exp-card" (click)="$event.stopPropagation()">
+    <div class="exp-head">
+      <div>
+        <h3 class="exp-title">Export image</h3>
+        <span class="exp-sub">Hide any components you don’t want in the exported picture.</span>
+      </div>
+      <button type="button" class="exp-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="exp-format">
+      <span class="exp-flabel">Format</span>
+      <button type="button" class="exp-fbtn" [class.on]="format === 'png'" (click)="format = 'png'">PNG</button>
+      <button type="button" class="exp-fbtn" [class.on]="format === 'svg'" (click)="format = 'svg'">SVG</button>
+    </div>
+
+    <div class="exp-listhead">
+      <span>Components ({{ nodes.length }})</span>
+      <button type="button" class="exp-showall" *ngIf="hiddenCount" (click)="showAll.emit()">
+        Show all ({{ hiddenCount }} hidden)
+      </button>
+    </div>
+
+    <div class="exp-body">
+      <p class="exp-empty" *ngIf="!nodes.length">Nothing on the canvas to export.</p>
+      <button type="button" class="exp-row" *ngFor="let n of nodes" [class.off]="!n.visible"
+              (click)="toggle.emit(n.id)"
+              [attr.title]="n.visible ? 'Click to hide from export' : 'Click to include'">
+        <mat-icon>{{ n.visible ? 'visibility' : 'visibility_off' }}</mat-icon>
+        <span class="exp-name">{{ n.label }}</span>
+        <span class="exp-tag" *ngIf="!n.visible">Hidden</span>
+      </button>
+    </div>
+
+    <div class="exp-actions">
+      <button type="button" mat-stroked-button (click)="close.emit()">Cancel</button>
+      <button type="button" mat-flat-button class="exp-go" (click)="run.emit(format)">
+        <mat-icon>download</mat-icon> Export {{ format | uppercase }}
+      </button>
+    </div>
+  </div>
+</div>
