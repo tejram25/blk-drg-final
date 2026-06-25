@@ -119,7 +119,9 @@ user’s **viewport** for follow‑mode. Chat is a shared `Y.Array`.
 - **Export**: JSON, **draw.io**, **PNG**, **SVG** (X6 export plugin), and **Bill of Materials (CSV)**.
 - **Hide components for export**: PNG/SVG open a popup listing every component with a visibility
   toggle, so you can leave parts out of the picture. You can also **right‑click any component → Hide
-  from export** (and *Show all hidden*); hidden components and their wires are dropped from the image.
+  from export**. Marked components **stay on the canvas with an eye‑off badge** at their top‑right
+  (click it to un‑hide) — they're only dropped, with their wires, for the instant the image is
+  captured, so you never lose sight of them while editing.
 
 ### Collaboration
 - **Live presence** — the "viewing this file" button **pulses green** while connected.

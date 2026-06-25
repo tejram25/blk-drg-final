@@ -715,6 +715,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.graph.on('cell:removed', ({ cell }) => {
       if (cell === this.selectedNode) this.selectedNode = null;
       if (cell === this.selectedEdge) this.selectedEdge = null;
+      this.exportHiddenIds.delete(cell.id);
     });
 
     // Right-click a node → context menu (Hide, layering). preventDefault stops
@@ -1512,6 +1513,8 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   /** Pre-export dialog state. */
   exportOpen = false;
   exportFormat: 'png' | 'svg' = 'png';
+  /** Ids of components marked "hidden from export" (they stay on the canvas). */
+  exportHiddenIds = new Set<string>();
 
   /** Open the export popup (lists components so you can hide some first). */
   openExport(format: 'png' | 'svg'): void {
@@ -1525,57 +1528,88 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     return this.graph.getNodes().map((n) => ({
       id: n.id,
       label: this.labelOf(n),
-      visible: n.isVisible(),
+      visible: !this.exportHiddenIds.has(n.id),
     }));
   }
 
-  /** Toggle one component's visibility from the export dialog. */
+  /** Toggle one component's "hidden from export" mark from the export dialog. */
   onExportToggle(nodeId: string): void {
     const node = this.graph.getCellById(nodeId);
-    if (node?.isNode()) (node.isVisible() ? this.hideNode(nodeId) : this.showNode(nodeId));
+    if (node?.isNode()) this.setExportHidden(node, !this.exportHiddenIds.has(nodeId));
   }
 
-  /** Run the chosen export, then close the dialog. */
+  /**
+   * Run the chosen export. Marked components stay ON the canvas (with their
+   * badge) the whole time; they're only made invisible for the instant the
+   * image is captured, then restored — so the export omits them without the
+   * editing view ever losing them.
+   */
   runExport(format: 'png' | 'svg'): void {
     this.exportOpen = false;
-    if (format === 'svg') this.exportSvg();
-    else this.exportPng();
+    const hide: Cell[] = [];
+    this.graph.getNodes().forEach((n) => {
+      if (!this.exportHiddenIds.has(n.id)) return;
+      hide.push(n);
+      this.graph.getConnectedEdges(n).forEach((e) => hide.push(e));
+    });
+    const restore = () => hide.forEach((c) => c.setVisible(true));
+    (this.graph as any).disableHistory?.();
+    hide.forEach((c) => c.setVisible(false));
+    const done = () => { restore(); (this.graph as any).enableHistory?.(); };
+    if (format === 'svg') this.exportSvg(done);
+    else this.exportPng(done);
   }
 
-  /** Hide a node (and its connected wires) from the canvas and any export. */
-  hideNode(nodeId: string): void {
-    const node = this.graph.getCellById(nodeId);
-    if (!node || !node.isNode()) return;
-    node.setVisible(false);
-    this.graph.getConnectedEdges(node).forEach((edge) => edge.setVisible(false));
-    if (this.selectedNode === node) this.selectedNode = null;
+  /** Mark/unmark a component as hidden-from-export (keeps it visible on canvas). */
+  setExportHidden(node: Node, hidden: boolean): void {
+    if (hidden) {
+      if (!this.exportHiddenIds.has(node.id)) {
+        this.exportHiddenIds.add(node.id);
+        this.addHiddenBadge(node);
+      }
+    } else if (this.exportHiddenIds.delete(node.id)) {
+      node.removeTool('button');
+    }
     this.ctxMenu = null;
   }
 
-  /** Show a hidden node again (and wires whose endpoints are all visible). */
-  showNode(nodeId: string): void {
-    const node = this.graph.getCellById(nodeId);
-    if (!node || !node.isNode()) return;
-    node.setVisible(true);
-    this.graph.getConnectedEdges(node).forEach((edge) => {
-      const s = edge.getSourceCell();
-      const t = edge.getTargetCell();
-      if ((!s || s.isVisible()) && (!t || t.isVisible())) edge.setVisible(true);
-    });
+  /** Eye-off badge pinned to the node's top-right; click it to un-hide. */
+  private addHiddenBadge(node: Node): void {
+    node.addTools({
+      name: 'button',
+      args: {
+        x: '100%', y: 0, offset: { x: -11, y: 11 },
+        markup: [
+          { tagName: 'circle', selector: 'bg',
+            attrs: { r: 10, fill: '#1f2937', stroke: '#f5a623', 'stroke-width': 1.5, cursor: 'pointer' } },
+          { tagName: 'text', selector: 'ico', textContent: 'visibility_off',
+            attrs: { fill: '#f5a623', 'font-family': 'Material Icons', 'font-size': 12,
+              'text-anchor': 'middle', y: 4, cursor: 'pointer' } },
+        ],
+        onClick: ({ cell }: { cell: Cell }) => { if (cell.isNode()) this.setExportHidden(cell, false); },
+      },
+    } as any);
   }
 
-  /** Reveal every hidden component. */
+  /** Un-hide every component that's currently marked hidden. */
   showAllHidden(): void {
-    this.graph.getNodes().forEach((n) => { if (!n.isVisible()) this.showNode(n.id); });
+    this.graph.getNodes().forEach((n) => { if (this.exportHiddenIds.has(n.id)) this.setExportHidden(n, false); });
   }
 
-  /** Whether any component is currently hidden. */
+  /** Whether any component is currently marked hidden-from-export. */
   get hasHidden(): boolean {
-    return !!this.graph && this.graph.getNodes().some((n) => !n.isVisible());
+    return !!this.graph && this.graph.getNodes().some((n) => this.exportHiddenIds.has(n.id));
   }
 
   // ---- context-menu actions ----
-  ctxHide(): void { if (this.ctxMenu) this.hideNode(this.ctxMenu.nodeId); }
+  ctxHide(): void {
+    const n = this.ctxNode();
+    if (n) this.setExportHidden(n, true);
+  }
+  ctxNodeShow(): void {
+    const n = this.ctxNode();
+    if (n) this.setExportHidden(n, false);
+  }
   ctxBringToFront(): void { this.ctxNode()?.toFront(); this.ctxMenu = null; }
   ctxSendToBack(): void { this.ctxNode()?.toBack(); this.ctxMenu = null; }
   private ctxNode(): Node | null {
@@ -1591,9 +1625,9 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   }
 
   /** Export the canvas as a PNG image (white background, trimmed to content). */
-  exportPng(): void {
+  exportPng(done?: () => void): void {
     const name = `${this.diagramName || 'diagram'}.png`;
-    (this.graph as any).toPNG((dataUri: string) => this.downloadDataUri(dataUri, name), {
+    (this.graph as any).toPNG((dataUri: string) => { this.downloadDataUri(dataUri, name); done?.(); }, {
       padding: 20,
       backgroundColor: this.lightCanvas ? '#ffffff' : '#0f172a',
       quality: 1,
@@ -1601,13 +1635,14 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   }
 
   /** Export the canvas as a vector SVG. */
-  exportSvg(): void {
+  exportSvg(done?: () => void): void {
     const name = `${this.diagramName || 'diagram'}.svg`;
     (this.graph as any).toSVG((svg: string) => {
       const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       this.downloadDataUri(url, name);
       URL.revokeObjectURL(url);
+      done?.();
     }, { preserveDimensions: true });
   }
 

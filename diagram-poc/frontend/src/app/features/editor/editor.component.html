@@ -581,8 +581,13 @@
       <!-- Right-click context menu (Hide / layering) -->
       <div class="ctx-menu" *ngIf="ctxMenu" [style.left.px]="ctxMenu.x" [style.top.px]="ctxMenu.y"
            (click)="$event.stopPropagation()">
-        <button type="button" class="ctx-item" (click)="ctxHide()">
+        <button type="button" class="ctx-item" *ngIf="ctxMenu && !exportHiddenIds.has(ctxMenu.nodeId)"
+                (click)="ctxHide()">
           <mat-icon>visibility_off</mat-icon><span>Hide from export</span>
+        </button>
+        <button type="button" class="ctx-item" *ngIf="ctxMenu && exportHiddenIds.has(ctxMenu.nodeId)"
+                (click)="ctxNodeShow()">
+          <mat-icon>visibility</mat-icon><span>Show in export</span>
         </button>
         <button type="button" class="ctx-item" (click)="ctxBringToFront()">
           <mat-icon>flip_to_front</mat-icon><span>Bring to front</span>
