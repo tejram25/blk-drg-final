@@ -1657,7 +1657,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   /** Build a Bill of Materials from catalogue part cards on the canvas. */
   exportBom(): void {
     const parts = this.graph.getNodes()
-      .filter((n) => n.shape === 'part-card')
+      .filter((n) => n.shape === 'part-card' && !this.exportHiddenIds.has(n.id)) // skip hidden parts
       .map((n) => (n.getData() as { part?: unknown } | undefined)?.part)
       .filter((p): p is object => !!p);
     if (!parts.length) {
