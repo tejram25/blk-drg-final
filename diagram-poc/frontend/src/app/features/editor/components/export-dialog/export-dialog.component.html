@@ -3,7 +3,7 @@
     <div class="exp-head">
       <div>
         <h3 class="exp-title">Export image</h3>
-        <span class="exp-sub">Hide any components you don’t want in the exported picture.</span>
+        <span class="exp-sub">Untick any components you don’t want in the exported picture.</span>
       </div>
       <button type="button" class="exp-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
     </div>
@@ -17,7 +17,7 @@
     <div class="exp-listhead">
       <span>Components ({{ nodes.length }})</span>
       <button type="button" class="exp-showall" *ngIf="hiddenCount" (click)="showAll.emit()">
-        Show all ({{ hiddenCount }} hidden)
+        Include all ({{ hiddenCount }} excluded)
       </button>
     </div>
 
@@ -25,10 +25,10 @@
       <p class="exp-empty" *ngIf="!nodes.length">Nothing on the canvas to export.</p>
       <button type="button" class="exp-row" *ngFor="let n of nodes" [class.off]="!n.visible"
               (click)="toggle.emit(n.id)"
-              [attr.title]="n.visible ? 'Click to hide from export' : 'Click to include'">
+              [attr.title]="n.visible ? 'Click to exclude from export' : 'Click to include in export'">
         <mat-icon>{{ n.visible ? 'visibility' : 'visibility_off' }}</mat-icon>
         <span class="exp-name">{{ n.label }}</span>
-        <span class="exp-tag" *ngIf="!n.visible">Hidden</span>
+        <span class="exp-tag" *ngIf="!n.visible">Excluded</span>
       </button>
     </div>
 

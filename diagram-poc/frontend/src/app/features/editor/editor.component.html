@@ -583,11 +583,11 @@
            (click)="$event.stopPropagation()">
         <button type="button" class="ctx-item" *ngIf="ctxMenu && !exportHiddenIds.has(ctxMenu.nodeId)"
                 (click)="ctxHide()">
-          <mat-icon>visibility_off</mat-icon><span>Hide from export</span>
+          <mat-icon>visibility_off</mat-icon><span>Exclude from export</span>
         </button>
         <button type="button" class="ctx-item" *ngIf="ctxMenu && exportHiddenIds.has(ctxMenu.nodeId)"
                 (click)="ctxNodeShow()">
-          <mat-icon>visibility</mat-icon><span>Show in export</span>
+          <mat-icon>visibility</mat-icon><span>Include in export</span>
         </button>
         <button type="button" class="ctx-item" (click)="ctxBringToFront()">
           <mat-icon>flip_to_front</mat-icon><span>Bring to front</span>
@@ -597,7 +597,7 @@
         </button>
         <div class="ctx-sep" *ngIf="hasHidden"></div>
         <button type="button" class="ctx-item" *ngIf="hasHidden" (click)="showAllHidden(); ctxMenu = null">
-          <mat-icon>visibility</mat-icon><span>Show all hidden</span>
+          <mat-icon>visibility</mat-icon><span>Include all in export</span>
         </button>
       </div>
 
