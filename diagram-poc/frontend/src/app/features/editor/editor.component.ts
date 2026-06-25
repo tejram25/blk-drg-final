@@ -1498,7 +1498,15 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   }
 
   exportJson(): void {
-    const blob = new Blob([JSON.stringify(this.graph.toJSON(), null, 2)], { type: 'application/json' });
+    // Drop components hidden from export (and any edge touching them) so the
+    // exported file matches what the image/BOM exports contain.
+    const json = this.graph.toJSON();
+    const cells = (json.cells || []).filter((c: any) => {
+      if (this.exportHiddenIds.has(c.id)) return false;
+      const s = c.source?.cell, t = c.target?.cell;
+      return !(this.exportHiddenIds.has(s) || this.exportHiddenIds.has(t));
+    });
+    const blob = new Blob([JSON.stringify({ cells }, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `${this.diagramName || 'diagram'}.json`;
@@ -1561,7 +1569,19 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   }
 
   /** Mark/unmark a component as hidden-from-export (keeps it visible on canvas). */
+  /**
+   * Mark/unmark a component as hidden-from-export (keeps it visible on canvas).
+   * Cascades to any components that sit INSIDE this one's bounds — so hiding a
+   * group/container block hides everything within it too.
+   */
   setExportHidden(node: Node, hidden: boolean): void {
+    this.applyHidden(node, hidden);
+    this.nodesInside(node).forEach((n) => this.applyHidden(n, hidden));
+    this.ctxMenu = null;
+  }
+
+  /** Apply the hidden mark (+ badge) to a single node. */
+  private applyHidden(node: Node, hidden: boolean): void {
     if (hidden) {
       if (!this.exportHiddenIds.has(node.id)) {
         this.exportHiddenIds.add(node.id);
@@ -1570,7 +1590,15 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     } else if (this.exportHiddenIds.delete(node.id)) {
       node.removeTool('button');
     }
-    this.ctxMenu = null;
+  }
+
+  /** Nodes whose centre falls within this node's bounds (its "contents"). */
+  private nodesInside(container: Node): Node[] {
+    const box = container.getBBox();
+    return this.graph.getNodes().filter((n) => {
+      if (n.id === container.id) return false;
+      return box.containsPoint(n.getBBox().getCenter());
+    });
   }
 
   /** Eye-off badge pinned to the node's top-right; click it to un-hide. */

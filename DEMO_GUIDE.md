@@ -121,7 +121,8 @@ user’s **viewport** for follow‑mode. Chat is a shared `Y.Array`.
   toggle, so you can leave parts out of the picture. You can also **right‑click any component → Hide
   from export**. Marked components **stay on the canvas with an eye‑off badge** at their top‑right
   (click it to un‑hide) — they're only dropped, with their wires, for the instant the image is
-  captured, so you never lose sight of them while editing.
+  captured, so you never lose sight of them while editing. Hiding a **group/container block cascades
+  to everything inside it**, and hidden parts are excluded from the **BOM and JSON** exports too.
 
 ### Collaboration
 - **Live presence** — the "viewing this file" button **pulses green** while connected.
