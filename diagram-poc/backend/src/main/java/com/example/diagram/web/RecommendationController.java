@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** AI (OpenAI / ChatGPT) recommendations with rule-based fallback. */
+/** AI (Google Gemini) recommendations with rule-based fallback. */
 @RestController
 @RequestMapping("/api/recommendations")
 public class RecommendationController {

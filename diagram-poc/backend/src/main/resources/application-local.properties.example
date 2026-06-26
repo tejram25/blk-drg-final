@@ -5,5 +5,6 @@
 arrow.client-id=your-client-id-here
 arrow.client-secret=your-client-secret-here
 
-# AI recommendations (OpenAI / ChatGPT). Leave unset to use the rule-based fallback.
-# openai.api-key=sk-...
+# AI recommendations (Google Gemini). Leave unset to use the rule-based fallback.
+# Free key (no card): https://aistudio.google.com/app/apikey
+# gemini.api-key=AIza...

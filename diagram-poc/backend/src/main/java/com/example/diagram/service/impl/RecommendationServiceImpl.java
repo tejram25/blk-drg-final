@@ -1,6 +1,6 @@
 package com.example.diagram.service.impl;
 
-import com.example.diagram.config.OpenAiProperties;
+import com.example.diagram.config.GeminiProperties;
 import com.example.diagram.domain.Template;
 import com.example.diagram.repository.TemplateRepository;
 import com.example.diagram.service.RecommendationService;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Recommendations backed by OpenAI (ChatGPT) when {@code openai.api-key} is set,
+ * Recommendations backed by Google Gemini when {@code gemini.api-key} is set,
  * with a deterministic rule-based fallback otherwise (and on any upstream
  * failure), so the feature always returns useful, source-traceable suggestions.
  */
@@ -40,12 +40,12 @@ public class RecommendationServiceImpl implements RecommendationService {
             Keep to at most 6 items. "source" must state where the suggestion comes from.
             """;
 
-    private final OpenAiProperties props;
+    private final GeminiProperties props;
     private final TemplateRepository templates;
     private final ObjectMapper mapper;
     private final RestClient rest;
 
-    public RecommendationServiceImpl(OpenAiProperties props, TemplateRepository templates, ObjectMapper mapper) {
+    public RecommendationServiceImpl(GeminiProperties props, TemplateRepository templates, ObjectMapper mapper) {
         this.props = props;
         this.templates = templates;
         this.mapper = mapper;
@@ -57,9 +57,9 @@ public class RecommendationServiceImpl implements RecommendationService {
         RecommendationRequest req = normalize(request);
         if (props.isConfigured()) {
             try {
-                return askOpenAi(req);
+                return askGemini(req);
             } catch (Exception ex) {
-                log.warn("OpenAI recommendation failed ({}); falling back to rule-based.", ex.toString());
+                log.warn("Gemini recommendation failed ({}); falling back to rule-based.", ex.toString());
                 RecommendationResult rb = ruleBased(req);
                 return new RecommendationResult(rb.items(), rb.model(), false,
                         "AI was unavailable — showing rule-based suggestions.");
@@ -68,32 +68,31 @@ public class RecommendationServiceImpl implements RecommendationService {
         return ruleBased(req);
     }
 
-    // ---- OpenAI (ChatGPT) path ----
+    // ---- Google Gemini path ----
 
-    private RecommendationResult askOpenAi(RecommendationRequest req) throws Exception {
+    private RecommendationResult askGemini(RecommendationRequest req) throws Exception {
         String user = "Design goal: " + (req.goal().isBlank() ? "(unspecified)" : req.goal())
                 + "\nParts already on the canvas: "
                 + (req.currentParts().isEmpty() ? "(none)" : String.join(", ", req.currentParts()))
                 + "\nAvailable templates: " + templateNames();
 
         Map<String, Object> body = Map.of(
-                "model", props.getModel(),
-                "max_tokens", props.getMaxTokens(),
-                // Force a JSON object response so parsing is reliable.
-                "response_format", Map.of("type", "json_object"),
-                "messages", List.of(
-                        Map.of("role", "system", "content", SYSTEM),
-                        Map.of("role", "user", "content", user)));
+                "systemInstruction", Map.of("parts", List.of(Map.of("text", SYSTEM))),
+                "contents", List.of(Map.of("role", "user", "parts", List.of(Map.of("text", user)))),
+                // Ask Gemini for raw JSON so parsing is reliable.
+                "generationConfig", Map.of(
+                        "responseMimeType", "application/json",
+                        "maxOutputTokens", props.getMaxTokens()));
 
         JsonNode resp = rest.post()
-                .uri(props.getBaseUrl() + "/v1/chat/completions")
-                .header("Authorization", "Bearer " + props.getApiKey())
+                .uri(props.getBaseUrl() + "/v1beta/models/" + props.getModel() + ":generateContent")
+                .header("x-goog-api-key", props.getApiKey())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()
                 .body(JsonNode.class);
 
-        String text = resp == null ? "" : resp.at("/choices/0/message/content").asText("");
+        String text = resp == null ? "" : resp.at("/candidates/0/content/parts/0/text").asText("");
         List<RecommendationItem> items = parseItems(text);
         if (items.isEmpty()) {
             return ruleBased(req); // model returned nothing parseable
@@ -116,11 +115,11 @@ public class RecommendationServiceImpl implements RecommendationService {
                         n.path("type").asText("solution"),
                         n.path("title").asText(""),
                         n.path("detail").asText(""),
-                        n.path("source").asText("ChatGPT — verify"),
+                        n.path("source").asText("Gemini — verify"),
                         n.path("verify").asText("Check the datasheet before committing.")));
             }
         } catch (Exception ex) {
-            log.warn("Could not parse OpenAI JSON: {}", ex.toString());
+            log.warn("Could not parse Gemini JSON: {}", ex.toString());
         }
         return out;
     }

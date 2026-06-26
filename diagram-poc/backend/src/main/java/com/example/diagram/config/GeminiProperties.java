@@ -4,23 +4,26 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * Configuration for the OpenAI (ChatGPT) API used by the AI recommendation
- * feature. The API key is supplied via env var {@code OPENAI_API_KEY} or a
+ * Configuration for the Google Gemini API used by the AI recommendation
+ * feature. The API key is supplied via env var {@code GEMINI_API_KEY} or a
  * gitignored application-local.properties — never committed. When no key is
  * present the recommendation service falls back to a deterministic rule-based
  * engine, so the feature works offline.
+ *
+ * <p>A free API key (no credit card) can be created at
+ * <a href="https://aistudio.google.com/app/apikey">Google AI Studio</a>.
  */
 @Component
-@ConfigurationProperties(prefix = "openai")
-public class OpenAiProperties {
+@ConfigurationProperties(prefix = "gemini")
+public class GeminiProperties {
 
     /** API key — leave empty to use the rule-based fallback. */
     private String apiKey = "";
 
-    /** Model id. Defaults to gpt-4o. */
-    private String model = "gpt-4o";
+    /** Model id. Defaults to gemini-2.0-flash (fast, free tier). */
+    private String model = "gemini-2.0-flash";
 
-    private String baseUrl = "https://api.openai.com";
+    private String baseUrl = "https://generativelanguage.googleapis.com";
 
     private int maxTokens = 1500;
 

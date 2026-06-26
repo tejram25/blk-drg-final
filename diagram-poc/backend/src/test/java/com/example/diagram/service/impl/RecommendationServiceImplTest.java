@@ -1,6 +1,6 @@
 package com.example.diagram.service.impl;
 
-import com.example.diagram.config.OpenAiProperties;
+import com.example.diagram.config.GeminiProperties;
 import com.example.diagram.domain.Template;
 import com.example.diagram.repository.TemplateRepository;
 import com.example.diagram.web.dto.RecommendationRequest;
@@ -23,7 +23,7 @@ class RecommendationServiceImplTest {
     @Mock private TemplateRepository templates;
 
     private RecommendationServiceImpl service() {
-        OpenAiProperties props = new OpenAiProperties();
+        GeminiProperties props = new GeminiProperties();
         props.setApiKey(""); // no key → rule-based path
         Template t = new Template();
         t.setName("Smart Microgrid");
