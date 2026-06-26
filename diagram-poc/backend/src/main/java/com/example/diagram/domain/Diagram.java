@@ -22,8 +22,12 @@ public class Diagram {
     @Column(name = "content_json", columnDefinition = "CLOB")
     private String contentJson;
 
-    /** Access classification: PUBLIC, INTERNAL (default), or RESTRICTED (ITAR/export-control). */
-    @Column(nullable = false)
+    /**
+     * Access classification: PUBLIC, INTERNAL (default), or RESTRICTED (ITAR/export-control).
+     * Left nullable at the DB level so {@code ddl-auto=update} can add this column to an
+     * existing {@code diagrams} table that already has rows; a stored null is treated as
+     * INTERNAL throughout the service layer.
+     */
     private String classification = "INTERNAL";
 
     /** Email of the creator; RESTRICTED diagrams are visible only to the owner. */
