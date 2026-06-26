@@ -22,6 +22,13 @@ public class Diagram {
     @Column(name = "content_json", columnDefinition = "CLOB")
     private String contentJson;
 
+    /** Access classification: PUBLIC, INTERNAL (default), or RESTRICTED (ITAR/export-control). */
+    @Column(nullable = false)
+    private String classification = "INTERNAL";
+
+    /** Email of the creator; RESTRICTED diagrams are visible only to the owner. */
+    private String ownerEmail;
+
     private Instant updatedAt;
 
     @PrePersist
@@ -39,6 +46,12 @@ public class Diagram {
 
     public String getContentJson() { return contentJson; }
     public void setContentJson(String contentJson) { this.contentJson = contentJson; }
+
+    public String getClassification() { return classification; }
+    public void setClassification(String classification) { this.classification = classification; }
+
+    public String getOwnerEmail() { return ownerEmail; }
+    public void setOwnerEmail(String ownerEmail) { this.ownerEmail = ownerEmail; }
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }

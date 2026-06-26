@@ -17,7 +17,7 @@ import { Transform } from '@antv/x6-plugin-transform';
 import { Export } from '@antv/x6-plugin-export';
 import { MiniMap } from '@antv/x6-plugin-minimap';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { BlockType, DiagramService, DiagramSummary } from '../../core/services/diagram.service';
+import { BlockType, Classification, DiagramService, DiagramSummary } from '../../core/services/diagram.service';
 import { ReviewService } from '../../core/services/review.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { GraphService } from '../../core/services/graph.service';
@@ -43,6 +43,8 @@ import { LifecycleDialogComponent } from './components/lifecycle-dialog/lifecycl
 import { AlternativePart, LifecycleInfo, LifecycleService } from '../../core/services/lifecycle.service';
 import { RecommendationsDialogComponent } from './components/recommendations-dialog/recommendations-dialog.component';
 import { RecommendationResult, RecommendationService } from '../../core/services/recommendation.service';
+import { FeedbackDialogComponent } from './components/feedback-dialog/feedback-dialog.component';
+import { FeedbackRequest, FeedbackService } from '../../core/services/feedback.service';
 import { TemplateDetail, TemplateService } from '../../core/services/template.service';
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
@@ -180,7 +182,7 @@ const PORT_GROUPS = {
     ConfirmDialogComponent, ReviewsDialogComponent, StatusBarComponent, ZoomDockComponent,
     BomDialogComponent, CommandPaletteComponent, VersionsDialogComponent, CommentsPanelComponent,
     PartSearchPanelComponent, TemplatesDialogComponent, ExportDialogComponent, ProjectPanelComponent,
-    LifecycleDialogComponent, RecommendationsDialogComponent,
+    LifecycleDialogComponent, RecommendationsDialogComponent, FeedbackDialogComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
@@ -232,6 +234,8 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       { label: 'Export as JSON', icon: 'data_object', run: () => this.exportJson() },
       { label: 'Export to draw.io', icon: 'account_tree', run: () => this.exportDrawioFile() },
       { label: 'Bill of Materials (CSV)', icon: 'receipt_long', run: () => this.exportBom() },
+      { label: 'Set classification', icon: 'shield', run: () => this.cycleClassification() },
+      { label: 'Send feedback', icon: 'feedback', run: () => this.openFeedback() },
     ];
   }
 
@@ -295,6 +299,10 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   selectedDiagramId: number | null = null;
   currentId: number | null = null;
   diagramName = 'Untitled diagram';
+  /** Access classification of the open diagram (PUBLIC | INTERNAL | RESTRICTED). */
+  classification: Classification = 'INTERNAL';
+  /** The classification levels, in order, for the cycling selector. */
+  readonly classificationLevels: Classification[] = ['PUBLIC', 'INTERNAL', 'RESTRICTED'];
   selectedNode: Node | null = null;
   selectedEdge: Edge | null = null;
   status = '';
@@ -345,6 +353,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     private templateApi: TemplateService,
     private lifecycleApi: LifecycleService,
     private recsApi: RecommendationService,
+    private feedbackApi: FeedbackService,
     private sanitizer: DomSanitizer,
     public collab: CollabService,
     public i18n: TranslateService,
@@ -767,6 +776,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.api.update(this.currentId, {
       name: this.diagramName || 'Untitled diagram',
       contentJson: JSON.stringify(this.graph.toJSON()),
+      classification: this.classification,
     }).subscribe({
       next: () => { this.markClean(); this.status = 'Autosaved'; },
       error: () => { /* silent — manual Save is still available */ },
@@ -1062,6 +1072,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     const dto = {
       name: this.diagramName || 'Untitled diagram',
       contentJson: JSON.stringify(this.graph.toJSON()),
+      classification: this.classification,
     };
     const req = this.currentId
       ? this.api.update(this.currentId, dto)
@@ -1104,6 +1115,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
         this.graph.fromJSON(JSON.parse(d.contentJson));
         this.currentId = d.id ?? null;
         this.diagramName = d.name;
+        this.classification = d.classification ?? 'INTERNAL';
         this.selectedNode = null;
         this.selectedEdge = null;
         this.editingTemplate = null;
@@ -1163,6 +1175,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.currentId = null;
     this.selectedDiagramId = null;
     this.diagramName = 'Untitled diagram';
+    this.classification = 'INTERNAL';
     this.selectedNode = null;
     this.selectedEdge = null;
     this.status = '';
@@ -1819,6 +1832,50 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       invOrgs: [{ desc: 'Recommended part' }],
       paramData: [{ name: 'Type', val: 'Recommendation' }],
     });
+  }
+
+  // ---------- Feedback loop ----------
+
+  feedbackOpen = false;
+  feedbackSubmitting = false;
+
+  openFeedback(): void {
+    this.feedbackOpen = true;
+  }
+
+  onSubmitFeedback(req: FeedbackRequest): void {
+    this.feedbackSubmitting = true;
+    this.feedbackApi.submit({ ...req, diagramId: this.currentId }).subscribe({
+      next: () => {
+        this.feedbackSubmitting = false;
+        this.feedbackOpen = false;
+        this.notify.success('Thanks! Your feedback was sent.');
+      },
+      error: () => {
+        this.feedbackSubmitting = false;
+        this.notify.error('Could not send feedback. Please try again.');
+      },
+    });
+  }
+
+  // ---------- Access classification (security / export control) ----------
+
+  /** Cycle PUBLIC → INTERNAL → RESTRICTED → PUBLIC and mark the diagram dirty. */
+  cycleClassification(): void {
+    const i = this.classificationLevels.indexOf(this.classification);
+    this.classification = this.classificationLevels[(i + 1) % this.classificationLevels.length];
+    this.notify.info(this.classification === 'RESTRICTED'
+      ? 'Restricted (ITAR/export-controlled) — visible only to you. Save to apply.'
+      : `Classification set to ${this.classification}. Save to apply.`);
+  }
+
+  /** CSS modifier for the classification pill. */
+  classificationClass(level: Classification = this.classification): string {
+    switch (level) {
+      case 'RESTRICTED': return 'restricted';
+      case 'PUBLIC': return 'public';
+      default: return 'internal';
+    }
   }
 
   // ---------- Lifecycle & alternatives (SiliconExpert) ----------

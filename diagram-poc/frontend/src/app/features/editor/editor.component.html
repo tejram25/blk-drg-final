@@ -47,6 +47,13 @@
         <button mat-stroked-button class="lbl-btn" (click)="newDiagram()"><span>{{ 'btn.new' | translate }}</span></button>
         <button mat-flat-button class="lbl-btn" (click)="save()"><span>{{ 'btn.save' | translate }}</span></button>
 
+        <button type="button" class="cls-pill" [class]="classificationClass()"
+                (click)="cycleClassification()"
+                matTooltip="Access classification — click to change. RESTRICTED = ITAR/export-controlled, visible only to you.">
+          <mat-icon>{{ classification === 'RESTRICTED' ? 'lock' : 'shield' }}</mat-icon>
+          <span>{{ classification }}</span>
+        </button>
+
         <span class="spacer"></span>
 
         <!-- History -->
@@ -74,6 +81,9 @@
           </button>
           <button mat-icon-button [class.on]="commentsOpen" matTooltip="Comments" (click)="toggleComments()">
             <mat-icon>comment</mat-icon>
+          </button>
+          <button mat-icon-button [class.on]="feedbackOpen" matTooltip="Send feedback" (click)="openFeedback()">
+            <mat-icon>feedback</mat-icon>
           </button>
         </div>
         <span class="vsep"></span>
@@ -654,6 +664,11 @@
       <app-lifecycle-dialog *ngIf="lifecycleOpen"
         [info]="lifecycleInfo" [loading]="lifecycleLoading"
         (addAlternative)="onAddAlternative($event)" (close)="lifecycleOpen = false"></app-lifecycle-dialog>
+
+      <!-- Feedback loop -->
+      <app-feedback-dialog *ngIf="feedbackOpen"
+        [submitting]="feedbackSubmitting"
+        (submitFeedback)="onSubmitFeedback($event)" (close)="feedbackOpen = false"></app-feedback-dialog>
 
       <!-- Command palette (Ctrl/Cmd+K) -->
       <app-command-palette *ngIf="commandPaletteOpen"

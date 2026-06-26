@@ -15,10 +15,17 @@ export interface BlockType {
   icon?: string;
 }
 
+/** Access classification levels, in increasing order of restriction. */
+export type Classification = 'PUBLIC' | 'INTERNAL' | 'RESTRICTED';
+
 export interface DiagramSummary {
   id: number;
   name: string;
   updatedAt: string;
+  /** PUBLIC | INTERNAL | RESTRICTED (ITAR/export-control). */
+  classification?: Classification;
+  /** Owner email; RESTRICTED diagrams are visible only to the owner. */
+  ownerEmail?: string;
   /** Average star rating (0 when no reviews yet), merged in from ReviewService. */
   avgRating?: number;
   /** Number of reviews. */
@@ -29,6 +36,9 @@ export interface DiagramDto {
   id?: number;
   name: string;
   contentJson: string;
+  /** PUBLIC | INTERNAL | RESTRICTED; defaults to INTERNAL server-side. */
+  classification?: Classification;
+  ownerEmail?: string;
 }
 
 // Resolved from the current page (protocol-matched) or an environment override,

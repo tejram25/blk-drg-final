@@ -7,6 +7,7 @@ import com.example.diagram.web.dto.DiagramResponse;
 import com.example.diagram.web.dto.DiagramSummary;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,29 +27,36 @@ public class DiagramController {
     }
 
     @GetMapping("/diagrams")
-    public List<DiagramSummary> list() {
-        return diagrams.listAll();
+    public List<DiagramSummary> list(Authentication auth) {
+        return diagrams.listAll(emailOf(auth));
     }
 
     @GetMapping("/diagrams/{id}")
-    public DiagramResponse get(@PathVariable Long id) {
-        return diagrams.get(id);
+    public DiagramResponse get(@PathVariable Long id, Authentication auth) {
+        return diagrams.get(id, emailOf(auth));
     }
 
     @PostMapping("/diagrams")
-    public ResponseEntity<DiagramResponse> create(@RequestBody DiagramRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(diagrams.create(request));
+    public ResponseEntity<DiagramResponse> create(@RequestBody DiagramRequest request,
+                                                  Authentication auth) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(diagrams.create(request, emailOf(auth)));
     }
 
     @PutMapping("/diagrams/{id}")
-    public DiagramResponse update(@PathVariable Long id, @RequestBody DiagramRequest request) {
-        return diagrams.update(id, request);
+    public DiagramResponse update(@PathVariable Long id, @RequestBody DiagramRequest request,
+                                  Authentication auth) {
+        return diagrams.update(id, request, emailOf(auth));
     }
 
     @DeleteMapping("/diagrams/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        diagrams.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id, Authentication auth) {
+        diagrams.delete(id, emailOf(auth));
         return ResponseEntity.noContent().build();
+    }
+
+    private String emailOf(Authentication auth) {
+        return auth == null ? "anonymous" : auth.getName();
     }
 
     @GetMapping("/block-types")

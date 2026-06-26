@@ -118,6 +118,17 @@
     .doc-name:hover { background: var(--bg-deep); }
     .open-dd { width: 140px; flex-shrink: 1; min-width: 100px; }
 
+    /* Access-classification pill (PUBLIC / INTERNAL / RESTRICTED). */
+    .cls-pill {
+      display: inline-flex; align-items: center; gap: 4px; height: 32px; flex: none;
+      padding: 0 10px; border-radius: 999px; cursor: pointer; font-size: 11px; font-weight: 600;
+      letter-spacing: .3px; border: 1px solid transparent; white-space: nowrap;
+    }
+    .cls-pill mat-icon { font-size: 15px; width: 15px; height: 15px; }
+    .cls-pill.public { color: #38bdf8; border-color: rgba(56,189,248,.4); background: rgba(56,189,248,.1); }
+    .cls-pill.internal { color: #94a3b8; border-color: rgba(148,163,184,.4); background: rgba(148,163,184,.1); }
+    .cls-pill.restricted { color: #f87171; border-color: rgba(248,113,113,.5); background: rgba(248,113,113,.12); }
+
     /* Header controls run a touch shorter than the 36px form default so the bar
        stays compact and everything fits one row on typical desktop widths. */
     .topbar .mdc-button { height: 32px; min-width: 0; padding: 0 12px; }
