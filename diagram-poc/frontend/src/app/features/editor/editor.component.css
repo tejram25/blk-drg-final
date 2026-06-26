@@ -13,6 +13,17 @@
       font-family: Roboto, 'Segoe UI', system-ui, sans-serif;
     }
 
+    /* ---- Linked-project banner ---- */
+    .proj-bar {
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+      padding: 6px 14px; font-size: 12.5px; color: var(--text, #e2e8f0);
+      background: rgba(56,189,248,.10); border-bottom: 1px solid rgba(56,189,248,.4);
+    }
+    .proj-bar > mat-icon { color: #38bdf8; font-size: 18px; width: 18px; height: 18px; }
+    .proj-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .proj-x { border: none; background: transparent; color: var(--muted, #94a3b8); cursor: pointer; display: inline-flex; }
+    .proj-x mat-icon { font-size: 16px; width: 16px; height: 16px; }
+
     /* ---- Onboarding empty-state ---- */
     .onboarding {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);

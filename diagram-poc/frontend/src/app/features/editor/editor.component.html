@@ -61,6 +61,10 @@
                   (click)="openTemplates()">
             <mat-icon>dashboard_customize</mat-icon>
           </button>
+          <button mat-icon-button [class.on]="projectPanelOpen" matTooltip="Project workspace"
+                  (click)="projectPanelOpen = !projectPanelOpen">
+            <mat-icon>work</mat-icon>
+          </button>
           <button mat-icon-button matTooltip="Version history" (click)="openVersions()">
             <mat-icon>history</mat-icon>
           </button>
@@ -221,6 +225,16 @@
           <mat-icon>save</mat-icon> Update template
         </button>
         <button type="button" mat-stroked-button (click)="cancelTemplateEdit()">Done</button>
+      </div>
+
+      <!-- Linked Salesforce project -->
+      <div class="proj-bar" *ngIf="linkedProject as p">
+        <mat-icon>work</mat-icon>
+        <span class="proj-text">Linked to <strong>{{ p.id }}</strong> · {{ p.name }} — {{ p.customer }}
+          · {{ p.stage }} · {{ p.leadTimeWeeks }}w lead</span>
+        <button type="button" class="proj-x" (click)="linkedProject = null" matTooltip="Unlink">
+          <mat-icon>close</mat-icon>
+        </button>
       </div>
 
       <div class="body">
@@ -559,6 +573,11 @@
       <!-- Parts search -->
       <app-part-search-panel *ngIf="partSearchOpen"
         (addPart)="addPartToCanvas($event)" (close)="partSearchOpen = false"></app-part-search-panel>
+
+      <!-- Project workspace (Salesforce integration) -->
+      <app-project-panel *ngIf="projectPanelOpen"
+        (attach)="onAttachProject($event)" (addPart)="onAddProjectPart($event)"
+        (close)="projectPanelOpen = false"></app-project-panel>
 
       <!-- Comments -->
       <app-comments-panel *ngIf="commentsOpen && currentId != null"

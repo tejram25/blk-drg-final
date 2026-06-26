@@ -37,6 +37,8 @@ import { CommentsPanelComponent } from './components/comments-panel/comments-pan
 import { PartSearchPanelComponent } from './components/part-search-panel/part-search-panel.component';
 import { TemplatesDialogComponent } from './components/templates-dialog/templates-dialog.component';
 import { ExportDialogComponent, ExportNode } from './components/export-dialog/export-dialog.component';
+import { ProjectPanelComponent } from './components/project-panel/project-panel.component';
+import { ProjectDetail, ProjectPart } from '../../core/services/integration.service';
 import { TemplateDetail, TemplateService } from '../../core/services/template.service';
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
@@ -173,7 +175,7 @@ const PORT_GROUPS = {
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe,
     ConfirmDialogComponent, ReviewsDialogComponent, StatusBarComponent, ZoomDockComponent,
     BomDialogComponent, CommandPaletteComponent, VersionsDialogComponent, CommentsPanelComponent,
-    PartSearchPanelComponent, TemplatesDialogComponent, ExportDialogComponent,
+    PartSearchPanelComponent, TemplatesDialogComponent, ExportDialogComponent, ProjectPanelComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
@@ -197,6 +199,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       { label: 'Template repository', icon: 'dashboard_customize', run: () => this.openTemplates() },
       { label: 'Save as template', icon: 'bookmark_add', run: () => this.openTemplates() },
       { label: 'Search parts', icon: 'travel_explore', run: () => (this.partSearchOpen = true) },
+      { label: 'Project workspace', icon: 'work', run: () => (this.projectPanelOpen = true) },
       { label: 'Version history', icon: 'history', run: () => this.openVersions() },
       { label: 'Comments', icon: 'comment', run: () => this.toggleComments() },
       { label: 'Duplicate selection', icon: 'content_copy', hint: 'Ctrl+D', run: () => this.duplicateSelection() },
@@ -1732,6 +1735,35 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   }
 
   // ---------- Template repository ----------
+
+  // ---------- Project workspace (Salesforce integration) ----------
+
+  /** Project workspace panel state. */
+  projectPanelOpen = false;
+  /** Project attached to the current diagram (from the workspace), or null. */
+  linkedProject: ProjectDetail | null = null;
+
+  /** Link a Salesforce project to this diagram (shown in a banner). */
+  onAttachProject(project: ProjectDetail): void {
+    this.linkedProject = project;
+    this.projectPanelOpen = false;
+    this.notify.success(`Linked to ${project.id} · ${project.customer}`);
+  }
+
+  /** Drop a project BOM part onto the canvas as a part card. */
+  onAddProjectPart(part: ProjectPart): void {
+    this.addPartToCanvas({
+      arwPartNum: { name: part.partNumber },
+      suppPartNum: { name: part.partNumber },
+      supp: { name: part.manufacturer },
+      mfr: { name: part.manufacturer },
+      invOrgs: [{ desc: part.description }],
+      paramData: [
+        { name: 'Type', val: part.description },
+        { name: 'Lifecycle', val: part.lifecycle },
+      ],
+    });
+  }
 
   /** Open the shared template repository dialog. */
   openTemplates(): void {

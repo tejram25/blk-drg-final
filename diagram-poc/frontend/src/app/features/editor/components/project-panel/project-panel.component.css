@@ -1,0 +1,78 @@
+.pp {
+  position: fixed;
+  top: 52px; right: 0; bottom: 28px;
+  width: 340px; max-width: 92vw; z-index: 40;
+  display: flex; flex-direction: column;
+  background: var(--panel, #1d1e23);
+  border-left: 1px solid var(--border, #34353c);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.35);
+  animation: pp-in 0.16s ease;
+}
+@keyframes pp-in { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.pp-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 12px 14px; border-bottom: 1px solid var(--border, #34353c);
+}
+.pp-title { margin: 0; font-size: 14px; font-weight: 600; color: var(--text, #e2e8f0); }
+.pp-sub { font-size: 11.5px; color: var(--muted, #94a3b8); }
+.pp-x { border: none; background: transparent; color: var(--muted, #94a3b8); cursor: pointer; }
+
+.pp-search {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+  border-bottom: 1px solid var(--border-soft, #2b2c32);
+}
+.pp-search mat-icon { color: var(--muted, #94a3b8); font-size: 19px; width: 19px; height: 19px; }
+.pp-search input {
+  flex: 1; background: var(--bg, #141518); border: 1px solid var(--border, #34353c);
+  border-radius: 8px; padding: 7px 10px; color: var(--text, #e2e8f0); font: inherit; font-size: 13px; outline: none;
+}
+
+.pp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 10px 12px; }
+.pp-msg { padding: 18px; text-align: center; color: var(--muted, #94a3b8); font-size: 13px; }
+
+.pp-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+  background: var(--bg-deep, #16171a); border: 1px solid var(--border-soft, #2b2c32);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; text-align: left;
+}
+.pp-row:hover { border-color: var(--accent, #f5a623); }
+.pp-row-main { display: flex; flex-direction: column; min-width: 0; }
+.pp-name { font-size: 13.5px; font-weight: 600; color: var(--text, #e2e8f0); }
+.pp-cust { font-size: 11.5px; color: var(--muted, #94a3b8); }
+.pp-row-meta { display: flex; flex-direction: column; align-items: flex-end; flex: none; gap: 2px; }
+.pp-stage { font-size: 11px; color: var(--accent, #f5a623); }
+.pp-lead { font-size: 11px; color: var(--muted, #94a3b8); }
+
+.pp-back {
+  display: inline-flex; align-items: center; gap: 4px; border: none; background: transparent;
+  color: var(--muted, #94a3b8); cursor: pointer; font: inherit; font-size: 12.5px; padding: 0 0 8px;
+}
+.pp-back mat-icon { font-size: 17px; width: 17px; height: 17px; }
+.pp-dname { margin: 4px 0 10px; font-size: 15px; color: var(--text, #e2e8f0); }
+
+.pp-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-bottom: 12px; }
+.pp-facts div { display: flex; flex-direction: column; }
+.pp-facts span { font-size: 10.5px; color: var(--faint, #6b7280); text-transform: uppercase; letter-spacing: .03em; }
+.pp-facts b { font-size: 12.5px; color: var(--text, #e2e8f0); font-weight: 600; }
+
+.pp-attach { width: 100%; background: var(--accent, #f5a623); color: #1a1303; margin-bottom: 14px; }
+.pp-attach mat-icon { font-size: 18px; width: 18px; height: 18px; vertical-align: text-bottom; }
+
+.pp-parts-head { font-size: 12px; color: var(--muted, #94a3b8); margin-bottom: 6px; }
+.pp-part {
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border-soft, #2b2c32); padding: 8px 2px;
+}
+.pp-part-main { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.pp-pn { font-size: 13px; font-weight: 600; color: var(--text, #e2e8f0); }
+.pp-pd { font-size: 11.5px; color: var(--muted, #94a3b8); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-pmeta { font-size: 11px; color: var(--faint, #6b7280); }
+.pp-life { color: #22c55e; }
+.pp-life.warn { color: #f59e0b; }
+.pp-add {
+  flex: none; border: 1px solid var(--border, #34353c); background: var(--bg-deep, #16171a);
+  color: var(--text, #e2e8f0); border-radius: 8px; cursor: pointer; display: inline-flex; padding: 5px;
+}
+.pp-add:hover { border-color: var(--accent, #f5a623); }
+.pp-add mat-icon { font-size: 18px; width: 18px; height: 18px; }
