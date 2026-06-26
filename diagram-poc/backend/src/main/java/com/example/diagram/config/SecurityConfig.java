@@ -61,6 +61,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(reg -> reg
                 // register / verify / login / logout / me are all open; the rest needs a session
                 .requestMatchers(antMatcher("/api/auth/**")).permitAll()
+                // Public health/info so IT monitoring can poll uptime
+                .requestMatchers(antMatcher("/actuator/health"), antMatcher("/actuator/info")).permitAll()
                 .requestMatchers(PathRequest.toH2Console()).permitAll()
                 .requestMatchers(antMatcher("/error")).permitAll()
                 .anyRequest().authenticated())

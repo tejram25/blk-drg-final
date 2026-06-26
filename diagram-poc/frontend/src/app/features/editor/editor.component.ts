@@ -729,6 +729,38 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       e.preventDefault();
       this.ctxMenu = null;
     });
+
+    // Autosave: debounce edits and quietly persist a saved diagram so users
+    // don't have to remember to hit Save (reduces manual work).
+    const onEdit = () => this.scheduleAutosave();
+    this.graph.on('cell:added', onEdit);
+    this.graph.on('cell:removed', onEdit);
+    this.graph.on('cell:changed', onEdit);
+  }
+
+  // ---------- Autosave ----------
+  private autosaveTimer: any = null;
+
+  private scheduleAutosave(): void {
+    if (this.currentId == null || this.editingTemplate || this.collab.isApplyingRemote) return;
+    if (this.autosaveTimer) clearTimeout(this.autosaveTimer);
+    this.autosaveTimer = setTimeout(() => this.autosave(), 4000);
+  }
+
+  private autosave(): void {
+    if (this.currentId == null || !this.hasUnsavedChanges()) return;
+    this.api.update(this.currentId, {
+      name: this.diagramName || 'Untitled diagram',
+      contentJson: JSON.stringify(this.graph.toJSON()),
+    }).subscribe({
+      next: () => { this.markClean(); this.status = 'Autosaved'; },
+      error: () => { /* silent — manual Save is still available */ },
+    });
+  }
+
+  /** True when the canvas is blank (drives the onboarding hint). */
+  get isCanvasEmpty(): boolean {
+    return !!this.graph && this.graph.getCells().length === 0;
   }
 
   // ---------- Palette ----------

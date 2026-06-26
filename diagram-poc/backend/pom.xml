@@ -35,6 +35,11 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
+    <!-- Health/info endpoints so IT can own uptime monitoring -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
     <!-- H2 file-based DB for the POC; swap for PostgreSQL in production -->
     <dependency>
       <groupId>com.h2database</groupId>

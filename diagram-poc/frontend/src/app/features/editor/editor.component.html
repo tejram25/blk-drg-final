@@ -298,6 +298,18 @@
                (mousemove)="onCanvasMouseMove($event)"
                (mouseleave)="onCanvasMouseLeave()"></div>
 
+          <!-- Onboarding hint on a blank canvas -->
+          <div class="onboarding" *ngIf="isCanvasEmpty">
+            <mat-icon class="ob-icon">schema</mat-icon>
+            <h3>Start your diagram</h3>
+            <ul>
+              <li><mat-icon>widgets</mat-icon> Drag a block or shape from the left palette</li>
+              <li><mat-icon>dashboard_customize</mat-icon> Or open the <b>Template repository</b> to start from a proven layout</li>
+              <li><mat-icon>travel_explore</mat-icon> <b>Search parts</b> to drop real components and build a BOM</li>
+              <li><mat-icon>keyboard_command_key</mat-icon> Press <b>Ctrl/Cmd&nbsp;+&nbsp;K</b> for the command palette</li>
+            </ul>
+          </div>
+
           <!-- Minimap (toggleable) -->
           <div #minimap class="minimap" [class.hidden]="!minimapOpen"></div>
 
