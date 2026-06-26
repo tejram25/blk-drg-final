@@ -1,6 +1,6 @@
 package com.example.diagram.service.impl;
 
-import com.example.diagram.config.AnthropicProperties;
+import com.example.diagram.config.OpenAiProperties;
 import com.example.diagram.domain.Template;
 import com.example.diagram.repository.TemplateRepository;
 import com.example.diagram.service.RecommendationService;
@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Recommendations backed by Claude when {@code anthropic.api-key} is set, with a
- * deterministic rule-based fallback otherwise (and on any upstream failure), so
- * the feature always returns useful, source-traceable suggestions.
+ * Recommendations backed by OpenAI (ChatGPT) when {@code openai.api-key} is set,
+ * with a deterministic rule-based fallback otherwise (and on any upstream
+ * failure), so the feature always returns useful, source-traceable suggestions.
  */
 @Service
 public class RecommendationServiceImpl implements RecommendationService {
@@ -40,12 +40,12 @@ public class RecommendationServiceImpl implements RecommendationService {
             Keep to at most 6 items. "source" must state where the suggestion comes from.
             """;
 
-    private final AnthropicProperties props;
+    private final OpenAiProperties props;
     private final TemplateRepository templates;
     private final ObjectMapper mapper;
     private final RestClient rest;
 
-    public RecommendationServiceImpl(AnthropicProperties props, TemplateRepository templates, ObjectMapper mapper) {
+    public RecommendationServiceImpl(OpenAiProperties props, TemplateRepository templates, ObjectMapper mapper) {
         this.props = props;
         this.templates = templates;
         this.mapper = mapper;
@@ -57,9 +57,9 @@ public class RecommendationServiceImpl implements RecommendationService {
         RecommendationRequest req = normalize(request);
         if (props.isConfigured()) {
             try {
-                return askClaude(req);
+                return askOpenAi(req);
             } catch (Exception ex) {
-                log.warn("Claude recommendation failed ({}); falling back to rule-based.", ex.toString());
+                log.warn("OpenAI recommendation failed ({}); falling back to rule-based.", ex.toString());
                 RecommendationResult rb = ruleBased(req);
                 return new RecommendationResult(rb.items(), rb.model(), false,
                         "AI was unavailable — showing rule-based suggestions.");
@@ -68,9 +68,9 @@ public class RecommendationServiceImpl implements RecommendationService {
         return ruleBased(req);
     }
 
-    // ---- Claude path ----
+    // ---- OpenAI (ChatGPT) path ----
 
-    private RecommendationResult askClaude(RecommendationRequest req) throws Exception {
+    private RecommendationResult askOpenAi(RecommendationRequest req) throws Exception {
         String user = "Design goal: " + (req.goal().isBlank() ? "(unspecified)" : req.goal())
                 + "\nParts already on the canvas: "
                 + (req.currentParts().isEmpty() ? "(none)" : String.join(", ", req.currentParts()))
@@ -79,19 +79,21 @@ public class RecommendationServiceImpl implements RecommendationService {
         Map<String, Object> body = Map.of(
                 "model", props.getModel(),
                 "max_tokens", props.getMaxTokens(),
-                "system", SYSTEM,
-                "messages", List.of(Map.of("role", "user", "content", user)));
+                // Force a JSON object response so parsing is reliable.
+                "response_format", Map.of("type", "json_object"),
+                "messages", List.of(
+                        Map.of("role", "system", "content", SYSTEM),
+                        Map.of("role", "user", "content", user)));
 
         JsonNode resp = rest.post()
-                .uri(props.getBaseUrl() + "/v1/messages")
-                .header("x-api-key", props.getApiKey())
-                .header("anthropic-version", props.getVersion())
+                .uri(props.getBaseUrl() + "/v1/chat/completions")
+                .header("Authorization", "Bearer " + props.getApiKey())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()
                 .body(JsonNode.class);
 
-        String text = resp == null ? "" : resp.at("/content/0/text").asText("");
+        String text = resp == null ? "" : resp.at("/choices/0/message/content").asText("");
         List<RecommendationItem> items = parseItems(text);
         if (items.isEmpty()) {
             return ruleBased(req); // model returned nothing parseable
@@ -114,11 +116,11 @@ public class RecommendationServiceImpl implements RecommendationService {
                         n.path("type").asText("solution"),
                         n.path("title").asText(""),
                         n.path("detail").asText(""),
-                        n.path("source").asText("Claude — verify"),
+                        n.path("source").asText("ChatGPT — verify"),
                         n.path("verify").asText("Check the datasheet before committing.")));
             }
         } catch (Exception ex) {
-            log.warn("Could not parse Claude JSON: {}", ex.toString());
+            log.warn("Could not parse OpenAI JSON: {}", ex.toString());
         }
         return out;
     }
