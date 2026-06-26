@@ -1445,6 +1445,45 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     reader.readAsDataURL(file);
   }
 
+  /**
+   * External diagram intake: bring a supplier/customer block diagram (image) in
+   * as a large, dimmed background tracing layer so you can draw editable Arrow
+   * blocks over it and map them to catalogue parts.
+   */
+  onSupplierImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = reader.result as string;
+      const probe = new Image();
+      probe.onload = () => {
+        const max = 900;
+        const scale = Math.min(1, max / Math.max(probe.width, probe.height));
+        const w = Math.max(120, Math.round(probe.width * scale));
+        const h = Math.max(120, Math.round(probe.height * scale));
+        const node = this.graph.addNode({
+          shape: 'img-node',
+          x: 40, y: 40, width: w, height: h,
+          data: { typeKey: 'supplier-trace' },
+          attrs: {
+            img: { 'xlink:href': url, opacity: 0.45 },
+            label: { text: `Trace: ${file.name.replace(/\.[^.]+$/, '')}` },
+          },
+        });
+        node.toBack(); // keep it behind the blocks you trace
+        try { this.graph.zoomToFit({ padding: 24, maxScale: 1 }); } catch { /* best effort */ }
+        this.markClean();
+        this.notify.info('Imported supplier diagram — trace editable blocks over it, then map blocks to parts via Search parts.');
+        this.status = 'Supplier diagram imported as a tracing layer';
+      };
+      probe.src = url;
+    };
+    reader.readAsDataURL(file);
+  }
+
   deleteSelectedEdge(): void {
     if (this.selectedEdge) {
       this.graph.removeCell(this.selectedEdge);

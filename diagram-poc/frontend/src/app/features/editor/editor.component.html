@@ -96,6 +96,8 @@
                  (change)="onJsonSelected($event)" />
           <input #drawioInput type="file" accept=".drawio,.xml,application/xml,text/xml" hidden
                  (change)="onDrawioSelected($event)" />
+          <input #supplierInput type="file" accept="image/*" hidden
+                 (change)="onSupplierImageSelected($event)" />
           <!-- Import (JSON / draw.io) -->
           <span class="menu-wrap">
             <button type="button" mat-icon-button [class.on]="importMenuOpen"
@@ -108,6 +110,9 @@
               </button>
               <button type="button" class="menu-item" (click)="drawioInput.click(); importMenuOpen = false">
                 <mat-icon>account_tree</mat-icon><span>Import from draw.io</span>
+              </button>
+              <button type="button" class="menu-item" (click)="supplierInput.click(); importMenuOpen = false">
+                <mat-icon>imagesearch_roller</mat-icon><span>Supplier diagram (trace image)</span>
               </button>
             </div>
           </span>
