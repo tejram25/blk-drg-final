@@ -612,6 +612,10 @@
       <!-- Right-click context menu (Hide / layering) -->
       <div class="ctx-menu" *ngIf="ctxMenu" [style.left.px]="ctxMenu.x" [style.top.px]="ctxMenu.y"
            (click)="$event.stopPropagation()">
+        <button type="button" class="ctx-item" *ngIf="ctxIsPart" (click)="ctxCheckLifecycle()">
+          <mat-icon>fact_check</mat-icon><span>Check lifecycle</span>
+        </button>
+        <div class="ctx-sep" *ngIf="ctxIsPart"></div>
         <button type="button" class="ctx-item" *ngIf="ctxMenu && !exportHiddenIds.has(ctxMenu.nodeId)"
                 (click)="ctxHide()">
           <mat-icon>visibility_off</mat-icon><span>Exclude from export</span>
@@ -631,6 +635,11 @@
           <mat-icon>visibility</mat-icon><span>Include all in export</span>
         </button>
       </div>
+
+      <!-- Lifecycle & alternatives -->
+      <app-lifecycle-dialog *ngIf="lifecycleOpen"
+        [info]="lifecycleInfo" [loading]="lifecycleLoading"
+        (addAlternative)="onAddAlternative($event)" (close)="lifecycleOpen = false"></app-lifecycle-dialog>
 
       <!-- Command palette (Ctrl/Cmd+K) -->
       <app-command-palette *ngIf="commandPaletteOpen"

@@ -39,6 +39,8 @@ import { TemplatesDialogComponent } from './components/templates-dialog/template
 import { ExportDialogComponent, ExportNode } from './components/export-dialog/export-dialog.component';
 import { ProjectPanelComponent } from './components/project-panel/project-panel.component';
 import { ProjectDetail, ProjectPart } from '../../core/services/integration.service';
+import { LifecycleDialogComponent } from './components/lifecycle-dialog/lifecycle-dialog.component';
+import { AlternativePart, LifecycleInfo, LifecycleService } from '../../core/services/lifecycle.service';
 import { TemplateDetail, TemplateService } from '../../core/services/template.service';
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
@@ -176,6 +178,7 @@ const PORT_GROUPS = {
     ConfirmDialogComponent, ReviewsDialogComponent, StatusBarComponent, ZoomDockComponent,
     BomDialogComponent, CommandPaletteComponent, VersionsDialogComponent, CommentsPanelComponent,
     PartSearchPanelComponent, TemplatesDialogComponent, ExportDialogComponent, ProjectPanelComponent,
+    LifecycleDialogComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
@@ -200,6 +203,10 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       { label: 'Save as template', icon: 'bookmark_add', run: () => this.openTemplates() },
       { label: 'Search parts', icon: 'travel_explore', run: () => (this.partSearchOpen = true) },
       { label: 'Project workspace', icon: 'work', run: () => (this.projectPanelOpen = true) },
+      { label: 'Check part lifecycle', icon: 'fact_check', run: () => {
+        const pn = this.partNumberOf(this.selectedNode);
+        if (pn) this.checkLifecycle(pn); else this.notify.info('Select a catalogue part first.');
+      } },
       { label: 'Version history', icon: 'history', run: () => this.openVersions() },
       { label: 'Comments', icon: 'comment', run: () => this.toggleComments() },
       { label: 'Duplicate selection', icon: 'content_copy', hint: 'Ctrl+D', run: () => this.duplicateSelection() },
@@ -333,6 +340,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     private graphSvc: GraphService,
     private bomService: BomService,
     private templateApi: TemplateService,
+    private lifecycleApi: LifecycleService,
     private sanitizer: DomSanitizer,
     public collab: CollabService,
     public i18n: TranslateService,
@@ -1735,6 +1743,55 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   }
 
   // ---------- Template repository ----------
+
+  // ---------- Lifecycle & alternatives (SiliconExpert) ----------
+
+  lifecycleOpen = false;
+  lifecycleLoading = false;
+  lifecycleInfo: LifecycleInfo | null = null;
+
+  /** Look up lifecycle risk + alternatives for a part number. */
+  checkLifecycle(partNumber: string): void {
+    if (!partNumber) return;
+    this.lifecycleInfo = null;
+    this.lifecycleLoading = true;
+    this.lifecycleOpen = true;
+    this.lifecycleApi.lookup(partNumber).subscribe({
+      next: (info) => { this.lifecycleInfo = info; this.lifecycleLoading = false; },
+      error: () => { this.lifecycleLoading = false; this.lifecycleOpen = false; },
+    });
+  }
+
+  /** Part number of a node, if it's a catalogue part card. */
+  private partNumberOf(node: Node | null): string | null {
+    if (!node || node.shape !== 'part-card') return null;
+    const part = (node.getData() as { part?: any } | undefined)?.part;
+    return part?.arwPartNum?.name || part?.suppPartNum?.name || null;
+  }
+
+  /** True when the context-menu target is a catalogue part card. */
+  get ctxIsPart(): boolean {
+    return !!this.partNumberOf(this.ctxNode());
+  }
+
+  /** Context-menu "Check lifecycle". */
+  ctxCheckLifecycle(): void {
+    const pn = this.partNumberOf(this.ctxNode());
+    this.ctxMenu = null;
+    if (pn) this.checkLifecycle(pn);
+  }
+
+  /** Drop a chosen alternative part onto the canvas. */
+  onAddAlternative(alt: AlternativePart): void {
+    this.addPartToCanvas({
+      arwPartNum: { name: alt.partNumber },
+      suppPartNum: { name: alt.partNumber },
+      supp: { name: alt.manufacturer },
+      mfr: { name: alt.manufacturer },
+      invOrgs: [{ desc: alt.note }],
+      paramData: [{ name: 'Type', val: alt.dropIn ? 'Drop-in alternative' : 'Approved substitute' }],
+    });
+  }
 
   // ---------- Project workspace (Salesforce integration) ----------
 
