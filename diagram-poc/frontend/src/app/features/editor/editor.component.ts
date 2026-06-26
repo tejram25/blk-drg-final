@@ -41,6 +41,8 @@ import { ProjectPanelComponent } from './components/project-panel/project-panel.
 import { ProjectDetail, ProjectPart } from '../../core/services/integration.service';
 import { LifecycleDialogComponent } from './components/lifecycle-dialog/lifecycle-dialog.component';
 import { AlternativePart, LifecycleInfo, LifecycleService } from '../../core/services/lifecycle.service';
+import { RecommendationsDialogComponent } from './components/recommendations-dialog/recommendations-dialog.component';
+import { RecommendationResult, RecommendationService } from '../../core/services/recommendation.service';
 import { TemplateDetail, TemplateService } from '../../core/services/template.service';
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
@@ -178,7 +180,7 @@ const PORT_GROUPS = {
     ConfirmDialogComponent, ReviewsDialogComponent, StatusBarComponent, ZoomDockComponent,
     BomDialogComponent, CommandPaletteComponent, VersionsDialogComponent, CommentsPanelComponent,
     PartSearchPanelComponent, TemplatesDialogComponent, ExportDialogComponent, ProjectPanelComponent,
-    LifecycleDialogComponent,
+    LifecycleDialogComponent, RecommendationsDialogComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
@@ -200,6 +202,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       { label: 'New diagram', icon: 'note_add', run: () => this.newDiagram() },
       { label: 'Save', icon: 'save', hint: 'Ctrl+S', run: () => this.save() },
       { label: 'Template repository', icon: 'dashboard_customize', run: () => this.openTemplates() },
+      { label: 'Recommendations (AI)', icon: 'auto_awesome', run: () => this.openRecommendations() },
       { label: 'Save as template', icon: 'bookmark_add', run: () => this.openTemplates() },
       { label: 'Search parts', icon: 'travel_explore', run: () => (this.partSearchOpen = true) },
       { label: 'Project workspace', icon: 'work', run: () => (this.projectPanelOpen = true) },
@@ -341,6 +344,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     private bomService: BomService,
     private templateApi: TemplateService,
     private lifecycleApi: LifecycleService,
+    private recsApi: RecommendationService,
     private sanitizer: DomSanitizer,
     public collab: CollabService,
     public i18n: TranslateService,
@@ -1743,6 +1747,40 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   }
 
   // ---------- Template repository ----------
+
+  // ---------- AI recommendations (Claude) ----------
+
+  recsOpen = false;
+  recsLoading = false;
+  recsResult: RecommendationResult | null = null;
+
+  /** Ask for recommendations based on the diagram name + the parts on canvas. */
+  openRecommendations(): void {
+    this.recsResult = null;
+    this.recsLoading = true;
+    this.recsOpen = true;
+    const parts = this.graph.getNodes()
+      .filter((n) => n.shape === 'part-card')
+      .map((n) => this.partNumberOf(n))
+      .filter((p): p is string => !!p);
+    const goal = this.diagramName && this.diagramName !== 'Untitled diagram' ? this.diagramName : '';
+    this.recsApi.recommend(goal, parts).subscribe({
+      next: (res) => { this.recsResult = res; this.recsLoading = false; },
+      error: () => { this.recsLoading = false; this.recsOpen = false; },
+    });
+  }
+
+  /** Add a recommended part to the canvas. */
+  onRecAddPart(partNumber: string): void {
+    this.addPartToCanvas({
+      arwPartNum: { name: partNumber },
+      suppPartNum: { name: partNumber },
+      supp: { name: 'Recommended' },
+      mfr: { name: 'Recommended' },
+      invOrgs: [{ desc: 'Recommended part' }],
+      paramData: [{ name: 'Type', val: 'Recommendation' }],
+    });
+  }
 
   // ---------- Lifecycle & alternatives (SiliconExpert) ----------
 

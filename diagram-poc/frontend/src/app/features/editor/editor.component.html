@@ -65,6 +65,10 @@
                   (click)="projectPanelOpen = !projectPanelOpen">
             <mat-icon>work</mat-icon>
           </button>
+          <button mat-icon-button [class.on]="recsOpen" matTooltip="Recommendations (AI)"
+                  (click)="openRecommendations()">
+            <mat-icon>auto_awesome</mat-icon>
+          </button>
           <button mat-icon-button matTooltip="Version history" (click)="openVersions()">
             <mat-icon>history</mat-icon>
           </button>
@@ -635,6 +639,11 @@
           <mat-icon>visibility</mat-icon><span>Include all in export</span>
         </button>
       </div>
+
+      <!-- AI recommendations -->
+      <app-recommendations-dialog *ngIf="recsOpen"
+        [result]="recsResult" [loading]="recsLoading"
+        (addPart)="onRecAddPart($event)" (close)="recsOpen = false"></app-recommendations-dialog>
 
       <!-- Lifecycle & alternatives -->
       <app-lifecycle-dialog *ngIf="lifecycleOpen"

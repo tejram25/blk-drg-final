@@ -1,0 +1,41 @@
+<div class="rc-backdrop" (click)="close.emit()">
+  <div class="rc-card" (click)="$event.stopPropagation()">
+    <div class="rc-head">
+      <div>
+        <h3 class="rc-title"><mat-icon>auto_awesome</mat-icon> Recommendations</h3>
+        <span class="rc-sub" *ngIf="result">
+          <span class="rc-badge" [class.ai]="result.aiGenerated">
+            {{ result.aiGenerated ? 'Claude · ' + result.model : 'Rule-based' }}
+          </span>
+          {{ result.note }}
+        </span>
+      </div>
+      <button type="button" class="rc-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="rc-body">
+      <p class="rc-msg" *ngIf="loading">Thinking about your design…</p>
+      <p class="rc-msg" *ngIf="!loading && result && !result.items.length">No recommendations right now.</p>
+
+      <div class="rc-item" *ngFor="let r of result?.items">
+        <mat-icon class="rc-ico">{{ icon(r.type) }}</mat-icon>
+        <div class="rc-main">
+          <div class="rc-top">
+            <span class="rc-name">{{ r.title }}</span>
+            <span class="rc-src">{{ r.source }}</span>
+          </div>
+          <p class="rc-detail" *ngIf="r.detail">{{ r.detail }}</p>
+          <p class="rc-verify"><mat-icon>fact_check</mat-icon> {{ r.verify }}</p>
+        </div>
+        <button type="button" class="rc-add" *ngIf="r.type === 'part'"
+                matTooltip="Add to canvas" (click)="addPart.emit(r.title)">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <p class="rc-disclaimer" *ngIf="result?.aiGenerated">
+      AI-generated — always verify specs and datasheets before committing.
+    </p>
+  </div>
+</div>
