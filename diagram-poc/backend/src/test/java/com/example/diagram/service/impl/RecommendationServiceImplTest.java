@@ -1,6 +1,6 @@
 package com.example.diagram.service.impl;
 
-import com.example.diagram.config.GeminiProperties;
+import com.example.diagram.config.OllamaProperties;
 import com.example.diagram.domain.Template;
 import com.example.diagram.repository.TemplateRepository;
 import com.example.diagram.web.dto.RecommendationRequest;
@@ -23,8 +23,8 @@ class RecommendationServiceImplTest {
     @Mock private TemplateRepository templates;
 
     private RecommendationServiceImpl service() {
-        GeminiProperties props = new GeminiProperties();
-        props.setApiKey(""); // no key → rule-based path
+        OllamaProperties props = new OllamaProperties();
+        props.setEnabled(false); // disabled → rule-based path
         Template t = new Template();
         t.setName("Smart Microgrid");
         t.setCategory("Power");

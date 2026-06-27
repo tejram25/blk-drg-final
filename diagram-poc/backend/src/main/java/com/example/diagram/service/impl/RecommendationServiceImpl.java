@@ -1,6 +1,6 @@
 package com.example.diagram.service.impl;
 
-import com.example.diagram.config.GeminiProperties;
+import com.example.diagram.config.OllamaProperties;
 import com.example.diagram.domain.Template;
 import com.example.diagram.repository.TemplateRepository;
 import com.example.diagram.service.RecommendationService;
@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Recommendations backed by Google Gemini when {@code gemini.api-key} is set,
- * with a deterministic rule-based fallback otherwise (and on any upstream
+ * Recommendations backed by a local Ollama model when {@code ollama.enabled} is
+ * true, with a deterministic rule-based fallback otherwise (and on any upstream
  * failure), so the feature always returns useful, source-traceable suggestions.
  */
 @Service
@@ -40,12 +40,12 @@ public class RecommendationServiceImpl implements RecommendationService {
             Keep to at most 6 items. "source" must state where the suggestion comes from.
             """;
 
-    private final GeminiProperties props;
+    private final OllamaProperties props;
     private final TemplateRepository templates;
     private final ObjectMapper mapper;
     private final RestClient rest;
 
-    public RecommendationServiceImpl(GeminiProperties props, TemplateRepository templates, ObjectMapper mapper) {
+    public RecommendationServiceImpl(OllamaProperties props, TemplateRepository templates, ObjectMapper mapper) {
         this.props = props;
         this.templates = templates;
         this.mapper = mapper;
@@ -57,9 +57,9 @@ public class RecommendationServiceImpl implements RecommendationService {
         RecommendationRequest req = normalize(request);
         if (props.isConfigured()) {
             try {
-                return askGemini(req);
+                return askOllama(req);
             } catch (Exception ex) {
-                log.warn("Gemini recommendation failed ({}); falling back to rule-based.", ex.toString());
+                log.warn("Ollama recommendation failed ({}); falling back to rule-based.", ex.toString());
                 RecommendationResult rb = ruleBased(req);
                 return new RecommendationResult(rb.items(), rb.model(), false,
                         "AI was unavailable — showing rule-based suggestions.");
@@ -68,31 +68,32 @@ public class RecommendationServiceImpl implements RecommendationService {
         return ruleBased(req);
     }
 
-    // ---- Google Gemini path ----
+    // ---- Local Ollama path (OpenAI-compatible endpoint) ----
 
-    private RecommendationResult askGemini(RecommendationRequest req) throws Exception {
+    private RecommendationResult askOllama(RecommendationRequest req) throws Exception {
         String user = "Design goal: " + (req.goal().isBlank() ? "(unspecified)" : req.goal())
                 + "\nParts already on the canvas: "
                 + (req.currentParts().isEmpty() ? "(none)" : String.join(", ", req.currentParts()))
                 + "\nAvailable templates: " + templateNames();
 
         Map<String, Object> body = Map.of(
-                "systemInstruction", Map.of("parts", List.of(Map.of("text", SYSTEM))),
-                "contents", List.of(Map.of("role", "user", "parts", List.of(Map.of("text", user)))),
-                // Ask Gemini for raw JSON so parsing is reliable.
-                "generationConfig", Map.of(
-                        "responseMimeType", "application/json",
-                        "maxOutputTokens", props.getMaxTokens()));
+                "model", props.getModel(),
+                "max_tokens", props.getMaxTokens(),
+                "stream", false,
+                // Ask for a JSON object response so parsing is reliable.
+                "response_format", Map.of("type", "json_object"),
+                "messages", List.of(
+                        Map.of("role", "system", "content", SYSTEM),
+                        Map.of("role", "user", "content", user)));
 
         JsonNode resp = rest.post()
-                .uri(props.getBaseUrl() + "/v1beta/models/" + props.getModel() + ":generateContent")
-                .header("x-goog-api-key", props.getApiKey())
+                .uri(props.getBaseUrl() + "/v1/chat/completions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()
                 .body(JsonNode.class);
 
-        String text = resp == null ? "" : resp.at("/candidates/0/content/parts/0/text").asText("");
+        String text = resp == null ? "" : resp.at("/choices/0/message/content").asText("");
         List<RecommendationItem> items = parseItems(text);
         if (items.isEmpty()) {
             return ruleBased(req); // model returned nothing parseable
@@ -115,11 +116,11 @@ public class RecommendationServiceImpl implements RecommendationService {
                         n.path("type").asText("solution"),
                         n.path("title").asText(""),
                         n.path("detail").asText(""),
-                        n.path("source").asText("Gemini — verify"),
+                        n.path("source").asText("Local AI (Ollama) — verify"),
                         n.path("verify").asText("Check the datasheet before committing.")));
             }
         } catch (Exception ex) {
-            log.warn("Could not parse Gemini JSON: {}", ex.toString());
+            log.warn("Could not parse Ollama JSON: {}", ex.toString());
         }
         return out;
     }

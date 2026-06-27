@@ -5,6 +5,7 @@
 arrow.client-id=your-client-id-here
 arrow.client-secret=your-client-secret-here
 
-# AI recommendations (Google Gemini). Leave unset to use the rule-based fallback.
-# Free key (no card): https://aistudio.google.com/app/apikey
-# gemini.api-key=AIza...
+# AI recommendations (local Ollama). Leave disabled to use the rule-based fallback.
+# Install Ollama (https://ollama.com), run `ollama pull llama3.2`, then:
+# ollama.enabled=true
+# ollama.model=llama3.2
