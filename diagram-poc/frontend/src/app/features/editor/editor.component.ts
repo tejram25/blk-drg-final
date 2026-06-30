@@ -739,10 +739,10 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
 
     // Hover a functional block → show its "link a component" badge.
     this.graph.on('node:mouseenter', ({ node }) => {
-      if (node.shape === 'block-card') this.hoverBlockId = node.id;
+      if (node.shape === 'block-card') this.setBlockHover(node.id);
     });
     this.graph.on('node:mouseleave', ({ node }) => {
-      if (this.hoverBlockId === node.id) this.hoverBlockId = null;
+      if (node.shape === 'block-card') this.scheduleBlockHoverClear();
     });
     // If the selected cell vanishes (Del key, collaborator deleted it,
     // diagram load), close its property panel instead of editing a ghost.
@@ -1950,6 +1950,18 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
 
   /** Block currently hovered (drives the on-canvas "link" badge). */
   hoverBlockId: string | null = null;
+  private hoverClearTimer: any = null;
+
+  /** Keep the badge up while the cursor moves from the block onto the badge itself. */
+  setBlockHover(id: string): void {
+    clearTimeout(this.hoverClearTimer);
+    this.hoverBlockId = id;
+  }
+
+  scheduleBlockHoverClear(): void {
+    clearTimeout(this.hoverClearTimer);
+    this.hoverClearTimer = setTimeout(() => { this.hoverBlockId = null; }, 220);
+  }
   /** Block whose link popover is open (null = closed). */
   linkTarget: Node | null = null;
   linkBlockName = '';
@@ -1960,7 +1972,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
    * component is linked, a chip with its part number + stock-status dot. Mirrors
    * the remote-cursor overlay approach so it tracks pan/zoom/drag.
    */
-  blockOverlays(): { id: string; x: number; y: number; w: number; hovered: boolean;
+  blockOverlays(): { id: string; x: number; y: number; w: number; show: boolean;
                      part: any; pn: string; dot: string }[] {
     if (!this.graph || !this.canvasRef) return [];
     const rect = this.canvasRef.nativeElement.getBoundingClientRect();
@@ -1971,12 +1983,14 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
         const tl = this.graph.localToClient(b.x, b.y);
         const br = this.graph.localToClient(b.x + b.width, b.y + b.height);
         const part = n.getData()?.linkedPart ?? null;
+        // Show the "link" badge when the block is hovered OR selected (sticky).
+        const show = this.hoverBlockId === n.id || this.selectedNode?.id === n.id;
         return {
           id: n.id,
           x: tl.x - rect.left,
           y: tl.y - rect.top,
           w: br.x - tl.x,
-          hovered: this.hoverBlockId === n.id,
+          show,
           part,
           pn: part ? (part?.arwPartNum?.name || part?.suppPartNum?.name || 'part') : '',
           dot: this.blockStatusDot(part),

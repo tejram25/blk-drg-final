@@ -356,11 +356,12 @@
             <span class="cursor-name" [style.background]="c.color">{{ c.name }}</span>
           </div>
 
-          <!-- Block ↔ component overlay: hover "link" badge + linked-part chip -->
+          <!-- Block ↔ component overlay: hover/select "link" badge + linked-part chip -->
           <div class="block-overlay" *ngFor="let bo of blockOverlays()"
                [style.left.px]="bo.x" [style.top.px]="bo.y" [style.width.px]="bo.w">
-            <button type="button" class="bl-link" *ngIf="bo.hovered && !bo.part && !linkTarget"
-                    matTooltip="Link a component" (click)="openBlockLink(bo.id, $event)">
+            <button type="button" class="bl-link" *ngIf="bo.show && !bo.part && !linkTarget"
+                    matTooltip="Link a component" (click)="openBlockLink(bo.id, $event)"
+                    (mouseenter)="setBlockHover(bo.id)" (mouseleave)="scheduleBlockHoverClear()">
               <mat-icon>add_link</mat-icon>
             </button>
             <button type="button" class="bl-chip" *ngIf="bo.part"
