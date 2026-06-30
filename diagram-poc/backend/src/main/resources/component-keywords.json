@@ -1,0 +1,77 @@
+{
+  "_comment": "Maps design-goal keywords to electronic-component catalogue search terms. Edit freely — reloaded on app restart. A rule fires when any of its 'triggers' matches a word in the goal (exact token, or a stem prefix for triggers >= 5 chars, e.g. 'regulat' -> 'regulator'). All of the rule's 'terms' are then searched in the Arrow catalogue.",
+  "rules": [
+    {
+      "terms": ["motor driver", "brushless motor controller"],
+      "triggers": ["robot", "amr", "agv", "motor", "servo", "drive", "actuator", "bldc", "brushless", "stepper"]
+    },
+    {
+      "terms": ["IMU sensor"],
+      "triggers": ["robot", "amr", "agv", "drone", "uav", "imu", "gyro", "gyroscope", "accel", "accelerometer", "navigation", "balance"]
+    },
+    {
+      "terms": ["microcontroller"],
+      "triggers": ["mcu", "microcontroller", "controller", "processor", "compute", "control", "fpga", "soc", "arm", "cortex"]
+    },
+    {
+      "terms": ["voltage regulator", "buck regulator"],
+      "triggers": ["power", "supply", "regulat", "battery", "dcdc", "buck", "boost", "ldo", "charger", "pmic", "rail"]
+    },
+    {
+      "terms": ["gate driver", "mosfet"],
+      "triggers": ["mosfet", "fet", "igbt", "switching", "inverter", "halfbridge", "bridge", "gate"]
+    },
+    {
+      "terms": ["wifi module"],
+      "triggers": ["wifi", "wireless", "ble", "bluetooth", "iot", "zigbee", "lora", "connectivity", "esp32"]
+    },
+    {
+      "terms": ["CAN transceiver"],
+      "triggers": ["can", "rs485", "rs232", "uart", "serial", "ethernet", "modbus", "transceiver"]
+    },
+    {
+      "terms": ["current sense amplifier"],
+      "triggers": ["current", "sense", "monitor", "metering", "shunt"]
+    },
+    {
+      "terms": ["temperature sensor", "sensor"],
+      "triggers": ["temperature", "thermal", "humidity", "pressure", "proximity", "sensor", "sensing"]
+    },
+    {
+      "terms": ["MLCC capacitor"],
+      "triggers": ["decoupl", "capacit", "filter", "bypass", "passive"]
+    },
+    {
+      "terms": ["LED driver"],
+      "triggers": ["led", "lighting", "display", "lcd", "oled", "backlight", "lamp", "blink"]
+    },
+    {
+      "terms": ["audio amplifier"],
+      "triggers": ["audio", "sound", "speaker", "amplifier", "microphone", "codec"]
+    },
+    {
+      "terms": ["flash memory"],
+      "triggers": ["memory", "flash", "eeprom", "storage", "sram", "dram"]
+    },
+    {
+      "terms": ["operational amplifier"],
+      "triggers": ["opamp", "comparator", "analog", "amplify"]
+    },
+    {
+      "terms": ["ADC", "DAC"],
+      "triggers": ["adc", "dac", "converter", "sampling", "acquisition"]
+    },
+    {
+      "terms": ["oscillator", "crystal"],
+      "triggers": ["clock", "oscillator", "crystal", "timing", "rtc"]
+    },
+    {
+      "terms": ["connector", "header"],
+      "triggers": ["connector", "header", "socket", "terminal", "usb"]
+    },
+    {
+      "terms": ["TVS diode", "ESD protection"],
+      "triggers": ["esd", "surge", "protection", "tvs", "transient"]
+    }
+  ]
+}

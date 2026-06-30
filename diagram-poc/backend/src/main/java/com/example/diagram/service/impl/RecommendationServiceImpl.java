@@ -57,6 +57,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     private final TemplateRepository templates;
     private final PartSearchService parts;
     private final DesignWinService designWin;
+    private final ComponentKeywordDictionary keywords;
     private final ObjectMapper mapper;
     private final RestClient rest;
 
@@ -70,11 +71,12 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     public RecommendationServiceImpl(OllamaProperties props, TemplateRepository templates,
                                      PartSearchService parts, DesignWinService designWin,
-                                     ObjectMapper mapper) {
+                                     ComponentKeywordDictionary keywords, ObjectMapper mapper) {
         this.props = props;
         this.templates = templates;
         this.parts = parts;
         this.designWin = designWin;
+        this.keywords = keywords;
         this.mapper = mapper;
         this.rest = RestClient.create();
     }
@@ -91,7 +93,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         for (String p : req.currentParts()) {
             if (present(p)) terms.add(p.trim());
         }
-        terms.addAll(keywordTerms(req.goal()));
+        terms.addAll(keywords.termsFor(req.goal()));
 
         // Only spend the (slow) local model when the dictionary is thin, so the
         // common case stays fast. The model just proposes more search terms.
@@ -167,54 +169,6 @@ public class RecommendationServiceImpl implements RecommendationService {
             log.warn("AI search-term extraction failed ({}); using keyword dictionary.", ex.toString());
             return List.of();
         }
-    }
-
-    /**
-     * Map a design goal to component search terms using a domain dictionary. This
-     * is the fallback when the model is off/unreachable, and a supplement when it
-     * is on — so every design produces real catalogue searches.
-     */
-    private List<String> keywordTerms(String goal) {
-        String g = goal.toLowerCase();
-        LinkedHashSet<String> out = new LinkedHashSet<>();
-        if (anyOf(g, "robot", "amr", "agv", "motor", "servo", "drive", "actuator", "bldc", "brushless")) {
-            out.add("motor driver");
-            out.add("brushless motor controller");
-        }
-        if (anyOf(g, "robot", "amr", "agv", "drone", "uav", "imu", "gyro", "accel", "navigation", "balance")) {
-            out.add("IMU sensor");
-        }
-        if (anyOf(g, "mcu", "microcontroller", "controller", "processor", "compute", "fast", "control", "fpga", "soc")) {
-            out.add("microcontroller");
-        }
-        if (anyOf(g, "power", "supply", "regulat", "battery", "dcdc", "buck", "boost", "ldo", "charger", "pmic")) {
-            out.add("voltage regulator");
-        }
-        if (anyOf(g, "wifi", "wireless", "ble", "bluetooth", "iot", "zigbee", "lora", "connectivity")) {
-            out.add("wifi module");
-        }
-        if (anyOf(g, "can", "rs485", "rs232", "uart", "serial", "ethernet", "modbus", "bus")) {
-            out.add("CAN transceiver");
-        }
-        if (anyOf(g, "current", "sense", "monitor", "metering")) {
-            out.add("current sense amplifier");
-        }
-        if (anyOf(g, "temperature", "thermal", "humidity", "pressure", "sensor", "proximity")) {
-            out.add("sensor");
-        }
-        if (anyOf(g, "decoupl", "capacit", "filter", "bypass")) {
-            out.add("MLCC capacitor");
-        }
-        if (anyOf(g, "led", "light", "display", "lcd", "oled", "backlight")) {
-            out.add("LED driver");
-        }
-        if (anyOf(g, "audio", "sound", "speaker", "amplifier", "microphone")) {
-            out.add("audio amplifier");
-        }
-        if (anyOf(g, "memory", "flash", "eeprom", "storage")) {
-            out.add("flash memory");
-        }
-        return new ArrayList<>(out);
     }
 
     // ---- Live catalogue grounding ----

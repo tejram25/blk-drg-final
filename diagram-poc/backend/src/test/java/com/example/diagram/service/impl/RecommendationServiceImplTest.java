@@ -66,7 +66,9 @@ class RecommendationServiceImplTest {
         t.setCategory("Power");
         t.setDescription("Inverter and battery power architecture");
         lenient().when(templates.findAll()).thenReturn(List.of(t));
-        return new RecommendationServiceImpl(props, templates, parts, designWin, new ObjectMapper());
+        ObjectMapper mapper = new ObjectMapper();
+        ComponentKeywordDictionary keywords = new ComponentKeywordDictionary(mapper);
+        return new RecommendationServiceImpl(props, templates, parts, designWin, keywords, mapper);
     }
 
     @Test
