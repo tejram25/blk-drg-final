@@ -3,6 +3,7 @@ package com.example.diagram.service.impl;
 import com.example.diagram.config.OllamaProperties;
 import com.example.diagram.domain.Template;
 import com.example.diagram.repository.TemplateRepository;
+import com.example.diagram.service.PartSearchService;
 import com.example.diagram.service.RecommendationService;
 import com.example.diagram.web.dto.RecommendationItem;
 import com.example.diagram.web.dto.RecommendationRequest;
@@ -16,8 +17,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Recommendations backed by a local Ollama model when {@code ollama.enabled} is
@@ -42,12 +46,15 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     private final OllamaProperties props;
     private final TemplateRepository templates;
+    private final PartSearchService parts;
     private final ObjectMapper mapper;
     private final RestClient rest;
 
-    public RecommendationServiceImpl(OllamaProperties props, TemplateRepository templates, ObjectMapper mapper) {
+    public RecommendationServiceImpl(OllamaProperties props, TemplateRepository templates,
+                                     PartSearchService parts, ObjectMapper mapper) {
         this.props = props;
         this.templates = templates;
+        this.parts = parts;
         this.mapper = mapper;
         this.rest = RestClient.create();
     }
@@ -55,26 +62,122 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Override
     public RecommendationResult recommend(RecommendationRequest request) {
         RecommendationRequest req = normalize(request);
+        // Ground the recommendation in live catalogue availability (best-effort).
+        List<RecommendationItem> catalogue = catalogueItems(req);
+
         if (props.isConfigured()) {
             try {
-                return askOllama(req);
+                return askOllama(req, catalogue);
             } catch (Exception ex) {
                 log.warn("Ollama recommendation failed ({}); falling back to rule-based.", ex.toString());
-                RecommendationResult rb = ruleBased(req);
-                return new RecommendationResult(rb.items(), rb.model(), false,
-                        "AI was unavailable — showing rule-based suggestions.");
+                String note = "AI was unavailable — showing rule-based suggestions"
+                        + (catalogue.isEmpty() ? "." : " with live catalogue data.");
+                return new RecommendationResult(
+                        combine(catalogue, ruleBased(req).items()), "rule-based", false, note);
             }
         }
-        return ruleBased(req);
+        String note = catalogue.isEmpty() ? null : "Includes live Arrow catalogue availability.";
+        return new RecommendationResult(
+                combine(catalogue, ruleBased(req).items()), "rule-based", false, note);
+    }
+
+    // ---- Live catalogue grounding ----
+
+    /**
+     * Look up real, current parts for the design (the parts already on the canvas
+     * plus keyword-derived canonical parts), so recommendations reflect actual
+     * stock and lifecycle status. Best-effort: any upstream failure yields fewer
+     * (or no) catalogue items, and the rest of the recommendation still works.
+     */
+    private List<RecommendationItem> catalogueItems(RecommendationRequest req) {
+        LinkedHashSet<String> terms = new LinkedHashSet<>();
+        for (String p : req.currentParts()) {
+            if (p != null && !p.isBlank()) terms.add(p.trim());
+        }
+        terms.addAll(keywordParts(req.goal()));
+
+        List<RecommendationItem> out = new ArrayList<>();
+        for (String term : terms) {
+            if (out.size() >= 5) break;
+            RecommendationItem item = lookupCatalogue(term);
+            if (item != null) out.add(item);
+        }
+        return out;
+    }
+
+    /** Search the catalogue for one term and turn the best hit into a grounded item. */
+    private RecommendationItem lookupCatalogue(String term) {
+        try {
+            String json = parts.search(term, null, false);
+            JsonNode part = mapper.readTree(json == null ? "" : json).at("/partserviceresult/parts/0");
+            if (part.isMissingNode() || part.isNull()) return null;
+
+            String pn = firstText(part.at("/arwPartNum/name"), part.at("/suppPartNum/name"), term);
+            String supplier = firstText(part.at("/mfr/name"), part.at("/supp/name"), "");
+            JsonNode org = part.at("/invOrgs/0");
+            String status = org.at("/status").asText("");
+            long stock = org.at("/avail/totohQty").asLong(org.at("/avail/FOHQty").asLong(0));
+            String lead = part.at("/leadTime/arwLT").asText("");
+            String desc = firstText(org.at("/desc"), part.at("/icc/name"), pn);
+
+            String detail = desc
+                    + " — " + (status.isBlank() ? "status n/a" : status)
+                    + ", " + stock + " in stock"
+                    + (lead.isBlank() ? "" : ", lead " + lead + " wks");
+            String source = "Arrow catalogue (live)" + (supplier.isBlank() ? "" : " · " + supplier);
+            String verify = stock > 0
+                    ? "In stock now — confirm the lifecycle status and specs before committing."
+                    : "Out of stock — check lead time and consider an alternative before committing.";
+            return new RecommendationItem("part", pn, detail, source, verify);
+        } catch (Exception ex) {
+            log.debug("Catalogue lookup for '{}' failed: {}", term, ex.toString());
+            return null;
+        }
+    }
+
+    /** Canonical part numbers implied by the design goal, used as catalogue search terms. */
+    private List<String> keywordParts(String goal) {
+        String g = (goal == null ? "" : goal).toLowerCase();
+        List<String> out = new ArrayList<>();
+        if (g.contains("power") || g.contains("regulat") || g.contains("supply")) out.add("LM317T");
+        if (g.contains("wifi") || g.contains("wireless") || g.contains("ble") || g.contains("mcu")) out.add("ESP32-WROOM-32");
+        if (g.contains("current") || g.contains("sense") || g.contains("amplif")) out.add("INA250A3PWR");
+        if (g.contains("decoupl") || g.contains("capacit") || g.contains("filter")) out.add("GRM188R71H104KA93D");
+        return out;
+    }
+
+    /** Merge two item lists, de-duplicated by title (case-insensitive); first wins. */
+    private List<RecommendationItem> combine(List<RecommendationItem> first, List<RecommendationItem> second) {
+        Map<String, RecommendationItem> byTitle = new LinkedHashMap<>();
+        for (RecommendationItem i : first) byTitle.putIfAbsent(i.title().toLowerCase(), i);
+        for (RecommendationItem i : second) byTitle.putIfAbsent(i.title().toLowerCase(), i);
+        return new ArrayList<>(byTitle.values());
+    }
+
+    /** First non-blank textual node, else the fallback string. */
+    private static String firstText(JsonNode a, JsonNode b, String fallback) {
+        if (a != null && a.isTextual() && !a.asText().isBlank()) return a.asText();
+        if (b != null && b.isTextual() && !b.asText().isBlank()) return b.asText();
+        return fallback;
     }
 
     // ---- Local Ollama path (OpenAI-compatible endpoint) ----
 
-    private RecommendationResult askOllama(RecommendationRequest req) throws Exception {
+    private RecommendationResult askOllama(RecommendationRequest req,
+                                           List<RecommendationItem> catalogue) throws Exception {
+        String availability = catalogue.isEmpty()
+                ? "(none retrieved)"
+                : catalogue.stream()
+                        .map(i -> "- " + i.title() + ": " + i.detail())
+                        .collect(Collectors.joining("\n"));
+
         String user = "Design goal: " + (req.goal().isBlank() ? "(unspecified)" : req.goal())
                 + "\nParts already on the canvas: "
                 + (req.currentParts().isEmpty() ? "(none)" : String.join(", ", req.currentParts()))
-                + "\nAvailable templates: " + templateNames();
+                + "\nAvailable templates: " + templateNames()
+                + "\nLive Arrow catalogue availability (prefer parts that are Active and in stock; "
+                + "when you recommend one of these, cite its real status/stock as the source):\n"
+                + availability;
 
         Map<String, Object> body = Map.of(
                 "model", props.getModel(),
@@ -96,9 +199,14 @@ public class RecommendationServiceImpl implements RecommendationService {
         String text = resp == null ? "" : resp.at("/choices/0/message/content").asText("");
         List<RecommendationItem> items = parseItems(text);
         if (items.isEmpty()) {
-            return ruleBased(req); // model returned nothing parseable
+            // Model returned nothing parseable — still surface live catalogue data.
+            return new RecommendationResult(combine(catalogue, ruleBased(req).items()),
+                    "rule-based", false,
+                    catalogue.isEmpty() ? null : "Includes live Arrow catalogue availability.");
         }
-        return new RecommendationResult(items, props.getModel(), true, null);
+        // Keep the model's reasoning but make sure the live, grounded parts are present.
+        String note = catalogue.isEmpty() ? null : "Grounded in live Arrow catalogue availability.";
+        return new RecommendationResult(combine(items, catalogue), props.getModel(), true, note);
     }
 
     /** Pull the items array out of the model's JSON (tolerating ```json fences). */
