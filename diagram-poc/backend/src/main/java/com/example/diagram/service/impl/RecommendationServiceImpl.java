@@ -25,24 +25,26 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Recommendations backed by a local Ollama model when {@code ollama.enabled} is
- * true, with a deterministic rule-based fallback otherwise (and on any upstream
- * failure), so the feature always returns useful, source-traceable suggestions.
+ * Catalogue-grounded recommendations. The AI (local Ollama, when enabled) — or a
+ * keyword dictionary as a fallback — translates the design goal into concrete
+ * component <em>search terms</em>. Those terms are then looked up in the live
+ * Arrow part catalogue and cross-checked against Design Win POS, so the actual
+ * recommended parts come from real data (stock, lifecycle, shipment history)
+ * rather than the model's imagination. Template matches and a BOM nudge round
+ * out the result; a generic fallback is used when nothing matches.
  */
 @Service
 public class RecommendationServiceImpl implements RecommendationService {
 
     private static final Logger log = LoggerFactory.getLogger(RecommendationServiceImpl.class);
 
-    private static final String SYSTEM = """
-            You are an electronics design assistant inside a block-diagram tool.
-            Recommend reusable templates, catalogue parts, and solution options for the
-            user's design. Be concrete and conservative: only suggest drop-in or
-            widely-available parts. For EVERY item include a short "verify" prompt telling
-            the engineer exactly what to check on the datasheet/specs before committing.
-            Respond with ONLY minified JSON, no prose, of the form:
-            {"items":[{"type":"template|part|solution","title":"...","detail":"...","source":"...","verify":"..."}]}
-            Keep to at most 6 items. "source" must state where the suggestion comes from.
+    /** Small, focused prompt: turn a design goal into catalogue search terms. */
+    private static final String TERMS_SYSTEM = """
+            You convert an electronics design goal into concrete component search terms
+            for a parts catalogue. Use common component families or categories such as
+            "motor driver", "buck regulator", "IMU sensor", "CAN transceiver",
+            "microcontroller". Do NOT invent specific part numbers. Return ONLY minified
+            JSON of the form {"terms":["term1","term2"]} with 3-6 short terms.
             """;
 
     private final OllamaProperties props;
@@ -66,47 +68,148 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Override
     public RecommendationResult recommend(RecommendationRequest request) {
         RecommendationRequest req = normalize(request);
-        // Ground the recommendation in live catalogue availability (best-effort).
-        List<RecommendationItem> catalogue = catalogueItems(req);
+        boolean aiTerms = props.isConfigured();
 
-        if (props.isConfigured()) {
-            try {
-                return askOllama(req, catalogue);
-            } catch (Exception ex) {
-                log.warn("Ollama recommendation failed ({}); falling back to rule-based.", ex.toString());
-                String note = "AI was unavailable — showing rule-based suggestions"
-                        + (catalogue.isEmpty() ? "." : " with live catalogue data.");
-                return new RecommendationResult(
-                        combine(catalogue, ruleBased(req).items()), "rule-based", false, note);
-            }
+        List<String> terms = deriveSearchTerms(req, aiTerms);
+        log.info("Recommendation search terms for goal '{}': {}", req.goal(), terms);
+
+        // The catalogue + Design Win APIs are the source of truth for actual parts.
+        List<RecommendationItem> partItems = catalogueItems(terms);
+
+        List<RecommendationItem> items = new ArrayList<>();
+        if (!partItems.isEmpty()) {
+            items.addAll(partItems);
+        } else {
+            items.addAll(fallbackParts(req.goal())); // generic suggestions when nothing matched
         }
-        String note = catalogue.isEmpty() ? null : "Includes live Arrow catalogue availability.";
-        return new RecommendationResult(
-                combine(catalogue, ruleBased(req).items()), "rule-based", false, note);
+        items.addAll(templateItems(req));
+        items.add(bomNudge());
+        items = dedupeByTitle(items);
+
+        boolean grounded = !partItems.isEmpty();
+        String model = grounded ? (aiTerms ? "Local AI (" + props.getModel() + ") + catalogue" : "Arrow catalogue")
+                : "rule-based";
+        String note = grounded
+                ? "Grounded in the live Arrow catalogue (stock, lifecycle, POS)."
+                : (aiTerms ? "No live catalogue matches — showing general guidance." : null);
+        return new RecommendationResult(items, model, grounded, note);
+    }
+
+    // ---- Search-term derivation (AI + dictionary + canvas) ----
+
+    private List<String> deriveSearchTerms(RecommendationRequest req, boolean aiTerms) {
+        LinkedHashSet<String> terms = new LinkedHashSet<>();
+        // Parts already on the canvas are the most specific signal.
+        for (String p : req.currentParts()) {
+            if (present(p)) terms.add(p.trim());
+        }
+        // AI-proposed component terms (best-effort), then the dictionary as backup.
+        if (aiTerms) terms.addAll(aiSearchTerms(req.goal()));
+        terms.addAll(keywordTerms(req.goal()));
+        return terms.stream().limit(6).collect(Collectors.toList());
+    }
+
+    /** Ask the local model for component search terms (small, reliable prompt). */
+    private List<String> aiSearchTerms(String goal) {
+        if (goal.isBlank()) return List.of();
+        try {
+            String user = "Design goal: " + goal;
+            Map<String, Object> body = Map.of(
+                    "model", props.getModel(),
+                    "max_tokens", 200,
+                    "stream", false,
+                    "response_format", Map.of("type", "json_object"),
+                    "messages", List.of(
+                            Map.of("role", "system", "content", TERMS_SYSTEM),
+                            Map.of("role", "user", "content", user)));
+
+            log.info("→ Ollama {} (search terms) @ {}\n[user]\n{}",
+                    props.getModel(), props.getBaseUrl() + "/v1/chat/completions", user);
+            long started = System.currentTimeMillis();
+
+            JsonNode resp = rest.post()
+                    .uri(props.getBaseUrl() + "/v1/chat/completions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(JsonNode.class);
+
+            String text = resp == null ? "" : resp.at("/choices/0/message/content").asText("");
+            log.info("← Ollama {} (search terms, {} ms): {}",
+                    props.getModel(), System.currentTimeMillis() - started, text);
+
+            JsonNode root = mapper.readTree(extractJsonObject(text));
+            List<String> out = new ArrayList<>();
+            for (JsonNode n : root.path("terms")) {
+                String s = n.asText("").trim();
+                if (!s.isBlank()) out.add(s);
+            }
+            return out;
+        } catch (Exception ex) {
+            log.warn("AI search-term extraction failed ({}); using keyword dictionary.", ex.toString());
+            return List.of();
+        }
+    }
+
+    /**
+     * Map a design goal to component search terms using a domain dictionary. This
+     * is the fallback when the model is off/unreachable, and a supplement when it
+     * is on — so every design produces real catalogue searches.
+     */
+    private List<String> keywordTerms(String goal) {
+        String g = goal.toLowerCase();
+        LinkedHashSet<String> out = new LinkedHashSet<>();
+        if (anyOf(g, "robot", "amr", "agv", "motor", "servo", "drive", "actuator", "bldc", "brushless")) {
+            out.add("motor driver");
+            out.add("brushless motor controller");
+        }
+        if (anyOf(g, "robot", "amr", "agv", "drone", "uav", "imu", "gyro", "accel", "navigation", "balance")) {
+            out.add("IMU sensor");
+        }
+        if (anyOf(g, "mcu", "microcontroller", "controller", "processor", "compute", "fast", "control", "fpga", "soc")) {
+            out.add("microcontroller");
+        }
+        if (anyOf(g, "power", "supply", "regulat", "battery", "dcdc", "buck", "boost", "ldo", "charger", "pmic")) {
+            out.add("voltage regulator");
+        }
+        if (anyOf(g, "wifi", "wireless", "ble", "bluetooth", "iot", "zigbee", "lora", "connectivity")) {
+            out.add("wifi module");
+        }
+        if (anyOf(g, "can", "rs485", "rs232", "uart", "serial", "ethernet", "modbus", "bus")) {
+            out.add("CAN transceiver");
+        }
+        if (anyOf(g, "current", "sense", "monitor", "metering")) {
+            out.add("current sense amplifier");
+        }
+        if (anyOf(g, "temperature", "thermal", "humidity", "pressure", "sensor", "proximity")) {
+            out.add("sensor");
+        }
+        if (anyOf(g, "decoupl", "capacit", "filter", "bypass")) {
+            out.add("MLCC capacitor");
+        }
+        if (anyOf(g, "led", "light", "display", "lcd", "oled", "backlight")) {
+            out.add("LED driver");
+        }
+        if (anyOf(g, "audio", "sound", "speaker", "amplifier", "microphone")) {
+            out.add("audio amplifier");
+        }
+        if (anyOf(g, "memory", "flash", "eeprom", "storage")) {
+            out.add("flash memory");
+        }
+        return new ArrayList<>(out);
     }
 
     // ---- Live catalogue grounding ----
 
-    /**
-     * Look up real, current parts for the design (the parts already on the canvas
-     * plus keyword-derived canonical parts), so recommendations reflect actual
-     * stock and lifecycle status. Best-effort: any upstream failure yields fewer
-     * (or no) catalogue items, and the rest of the recommendation still works.
-     */
-    private List<RecommendationItem> catalogueItems(RecommendationRequest req) {
-        LinkedHashSet<String> terms = new LinkedHashSet<>();
-        for (String p : req.currentParts()) {
-            if (p != null && !p.isBlank()) terms.add(p.trim());
-        }
-        terms.addAll(keywordParts(req.goal()));
-
-        List<RecommendationItem> out = new ArrayList<>();
+    /** Look each term up in the catalogue; return real, de-duplicated grounded parts. */
+    private List<RecommendationItem> catalogueItems(List<String> terms) {
+        Map<String, RecommendationItem> byPart = new LinkedHashMap<>();
         for (String term : terms) {
-            if (out.size() >= 5) break;
+            if (byPart.size() >= 6) break;
             RecommendationItem item = lookupCatalogue(term);
-            if (item != null) out.add(item);
+            if (item != null) byPart.putIfAbsent(item.title().toLowerCase(), item);
         }
-        return out;
+        return new ArrayList<>(byPart.values());
     }
 
     /** Search the catalogue for one term and turn the best hit into a grounded item. */
@@ -127,8 +230,8 @@ public class RecommendationServiceImpl implements RecommendationService {
             // Cross-check Design Win POS: a part with shipment history is field-proven.
             boolean proven = hasPosSales(pn, supplier);
 
-            String detail = desc
-                    + " — " + (status.isBlank() ? "status n/a" : status)
+            String detail = "Matched \"" + term + "\" — " + desc
+                    + " · " + (status.isBlank() ? "status n/a" : status)
                     + ", " + stock + " in stock"
                     + (lead.isBlank() ? "" : ", lead " + lead + " wks")
                     + (proven ? " · field-proven (POS shipment history)" : "");
@@ -146,7 +249,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     /** True when the Design Win POS API reports shipment history for the part. */
     private boolean hasPosSales(String partNumber, String mfr) {
         try {
-            String json = designWin.sales(partNumber, mfr == null || mfr.isBlank() ? null : mfr);
+            String json = designWin.sales(partNumber, present(mfr) ? mfr : null);
             JsonNode sales = mapper.readTree(json == null ? "" : json).path("sales");
             return sales.isArray() && sales.size() > 0;
         } catch (Exception ex) {
@@ -155,117 +258,12 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
     }
 
-    /** Canonical part numbers implied by the design goal, used as catalogue search terms. */
-    private List<String> keywordParts(String goal) {
-        String g = (goal == null ? "" : goal).toLowerCase();
-        List<String> out = new ArrayList<>();
-        if (g.contains("power") || g.contains("regulat") || g.contains("supply")) out.add("LM317T");
-        if (g.contains("wifi") || g.contains("wireless") || g.contains("ble") || g.contains("mcu")) out.add("ESP32-WROOM-32");
-        if (g.contains("current") || g.contains("sense") || g.contains("amplif")) out.add("INA250A3PWR");
-        if (g.contains("decoupl") || g.contains("capacit") || g.contains("filter")) out.add("GRM188R71H104KA93D");
-        return out;
-    }
+    // ---- Templates, fallback parts, nudge ----
 
-    /** Merge two item lists, de-duplicated by title (case-insensitive); first wins. */
-    private List<RecommendationItem> combine(List<RecommendationItem> first, List<RecommendationItem> second) {
-        Map<String, RecommendationItem> byTitle = new LinkedHashMap<>();
-        for (RecommendationItem i : first) byTitle.putIfAbsent(i.title().toLowerCase(), i);
-        for (RecommendationItem i : second) byTitle.putIfAbsent(i.title().toLowerCase(), i);
-        return new ArrayList<>(byTitle.values());
-    }
-
-    /** First non-blank textual node, else the fallback string. */
-    private static String firstText(JsonNode a, JsonNode b, String fallback) {
-        if (a != null && a.isTextual() && !a.asText().isBlank()) return a.asText();
-        if (b != null && b.isTextual() && !b.asText().isBlank()) return b.asText();
-        return fallback;
-    }
-
-    // ---- Local Ollama path (OpenAI-compatible endpoint) ----
-
-    private RecommendationResult askOllama(RecommendationRequest req,
-                                           List<RecommendationItem> catalogue) throws Exception {
-        String availability = catalogue.isEmpty()
-                ? "(none retrieved)"
-                : catalogue.stream()
-                        .map(i -> "- " + i.title() + ": " + i.detail())
-                        .collect(Collectors.joining("\n"));
-
-        String user = "Design goal: " + (req.goal().isBlank() ? "(unspecified)" : req.goal())
-                + "\nParts already on the canvas: "
-                + (req.currentParts().isEmpty() ? "(none)" : String.join(", ", req.currentParts()))
-                + "\nAvailable templates: " + templateNames()
-                + "\nLive Arrow catalogue availability (prefer parts that are Active and in stock; "
-                + "when you recommend one of these, cite its real status/stock as the source):\n"
-                + availability;
-
-        Map<String, Object> body = Map.of(
-                "model", props.getModel(),
-                "max_tokens", props.getMaxTokens(),
-                "stream", false,
-                // Ask for a JSON object response so parsing is reliable.
-                "response_format", Map.of("type", "json_object"),
-                "messages", List.of(
-                        Map.of("role", "system", "content", SYSTEM),
-                        Map.of("role", "user", "content", user)));
-
-        log.info("→ Ollama {} @ {}\n[system]\n{}\n[user]\n{}",
-                props.getModel(), props.getBaseUrl() + "/v1/chat/completions", SYSTEM, user);
-        long started = System.currentTimeMillis();
-
-        JsonNode resp = rest.post()
-                .uri(props.getBaseUrl() + "/v1/chat/completions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(body)
-                .retrieve()
-                .body(JsonNode.class);
-
-        String text = resp == null ? "" : resp.at("/choices/0/message/content").asText("");
-        log.info("← Ollama {} ({} ms) response:\n{}",
-                props.getModel(), System.currentTimeMillis() - started, text);
-        List<RecommendationItem> items = parseItems(text);
-        if (items.isEmpty()) {
-            // Model returned nothing parseable — still surface live catalogue data.
-            return new RecommendationResult(combine(catalogue, ruleBased(req).items()),
-                    "rule-based", false,
-                    catalogue.isEmpty() ? null : "Includes live Arrow catalogue availability.");
-        }
-        // Keep the model's reasoning but make sure the live, grounded parts are present.
-        String note = catalogue.isEmpty() ? null : "Grounded in live Arrow catalogue availability.";
-        return new RecommendationResult(combine(items, catalogue), props.getModel(), true, note);
-    }
-
-    /** Pull the items array out of the model's JSON (tolerating ```json fences). */
-    private List<RecommendationItem> parseItems(String text) {
-        String json = text.trim();
-        int start = json.indexOf('{');
-        int end = json.lastIndexOf('}');
-        if (start < 0 || end <= start) return List.of();
-        json = json.substring(start, end + 1);
-        List<RecommendationItem> out = new ArrayList<>();
-        try {
-            JsonNode root = mapper.readTree(json);
-            for (JsonNode n : root.path("items")) {
-                out.add(new RecommendationItem(
-                        n.path("type").asText("solution"),
-                        n.path("title").asText(""),
-                        n.path("detail").asText(""),
-                        n.path("source").asText("Local AI (Ollama) — verify"),
-                        n.path("verify").asText("Check the datasheet before committing.")));
-            }
-        } catch (Exception ex) {
-            log.warn("Could not parse Ollama JSON: {}", ex.toString());
-        }
-        return out;
-    }
-
-    // ---- Rule-based fallback ----
-
-    RecommendationResult ruleBased(RecommendationRequest req) {
+    /** Top template matches for the goal (by keyword overlap). */
+    private List<RecommendationItem> templateItems(RecommendationRequest req) {
         String g = (req.goal() + " " + String.join(" ", req.currentParts())).toLowerCase();
-        List<RecommendationItem> items = new ArrayList<>();
-
-        // Templates: rank by keyword overlap with the goal.
+        List<RecommendationItem> out = new ArrayList<>();
         templates.findAll().stream()
                 .map(t -> Map.entry(t, score(t, g)))
                 .filter(e -> e.getValue() > 0)
@@ -273,36 +271,43 @@ public class RecommendationServiceImpl implements RecommendationService {
                 .limit(2)
                 .forEach(e -> {
                     Template t = e.getKey();
-                    items.add(new RecommendationItem("template", t.getName(),
+                    out.add(new RecommendationItem("template", t.getName(),
                             t.getDescription() == null ? "A reusable starting point." : t.getDescription(),
                             "Template repository", "Open it and confirm the blocks match your architecture."));
                 });
+        return out;
+    }
 
-        // Parts: keyword-triggered catalogue suggestions.
-        if (g.contains("power") || g.contains("regulat") || g.contains("supply")) {
+    /** Generic catalogue suggestions when no live match was found, by keyword. */
+    private List<RecommendationItem> fallbackParts(String goal) {
+        String g = goal.toLowerCase();
+        List<RecommendationItem> items = new ArrayList<>();
+        if (anyOf(g, "power", "supply", "regulat", "battery", "buck", "boost", "ldo")) {
             items.add(part("LM317T", "Adjustable LDO regulator (STMicroelectronics)",
                     "Verify input/output voltage headroom and thermal dissipation for your load."));
         }
-        if (g.contains("wifi") || g.contains("wireless") || g.contains("ble") || g.contains("mcu")) {
+        if (anyOf(g, "wifi", "wireless", "ble", "mcu", "iot")) {
             items.add(part("ESP32-WROOM-32", "Wi-Fi/BLE MCU module (Espressif)",
                     "Confirm 3.3V rail current capability and antenna keep-out on your PCB."));
         }
-        if (g.contains("current") || g.contains("sense") || g.contains("amplif")) {
+        if (anyOf(g, "current", "sense", "amplif", "metering")) {
             items.add(part("INA250A3PWR", "Current-sense amplifier (Texas Instruments)",
                     "Verify the integrated shunt value and common-mode range for your bus."));
         }
-        if (g.contains("decoupl") || g.contains("capacit") || g.contains("filter")) {
-            items.add(part("GRM188R71H104KA93D", "0.1µF MLCC decoupling capacitor (Murata)",
-                    "Check voltage derating (X7R) at your rail voltage."));
+        if (anyOf(g, "robot", "amr", "motor", "servo", "drive")) {
+            items.add(part("DRV8870", "Brushed DC motor driver, 3.6A (Texas Instruments)",
+                    "Check the peak/continuous current and thermal pad layout for your motor."));
         }
-
-        // Always include one solution-level nudge.
-        items.add(new RecommendationItem("solution", "Add a Bill of Materials check",
-                "Drop your parts onto the canvas and export a BOM to catch duplicates and quantities early.",
-                "Tool best-practice", "Cross-check each part's lifecycle status before release."));
-
-        return new RecommendationResult(items, "rule-based", false, null);
+        return items;
     }
+
+    private RecommendationItem bomNudge() {
+        return new RecommendationItem("solution", "Add a Bill of Materials check",
+                "Drop your parts onto the canvas and export a BOM to catch duplicates and quantities early.",
+                "Tool best-practice", "Cross-check each part's lifecycle status before release.");
+    }
+
+    // ---- helpers ----
 
     private RecommendationItem part(String pn, String detail, String verify) {
         return new RecommendationItem("part", pn, detail, "Arrow catalogue", verify);
@@ -318,9 +323,35 @@ public class RecommendationServiceImpl implements RecommendationService {
         return s;
     }
 
-    private String templateNames() {
-        return templates.findAll().stream().map(Template::getName).limit(20)
-                .reduce((a, b) -> a + ", " + b).orElse("(none)");
+    private List<RecommendationItem> dedupeByTitle(List<RecommendationItem> in) {
+        Map<String, RecommendationItem> byTitle = new LinkedHashMap<>();
+        for (RecommendationItem i : in) byTitle.putIfAbsent(i.title().toLowerCase(), i);
+        return new ArrayList<>(byTitle.values());
+    }
+
+    private static boolean anyOf(String hay, String... keys) {
+        for (String k : keys) {
+            if (hay.contains(k)) return true;
+        }
+        return false;
+    }
+
+    private static boolean present(String s) {
+        return s != null && !s.isBlank();
+    }
+
+    private static String firstText(JsonNode a, JsonNode b, String fallback) {
+        if (a != null && a.isTextual() && !a.asText().isBlank()) return a.asText();
+        if (b != null && b.isTextual() && !b.asText().isBlank()) return b.asText();
+        return fallback;
+    }
+
+    /** Extract the first JSON object substring (tolerating prose/fences around it). */
+    private static String extractJsonObject(String text) {
+        if (text == null) return "{}";
+        int start = text.indexOf('{');
+        int end = text.lastIndexOf('}');
+        return (start >= 0 && end > start) ? text.substring(start, end + 1) : "{}";
     }
 
     private RecommendationRequest normalize(RecommendationRequest req) {

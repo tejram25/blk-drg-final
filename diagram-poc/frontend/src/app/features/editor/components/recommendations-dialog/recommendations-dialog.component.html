@@ -5,7 +5,7 @@
         <h3 class="rc-title"><mat-icon>auto_awesome</mat-icon> Recommendations</h3>
         <span class="rc-sub" *ngIf="result">
           <span class="rc-badge" [class.ai]="result.aiGenerated">
-            {{ result.aiGenerated ? 'Local AI · ' + result.model : 'Rule-based' }}
+            {{ result.aiGenerated ? result.model : 'Rule-based' }}
           </span>
           {{ result.note }}
         </span>
