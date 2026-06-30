@@ -209,6 +209,10 @@ public class RecommendationServiceImpl implements RecommendationService {
                         Map.of("role", "system", "content", SYSTEM),
                         Map.of("role", "user", "content", user)));
 
+        log.info("→ Ollama {} @ {}\n[system]\n{}\n[user]\n{}",
+                props.getModel(), props.getBaseUrl() + "/v1/chat/completions", SYSTEM, user);
+        long started = System.currentTimeMillis();
+
         JsonNode resp = rest.post()
                 .uri(props.getBaseUrl() + "/v1/chat/completions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -217,6 +221,8 @@ public class RecommendationServiceImpl implements RecommendationService {
                 .body(JsonNode.class);
 
         String text = resp == null ? "" : resp.at("/choices/0/message/content").asText("");
+        log.info("← Ollama {} ({} ms) response:\n{}",
+                props.getModel(), System.currentTimeMillis() - started, text);
         List<RecommendationItem> items = parseItems(text);
         if (items.isEmpty()) {
             // Model returned nothing parseable — still surface live catalogue data.
