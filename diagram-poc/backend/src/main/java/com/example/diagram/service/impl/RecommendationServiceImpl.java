@@ -40,11 +40,16 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     /** Small, focused prompt: turn a design goal into catalogue search terms. */
     private static final String TERMS_SYSTEM = """
-            You convert an electronics design goal into concrete component search terms
-            for a parts catalogue. Use common component families or categories such as
-            "motor driver", "buck regulator", "IMU sensor", "CAN transceiver",
-            "microcontroller". Do NOT invent specific part numbers. Return ONLY minified
-            JSON of the form {"terms":["term1","term2"]} with 3-6 short terms.
+            You convert an electronics design goal into search terms for an ELECTRONIC
+            COMPONENTS catalogue (ICs, regulators, drivers, sensors, transceivers,
+            connectors, passives). Rules:
+            - Use 1-3 word component CATEGORY nouns only, e.g. "motor driver",
+              "buck regulator", "IMU sensor", "CAN transceiver", "microcontroller",
+              "gate driver", "current sense amplifier".
+            - NO adjectives like fast/powerful/high-speed/lightweight.
+            - NO mechanical or structural parts (chassis, gears, motors, frames, wheels).
+            - Do NOT invent part numbers.
+            Return ONLY minified JSON of the form {"terms":["term1","term2"]} with 3-6 terms.
             """;
 
     private final OllamaProperties props;
@@ -103,10 +108,11 @@ public class RecommendationServiceImpl implements RecommendationService {
         for (String p : req.currentParts()) {
             if (present(p)) terms.add(p.trim());
         }
-        // AI-proposed component terms (best-effort), then the dictionary as backup.
-        if (aiTerms) terms.addAll(aiSearchTerms(req.goal()));
+        // Reliable, catalogue-friendly dictionary terms first; AI fills gaps it
+        // doesn't cover (its phrasing is less predictable, so it runs after).
         terms.addAll(keywordTerms(req.goal()));
-        return terms.stream().limit(6).collect(Collectors.toList());
+        if (aiTerms) terms.addAll(aiSearchTerms(req.goal()));
+        return terms.stream().limit(5).collect(Collectors.toList());
     }
 
     /** Ask the local model for component search terms (small, reliable prompt). */
@@ -212,20 +218,32 @@ public class RecommendationServiceImpl implements RecommendationService {
         return new ArrayList<>(byPart.values());
     }
 
-    /** Search the catalogue for one term and turn the best hit into a grounded item. */
+    /** Search the catalogue for one term and turn the BEST hit into a grounded item. */
     private RecommendationItem lookupCatalogue(String term) {
         try {
             String json = parts.search(term, null, false);
-            JsonNode part = mapper.readTree(json == null ? "" : json).at("/partserviceresult/parts/0");
-            if (part.isMissingNode() || part.isNull()) return null;
+            JsonNode arr = mapper.readTree(json == null ? "" : json).at("/partserviceresult/parts");
+            if (!arr.isArray() || arr.isEmpty()) return null;
 
-            String pn = firstText(part.at("/arwPartNum/name"), part.at("/suppPartNum/name"), term);
-            String supplier = firstText(part.at("/mfr/name"), part.at("/supp/name"), "");
-            JsonNode org = part.at("/invOrgs/0");
+            // Prefer an Active, in-stock part over the (arbitrary) first result.
+            JsonNode best = null;
+            int bestScore = Integer.MIN_VALUE;
+            for (JsonNode p : arr) {
+                int s = partScore(p);
+                if (s > bestScore) {
+                    bestScore = s;
+                    best = p;
+                }
+            }
+            if (best == null) return null;
+
+            String pn = firstText(best.at("/arwPartNum/name"), best.at("/suppPartNum/name"), term);
+            String supplier = firstText(best.at("/mfr/name"), best.at("/supp/name"), "");
+            JsonNode org = best.at("/invOrgs/0");
             String status = org.at("/status").asText("");
-            long stock = org.at("/avail/totohQty").asLong(org.at("/avail/FOHQty").asLong(0));
-            String lead = part.at("/leadTime/arwLT").asText("");
-            String desc = firstText(org.at("/desc"), part.at("/icc/name"), pn);
+            long stock = stockOf(best);
+            String lead = best.at("/leadTime/arwLT").asText("");
+            String desc = firstText(org.at("/desc"), best.at("/icc/name"), pn);
 
             // Cross-check Design Win POS: a part with shipment history is field-proven.
             boolean proven = hasPosSales(pn, supplier);
@@ -238,12 +256,30 @@ public class RecommendationServiceImpl implements RecommendationService {
             String source = "Arrow catalogue (live)" + (supplier.isBlank() ? "" : " · " + supplier);
             String verify = stock > 0
                     ? "In stock now — confirm the lifecycle status and specs before committing."
-                    : "Out of stock — check lead time and consider an alternative before committing.";
+                    : "Best match is out of stock — check lead time or pick an in-stock alternative.";
             return new RecommendationItem("part", pn, detail, source, verify);
         } catch (Exception ex) {
             log.debug("Catalogue lookup for '{}' failed: {}", term, ex.toString());
             return null;
         }
+    }
+
+    /** Rank a catalogue part: in-stock and an active lifecycle status score highest. */
+    private int partScore(JsonNode part) {
+        String status = part.at("/invOrgs/0/status").asText("").toLowerCase();
+        // "Nvr.Active" / "Never Active" are dead statuses despite containing "active".
+        boolean dead = status.contains("nvr") || status.contains("never")
+                || status.contains("obsolete") || status.contains("eol");
+        boolean active = !dead && (status.contains("active") || status.contains("new"));
+        int s = 0;
+        if (stockOf(part) > 0) s += 3;
+        if (active) s += 2;
+        return s;
+    }
+
+    private long stockOf(JsonNode part) {
+        JsonNode avail = part.at("/invOrgs/0/avail");
+        return avail.at("/totohQty").asLong(avail.at("/FOHQty").asLong(avail.at("/ACFOHQty").asLong(0)));
     }
 
     /** True when the Design Win POS API reports shipment history for the part. */

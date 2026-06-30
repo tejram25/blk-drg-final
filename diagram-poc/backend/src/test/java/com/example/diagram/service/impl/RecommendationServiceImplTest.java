@@ -117,6 +117,28 @@ class RecommendationServiceImplTest {
     }
 
     @Test
+    void picksInStockActivePartOverDeadFirstResult() {
+        // First result is dead (Nvr.Active, 0 stock); second is Active and in stock.
+        PartSearchService live = new PartSearchService() {
+            @Override public String search(String q, String supplier, boolean dw) {
+                return "{\"partserviceresult\":{\"parts\":["
+                        + "{\"arwPartNum\":{\"name\":\"DEADPART\"},"
+                        + " \"invOrgs\":[{\"status\":\"Nvr.Active\",\"avail\":{\"totohQty\":0}}]},"
+                        + "{\"arwPartNum\":{\"name\":\"GOODPART\"},"
+                        + " \"invOrgs\":[{\"status\":\"Active\",\"avail\":{\"totohQty\":500}}]}"
+                        + "]}}";
+            }
+            @Override public Map<String, Object> health() { return Map.of(); }
+        };
+
+        RecommendationResult res = service(live).recommend(
+                new RecommendationRequest("Design a power supply regulator", List.of()));
+
+        assertThat(res.items()).anyMatch(i -> i.title().equals("GOODPART"));
+        assertThat(res.items()).noneMatch(i -> i.title().equals("DEADPART"));
+    }
+
+    @Test
     void flagsFieldProvenPartsFromPos() {
         PartSearchService live = new PartSearchService() {
             @Override public String search(String q, String supplier, boolean dw) {
