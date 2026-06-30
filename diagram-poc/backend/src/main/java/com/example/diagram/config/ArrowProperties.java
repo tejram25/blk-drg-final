@@ -4,13 +4,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * Configuration for the Arrow APIM Part Search API.
+ * Configuration for the Arrow APIM Design Win APIs (part search + Design Win
+ * data: customers, projects, boards, registrations, POS).
  *
- * <p>The OAuth2 token and the search call live on <em>different</em> hosts
- * (e.g. on DEV the token comes from {@code gc-api-dev-apimgwt…arrow.com} while
- * search is served from {@code gc-apim-dev1.azure-api.net}), so the auth and
- * search base URLs are configured separately. The search path
- * ({@code /arrowapi/dw/partservice/search}) is configurable per environment.
+ * <p>Per the Design Win API V2.0 doc all endpoints — including the OAuth2 token
+ * — live on a single host ({@code qa-components-api-int.arrow.com} on QUAL). The
+ * auth, search and Design Win base URLs are still configured separately so they
+ * can be split per environment if needed.
  *
  * <p>Credentials are supplied via environment variables
  * ({@code ARROW_CLIENT_ID} / {@code ARROW_CLIENT_SECRET}) and are never
@@ -24,6 +24,8 @@ public class ArrowProperties {
     private String authBaseUrl;
     /** Host that serves part search. */
     private String searchBaseUrl;
+    /** Base for the Design Win endpoints, e.g. https://host/designwin. */
+    private String designwinBaseUrl;
     private String tokenPath;
     /** Search path on the search host, e.g. /arrowapi/dw/partservice/search. */
     private String searchPath;
@@ -51,6 +53,11 @@ public class ArrowProperties {
         return trimTrailingSlash(searchBaseUrl) + searchPath;
     }
 
+    /** A Design Win endpoint URL, e.g. designwinUrl("/customers"). */
+    public String designwinUrl(String path) {
+        return trimTrailingSlash(designwinBaseUrl) + path;
+    }
+
     private static String trimTrailingSlash(String s) {
         if (s == null) return "";
         return s.endsWith("/") ? s.substring(0, s.length() - 1) : s;
@@ -61,6 +68,9 @@ public class ArrowProperties {
 
     public String getSearchBaseUrl() { return searchBaseUrl; }
     public void setSearchBaseUrl(String searchBaseUrl) { this.searchBaseUrl = searchBaseUrl; }
+
+    public String getDesignwinBaseUrl() { return designwinBaseUrl; }
+    public void setDesignwinBaseUrl(String designwinBaseUrl) { this.designwinBaseUrl = designwinBaseUrl; }
 
     public String getTokenPath() { return tokenPath; }
     public void setTokenPath(String tokenPath) { this.tokenPath = tokenPath; }

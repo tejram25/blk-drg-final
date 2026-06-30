@@ -22,7 +22,7 @@ class ArrowPartSearchServiceTest {
             props.setClientId("id");
             props.setClientSecret("secret");
         }
-        return new ArrowPartSearchService(props, new ObjectMapper());
+        return new ArrowPartSearchService(props, new ArrowApiClient(props, new ObjectMapper()));
     }
 
     @Test

@@ -2,14 +2,11 @@
 # real Arrow credentials here. application-local.properties is gitignored, so it
 # will NOT be committed. These values override the ones in application.properties.
 
-# Arrow APIM Part Search credentials (from your APIM app registration).
+# Arrow APIM Design Win credentials (from your APIM app registration).
 arrow.client-id=your-client-id-here
 arrow.client-secret=your-client-secret-here
-# Defaults target DEV. For QUAL, also set:
-# arrow.auth-base-url=https://gc-apim-qual1.azure-api.net
-# arrow.search-base-url=https://gc-apiext-qual-apimgwq.apps.usdenpos02.arrow.com
-# Search path (override only if your environment differs):
-# arrow.search-path=/arrowapi/dw/partservice/search
+# Endpoint hosts are set via env vars (ARROW_AUTH_BASE_URL / ARROW_SEARCH_BASE_URL
+# / ARROW_DESIGNWIN_BASE_URL); override here only if your environment differs.
 
 # AI recommendations (local Ollama). Leave disabled to use the rule-based fallback.
 # Install Ollama (https://ollama.com), run `ollama pull llama3.2`, then:
