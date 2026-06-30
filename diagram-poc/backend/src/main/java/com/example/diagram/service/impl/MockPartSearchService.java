@@ -66,6 +66,16 @@ public class MockPartSearchService implements PartSearchService {
         }
     }
 
+    @Override
+    public java.util.Map<String, Object> health() {
+        java.util.Map<String, Object> out = new java.util.LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("mock", true);
+        out.put("stage", "mock");
+        out.put("detail", "Mock mode (arrow.mock=true) — serving the bundled sample catalogue.");
+        return out;
+    }
+
     private boolean matches(JsonNode part, String q, String supplier) {
         String haystack = (part.at("/arwPartNum/name").asText("") + " "
                 + part.at("/suppPartNum/name").asText("") + " "

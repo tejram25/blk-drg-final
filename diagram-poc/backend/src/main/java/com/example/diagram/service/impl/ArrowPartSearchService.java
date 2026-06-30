@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -99,11 +100,16 @@ public class ArrowPartSearchService implements PartSearchService {
                     .body(String.class);
         } catch (RestClientResponseException ex) {
             log.error("Arrow token request rejected: HTTP {} - {}", ex.getStatusCode().value(), ex.getResponseBodyAsString());
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Parts authentication failed.");
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Parts authentication failed — auth host returned HTTP " + ex.getStatusCode().value()
+                            + " (check client-id/secret and that they're valid for this environment).");
         } catch (RestClientException ex) {
             // Connection/DNS/timeout — e.g. the internal Arrow host isn't reachable from here.
-            log.error("Arrow token request could not be sent (is the host reachable?): {}", ex.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Parts authentication failed.");
+            String cause = rootCauseType(ex);
+            log.error("Arrow token request could not be sent (is the host reachable?): {} [{}]", ex.getMessage(), cause);
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Parts authentication failed — could not reach auth host " + hostOf(props.tokenUrl())
+                            + " (" + cause + "). Are you on the Arrow network/VPN?");
         }
 
         try {
@@ -115,7 +121,8 @@ public class ArrowPartSearchService implements PartSearchService {
                     node.path("token").asText(null));
             if (token == null) {
                 log.error("Arrow token response had no recognizable token field: {}", truncate(body));
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Parts authentication failed.");
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                        "Parts authentication failed — auth response had no access_token field.");
             }
             long expiresIn = node.path("expires_in").asLong(node.path("expiresIn").asLong(3600));
             cachedToken = token;
@@ -125,7 +132,60 @@ public class ArrowPartSearchService implements PartSearchService {
             throw ex; // already a clean failure (no token field)
         } catch (Exception ex) {
             log.error("Arrow token response was not valid JSON: {}", truncate(body));
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Parts authentication failed.");
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Parts authentication failed — auth response was not valid JSON.");
+        }
+    }
+
+    /**
+     * Diagnostic: attempts a fresh authentication and reports the outcome (never
+     * the secret). Backs {@code GET /api/parts/health} so credentials and
+     * connectivity can be checked independently of the search UI.
+     */
+    @Override
+    public Map<String, Object> health() {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("mock", false);
+        out.put("tokenUrl", props.tokenUrl());
+        out.put("searchUrl", props.searchUrl());
+        out.put("configured", props.isConfigured());
+        if (!props.isConfigured()) {
+            out.put("ok", false);
+            out.put("stage", "config");
+            out.put("detail", "ARROW_CLIENT_ID / ARROW_CLIENT_SECRET are not set.");
+            return out;
+        }
+        // Force a fresh token so we test the live round-trip, not the cache.
+        cachedToken = null;
+        tokenExpiry = Instant.EPOCH;
+        try {
+            String token = token();
+            out.put("ok", true);
+            out.put("stage", "token");
+            out.put("detail", "Authenticated — token acquired (" + token.length() + " chars).");
+        } catch (ResponseStatusException ex) {
+            out.put("ok", false);
+            out.put("stage", "token");
+            out.put("detail", ex.getReason());
+        }
+        return out;
+    }
+
+    /** Innermost cause's simple class name, e.g. UnknownHostException / ConnectException. */
+    private static String rootCauseType(Throwable ex) {
+        Throwable root = ex;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        return root.getClass().getSimpleName();
+    }
+
+    /** Host portion of a URL, for clearer "unreachable host" messages. */
+    private static String hostOf(String url) {
+        try {
+            return java.net.URI.create(url).getHost();
+        } catch (Exception ex) {
+            return url;
         }
     }
 

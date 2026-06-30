@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 /**
  * Parts search proxy. The frontend calls this (authenticated) instead of Arrow
  * directly, so the OAuth credentials stay server-side. Returns the raw
@@ -28,5 +30,11 @@ public class PartSearchController {
                                          @RequestParam(value = "supplier", required = false) String supplier,
                                          @RequestParam(value = "dw", required = false, defaultValue = "false") boolean designWin) {
         return ResponseEntity.ok(parts.search(query, supplier, designWin));
+    }
+
+    /** Connectivity/credentials check — tries to authenticate and reports the outcome. */
+    @GetMapping(value = "/parts/health", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, Object> health() {
+        return parts.health();
     }
 }

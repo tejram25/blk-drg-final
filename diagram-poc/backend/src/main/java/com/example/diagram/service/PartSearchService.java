@@ -1,6 +1,8 @@
 package com.example.diagram.service;
 
-/** Proxies the Arrow Design Win Part Search API. */
+import java.util.Map;
+
+/** Proxies the Arrow Part Search API. */
 public interface PartSearchService {
 
     /**
@@ -12,4 +14,10 @@ public interface PartSearchService {
      * @param designWin whether to include design-win data (dw)
      */
     String search(String query, String supplier, boolean designWin);
+
+    /**
+     * Diagnostic for {@code GET /api/parts/health}: reports whether the service
+     * can authenticate (and the resolved endpoints), without exposing secrets.
+     */
+    Map<String, Object> health();
 }
