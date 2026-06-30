@@ -59,11 +59,15 @@ public class ArrowPartSearchService implements PartSearchService {
                     "Parts search is currently unavailable. Please try again later.");
         }
         // Per the APIM docs the search call takes srchtxt + render=json + appid.
+        // The API pages (default returns a single item), so request a page of
+        // results from the start with start/limit.
         String url = UriComponentsBuilder.fromHttpUrl(props.searchUrl())
                 .queryParam("srchtxt", query)
                 .queryParam("render", "json")
                 .queryParam("appid", props.getAppId() == null || props.getAppId().isBlank()
                         ? "gen" : props.getAppId())
+                .queryParam("start", 0)
+                .queryParam("limit", props.getSearchLimit())
                 .build()
                 .toUriString();
         try {

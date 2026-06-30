@@ -21,9 +21,11 @@ export class BomService {
     for (const part of parts) {
       const partNumber =
         part?.arwPartNum?.name || part?.suppPartNum?.name || part?.partKey || 'Unknown';
+      // Quantity chosen in the search panel (__bomQty); otherwise one per card.
+      const qty = Math.max(1, Number(part?.__bomQty ?? 1));
       const existing = byKey.get(partNumber);
       if (existing) {
-        existing.quantity += 1;
+        existing.quantity += qty;
         continue;
       }
       byKey.set(partNumber, {
@@ -31,7 +33,7 @@ export class BomService {
         manufacturer: part?.mfr?.name || '',
         supplier: part?.supp?.name || '',
         description: part?.invOrgs?.[0]?.desc || part?.icc?.name || '',
-        quantity: 1,
+        quantity: qty,
       });
     }
     return [...byKey.values()].sort((a, b) => a.partNumber.localeCompare(b.partNumber));

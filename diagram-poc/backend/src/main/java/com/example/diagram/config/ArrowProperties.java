@@ -29,6 +29,8 @@ public class ArrowProperties {
     private String searchPath;
     /** APIM application id query param (the docs use "gen"). */
     private String appId;
+    /** How many results to request per search (the API pages; default returns 1). */
+    private int searchLimit = 25;
     private String version;
     private String clientId;
     private String clientSecret;
@@ -68,6 +70,9 @@ public class ArrowProperties {
 
     public String getAppId() { return appId; }
     public void setAppId(String appId) { this.appId = appId; }
+
+    public int getSearchLimit() { return searchLimit; }
+    public void setSearchLimit(int searchLimit) { this.searchLimit = searchLimit; }
 
     public String getVersion() { return version; }
     public void setVersion(String version) { this.version = version; }

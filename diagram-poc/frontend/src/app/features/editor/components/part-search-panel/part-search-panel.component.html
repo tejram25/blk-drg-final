@@ -12,20 +12,49 @@
     </button>
   </div>
 
+  <!-- Supplier filter + result count -->
+  <div class="ps-filter" *ngIf="!loading && results.length">
+    <span class="ps-count">{{ visibleResults.length }} of {{ results.length }}</span>
+    <label class="ps-supplabel">
+      <mat-icon>filter_list</mat-icon>
+      <select [(ngModel)]="supplierFilter">
+        <option value="">All suppliers</option>
+        <option *ngFor="let s of suppliers" [value]="s">{{ s }}</option>
+      </select>
+    </label>
+  </div>
+
   <div class="ps-results">
     <p class="ps-msg" *ngIf="loading">Searching…</p>
     <p class="ps-msg" *ngIf="!loading && searched && !results.length">No matching parts.</p>
     <p class="ps-msg" *ngIf="!loading && !searched">Search the catalogue, then add a part to the canvas.</p>
 
-    <div class="ps-item" *ngFor="let hit of results">
+    <div class="ps-item" *ngFor="let hit of visibleResults">
       <div class="ps-info">
         <span class="ps-pn">{{ hit.partNumber }}</span>
         <span class="ps-supp">{{ hit.manufacturer || hit.supplier }}</span>
         <span class="ps-desc" *ngIf="hit.description">{{ hit.description }}</span>
+
+        <!-- Inventory / lifecycle -->
+        <div class="ps-meta">
+          <span class="ps-chip" [class]="statusClass(hit.status)" *ngIf="hit.status">{{ hit.status }}</span>
+          <span class="ps-chip stock" [class.zero]="!hit.inStock">
+            <mat-icon>inventory_2</mat-icon>{{ hit.inStock | number }} in stock
+          </span>
+          <span class="ps-chip" *ngIf="hit.leadTime">
+            <mat-icon>schedule</mat-icon>LT {{ hit.leadTime }}
+          </span>
+          <span class="ps-chip" *ngFor="let c of hit.compliance">{{ c }}</span>
+        </div>
       </div>
-      <button type="button" class="ps-add" (click)="add(hit)" title="Add to canvas">
-        <mat-icon>add</mat-icon>
-      </button>
+
+      <div class="ps-actions">
+        <input class="ps-qty" type="number" min="1" [(ngModel)]="hit.qty" (change)="clampQty(hit)"
+               title="Order quantity" />
+        <button type="button" class="ps-add" (click)="add(hit)" title="Add to canvas">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
     </div>
   </div>
 </aside>
