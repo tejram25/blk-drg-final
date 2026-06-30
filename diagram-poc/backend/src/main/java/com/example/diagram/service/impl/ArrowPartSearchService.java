@@ -18,11 +18,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Instant;
 import java.util.Map;
-import java.util.Optional;
 
 /**
- * Server-side proxy for the Arrow Part Search API. Obtains and caches an OAuth2
- * client-credentials Bearer token, then forwards searches. The client secret
+ * Server-side proxy for the Arrow APIM Part Search API. Obtains and caches an
+ * OAuth2 client-credentials Bearer token from the auth host, then forwards
+ * searches to the regional {@code <region>partservice} host. The client secret
  * never leaves the server. Upstream failures are logged with their real cause
  * (status + body), while the caller gets a generic message.
  *
@@ -57,11 +57,12 @@ public class ArrowPartSearchService implements PartSearchService {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Parts search is currently unavailable. Please try again later.");
         }
-        String url = UriComponentsBuilder.fromHttpUrl(props.getBaseUrl() + props.getSearchPath())
+        // Per the APIM docs the search call takes srchtxt + render=json + appid.
+        String url = UriComponentsBuilder.fromHttpUrl(props.searchUrl())
                 .queryParam("srchtxt", query)
-                .queryParamIfPresent("suppname",
-                        Optional.ofNullable(supplier != null && !supplier.isBlank() ? supplier : null))
-                .queryParamIfPresent("dw", Optional.ofNullable(designWin ? "true" : null))
+                .queryParam("render", "json")
+                .queryParam("appid", props.getAppId() == null || props.getAppId().isBlank()
+                        ? "gen" : props.getAppId())
                 .build()
                 .toUriString();
         try {
@@ -87,8 +88,8 @@ public class ArrowPartSearchService implements PartSearchService {
         String body;
         try {
             body = http.post()
-                    .uri(props.getBaseUrl() + props.getTokenPath())
-                    .header("version", props.getVersion())
+                    .uri(props.tokenUrl())
+                    .header("Version", props.getVersion())
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(Map.of(
                             "grant_type", "client_credentials",

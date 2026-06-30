@@ -12,9 +12,11 @@ class ArrowPartSearchServiceTest {
 
     private ArrowPartSearchService service(boolean configured) {
         ArrowProperties props = new ArrowProperties();
-        props.setBaseUrl("https://example.test");
+        props.setAuthBaseUrl("https://auth.example.test");
+        props.setSearchBaseUrl("https://search.example.test");
         props.setTokenPath("/auth/oauth2/token");
-        props.setSearchPath("/partservice/search");
+        props.setRegion("ac");
+        props.setAppId("gen");
         props.setVersion("v1");
         if (configured) {
             props.setClientId("id");
@@ -33,5 +35,19 @@ class ArrowPartSearchServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> service(false).search("INA250", null, false));
         assertThat(ex.getStatusCode().value()).isEqualTo(503);
+    }
+
+    @Test
+    void buildsDocumentedTokenAndSearchUrls() {
+        ArrowProperties props = new ArrowProperties();
+        props.setAuthBaseUrl("https://gc-api-dev-apimgwt.apps.usdenpos01.arrow.com");
+        props.setSearchBaseUrl("https://gc-apim-dev1.azure-api.net");
+        props.setTokenPath("/auth/oauth2/token");
+        props.setRegion("eu");
+
+        assertThat(props.tokenUrl())
+                .isEqualTo("https://gc-api-dev-apimgwt.apps.usdenpos01.arrow.com/auth/oauth2/token");
+        assertThat(props.searchUrl())
+                .isEqualTo("https://gc-apim-dev1.azure-api.net/eupartservice/search");
     }
 }
