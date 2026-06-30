@@ -99,10 +99,11 @@ public class ArrowPartSearchService implements PartSearchService {
                     .retrieve()
                     .body(String.class);
         } catch (RestClientResponseException ex) {
-            log.error("Arrow token request rejected: HTTP {} - {}", ex.getStatusCode().value(), ex.getResponseBodyAsString());
+            String upstream = truncate(ex.getResponseBodyAsString());
+            log.error("Arrow token request rejected: HTTP {} - {}", ex.getStatusCode().value(), upstream);
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
                     "Parts authentication failed — auth host returned HTTP " + ex.getStatusCode().value()
-                            + " (check client-id/secret and that they're valid for this environment).");
+                            + ". Upstream said: " + upstream);
         } catch (RestClientException ex) {
             // Connection/DNS/timeout — e.g. the internal Arrow host isn't reachable from here.
             String cause = rootCauseType(ex);
