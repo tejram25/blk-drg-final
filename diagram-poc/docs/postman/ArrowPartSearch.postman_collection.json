@@ -61,23 +61,22 @@
           { "key": "Authorization", "value": "Bearer {{part_token}}" }
         ],
         "url": {
-          "raw": "{{search_base_url}}/{{region}}partservice/search?srchtxt={{srchtxt}}&render=json&appid={{app_id}}",
-          "host": ["{{search_base_url}}"],
-          "path": ["{{region}}partservice", "search"],
+          "raw": "{{search_base_url}}{{search_path}}?srchtxt={{srchtxt}}&render=json&appid={{app_id}}",
+          "host": ["{{search_base_url}}{{search_path}}"],
           "query": [
             { "key": "srchtxt", "value": "{{srchtxt}}" },
             { "key": "render", "value": "json" },
             { "key": "appid", "value": "{{app_id}}" }
           ]
         },
-        "description": "Searches the regional part service ({{region}}partservice). Run request 1 first so {{part_token}} is populated.\n\nThe response is the partserviceresult JSON the app renders into part cards."
+        "description": "Calls {{search_base_url}}{{search_path}}. Run request 1 first so {{part_token}} is populated.\n\nThe response is the partserviceresult JSON the app renders into part cards."
       }
     }
   ],
   "variable": [
     { "key": "auth_base_url", "value": "https://gc-api-dev-apimgwt.apps.usdenpos01.arrow.com" },
     { "key": "search_base_url", "value": "https://gc-apim-dev1.azure-api.net" },
-    { "key": "region", "value": "ac" },
+    { "key": "search_path", "value": "/arrowapi/dw/partservice/search" },
     { "key": "app_id", "value": "gen" },
     { "key": "version", "value": "v1" },
     { "key": "srchtxt", "value": "BAV99" },

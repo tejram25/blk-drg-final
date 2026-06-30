@@ -15,7 +15,7 @@ class ArrowPartSearchServiceTest {
         props.setAuthBaseUrl("https://auth.example.test");
         props.setSearchBaseUrl("https://search.example.test");
         props.setTokenPath("/auth/oauth2/token");
-        props.setRegion("ac");
+        props.setSearchPath("/arrowapi/dw/partservice/search");
         props.setAppId("gen");
         props.setVersion("v1");
         if (configured) {
@@ -43,11 +43,11 @@ class ArrowPartSearchServiceTest {
         props.setAuthBaseUrl("https://gc-api-dev-apimgwt.apps.usdenpos01.arrow.com");
         props.setSearchBaseUrl("https://gc-apim-dev1.azure-api.net");
         props.setTokenPath("/auth/oauth2/token");
-        props.setRegion("eu");
+        props.setSearchPath("/arrowapi/dw/partservice/search");
 
         assertThat(props.tokenUrl())
                 .isEqualTo("https://gc-api-dev-apimgwt.apps.usdenpos01.arrow.com/auth/oauth2/token");
         assertThat(props.searchUrl())
-                .isEqualTo("https://gc-apim-dev1.azure-api.net/eupartservice/search");
+                .isEqualTo("https://gc-apim-dev1.azure-api.net/arrowapi/dw/partservice/search");
     }
 }

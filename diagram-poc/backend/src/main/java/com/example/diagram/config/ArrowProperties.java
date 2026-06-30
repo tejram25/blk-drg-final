@@ -6,12 +6,11 @@ import org.springframework.stereotype.Component;
 /**
  * Configuration for the Arrow APIM Part Search API.
  *
- * <p>Per the APIM documentation the OAuth2 token and the search call live on
- * <em>different</em> hosts (e.g. on DEV the token comes from
- * {@code gc-api-dev-apimgwt…arrow.com} while search is served from
- * {@code gc-apim-dev1.azure-api.net}), so the auth and search base URLs are
- * configured separately. The regional service ({@code ac}/{@code eu}/{@code ap})
- * selects the {@code <region>partservice} path segment.
+ * <p>The OAuth2 token and the search call live on <em>different</em> hosts
+ * (e.g. on DEV the token comes from {@code gc-api-dev-apimgwt…arrow.com} while
+ * search is served from {@code gc-apim-dev1.azure-api.net}), so the auth and
+ * search base URLs are configured separately. The search path
+ * ({@code /arrowapi/dw/partservice/search}) is configurable per environment.
  *
  * <p>Credentials are supplied via environment variables
  * ({@code ARROW_CLIENT_ID} / {@code ARROW_CLIENT_SECRET}) and are never
@@ -23,11 +22,11 @@ public class ArrowProperties {
 
     /** Host that issues the OAuth2 token (…/auth/oauth2/token). */
     private String authBaseUrl;
-    /** Host that serves part search (…/<region>partservice/search). */
+    /** Host that serves part search. */
     private String searchBaseUrl;
     private String tokenPath;
-    /** Regional service: ac (Americas), eu (Europe) or ap (Asia-Pacific). */
-    private String region;
+    /** Search path on the search host, e.g. /arrowapi/dw/partservice/search. */
+    private String searchPath;
     /** APIM application id query param (the docs use "gen"). */
     private String appId;
     private String version;
@@ -45,10 +44,9 @@ public class ArrowProperties {
         return trimTrailingSlash(authBaseUrl) + tokenPath;
     }
 
-    /** Full search endpoint, e.g. https://host/acpartservice/search. */
+    /** Full search endpoint, e.g. https://host/arrowapi/dw/partservice/search. */
     public String searchUrl() {
-        String r = (region == null || region.isBlank()) ? "ac" : region.trim().toLowerCase();
-        return trimTrailingSlash(searchBaseUrl) + "/" + r + "partservice/search";
+        return trimTrailingSlash(searchBaseUrl) + searchPath;
     }
 
     private static String trimTrailingSlash(String s) {
@@ -65,8 +63,8 @@ public class ArrowProperties {
     public String getTokenPath() { return tokenPath; }
     public void setTokenPath(String tokenPath) { this.tokenPath = tokenPath; }
 
-    public String getRegion() { return region; }
-    public void setRegion(String region) { this.region = region; }
+    public String getSearchPath() { return searchPath; }
+    public void setSearchPath(String searchPath) { this.searchPath = searchPath; }
 
     public String getAppId() { return appId; }
     public void setAppId(String appId) { this.appId = appId; }

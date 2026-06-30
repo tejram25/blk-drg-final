@@ -13,8 +13,8 @@ Test the Arrow part-search flow directly (token → search), independent of the 
    `client_id` and `client_secret` (created for that environment — DEV and QUAL use
    separate credentials).
 3. Run **`1. Get OAuth Token`** — on success the script saves the token into `part_token`.
-4. Run **`2. Part Search`** — change `srchtxt` (default `BAV99`) for other parts; switch
-   `region` between `ac` / `eu` / `ap` for Americas / Europe / Asia-Pacific.
+4. Run **`2. Part Search`** — change `srchtxt` (default `BAV99`) for other parts. The
+   search path defaults to `/arrowapi/dw/partservice/search` (`search_path` variable).
 
 ## Reading failures on request 1
 - **503** — the auth service/route is unavailable (usually the environment is down, not

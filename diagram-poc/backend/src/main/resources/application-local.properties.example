@@ -8,8 +8,8 @@ arrow.client-secret=your-client-secret-here
 # Defaults target DEV. For QUAL, also set:
 # arrow.auth-base-url=https://gc-apim-qual1.azure-api.net
 # arrow.search-base-url=https://gc-apiext-qual-apimgwq.apps.usdenpos02.arrow.com
-# Region: ac (Americas), eu (Europe) or ap (Asia-Pacific).
-# arrow.region=ac
+# Search path (override only if your environment differs):
+# arrow.search-path=/arrowapi/dw/partservice/search
 
 # AI recommendations (local Ollama). Leave disabled to use the rule-based fallback.
 # Install Ollama (https://ollama.com), run `ollama pull llama3.2`, then:
