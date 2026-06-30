@@ -1,0 +1,39 @@
+<div class="bp-pop" [style.left.px]="x" [style.top.px]="y" (click)="$event.stopPropagation()">
+  <div class="bp-head">
+    <span class="bp-title"><mat-icon>link</mat-icon> Link a component</span>
+    <button type="button" class="bp-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <div class="bp-search">
+    <input type="text" [(ngModel)]="query" (keyup.enter)="search()" placeholder="Search the catalogue…" />
+    <button type="button" class="bp-go" [disabled]="!query.trim() || loading" (click)="search()">
+      <mat-icon>search</mat-icon>
+    </button>
+  </div>
+
+  <div class="bp-filter" *ngIf="!loading && results.length">
+    <span class="bp-count">{{ visibleResults.length }} of {{ results.length }}</span>
+    <select [(ngModel)]="supplierFilter">
+      <option value="">All suppliers</option>
+      <option *ngFor="let s of suppliers" [value]="s">{{ s }}</option>
+    </select>
+  </div>
+
+  <div class="bp-results">
+    <p class="bp-msg" *ngIf="loading">Searching the catalogue…</p>
+    <p class="bp-msg" *ngIf="!loading && searched && !results.length">No matching parts.</p>
+
+    <button type="button" class="bp-item" *ngFor="let hit of visibleResults" (click)="add(hit)"
+            [attr.title]="'Link ' + hit.partNumber">
+      <span class="bp-dot" [class]="dotClass(hit)"></span>
+      <span class="bp-info">
+        <span class="bp-pn">{{ hit.partNumber }}</span>
+        <span class="bp-supp">{{ hit.manufacturer || hit.supplier }}</span>
+        <span class="bp-meta">
+          {{ hit.inStock | number }} in stock<span *ngIf="hit.status"> · {{ hit.status }}</span><span *ngIf="hit.leadTime"> · LT {{ hit.leadTime }}</span>
+        </span>
+      </span>
+      <mat-icon class="bp-add">add_link</mat-icon>
+    </button>
+  </div>
+</div>

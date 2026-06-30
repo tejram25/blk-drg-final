@@ -45,6 +45,7 @@ import { RecommendationsDialogComponent } from './components/recommendations-dia
 import { RecommendationItem, RecommendationResult, RecommendationService } from '../../core/services/recommendation.service';
 import { FeedbackDialogComponent } from './components/feedback-dialog/feedback-dialog.component';
 import { FeedbackRequest, FeedbackService } from '../../core/services/feedback.service';
+import { BlockPartPopoverComponent } from './components/block-part-popover/block-part-popover.component';
 import { TemplateDetail, TemplateService } from '../../core/services/template.service';
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
@@ -183,6 +184,7 @@ const PORT_GROUPS = {
     BomDialogComponent, CommandPaletteComponent, VersionsDialogComponent, CommentsPanelComponent,
     PartSearchPanelComponent, TemplatesDialogComponent, ExportDialogComponent, ProjectPanelComponent,
     LifecycleDialogComponent, RecommendationsDialogComponent, FeedbackDialogComponent,
+    BlockPartPopoverComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
@@ -734,6 +736,14 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       this.selectedEdge = null;
       this.highlightWire(null);
     });
+
+    // Hover a functional block → show its "link a component" badge.
+    this.graph.on('node:mouseenter', ({ node }) => {
+      if (node.shape === 'block-card') this.hoverBlockId = node.id;
+    });
+    this.graph.on('node:mouseleave', ({ node }) => {
+      if (this.hoverBlockId === node.id) this.hoverBlockId = null;
+    });
     // If the selected cell vanishes (Del key, collaborator deleted it,
     // diagram load), close its property panel instead of editing a ghost.
     this.graph.on('cell:removed', ({ cell }) => {
@@ -1012,14 +1022,28 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     return s.startsWith('elec-') || s.startsWith('anim-');
   }
 
-  /** True when the selected node is a catalogue part card carrying part data. */
+  /** True when the selected node carries catalogue part data (a part card, or a block with a linked component). */
   get isPartCard(): boolean {
-    return this.selectedNode?.shape === 'part-card' && !!this.selectedNode?.getData()?.part;
+    return !!this.selectedPart;
   }
 
-  /** The raw catalogue part object for the selected part card, if any. */
+  /** The raw catalogue part for the selection: a part card's `part`, or a block's `linkedPart`. */
   get selectedPart(): any {
-    return this.isPartCard ? this.selectedNode!.getData().part : null;
+    const d = this.selectedNode?.getData();
+    if (!d) return null;
+    if (this.selectedNode?.shape === 'part-card') return d.part ?? null;
+    if (this.selectedNode?.shape === 'block-card') return d.linkedPart ?? null;
+    return null;
+  }
+
+  /** True when the selection is a block with a linked component (shows the Unlink action). */
+  get isLinkedBlock(): boolean {
+    return this.selectedNode?.shape === 'block-card' && !!this.selectedNode?.getData()?.linkedPart;
+  }
+
+  /** Data key holding the part for the current selection. */
+  private partDataKey(): 'part' | 'linkedPart' {
+    return this.selectedNode?.shape === 'block-card' ? 'linkedPart' : 'part';
   }
 
   /** Order/BOM quantity for the selected part card (editable in Properties). */
@@ -1031,8 +1055,9 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     if (!this.isPartCard) return;
     const qty = Math.max(1, Math.floor(Number(value) || 1));
     // Re-set data with a fresh part object so change detection + autosave fire.
-    const part = { ...this.selectedNode!.getData().part, __bomQty: qty };
-    this.selectedNode!.setData({ part });
+    const key = this.partDataKey();
+    const part = { ...this.selectedNode!.getData()[key], __bomQty: qty };
+    this.selectedNode!.setData({ [key]: part });
   }
 
   /** Full catalogue + inventory info for the Properties tab (label/value rows). */
@@ -1858,14 +1883,18 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     a.click();
   }
 
-  /** Build a Bill of Materials from catalogue part cards on the canvas. */
+  /** Build a Bill of Materials from catalogue part cards AND blocks with linked parts. */
   exportBom(): void {
     const parts = this.graph.getNodes()
-      .filter((n) => n.shape === 'part-card' && !this.exportHiddenIds.has(n.id)) // skip hidden parts
-      .map((n) => (n.getData() as { part?: unknown } | undefined)?.part)
+      .filter((n) => !this.exportHiddenIds.has(n.id)) // skip hidden components
+      .map((n) => {
+        const d = n.getData() as { part?: unknown; linkedPart?: unknown } | undefined;
+        // Part cards carry `part`; functional blocks carry a linked `linkedPart`.
+        return n.shape === 'part-card' ? d?.part : d?.linkedPart;
+      })
       .filter((p): p is object => !!p);
     if (!parts.length) {
-      this.notify.info('No catalogue parts on the canvas to build a BOM from. Import a parts file first.');
+      this.notify.info('No catalogue parts on the canvas to build a BOM from. Add parts or link components to blocks.');
       return;
     }
     this.bomRows = this.bomService.build(parts);
@@ -1915,6 +1944,92 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.partSearchOpen = false;
     setTimeout(() => { this.partSearchOpen = true; }, 0);
     this.notify.info(`Catalogue options for "${q}" — choose a supplier and add.`);
+  }
+
+  // ---------- Block ↔ component linking ----------
+
+  /** Block currently hovered (drives the on-canvas "link" badge). */
+  hoverBlockId: string | null = null;
+  /** Block whose link popover is open (null = closed). */
+  linkTarget: Node | null = null;
+  linkBlockName = '';
+  linkPos = { x: 0, y: 0 };
+
+  /**
+   * Per-block overlay data (screen-space): the hover "link" badge and, when a
+   * component is linked, a chip with its part number + stock-status dot. Mirrors
+   * the remote-cursor overlay approach so it tracks pan/zoom/drag.
+   */
+  blockOverlays(): { id: string; x: number; y: number; w: number; hovered: boolean;
+                     part: any; pn: string; dot: string }[] {
+    if (!this.graph || !this.canvasRef) return [];
+    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+    return this.graph.getNodes()
+      .filter((n) => n.shape === 'block-card')
+      .map((n) => {
+        const b = n.getBBox();
+        const tl = this.graph.localToClient(b.x, b.y);
+        const br = this.graph.localToClient(b.x + b.width, b.y + b.height);
+        const part = n.getData()?.linkedPart ?? null;
+        return {
+          id: n.id,
+          x: tl.x - rect.left,
+          y: tl.y - rect.top,
+          w: br.x - tl.x,
+          hovered: this.hoverBlockId === n.id,
+          part,
+          pn: part ? (part?.arwPartNum?.name || part?.suppPartNum?.name || 'part') : '',
+          dot: this.blockStatusDot(part),
+        };
+      });
+  }
+
+  /** Stock-status dot for a linked part chip. */
+  private blockStatusDot(part: any): string {
+    if (!part) return 'grey';
+    const org = part?.invOrgs?.[0] ?? {};
+    const s = String(org?.status ?? '').toLowerCase();
+    const stock = Number(org?.avail?.totohQty ?? org?.avail?.FOHQty ?? 0);
+    if (s.includes('nvr') || s.includes('never') || s.includes('obsolete') || s.includes('eol')) return 'grey';
+    return stock > 0 ? 'green' : 'amber';
+  }
+
+  /** Open the glass link popover anchored to a block (by id). */
+  openBlockLink(blockId: string, event?: Event): void {
+    event?.stopPropagation();
+    const node = this.graph.getCellById(blockId) as Node | undefined;
+    if (!node || !node.isNode()) return;
+    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+    const b = node.getBBox();
+    const tr = this.graph.localToClient(b.x + b.width, b.y);
+    // Anchor just off the block's top-right, clamped into the viewport.
+    this.linkPos = {
+      x: Math.min(tr.x - rect.left + 8, rect.width - 312),
+      y: Math.max(tr.y - rect.top, 8),
+    };
+    this.linkBlockName = node.attr('title/text') ? String(node.attr('title/text')) : '';
+    this.linkTarget = node;
+  }
+
+  closeBlockLink(): void {
+    this.linkTarget = null;
+  }
+
+  /** Link the chosen catalogue part to the open block; reflected in BOM + Properties. */
+  onLinkPart(part: any): void {
+    if (!this.linkTarget) return;
+    this.linkTarget.setData({ linkedPart: part });
+    const pn = part?.arwPartNum?.name || part?.suppPartNum?.name || 'part';
+    this.notify.success(`Linked ${pn} to "${this.linkBlockName || 'block'}".`);
+    this.closeBlockLink();
+    this.scheduleAutosave();
+  }
+
+  /** Remove the linked component from a block. */
+  unlinkBlock(node: Node | null): void {
+    if (!node) return;
+    node.setData({ linkedPart: null });
+    this.scheduleAutosave();
   }
 
   // ---------- Feedback loop ----------
