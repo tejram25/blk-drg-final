@@ -227,7 +227,8 @@ public class RecommendationServiceImpl implements RecommendationService {
             String verify = stock > 0
                     ? "In stock now — confirm the lifecycle status and specs before committing."
                     : "Best match is out of stock — check lead time or pick an in-stock alternative.";
-            return new RecommendationItem("part", pn, detail, source, verify);
+            // query = the matched term, so "add" can re-search and offer suppliers/variants.
+            return new RecommendationItem("part", pn, detail, source, verify, term);
         } catch (Exception ex) {
             log.debug("Catalogue lookup for '{}' failed: {}", term, ex.toString());
             return null;
@@ -286,7 +287,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                     Template t = e.getKey();
                     out.add(new RecommendationItem("template", t.getName(),
                             t.getDescription() == null ? "A reusable starting point." : t.getDescription(),
-                            "Template repository", "Open it and confirm the blocks match your architecture."));
+                            "Template repository", "Open it and confirm the blocks match your architecture.", ""));
                 });
         return out;
     }
@@ -317,13 +318,14 @@ public class RecommendationServiceImpl implements RecommendationService {
     private RecommendationItem bomNudge() {
         return new RecommendationItem("solution", "Add a Bill of Materials check",
                 "Drop your parts onto the canvas and export a BOM to catch duplicates and quantities early.",
-                "Tool best-practice", "Cross-check each part's lifecycle status before release.");
+                "Tool best-practice", "Cross-check each part's lifecycle status before release.", "");
     }
 
     // ---- helpers ----
 
     private RecommendationItem part(String pn, String detail, String verify) {
-        return new RecommendationItem("part", pn, detail, "Arrow catalogue", verify);
+        // Generic fallback part: the part number itself is the search query.
+        return new RecommendationItem("part", pn, detail, "Arrow catalogue", verify, pn);
     }
 
     private int score(Template t, String goal) {

@@ -20,7 +20,7 @@ import { RecommendationItem, RecommendationResult } from '../../../../core/servi
 export class RecommendationsDialogComponent {
   @Input() result: RecommendationResult | null = null;
   @Input() loading = false;
-  @Output() addPart = new EventEmitter<string>();
+  @Output() addPart = new EventEmitter<RecommendationItem>();
   @Output() close = new EventEmitter<void>();
 
   icon(type: string): string {

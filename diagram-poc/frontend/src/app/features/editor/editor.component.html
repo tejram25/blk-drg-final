@@ -615,7 +615,7 @@
         (restore)="onRestoreVersion($event)" (close)="versionsOpen = false"></app-versions-dialog>
 
       <!-- Parts search -->
-      <app-part-search-panel *ngIf="partSearchOpen"
+      <app-part-search-panel *ngIf="partSearchOpen" [seedQuery]="partSearchSeed"
         (addPart)="addPartToCanvas($event)" (close)="partSearchOpen = false"></app-part-search-panel>
 
       <!-- Project workspace (Salesforce integration) -->

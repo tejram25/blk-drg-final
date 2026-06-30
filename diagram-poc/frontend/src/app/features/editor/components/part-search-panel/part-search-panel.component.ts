@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,6 +19,8 @@ import { PartHit, PartSearchService } from '../../../../core/services/part-searc
 export class PartSearchPanelComponent implements AfterViewInit {
   @Output() close = new EventEmitter<void>();
   @Output() addPart = new EventEmitter<any>();
+  /** Optional initial query (e.g. from a recommendation) — auto-searched on open. */
+  @Input() seedQuery = '';
   @ViewChild('box') boxRef!: ElementRef<HTMLInputElement>;
 
   query = '';
@@ -31,7 +33,13 @@ export class PartSearchPanelComponent implements AfterViewInit {
   constructor(private api: PartSearchService) {}
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.boxRef?.nativeElement.focus());
+    if (this.seedQuery && this.seedQuery.trim()) {
+      // Opened from a recommendation: pre-fill and run the search immediately.
+      this.query = this.seedQuery.trim();
+      this.search();
+    } else {
+      setTimeout(() => this.boxRef?.nativeElement.focus());
+    }
   }
 
   search(): void {

@@ -9,6 +9,8 @@ export interface RecommendationItem {
   detail: string;
   source: string;
   verify: string;
+  /** Catalogue search term to re-run when adding, so the user can pick a supplier. */
+  query?: string;
 }
 
 export interface RecommendationResult {

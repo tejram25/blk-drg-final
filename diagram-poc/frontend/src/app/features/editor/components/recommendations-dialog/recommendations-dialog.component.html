@@ -28,7 +28,7 @@
           <p class="rc-verify"><mat-icon>fact_check</mat-icon> {{ r.verify }}</p>
         </div>
         <button type="button" class="rc-add" *ngIf="r.type === 'part'"
-                matTooltip="Add to canvas" (click)="addPart.emit(r.title)">
+                matTooltip="Choose supplier & add" (click)="addPart.emit(r)">
           <mat-icon>add</mat-icon>
         </button>
       </div>

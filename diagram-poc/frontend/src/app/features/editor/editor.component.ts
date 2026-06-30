@@ -42,7 +42,7 @@ import { ProjectDetail, ProjectPart } from '../../core/services/integration.serv
 import { LifecycleDialogComponent } from './components/lifecycle-dialog/lifecycle-dialog.component';
 import { AlternativePart, LifecycleInfo, LifecycleService } from '../../core/services/lifecycle.service';
 import { RecommendationsDialogComponent } from './components/recommendations-dialog/recommendations-dialog.component';
-import { RecommendationResult, RecommendationService } from '../../core/services/recommendation.service';
+import { RecommendationItem, RecommendationResult, RecommendationService } from '../../core/services/recommendation.service';
 import { FeedbackDialogComponent } from './components/feedback-dialog/feedback-dialog.component';
 import { FeedbackRequest, FeedbackService } from '../../core/services/feedback.service';
 import { TemplateDetail, TemplateService } from '../../core/services/template.service';
@@ -1899,16 +1899,22 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     });
   }
 
-  /** Add a recommended part to the canvas. */
-  onRecAddPart(partNumber: string): void {
-    this.addPartToCanvas({
-      arwPartNum: { name: partNumber },
-      suppPartNum: { name: partNumber },
-      supp: { name: 'Recommended' },
-      mfr: { name: 'Recommended' },
-      invOrgs: [{ desc: 'Recommended part' }],
-      paramData: [{ name: 'Type', val: 'Recommendation' }],
-    });
+  /** Seed query handed to the part-search panel (e.g. from a recommendation). */
+  partSearchSeed = '';
+
+  /**
+   * Adding a recommended part opens the catalogue search for that component, so
+   * the user can see the available suppliers/variants (with stock + status) and
+   * pick one — rather than dropping a stub. Reuses the part-search panel.
+   */
+  onRecAddPart(item: RecommendationItem): void {
+    const q = (item.query && item.query.trim()) ? item.query.trim() : item.title;
+    this.recsOpen = false;
+    this.partSearchSeed = q;
+    // Force the panel to (re)open so it runs a fresh search for this term.
+    this.partSearchOpen = false;
+    setTimeout(() => { this.partSearchOpen = true; }, 0);
+    this.notify.info(`Catalogue options for "${q}" — choose a supplier and add.`);
   }
 
   // ---------- Feedback loop ----------
