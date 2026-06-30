@@ -989,9 +989,10 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     return 'body/fill';
   }
 
-  /** Card blocks keep their name in 'title'; everything else uses 'label'. */
+  /** Card blocks and part cards keep their name in 'title'; everything else uses 'label'. */
   get labelAttrPath(): string {
-    return this.selectedNode?.shape === 'block-card' ? 'title/text' : 'label/text';
+    const shape = this.selectedNode?.shape;
+    return shape === 'block-card' || shape === 'part-card' ? 'title/text' : 'label/text';
   }
 
   get nodeTypeName(): string {
@@ -1019,6 +1020,19 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   /** The raw catalogue part object for the selected part card, if any. */
   get selectedPart(): any {
     return this.isPartCard ? this.selectedNode!.getData().part : null;
+  }
+
+  /** Order/BOM quantity for the selected part card (editable in Properties). */
+  get partQty(): number {
+    return Math.max(1, Number(this.selectedPart?.__bomQty ?? 1));
+  }
+
+  setPartQty(value: any): void {
+    if (!this.isPartCard) return;
+    const qty = Math.max(1, Math.floor(Number(value) || 1));
+    // Re-set data with a fresh part object so change detection + autosave fire.
+    const part = { ...this.selectedNode!.getData().part, __bomQty: qty };
+    this.selectedNode!.setData({ part });
   }
 
   /** Full catalogue + inventory info for the Properties tab (label/value rows). */
@@ -1053,7 +1067,6 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       { label: 'Design-win eligible', value: org?.dwData?.dwEligible },
       { label: 'Franchised', value: yn(org?.franchised) },
       { label: 'Compliance', value: compliance },
-      { label: 'BOM quantity', value: num(part?.__bomQty) },
     ];
     return rows.filter((r) => r.value != null && String(r.value).trim() !== '') as {
       label: string;
@@ -2376,10 +2389,14 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       urls.find((u) => /image/i.test(u?.type))?.URL || '';
 
     const tip = part?.invOrgs?.[0]?.desc || `${title} — ${supplier}`;
+    // Auto-populate the editable Properties fields from the catalogue record.
+    const category = part?.icc?.tree
+      ? String(part.icc.tree).split('|')[0].trim()
+      : (part?.icc?.name || 'Component');
     return {
       shape: 'part-card',
       x, y, width: CARD_W, height: CARD_H,
-      data: { typeKey: 'part', part },
+      data: { typeKey: 'part', part, partNumber: title, category },
       attrs: {
         tip: { text: String(tip) },
         img: imgUrl ? { 'xlink:href': imgUrl } : { 'xlink:href': '', opacity: 0 },

@@ -487,6 +487,11 @@
                       [placeholder]="'props.notesPlaceholder' | translate"></textarea>
           </label>
 
+          <label *ngIf="isPartCard"><span>Quantity</span>
+            <input type="number" min="1" [ngModel]="partQty"
+                   (ngModelChange)="setPartQty($event)" />
+          </label>
+
           <!-- Full catalogue + inventory info (part cards from the Arrow search) -->
           <ng-container *ngIf="isPartCard">
             <div class="prop-section">Catalogue details</div>
