@@ -71,15 +71,37 @@
         },
         "description": "Calls {{search_base_url}}{{search_path}}. Run request 1 first so {{part_token}} is populated.\n\nThe response is the partserviceresult JSON the app renders into part cards."
       }
+    },
+    {
+      "name": "3. POS / Sales",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{part_token}}" }
+        ],
+        "url": {
+          "raw": "{{designwin_base_url}}/sales?partNumber={{pos_part}}&mfrName={{pos_mfr}}",
+          "host": ["{{designwin_base_url}}"],
+          "path": ["sales"],
+          "query": [
+            { "key": "partNumber", "value": "{{pos_part}}" },
+            { "key": "mfrName", "value": "{{pos_mfr}}" }
+          ]
+        },
+        "description": "Design Win POS / sales for a part. Run request 1 first so {{part_token}} is populated.\n\nThe app uses this to flag a recommended part as 'field-proven' when it has shipment history. Paste the full response back so the parsing can be mapped to the real wrapper key."
+      }
     }
   ],
   "variable": [
     { "key": "auth_base_url", "value": "https://gc-api-dev-apimgwt.apps.usdenpos01.arrow.com" },
     { "key": "search_base_url", "value": "https://gc-apim-dev1.azure-api.net" },
     { "key": "search_path", "value": "/arrowapi/dw/partservice/search" },
+    { "key": "designwin_base_url", "value": "https://gc-apim-dev1.azure-api.net/designwin" },
     { "key": "app_id", "value": "gen" },
     { "key": "version", "value": "v1" },
     { "key": "srchtxt", "value": "BAV99" },
+    { "key": "pos_part", "value": "MC33926PNB" },
+    { "key": "pos_mfr", "value": "NXP Semiconductors" },
     { "key": "client_id", "value": "" },
     { "key": "client_secret", "value": "" },
     { "key": "part_token", "value": "" }
