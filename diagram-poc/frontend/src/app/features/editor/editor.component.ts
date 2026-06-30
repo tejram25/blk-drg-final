@@ -1011,6 +1011,70 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     return s.startsWith('elec-') || s.startsWith('anim-');
   }
 
+  /** True when the selected node is a catalogue part card carrying part data. */
+  get isPartCard(): boolean {
+    return this.selectedNode?.shape === 'part-card' && !!this.selectedNode?.getData()?.part;
+  }
+
+  /** The raw catalogue part object for the selected part card, if any. */
+  get selectedPart(): any {
+    return this.isPartCard ? this.selectedNode!.getData().part : null;
+  }
+
+  /** Full catalogue + inventory info for the Properties tab (label/value rows). */
+  get partDetails(): { label: string; value: string }[] {
+    const part = this.selectedPart;
+    if (!part) return [];
+    const org = part?.invOrgs?.[0] ?? {};
+    const avail = org?.avail ?? {};
+    const num = (v: any) =>
+      v === null || v === undefined || v === '' ? '' : Number(v).toLocaleString();
+    const yn = (v: any) => (v === 'Y' ? 'Yes' : v === 'N' ? 'No' : '');
+    const compliance = (part?.EnvData?.complianceList ?? [])
+      .map((c: any) => c?.type)
+      .filter(Boolean)
+      .join(', ');
+    const rows = [
+      { label: 'Arrow part #', value: part?.arwPartNum?.name },
+      { label: 'Supplier part #', value: part?.suppPartNum?.name },
+      { label: 'Manufacturer', value: part?.mfr?.name },
+      { label: 'Supplier', value: part?.supp?.name },
+      { label: 'Description', value: org?.desc },
+      { label: 'Category', value: part?.icc?.tree || part?.icc?.name },
+      { label: 'Status', value: org?.status },
+      { label: 'In stock', value: num(avail?.totohQty ?? avail?.FOHQty ?? avail?.ACFOHQty) },
+      { label: 'Lead time', value: part?.leadTime?.arwLT ? `${part.leadTime.arwLT} wks` : '' },
+      { label: 'Min order qty', value: num(org?.minOrdQty) },
+      { label: 'Multiple order qty', value: num(org?.multOrdQty) },
+      {
+        label: 'Package',
+        value: [org?.pkg, org?.pkgQty && `(${org.pkgQty}/pk)`].filter(Boolean).join(' '),
+      },
+      { label: 'Design-win eligible', value: org?.dwData?.dwEligible },
+      { label: 'Franchised', value: yn(org?.franchised) },
+      { label: 'Compliance', value: compliance },
+      { label: 'BOM quantity', value: num(part?.__bomQty) },
+    ];
+    return rows.filter((r) => r.value != null && String(r.value).trim() !== '') as {
+      label: string;
+      value: string;
+    }[];
+  }
+
+  /** Datasheet/parametric specs (paramData) for the selected part card. */
+  get partSpecs(): { label: string; value: string }[] {
+    const part = this.selectedPart;
+    const pd = Array.isArray(part?.paramData) ? part.paramData : [];
+    return pd
+      .map((p: any) => ({
+        label: String(p?.name ?? '').trim(),
+        value: [String(p?.val ?? '').trim(), String(p?.uom ?? '').trim()]
+          .filter((s) => s && s !== ' ')
+          .join(' '),
+      }))
+      .filter((r: any) => r.label && r.value && !/^not required$/i.test(r.value));
+  }
+
   get defaultCategory(): string {
     const shape = this.selectedNode?.shape ?? '';
     if (shape.startsWith('elec-')) return 'Electrical';

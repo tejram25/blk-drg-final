@@ -487,6 +487,26 @@
                       [placeholder]="'props.notesPlaceholder' | translate"></textarea>
           </label>
 
+          <!-- Full catalogue + inventory info (part cards from the Arrow search) -->
+          <ng-container *ngIf="isPartCard">
+            <div class="prop-section">Catalogue details</div>
+            <div class="part-details">
+              <div class="pd-row" *ngFor="let d of partDetails">
+                <span class="pd-key">{{ d.label }}</span>
+                <span class="pd-val">{{ d.value }}</span>
+              </div>
+            </div>
+            <ng-container *ngIf="partSpecs.length">
+              <div class="prop-section">Specifications</div>
+              <div class="part-details">
+                <div class="pd-row" *ngFor="let d of partSpecs">
+                  <span class="pd-key">{{ d.label }}</span>
+                  <span class="pd-val">{{ d.value }}</span>
+                </div>
+              </div>
+            </ng-container>
+          </ng-container>
+
           <div class="prop-section">{{ 'props.appearance' | translate }}</div>
           <ng-container *ngIf="!isSymbol">
             <div class="prop-row">
