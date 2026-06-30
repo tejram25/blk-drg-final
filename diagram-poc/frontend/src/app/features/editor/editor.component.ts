@@ -737,12 +737,12 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       this.highlightWire(null);
     });
 
-    // Hover a functional block → show its "link a component" badge.
+    // Hover any block-like node → show its "link a component" badge.
     this.graph.on('node:mouseenter', ({ node }) => {
-      if (node.shape === 'block-card') this.setBlockHover(node.id);
+      if (this.isLinkable(node)) this.setBlockHover(node.id);
     });
     this.graph.on('node:mouseleave', ({ node }) => {
-      if (node.shape === 'block-card') this.scheduleBlockHoverClear();
+      if (this.isLinkable(node)) this.scheduleBlockHoverClear();
     });
     // If the selected cell vanishes (Del key, collaborator deleted it,
     // diagram load), close its property panel instead of editing a ghost.
@@ -1032,18 +1032,17 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     const d = this.selectedNode?.getData();
     if (!d) return null;
     if (this.selectedNode?.shape === 'part-card') return d.part ?? null;
-    if (this.selectedNode?.shape === 'block-card') return d.linkedPart ?? null;
-    return null;
+    return d.linkedPart ?? null; // any linkable node can hold a linked component
   }
 
-  /** True when the selection is a block with a linked component (shows the Unlink action). */
+  /** True when the selection is a block/shape with a linked component (shows the Unlink action). */
   get isLinkedBlock(): boolean {
-    return this.selectedNode?.shape === 'block-card' && !!this.selectedNode?.getData()?.linkedPart;
+    return this.canLinkSelected && !!this.selectedNode?.getData()?.linkedPart;
   }
 
   /** Data key holding the part for the current selection. */
   private partDataKey(): 'part' | 'linkedPart' {
-    return this.selectedNode?.shape === 'block-card' ? 'linkedPart' : 'part';
+    return this.selectedNode?.shape === 'part-card' ? 'part' : 'linkedPart';
   }
 
   /** Order/BOM quantity for the selected part card (editable in Properties). */
@@ -1948,6 +1947,27 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
 
   // ---------- Block ↔ component linking ----------
 
+  /** Shapes that already ARE components/images — not link targets. */
+  private static readonly LINK_EXCLUDED = new Set(['part-card', 'img-node', 'supplier-trace']);
+
+  /** A node can hold a linked catalogue component (any block/shape/symbol, not a part card/image). */
+  isLinkable(node: Node | null | undefined): boolean {
+    return !!node && node.isNode() && !EditorComponent.LINK_EXCLUDED.has(node.shape);
+  }
+
+  /** True when the current selection can be linked to a component. */
+  get canLinkSelected(): boolean {
+    return this.isLinkable(this.selectedNode);
+  }
+
+  /** Display label of a node (block card uses 'title', everything else 'label'). */
+  private nodeLabel(node: Node): string {
+    const t = node.attr('title/text');
+    if (t) return String(t);
+    const l = node.attr('label/text');
+    return l ? String(l) : '';
+  }
+
   /** Block currently hovered (drives the on-canvas "link" badge). */
   hoverBlockId: string | null = null;
   private hoverClearTimer: any = null;
@@ -1977,7 +1997,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     if (!this.graph || !this.canvasRef) return [];
     const rect = this.canvasRef.nativeElement.getBoundingClientRect();
     return this.graph.getNodes()
-      .filter((n) => n.shape === 'block-card')
+      .filter((n) => this.isLinkable(n))
       .map((n) => {
         const b = n.getBBox();
         const tl = this.graph.localToClient(b.x, b.y);
@@ -2021,7 +2041,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       x: Math.min(tr.x - rect.left + 8, rect.width - 312),
       y: Math.max(tr.y - rect.top, 8),
     };
-    this.linkBlockName = node.attr('title/text') ? String(node.attr('title/text')) : '';
+    this.linkBlockName = this.nodeLabel(node);
     this.linkTarget = node;
   }
 

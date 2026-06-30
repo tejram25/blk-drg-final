@@ -513,8 +513,8 @@
                    (ngModelChange)="setPartQty($event)" />
           </label>
 
-          <!-- Linked component actions (functional blocks) -->
-          <div class="prop-linked" *ngIf="selectedNode?.shape === 'block-card'">
+          <!-- Linked component actions (blocks, shapes, symbols) -->
+          <div class="prop-linked" *ngIf="canLinkSelected">
             <button type="button" class="link-btn" (click)="openBlockLink(selectedNode!.id)">
               <mat-icon>{{ isLinkedBlock ? 'sync' : 'add_link' }}</mat-icon>
               <span>{{ isLinkedBlock ? 'Change component' : 'Link a component' }}</span>
