@@ -56,12 +56,17 @@ public class ArrowApiClient {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Arrow API is not configured. Please try again later.");
         }
+        long started = System.currentTimeMillis();
+        log.info("→ Arrow API GET {}", url);
         try {
-            return http.get()
+            String body = http.get()
                     .uri(url)
                     .header("Authorization", "Bearer " + token())
                     .retrieve()
                     .body(String.class);
+            log.info("← Arrow API GET {} ({} ms, {} chars)", url,
+                    System.currentTimeMillis() - started, body == null ? 0 : body.length());
+            return body;
         } catch (RestClientResponseException ex) {
             log.error("Arrow GET {} failed: HTTP {} - {}", url, ex.getStatusCode().value(),
                     truncate(ex.getResponseBodyAsString()));
@@ -77,8 +82,10 @@ public class ArrowApiClient {
     /** Return a cached token, refreshing it shortly before it expires. */
     private synchronized String token() {
         if (cachedToken != null && Instant.now().isBefore(tokenExpiry)) {
+            log.debug("Arrow token served from cache (valid until {})", tokenExpiry);
             return cachedToken;
         }
+        log.info("→ Arrow token request {}", props.tokenUrl());
         String body;
         try {
             body = http.post()
@@ -120,6 +127,7 @@ public class ArrowApiClient {
             long expiresIn = node.path("expires_in").asLong(node.path("expiresIn").asLong(3600));
             cachedToken = token;
             tokenExpiry = Instant.now().plusSeconds(Math.max(60, expiresIn - 60));
+            log.info("← Arrow token acquired (expires in ~{}s, cached until {})", expiresIn, tokenExpiry);
             return cachedToken;
         } catch (ResponseStatusException ex) {
             throw ex;
