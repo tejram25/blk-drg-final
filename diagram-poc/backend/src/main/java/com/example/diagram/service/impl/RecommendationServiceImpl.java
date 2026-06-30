@@ -70,16 +70,34 @@ public class RecommendationServiceImpl implements RecommendationService {
         this.rest = RestClient.create();
     }
 
+    /** Max catalogue searches per recommendation (keeps latency bounded). */
+    private static final int MAX_TERMS = 4;
+
     @Override
     public RecommendationResult recommend(RecommendationRequest request) {
         RecommendationRequest req = normalize(request);
-        boolean aiTerms = props.isConfigured();
 
-        List<String> terms = deriveSearchTerms(req, aiTerms);
-        log.info("Recommendation search terms for goal '{}': {}", req.goal(), terms);
+        // Canvas parts + the reliable, catalogue-friendly dictionary first.
+        LinkedHashSet<String> terms = new LinkedHashSet<>();
+        for (String p : req.currentParts()) {
+            if (present(p)) terms.add(p.trim());
+        }
+        terms.addAll(keywordTerms(req.goal()));
+
+        // Only spend the (slow) local model when the dictionary is thin, so the
+        // common case stays fast. The model just proposes more search terms.
+        boolean usedAi = false;
+        if (props.isConfigured() && terms.size() < 3) {
+            List<String> ai = aiSearchTerms(req.goal());
+            terms.addAll(ai);
+            usedAi = !ai.isEmpty();
+        }
+
+        List<String> termList = terms.stream().limit(MAX_TERMS).collect(Collectors.toList());
+        log.info("Recommendation search terms for goal '{}': {}", req.goal(), termList);
 
         // The catalogue + Design Win APIs are the source of truth for actual parts.
-        List<RecommendationItem> partItems = catalogueItems(terms);
+        List<RecommendationItem> partItems = catalogueItems(termList);
 
         List<RecommendationItem> items = new ArrayList<>();
         if (!partItems.isEmpty()) {
@@ -92,27 +110,12 @@ public class RecommendationServiceImpl implements RecommendationService {
         items = dedupeByTitle(items);
 
         boolean grounded = !partItems.isEmpty();
-        String model = grounded ? (aiTerms ? "Local AI (" + props.getModel() + ") + catalogue" : "Arrow catalogue")
+        String model = grounded ? (usedAi ? "Local AI (" + props.getModel() + ") + catalogue" : "Arrow catalogue")
                 : "rule-based";
         String note = grounded
                 ? "Grounded in the live Arrow catalogue (stock, lifecycle, POS)."
-                : (aiTerms ? "No live catalogue matches — showing general guidance." : null);
+                : (props.isConfigured() ? "No live catalogue matches — showing general guidance." : null);
         return new RecommendationResult(items, model, grounded, note);
-    }
-
-    // ---- Search-term derivation (AI + dictionary + canvas) ----
-
-    private List<String> deriveSearchTerms(RecommendationRequest req, boolean aiTerms) {
-        LinkedHashSet<String> terms = new LinkedHashSet<>();
-        // Parts already on the canvas are the most specific signal.
-        for (String p : req.currentParts()) {
-            if (present(p)) terms.add(p.trim());
-        }
-        // Reliable, catalogue-friendly dictionary terms first; AI fills gaps it
-        // doesn't cover (its phrasing is less predictable, so it runs after).
-        terms.addAll(keywordTerms(req.goal()));
-        if (aiTerms) terms.addAll(aiSearchTerms(req.goal()));
-        return terms.stream().limit(5).collect(Collectors.toList());
     }
 
     /** Ask the local model for component search terms (small, reliable prompt). */
@@ -207,13 +210,17 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     // ---- Live catalogue grounding ----
 
-    /** Look each term up in the catalogue; return real, de-duplicated grounded parts. */
+    /** Look each term up in the catalogue (in parallel); return de-duplicated grounded parts. */
     private List<RecommendationItem> catalogueItems(List<String> terms) {
+        // Run the per-term lookups concurrently — they're independent network calls.
+        List<RecommendationItem> found = terms.parallelStream()
+                .map(this::lookupCatalogue)
+                .filter(i -> i != null)
+                .collect(Collectors.toList());
+
         Map<String, RecommendationItem> byPart = new LinkedHashMap<>();
-        for (String term : terms) {
-            if (byPart.size() >= 6) break;
-            RecommendationItem item = lookupCatalogue(term);
-            if (item != null) byPart.putIfAbsent(item.title().toLowerCase(), item);
+        for (RecommendationItem i : found) {
+            byPart.putIfAbsent(i.title().toLowerCase(), i);
         }
         return new ArrayList<>(byPart.values());
     }
