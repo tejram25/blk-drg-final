@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -58,6 +59,14 @@ public class RecommendationServiceImpl implements RecommendationService {
     private final DesignWinService designWin;
     private final ObjectMapper mapper;
     private final RestClient rest;
+
+    /**
+     * Whether to cross-check Design Win POS for "field-proven" status. Worth
+     * disabling where POS data isn't loaded (e.g. DEV returns an empty envelope),
+     * to avoid a wasted call per recommended part. Defaults to true.
+     */
+    @Value("${recommendation.pos-check:true}")
+    private boolean posCheck = true;
 
     public RecommendationServiceImpl(OllamaProperties props, TemplateRepository templates,
                                      PartSearchService parts, DesignWinService designWin,
@@ -291,10 +300,17 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     /** True when the Design Win POS API reports shipment history for the part. */
     private boolean hasPosSales(String partNumber, String mfr) {
+        if (!posCheck) return false; // POS disabled (e.g. no POS data in this environment)
         try {
             String json = designWin.sales(partNumber, present(mfr) ? mfr : null);
-            JsonNode sales = mapper.readTree(json == null ? "" : json).path("sales");
-            return sales.isArray() && sales.size() > 0;
+            JsonNode root = mapper.readTree(json == null ? "" : json);
+            // POS records may be wrapped under different keys across environments; a
+            // non-empty records array (or a positive posAmount) means shipment history.
+            for (String key : new String[]{"sales", "details", "pos", "salesData", "posData"}) {
+                JsonNode arr = root.path(key);
+                if (arr.isArray() && !arr.isEmpty()) return true;
+            }
+            return root.path("posAmount").asDouble(0) > 0;
         } catch (Exception ex) {
             log.debug("POS lookup for '{}' failed: {}", partNumber, ex.toString());
             return false;
