@@ -1,77 +1,177 @@
 {
-  "_comment": "Maps design-goal keywords to electronic-component catalogue search terms. Edit freely — reloaded on app restart. A rule fires when any of its 'triggers' matches a word in the goal (exact token, or a stem prefix for triggers >= 5 chars, e.g. 'regulat' -> 'regulator'). All of the rule's 'terms' are then searched in the Arrow catalogue.",
+  "_comment": "Maps design-goal keywords to electronic-component catalogue search terms (grounded in Arrow.com's product taxonomy). Edit freely — reloaded on app restart. A rule fires when any of its single-word 'triggers' matches a word in the goal: exact token match, or a stem prefix for triggers >= 5 chars (e.g. 'regulat' -> 'regulator'). All of the rule's 'terms' are then searched in the Arrow catalogue. The recommendation caps the total number of searches, so breadth here is safe.",
   "rules": [
     {
-      "terms": ["motor driver", "brushless motor controller"],
-      "triggers": ["robot", "amr", "agv", "motor", "servo", "drive", "actuator", "bldc", "brushless", "stepper"]
+      "terms": ["motor driver", "brushless motor controller", "stepper motor driver"],
+      "triggers": ["robot", "amr", "agv", "motor", "servo", "drive", "actuator", "bldc", "brushless", "stepper", "gimbal", "propulsion"]
     },
     {
-      "terms": ["IMU sensor"],
-      "triggers": ["robot", "amr", "agv", "drone", "uav", "imu", "gyro", "gyroscope", "accel", "accelerometer", "navigation", "balance"]
+      "terms": ["IMU sensor", "accelerometer", "gyroscope"],
+      "triggers": ["robot", "drone", "uav", "imu", "gyro", "gyroscope", "accel", "accelerometer", "navigation", "balance", "motion", "tilt", "vibration"]
     },
     {
-      "terms": ["microcontroller"],
-      "triggers": ["mcu", "microcontroller", "controller", "processor", "compute", "control", "fpga", "soc", "arm", "cortex"]
+      "terms": ["microcontroller", "microprocessor"],
+      "triggers": ["mcu", "microcontroller", "microprocessor", "processor", "firmware", "embedded", "cortex", "stm32", "esp32", "avr", "pic", "risc"]
     },
     {
-      "terms": ["voltage regulator", "buck regulator"],
-      "triggers": ["power", "supply", "regulat", "battery", "dcdc", "buck", "boost", "ldo", "charger", "pmic", "rail"]
+      "terms": ["FPGA", "CPLD"],
+      "triggers": ["fpga", "cpld", "programmable", "verilog", "vhdl", "gateware"]
     },
     {
-      "terms": ["gate driver", "mosfet"],
-      "triggers": ["mosfet", "fet", "igbt", "switching", "inverter", "halfbridge", "bridge", "gate"]
+      "terms": ["voltage regulator", "LDO regulator", "DC-DC converter"],
+      "triggers": ["power", "supply", "regulat", "dcdc", "buck", "boost", "rail", "smps", "converter", "stepdown", "stepup"]
     },
     {
-      "terms": ["wifi module"],
-      "triggers": ["wifi", "wireless", "ble", "bluetooth", "iot", "zigbee", "lora", "connectivity", "esp32"]
+      "terms": ["LDO regulator"],
+      "triggers": ["ldo", "dropout", "linear"]
     },
     {
-      "terms": ["CAN transceiver"],
-      "triggers": ["can", "rs485", "rs232", "uart", "serial", "ethernet", "modbus", "transceiver"]
+      "terms": ["PMIC", "battery charger", "battery management"],
+      "triggers": ["battery", "charger", "charging", "pmic", "fuelgauge", "lipo", "liion", "powerbank", "bms"]
     },
     {
-      "terms": ["current sense amplifier"],
-      "triggers": ["current", "sense", "monitor", "metering", "shunt"]
+      "terms": ["gate driver", "power MOSFET", "IGBT"],
+      "triggers": ["mosfet", "igbt", "switching", "inverter", "halfbridge", "gate", "transistor", "vfd"]
     },
     {
-      "terms": ["temperature sensor", "sensor"],
-      "triggers": ["temperature", "thermal", "humidity", "pressure", "proximity", "sensor", "sensing"]
+      "terms": ["AC-DC converter", "PWM controller"],
+      "triggers": ["acdc", "mains", "offline", "flyback", "isolated", "pfc"]
     },
     {
-      "terms": ["MLCC capacitor"],
-      "triggers": ["decoupl", "capacit", "filter", "bypass", "passive"]
-    },
-    {
-      "terms": ["LED driver"],
-      "triggers": ["led", "lighting", "display", "lcd", "oled", "backlight", "lamp", "blink"]
-    },
-    {
-      "terms": ["audio amplifier"],
-      "triggers": ["audio", "sound", "speaker", "amplifier", "microphone", "codec"]
-    },
-    {
-      "terms": ["flash memory"],
-      "triggers": ["memory", "flash", "eeprom", "storage", "sram", "dram"]
-    },
-    {
-      "terms": ["operational amplifier"],
-      "triggers": ["opamp", "comparator", "analog", "amplify"]
+      "terms": ["operational amplifier", "instrumentation amplifier", "comparator"],
+      "triggers": ["opamp", "comparator", "analog", "instrumentation", "conditioning", "preamp"]
     },
     {
       "terms": ["ADC", "DAC"],
-      "triggers": ["adc", "dac", "converter", "sampling", "acquisition"]
+      "triggers": ["adc", "dac", "sampling", "acquisition", "mixedsignal", "datalogger"]
     },
     {
-      "terms": ["oscillator", "crystal"],
-      "triggers": ["clock", "oscillator", "crystal", "timing", "rtc"]
+      "terms": ["voltage reference"],
+      "triggers": ["reference", "bandgap", "precision", "calibration"]
     },
     {
-      "terms": ["connector", "header"],
-      "triggers": ["connector", "header", "socket", "terminal", "usb"]
+      "terms": ["current sense amplifier", "current sensor"],
+      "triggers": ["current", "shunt", "metering", "ammeter", "coulomb"]
+    },
+    {
+      "terms": ["temperature sensor"],
+      "triggers": ["temperature", "thermal", "thermistor", "thermocouple"]
+    },
+    {
+      "terms": ["pressure sensor", "humidity sensor"],
+      "triggers": ["pressure", "barometric", "humidity", "altitude", "environmental", "weather"]
+    },
+    {
+      "terms": ["proximity sensor", "ambient light sensor"],
+      "triggers": ["proximity", "ambient", "gesture", "optical", "lux", "rangefinder"]
+    },
+    {
+      "terms": ["Hall effect sensor", "magnetometer"],
+      "triggers": ["hall", "magnetic", "magnetometer", "compass"]
+    },
+    {
+      "terms": ["air quality sensor", "gas sensor"],
+      "triggers": ["gas", "airquality", "voc", "co2", "particulate"]
+    },
+    {
+      "terms": ["MLCC capacitor", "ceramic capacitor"],
+      "triggers": ["decoupl", "capacit", "bypass", "mlcc", "ceramic"]
+    },
+    {
+      "terms": ["electrolytic capacitor", "tantalum capacitor"],
+      "triggers": ["electrolytic", "tantalum", "reservoir", "bulk"]
+    },
+    {
+      "terms": ["chip resistor"],
+      "triggers": ["resistor", "pullup", "pulldown", "divider"]
+    },
+    {
+      "terms": ["power inductor", "ferrite bead"],
+      "triggers": ["inductor", "choke", "ferrite", "magnetics", "coil"]
+    },
+    {
+      "terms": ["transformer"],
+      "triggers": ["transformer", "isolation", "galvanic"]
+    },
+    {
+      "terms": ["crystal oscillator", "MEMS oscillator", "real-time clock"],
+      "triggers": ["clock", "oscillator", "crystal", "timing", "resonator", "rtc", "mems"]
+    },
+    {
+      "terms": ["flash memory", "EEPROM", "SRAM"],
+      "triggers": ["memory", "flash", "eeprom", "sram", "dram", "storage", "fram", "nvram"]
+    },
+    {
+      "terms": ["wifi module", "bluetooth module"],
+      "triggers": ["wifi", "wireless", "ble", "bluetooth", "iot", "zigbee", "lora", "thread", "matter", "connectivity"]
+    },
+    {
+      "terms": ["RF transceiver", "antenna"],
+      "triggers": ["antenna", "cellular", "gnss", "radio", "subghz", "transceiver"]
+    },
+    {
+      "terms": ["GNSS receiver"],
+      "triggers": ["gps", "gnss", "positioning", "geolocation"]
+    },
+    {
+      "terms": ["CAN transceiver", "RS-485 transceiver"],
+      "triggers": ["canbus", "rs485", "rs232", "modbus", "profibus", "industrial", "fieldbus"]
+    },
+    {
+      "terms": ["USB transceiver", "USB connector"],
+      "triggers": ["usb", "typec", "otg"]
+    },
+    {
+      "terms": ["Ethernet PHY", "Ethernet connector"],
+      "triggers": ["ethernet", "rj45", "network", "phy"]
+    },
+    {
+      "terms": ["level shifter", "digital isolator"],
+      "triggers": ["levelshift", "translator", "isolator", "optocoupler"]
+    },
+    {
+      "terms": ["LED driver"],
+      "triggers": ["led", "lighting", "lamp", "blink", "backlight", "illumination"]
+    },
+    {
+      "terms": ["display driver", "OLED display"],
+      "triggers": ["display", "lcd", "oled", "tft", "screen", "segment"]
+    },
+    {
+      "terms": ["connector", "pin header", "terminal block"],
+      "triggers": ["connector", "header", "terminal", "interconnect", "ribbon", "molex"]
+    },
+    {
+      "terms": ["relay", "solid state relay"],
+      "triggers": ["relay", "contactor", "ssr"]
+    },
+    {
+      "terms": ["tactile switch", "slide switch"],
+      "triggers": ["switch", "button", "tactile", "toggle"]
     },
     {
       "terms": ["TVS diode", "ESD protection"],
-      "triggers": ["esd", "surge", "protection", "tvs", "transient"]
+      "triggers": ["esd", "surge", "protection", "transient", "clamp"]
+    },
+    {
+      "terms": ["resettable fuse", "varistor"],
+      "triggers": ["fuse", "overcurrent", "polyfuse", "varistor"]
+    },
+    {
+      "terms": ["Schottky diode", "rectifier diode"],
+      "triggers": ["diode", "rectifier", "schottky", "freewheel", "zener"]
+    },
+    {
+      "terms": ["cooling fan", "heatsink"],
+      "triggers": ["cooling", "heatsink", "dissipation", "airflow"]
+    },
+    {
+      "terms": ["audio amplifier", "audio codec"],
+      "triggers": ["audio", "speaker", "microphone", "codec", "voice", "acoustic"]
+    },
+    {
+      "terms": ["rotary encoder"],
+      "triggers": ["encoder", "resolver", "quadrature"]
     }
   ]
 }
