@@ -2279,13 +2279,32 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
         : (supplyMin || supplyMax || spec('Single Supply Voltage (Typ)'));
     const pkg = [spec('Pin Count') && `${spec('Pin Count')}-pin`, spec('Package Type')]
       .filter(Boolean).join(' ');
-    const lines = [
+
+    // Inventory / lifecycle, pulled from the first inventory org. Shown first so
+    // stock + lead time are visible on the card itself (esp. for discrete parts
+    // that carry no paramData specs).
+    const org = part?.invOrgs?.[0] ?? {};
+    const avail = org?.avail ?? {};
+    const stock = Number(avail?.totohQty ?? avail?.FOHQty ?? avail?.ACFOHQty ?? 0);
+    const lead = part?.leadTime?.arwLT ? String(part.leadTime.arwLT).trim() : '';
+    const stockLead = [
+      `Stock ${stock.toLocaleString()}`,
+      lead && `Lead ${lead} wks`,
+    ].filter(Boolean).join('  ·  ');
+    const invLines = [
+      stockLead,
+      org?.status && `Status: ${org.status}`,
+    ].filter(Boolean) as string[];
+
+    const specLines = [
       spec('Type') && `Type: ${spec('Type')}`,
       supply && `Supply: ${supply}`,
       spec('Number of Channels') && `Channels: ${spec('Number of Channels')}`,
       spec('Operating Temp Range') && `Temp: ${spec('Operating Temp Range')}`,
       pkg && `Pkg: ${pkg}`,
-    ].filter(Boolean).slice(0, 4) as string[];
+    ].filter(Boolean) as string[];
+
+    const lines = [...invLines, ...specLines].slice(0, 4);
 
     const urls: any[] = Array.isArray(part?.urls) ? part.urls : [];
     const imgUrl =
