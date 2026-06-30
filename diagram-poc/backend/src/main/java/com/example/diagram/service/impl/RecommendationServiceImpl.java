@@ -3,6 +3,7 @@ package com.example.diagram.service.impl;
 import com.example.diagram.config.OllamaProperties;
 import com.example.diagram.domain.Template;
 import com.example.diagram.repository.TemplateRepository;
+import com.example.diagram.service.DesignWinService;
 import com.example.diagram.service.PartSearchService;
 import com.example.diagram.service.RecommendationService;
 import com.example.diagram.web.dto.RecommendationItem;
@@ -47,14 +48,17 @@ public class RecommendationServiceImpl implements RecommendationService {
     private final OllamaProperties props;
     private final TemplateRepository templates;
     private final PartSearchService parts;
+    private final DesignWinService designWin;
     private final ObjectMapper mapper;
     private final RestClient rest;
 
     public RecommendationServiceImpl(OllamaProperties props, TemplateRepository templates,
-                                     PartSearchService parts, ObjectMapper mapper) {
+                                     PartSearchService parts, DesignWinService designWin,
+                                     ObjectMapper mapper) {
         this.props = props;
         this.templates = templates;
         this.parts = parts;
+        this.designWin = designWin;
         this.mapper = mapper;
         this.rest = RestClient.create();
     }
@@ -120,10 +124,14 @@ public class RecommendationServiceImpl implements RecommendationService {
             String lead = part.at("/leadTime/arwLT").asText("");
             String desc = firstText(org.at("/desc"), part.at("/icc/name"), pn);
 
+            // Cross-check Design Win POS: a part with shipment history is field-proven.
+            boolean proven = hasPosSales(pn, supplier);
+
             String detail = desc
                     + " — " + (status.isBlank() ? "status n/a" : status)
                     + ", " + stock + " in stock"
-                    + (lead.isBlank() ? "" : ", lead " + lead + " wks");
+                    + (lead.isBlank() ? "" : ", lead " + lead + " wks")
+                    + (proven ? " · field-proven (POS shipment history)" : "");
             String source = "Arrow catalogue (live)" + (supplier.isBlank() ? "" : " · " + supplier);
             String verify = stock > 0
                     ? "In stock now — confirm the lifecycle status and specs before committing."
@@ -132,6 +140,18 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (Exception ex) {
             log.debug("Catalogue lookup for '{}' failed: {}", term, ex.toString());
             return null;
+        }
+    }
+
+    /** True when the Design Win POS API reports shipment history for the part. */
+    private boolean hasPosSales(String partNumber, String mfr) {
+        try {
+            String json = designWin.sales(partNumber, mfr == null || mfr.isBlank() ? null : mfr);
+            JsonNode sales = mapper.readTree(json == null ? "" : json).path("sales");
+            return sales.isArray() && sales.size() > 0;
+        } catch (Exception ex) {
+            log.debug("POS lookup for '{}' failed: {}", partNumber, ex.toString());
+            return false;
         }
     }
 

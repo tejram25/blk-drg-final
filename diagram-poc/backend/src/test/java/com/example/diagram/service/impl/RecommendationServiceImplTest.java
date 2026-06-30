@@ -3,6 +3,7 @@ package com.example.diagram.service.impl;
 import com.example.diagram.config.OllamaProperties;
 import com.example.diagram.domain.Template;
 import com.example.diagram.repository.TemplateRepository;
+import com.example.diagram.service.DesignWinService;
 import com.example.diagram.service.PartSearchService;
 import com.example.diagram.web.dto.RecommendationRequest;
 import com.example.diagram.web.dto.RecommendationResult;
@@ -32,11 +33,32 @@ class RecommendationServiceImplTest {
         @Override public Map<String, Object> health() { return Map.of(); }
     };
 
+    /** Design Win with no POS history. */
+    private static final DesignWinService NO_SALES = designWin(false);
+
+    private static DesignWinService designWin(boolean hasSales) {
+        String sales = hasSales ? "{\"posAmount\":\"11272.8\"}" : "";
+        return new DesignWinService() {
+            @Override public String customers(String a, String b, String c) { return "{}"; }
+            @Override public String projects(String a, String b, String c) { return "{}"; }
+            @Override public String boards(String a, String b) { return "{}"; }
+            @Override public String registrationDetails(String a, String b, String c, String d) { return "{}"; }
+            @Override public String custPartSearch(String a, String b, String c, String d, String e) { return "{}"; }
+            @Override public String sales(String partNumber, String mfrName) {
+                return "{\"sales\":[" + sales + "],\"status\":\"S\"}";
+            }
+        };
+    }
+
     private RecommendationServiceImpl service() {
-        return service(NO_PARTS);
+        return service(NO_PARTS, NO_SALES);
     }
 
     private RecommendationServiceImpl service(PartSearchService parts) {
+        return service(parts, NO_SALES);
+    }
+
+    private RecommendationServiceImpl service(PartSearchService parts, DesignWinService designWin) {
         OllamaProperties props = new OllamaProperties();
         props.setEnabled(false); // disabled → rule-based path
         Template t = new Template();
@@ -44,7 +66,7 @@ class RecommendationServiceImplTest {
         t.setCategory("Power");
         t.setDescription("Inverter and battery power architecture");
         lenient().when(templates.findAll()).thenReturn(List.of(t));
-        return new RecommendationServiceImpl(props, templates, parts, new ObjectMapper());
+        return new RecommendationServiceImpl(props, templates, parts, designWin, new ObjectMapper());
     }
 
     @Test
@@ -92,5 +114,24 @@ class RecommendationServiceImplTest {
                         && i.title().equals("LM317T")
                         && i.source().contains("Arrow catalogue (live)")
                         && i.detail().contains("in stock"));
+    }
+
+    @Test
+    void flagsFieldProvenPartsFromPos() {
+        PartSearchService live = new PartSearchService() {
+            @Override public String search(String q, String supplier, boolean dw) {
+                return "{\"partserviceresult\":{\"parts\":[{"
+                        + "\"arwPartNum\":{\"name\":\"LM317T\"},"
+                        + "\"mfr\":{\"name\":\"STMicroelectronics\"},"
+                        + "\"invOrgs\":[{\"status\":\"Active\",\"avail\":{\"totohQty\":1200}}]}]}}";
+            }
+            @Override public Map<String, Object> health() { return Map.of(); }
+        };
+
+        RecommendationResult res = service(live, designWin(true)).recommend(
+                new RecommendationRequest("Design a power supply regulator", List.of()));
+
+        assertThat(res.items()).anyMatch(i ->
+                i.title().equals("LM317T") && i.detail().contains("field-proven"));
     }
 }
