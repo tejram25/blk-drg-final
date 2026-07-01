@@ -233,15 +233,50 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.diagram.addDiagramListener('ViewportBoundsChanged', () => this.onViewport());
 
     this.palette = new go.Palette(this.paletteRef.nativeElement, {
-      nodeTemplateMap: this.diagram.nodeTemplateMap,
-      contentAlignment: go.Spot.TopCenter,
+      contentAlignment: go.Spot.Top,
+      // top gap keeps the first chip clear of the GoJS evaluation watermark
+      padding: new go.Margin(52, 6, 6, 6),
+      allowHorizontalScroll: false,
       layout: $(go.GridLayout, {
-        wrappingColumn: 1, cellSize: new go.Size(1, 1), spacing: new go.Size(6, 10),
+        wrappingColumn: 1, cellSize: new go.Size(1, 1), spacing: new go.Size(6, 6),
         alignment: go.GridLayout.Position,
       }),
     });
+    // Compact, on-theme palette chips (distinct from the full canvas node cards).
+    this.palette.nodeTemplate = this.buildPaletteChip($);
     this.palette.model = this.emptyModel();
     this.refreshPaletteModel();
+  }
+
+  /** A small dark chip used only in the palette: preview/icon + label. */
+  private buildPaletteChip($: typeof go.GraphObject.make): go.Node {
+    return $(
+      go.Node, 'Auto',
+      { cursor: 'grab' },
+      $(go.Shape, 'RoundedRectangle',
+        { parameter1: 8, fill: '#26272d', stroke: '#34353c', strokeWidth: 1, minSize: new go.Size(158, 34) }),
+      $(
+        go.Panel, 'Horizontal',
+        { margin: new go.Margin(5, 9, 5, 6), alignment: go.Spot.Left },
+        // functional-block icon badge (when there is no SVG preview)
+        $(go.Panel, 'Spot',
+          { width: 24, height: 24, margin: new go.Margin(0, 8, 0, 0) },
+          new go.Binding('visible', 'source', (s) => !s),
+          $(go.Shape, 'RoundedRectangle', { parameter1: 6, strokeWidth: 0 },
+            new go.Binding('fill', 'color')),
+          $(go.TextBlock, { font: '15px Material Icons', stroke: '#ffffff' },
+            new go.Binding('text', 'icon'))),
+        // schematic / basic-shape SVG preview
+        $(go.Picture,
+          { width: 34, height: 24, imageStretch: go.GraphObject.Uniform, margin: new go.Margin(0, 8, 0, 0) },
+          new go.Binding('source', 'source'),
+          new go.Binding('visible', 'source', (s) => !!s)),
+        $(go.TextBlock,
+          { font: '600 12px Roboto, sans-serif', stroke: '#ececef', alignment: go.Spot.Left,
+            maxSize: new go.Size(112, NaN), overflow: go.TextBlock.OverflowEllipsis, wrap: go.TextBlock.None },
+          new go.Binding('text')),
+      ),
+    );
   }
 
   private emptyModel(): go.GraphLinksModel {
