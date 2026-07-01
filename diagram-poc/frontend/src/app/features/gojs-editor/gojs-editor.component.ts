@@ -11,6 +11,7 @@ import * as go from 'gojs';
 import { BlockType, DiagramService, DiagramSummary } from '../../core/services/diagram.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
+import { GojsCollabService } from '../../core/services/gojs-collab.service';
 import { symbolInfo } from './gojs-symbols';
 
 /**
@@ -52,6 +53,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   diagramName = 'Untitled diagram';
   status = '';
   saving = false;
+  showChat = false;
+  chatDraft = '';
+  private viewportTick: any = null;
   /** Palette block types grouped by category. */
   categories: { name: string; blocks: BlockType[] }[] = [];
   /** Editable properties of the selected node (bound to the panel). */
@@ -67,6 +71,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private diagrams: DiagramService,
     private notify: NotificationService,
     private auth: AuthService,
+    public collab: GojsCollabService,
     private route: ActivatedRoute,
     private router: Router,
   ) {}
@@ -83,8 +88,69 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.autosaveTimer) clearTimeout(this.autosaveTimer);
+    this.collab.leave();
     if (this.diagram) this.diagram.div = null;
     if (this.palette) this.palette.div = null;
+  }
+
+  // ---- collaboration ----
+
+  /** Join the room for the current diagram (once it has an id). */
+  private joinCollab(): void {
+    if (this.diagramId == null || this.collab.active) return;
+    const u = this.auth.user();
+    const name = u?.name || u?.email || 'You';
+    const uid = u?.email || `anon-${Math.random().toString(36).slice(2)}`;
+    this.zone.runOutsideAngular(() => this.collab.join(this.diagram, String(this.diagramId), name, uid));
+  }
+
+  onCanvasMouseMove(e: MouseEvent): void {
+    if (!this.collab.active || !this.diagram) return;
+    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+    const pt = this.diagram.transformViewToDoc(new go.Point(e.clientX - rect.left, e.clientY - rect.top));
+    this.collab.setLocalCursor({ x: pt.x, y: pt.y });
+  }
+
+  onCanvasMouseLeave(): void {
+    if (this.collab.active) this.collab.setLocalCursor(null);
+  }
+
+  private onViewport(): void {
+    if (this.collab.active) {
+      const pos = this.diagram.position;
+      this.collab.setLocalViewport({ x: pos.x, y: pos.y, scale: this.diagram.scale });
+    }
+    if (this.viewportTick) return;
+    this.viewportTick = setTimeout(() => {
+      this.viewportTick = null;
+      this.zone.run(() => this.cdr.detectChanges());
+    }, 50);
+  }
+
+  /** Remote pointers converted to overlay (view) coordinates for rendering. */
+  remoteCursors(): { id: number; name: string; color: string; sx: number; sy: number }[] {
+    if (!this.diagram || !this.collab.cursors.length) return [];
+    return this.collab.cursors.map((c) => {
+      const v = this.diagram.transformDocToView(new go.Point(c.x, c.y));
+      return { id: c.id, name: c.name, color: c.color, sx: v.x, sy: v.y };
+    });
+  }
+
+  toggleChat(): void { this.showChat = !this.showChat; }
+
+  sendChat(): void {
+    const text = this.chatDraft.trim();
+    if (!text) return;
+    this.collab.sendChat(text);
+    this.chatDraft = '';
+  }
+
+  initials(name: string): string {
+    return (name || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+  }
+
+  fmtTime(ts: number): string {
+    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   // ---- keyboard ----
@@ -128,6 +194,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.diagram.addModelChangedListener((e) => {
       if (e.isTransactionFinished) this.scheduleAutosave();
     });
+    // Broadcast our viewport for follow-mode and refresh remote-cursor overlay.
+    this.diagram.addDiagramListener('ViewportBoundsChanged', () => this.onViewport());
 
     this.palette = new go.Palette(this.paletteRef.nativeElement, {
       nodeTemplateMap: this.diagram.nodeTemplateMap,
@@ -155,7 +223,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private buildTemplates($: typeof go.GraphObject.make): void {
     const portItem = $(
       go.Panel, 'Spot',
-      new go.Binding('alignment', 'spot'),
+      new go.Binding('alignment', 'spot', go.Spot.parse),
       $(
         go.Shape, 'Circle',
         {
@@ -384,7 +452,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         shape: b.shape,
         source: info.source,
         size: `${info.width} ${info.height}`,
-        ports: info.pins.map((p, i) => ({ portId: `p${i}`, spot: new go.Spot(p.fx, p.fy) })),
+        ports: info.pins.map((p, i) => ({ portId: `p${i}`, spot: `${p.fx} ${p.fy}` })),
       };
     }
     // functional block card
@@ -572,6 +640,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.saving = false;
       if (d?.id) this.diagramId = d.id;
       this.status = 'Saved';
+      this.joinCollab();
       this.cdr.detectChanges();
       then?.();
     };
@@ -594,6 +663,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         this.diagramName = dto.name;
         this.diagramId = dto.id ?? id;
         this.applyContent(dto.contentJson);
+        this.joinCollab();
       },
       error: () => this.notify.error('Could not open that diagram.'),
     });
@@ -627,7 +697,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private scheduleAutosave(): void {
-    if (this.suppressAutosave) return;
+    if (this.suppressAutosave || this.collab.isApplyingRemote) return;
     if (this.autosaveTimer) clearTimeout(this.autosaveTimer);
     this.autosaveTimer = setTimeout(() => this.zone.run(() => this.save()), 1500);
   }

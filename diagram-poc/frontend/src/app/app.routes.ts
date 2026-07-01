@@ -29,6 +29,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/gojs-editor/gojs-editor.component').then((m) => m.GojsEditorComponent),
   },
+  {
+    path: 'gojs/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/gojs-editor/gojs-editor.component').then((m) => m.GojsEditorComponent),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'editor' },
   {
     path: '**',

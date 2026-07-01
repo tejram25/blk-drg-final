@@ -13,6 +13,20 @@
 
     <span class="spacer"></span>
 
+    <div class="presence" *ngIf="collab.active">
+      <span class="dot" [class.on]="collab.connected"></span>
+      <span class="avatars">
+        <span class="avatar" *ngFor="let p of collab.participants"
+              [style.background]="p.color" [matTooltip]="p.name + (p.isSelf ? ' (you)' : '')">
+          {{ initials(p.name) }}
+        </span>
+      </span>
+      <button mat-icon-button matTooltip="Session chat" (click)="toggleChat()">
+        <mat-icon>chat</mat-icon>
+      </button>
+    </div>
+    <span class="vsep" *ngIf="collab.active"></span>
+
     <div class="grp">
       <button mat-icon-button matTooltip="Undo" (click)="undo()"><mat-icon>undo</mat-icon></button>
       <button mat-icon-button matTooltip="Redo" (click)="redo()"><mat-icon>redo</mat-icon></button>
@@ -54,9 +68,34 @@
     </aside>
 
     <!-- Canvas -->
-    <main class="gj-canvas-wrap">
+    <main class="gj-canvas-wrap" (mousemove)="onCanvasMouseMove($event)" (mouseleave)="onCanvasMouseLeave()">
       <div #canvas class="gj-canvas"></div>
       <span class="gj-status" *ngIf="status">{{ status }}</span>
+
+      <!-- remote collaborators' cursors -->
+      <div class="rcursor" *ngFor="let c of remoteCursors()"
+           [style.left.px]="c.sx" [style.top.px]="c.sy" [style.color]="c.color">
+        <mat-icon>near_me</mat-icon>
+        <span class="rlabel" [style.background]="c.color">{{ c.name }}</span>
+      </div>
+
+      <!-- session chat -->
+      <div class="chat" *ngIf="showChat && collab.active">
+        <div class="chat-head">
+          <span>Session chat</span>
+          <button mat-icon-button (click)="toggleChat()"><mat-icon>close</mat-icon></button>
+        </div>
+        <div class="chat-log">
+          <div class="msg" *ngFor="let m of collab.messages" [class.self]="m.isSelf">
+            <span class="msg-meta"><b [style.color]="m.color">{{ m.name }}</b> · {{ fmtTime(m.ts) }}</span>
+            <span class="msg-body">{{ m.text }}</span>
+          </div>
+        </div>
+        <form class="chat-input" (ngSubmit)="sendChat()">
+          <input [(ngModel)]="chatDraft" name="chatDraft" placeholder="Message…" autocomplete="off" />
+          <button mat-icon-button type="submit"><mat-icon>send</mat-icon></button>
+        </form>
+      </div>
     </main>
 
     <!-- Properties -->
