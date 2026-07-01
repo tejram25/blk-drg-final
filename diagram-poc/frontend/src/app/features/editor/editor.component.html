@@ -9,14 +9,62 @@
           </button>
         </span>
 
-        <!-- Brand -->
+        <!-- ===== LEFT: brand · File menu · document ===== -->
         <div class="brand">
           <span class="brand-mark"><mat-icon>schema</mat-icon></span>
           <span class="brand-name">{{ 'app.brand' | translate }}</span>
         </div>
+
+        <!-- File menu: New / Save / Import / Export / Version history -->
+        <span class="menu-wrap">
+          <button type="button" class="hb-menu" [class.open]="fileMenuOpen" (click)="toggleMenu('file', $event)">
+            <mat-icon>folder_open</mat-icon><span>File</span><mat-icon class="caret">arrow_drop_down</mat-icon>
+          </button>
+          <div class="dropdown-menu hb-drop file-menu" *ngIf="fileMenuOpen" (click)="$event.stopPropagation()">
+            <button type="button" class="menu-item" (click)="fileMenuOpen = false; newDiagram()">
+              <mat-icon>note_add</mat-icon><span>{{ 'btn.new' | translate }}</span>
+            </button>
+            <button type="button" class="menu-item" (click)="fileMenuOpen = false; save()">
+              <mat-icon>save</mat-icon><span>{{ 'btn.save' | translate }}</span><span class="menu-hint">Ctrl+S</span>
+            </button>
+            <div class="menu-sep"></div>
+            <div class="menu-label">Import</div>
+            <button type="button" class="menu-item" (click)="fileMenuOpen = false; jsonInput.click()">
+              <mat-icon>data_object</mat-icon><span>{{ 'tip.importJson' | translate }}</span>
+            </button>
+            <button type="button" class="menu-item" (click)="fileMenuOpen = false; drawioInput.click()">
+              <mat-icon>account_tree</mat-icon><span>From draw.io</span>
+            </button>
+            <button type="button" class="menu-item" (click)="fileMenuOpen = false; supplierInput.click()">
+              <mat-icon>imagesearch_roller</mat-icon><span>Supplier diagram (trace image)</span>
+            </button>
+            <div class="menu-sep"></div>
+            <div class="menu-label">Export</div>
+            <button type="button" class="menu-item" (click)="fileMenuOpen = false; exportJson()">
+              <mat-icon>data_object</mat-icon><span>{{ 'tip.exportJson' | translate }}</span>
+            </button>
+            <button type="button" class="menu-item" (click)="fileMenuOpen = false; exportDrawioFile()">
+              <mat-icon>account_tree</mat-icon><span>Export to draw.io</span>
+            </button>
+            <button type="button" class="menu-item" (click)="fileMenuOpen = false; openExport('png')">
+              <mat-icon>image</mat-icon><span>Export as PNG…</span>
+            </button>
+            <button type="button" class="menu-item" (click)="fileMenuOpen = false; openExport('svg')">
+              <mat-icon>shape_line</mat-icon><span>Export as SVG…</span>
+            </button>
+            <button type="button" class="menu-item" (click)="fileMenuOpen = false; exportBom()">
+              <mat-icon>receipt_long</mat-icon><span>Bill of Materials (CSV)</span>
+            </button>
+            <div class="menu-sep"></div>
+            <button type="button" class="menu-item" (click)="fileMenuOpen = false; openVersions()">
+              <mat-icon>history</mat-icon><span>Version history</span>
+            </button>
+          </div>
+        </span>
+
         <span class="vsep"></span>
 
-        <!-- Document -->
+        <!-- Document name + open saved file + classification -->
         <input class="doc-name" [(ngModel)]="diagramName"
                [placeholder]="'doc.placeholder' | translate"
                [matTooltip]="'doc.tooltip' | translate" />
@@ -44,8 +92,6 @@
             </div>
           </div>
         </div>
-        <button mat-stroked-button class="lbl-btn" (click)="newDiagram()"><span>{{ 'btn.new' | translate }}</span></button>
-        <button mat-flat-button class="lbl-btn" (click)="save()"><span>{{ 'btn.save' | translate }}</span></button>
 
         <button type="button" class="cls-pill" [class]="classificationClass()"
                 (click)="cycleClassification()"
@@ -56,110 +102,70 @@
 
         <span class="spacer"></span>
 
-        <!-- History -->
-        <div class="tool-group">
+        <!-- ===== CENTER: primary actions ===== -->
+        <div class="tool-group boxed">
           <button mat-icon-button [matTooltip]="'tip.undo' | translate" (click)="undo()"><mat-icon>undo</mat-icon></button>
           <button mat-icon-button [matTooltip]="'tip.redo' | translate" (click)="redo()"><mat-icon>redo</mat-icon></button>
           <button mat-icon-button [class.on]="partSearchOpen" matTooltip="Search parts catalogue"
-                  (click)="partSearchOpen = !partSearchOpen">
-            <mat-icon>travel_explore</mat-icon>
-          </button>
-          <button mat-icon-button [class.on]="templatesOpen" matTooltip="Template repository"
-                  (click)="openTemplates()">
-            <mat-icon>dashboard_customize</mat-icon>
-          </button>
-          <button mat-icon-button [class.on]="projectPanelOpen" matTooltip="Project workspace"
-                  (click)="projectPanelOpen = !projectPanelOpen">
-            <mat-icon>work</mat-icon>
-          </button>
+                  (click)="partSearchOpen = !partSearchOpen"><mat-icon>travel_explore</mat-icon></button>
           <button mat-icon-button [class.on]="recsOpen" matTooltip="Recommendations (AI)"
-                  (click)="openRecommendations()">
-            <mat-icon>auto_awesome</mat-icon>
-          </button>
-          <button mat-icon-button matTooltip="Version history" (click)="openVersions()">
-            <mat-icon>history</mat-icon>
-          </button>
-          <button mat-icon-button [class.on]="commentsOpen" matTooltip="Comments" (click)="toggleComments()">
-            <mat-icon>comment</mat-icon>
-          </button>
-          <button mat-icon-button [class.on]="feedbackOpen" matTooltip="Send feedback" (click)="openFeedback()">
-            <mat-icon>feedback</mat-icon>
-          </button>
+                  (click)="openRecommendations()"><mat-icon>auto_awesome</mat-icon></button>
         </div>
+
+        <!-- Insert menu -->
+        <span class="menu-wrap">
+          <button type="button" class="hb-menu" [class.open]="insertMenuOpen" (click)="toggleMenu('insert', $event)">
+            <mat-icon>add_box</mat-icon><span>Insert</span><mat-icon class="caret">arrow_drop_down</mat-icon>
+          </button>
+          <div class="dropdown-menu hb-drop" *ngIf="insertMenuOpen" (click)="$event.stopPropagation()">
+            <button type="button" class="menu-item" (click)="insertMenuOpen = false; fileInput.click()">
+              <mat-icon>image</mat-icon><span>{{ 'tip.addImage' | translate }}</span>
+            </button>
+            <button type="button" class="menu-item" [class.sel]="templatesOpen" (click)="insertMenuOpen = false; openTemplates()">
+              <mat-icon>dashboard_customize</mat-icon><span>Template repository</span>
+            </button>
+            <button type="button" class="menu-item" [class.sel]="projectPanelOpen"
+                    (click)="insertMenuOpen = false; projectPanelOpen = !projectPanelOpen">
+              <mat-icon>work</mat-icon><span>Project workspace</span>
+            </button>
+          </div>
+        </span>
+
+        <!-- View menu -->
+        <span class="menu-wrap">
+          <button type="button" class="hb-menu" [class.open]="viewMenuOpen" (click)="toggleMenu('view', $event)">
+            <mat-icon>visibility</mat-icon><span>View</span><mat-icon class="caret">arrow_drop_down</mat-icon>
+          </button>
+          <div class="dropdown-menu hb-drop" *ngIf="viewMenuOpen" (click)="$event.stopPropagation()">
+            <button type="button" class="menu-item" (click)="viewMenuOpen = false; toggleCanvasTheme()">
+              <mat-icon>{{ lightCanvas ? 'dark_mode' : 'light_mode' }}</mat-icon>
+              <span>{{ lightCanvas ? 'Dark canvas' : 'White canvas' }}</span>
+            </button>
+            <button type="button" class="menu-item" [class.sel]="minimapOpen"
+                    (click)="viewMenuOpen = false; minimapOpen = !minimapOpen">
+              <mat-icon>map</mat-icon><span>Minimap</span>
+            </button>
+          </div>
+        </span>
+
         <span class="vsep"></span>
 
-        <!-- View & insert -->
-        <div class="tool-group">
-          <button mat-icon-button [matTooltip]="lightCanvas ? 'Dark canvas' : 'White canvas'"
-                  (click)="toggleCanvasTheme()">
-            <mat-icon>{{ lightCanvas ? 'dark_mode' : 'light_mode' }}</mat-icon>
-          </button>
-          <button mat-icon-button [class.on]="minimapOpen" matTooltip="Toggle minimap"
-                  (click)="minimapOpen = !minimapOpen">
-            <mat-icon>map</mat-icon>
-          </button>
-          <button mat-icon-button [matTooltip]="'tip.addImage' | translate" (click)="fileInput.click()">
-            <mat-icon>image</mat-icon>
-          </button>
-          <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
-          <input #jsonInput type="file" accept=".json,application/json" hidden
-                 (change)="onJsonSelected($event)" />
-          <input #drawioInput type="file" accept=".drawio,.xml,application/xml,text/xml" hidden
-                 (change)="onDrawioSelected($event)" />
-          <input #supplierInput type="file" accept="image/*" hidden
-                 (change)="onSupplierImageSelected($event)" />
-          <!-- Import (JSON / draw.io) -->
-          <span class="menu-wrap">
-            <button type="button" mat-icon-button [class.on]="importMenuOpen"
-                    (click)="toggleMenu('import', $event)" matTooltip="Import">
-              <mat-icon>upload</mat-icon>
-            </button>
-            <div class="dropdown-menu" *ngIf="importMenuOpen" (click)="$event.stopPropagation()">
-              <button type="button" class="menu-item" (click)="jsonInput.click(); importMenuOpen = false">
-                <mat-icon>data_object</mat-icon><span>{{ 'tip.importJson' | translate }}</span>
-              </button>
-              <button type="button" class="menu-item" (click)="drawioInput.click(); importMenuOpen = false">
-                <mat-icon>account_tree</mat-icon><span>Import from draw.io</span>
-              </button>
-              <button type="button" class="menu-item" (click)="supplierInput.click(); importMenuOpen = false">
-                <mat-icon>imagesearch_roller</mat-icon><span>Supplier diagram (trace image)</span>
-              </button>
-            </div>
-          </span>
-          <!-- Export (JSON / draw.io) -->
-          <span class="menu-wrap">
-            <button type="button" mat-icon-button [class.on]="exportMenuOpen"
-                    (click)="toggleMenu('export', $event)" matTooltip="Export">
-              <mat-icon>download</mat-icon>
-            </button>
-            <div class="dropdown-menu" *ngIf="exportMenuOpen" (click)="$event.stopPropagation()">
-              <button type="button" class="menu-item" (click)="exportJson(); exportMenuOpen = false">
-                <mat-icon>data_object</mat-icon><span>{{ 'tip.exportJson' | translate }}</span>
-              </button>
-              <button type="button" class="menu-item" (click)="exportDrawioFile(); exportMenuOpen = false">
-                <mat-icon>account_tree</mat-icon><span>Export to draw.io</span>
-              </button>
-              <button type="button" class="menu-item" (click)="openExport('png'); exportMenuOpen = false">
-                <mat-icon>image</mat-icon><span>Export as PNG…</span>
-              </button>
-              <button type="button" class="menu-item" (click)="openExport('svg'); exportMenuOpen = false">
-                <mat-icon>shape_line</mat-icon><span>Export as SVG…</span>
-              </button>
-              <button type="button" class="menu-item" (click)="exportBom(); exportMenuOpen = false">
-                <mat-icon>receipt_long</mat-icon><span>Bill of Materials (CSV)</span>
-              </button>
-            </div>
-          </span>
-        </div>
-        <span class="vsep"></span>
-
-        <!-- Properties toggle (compact screens) -->
+        <!-- ===== RIGHT: properties · comments · collab · language · account ===== -->
         <span class="panel-toggle" *ngIf="selectedNode">
           <button mat-icon-button [class.on]="propsOpen" (click)="propsOpen = !propsOpen"
                   [matTooltip]="'props.title' | translate">
             <mat-icon>tune</mat-icon>
           </button>
         </span>
+        <button mat-icon-button [class.on]="commentsOpen" matTooltip="Comments" (click)="toggleComments()">
+          <mat-icon>comment</mat-icon>
+        </button>
+
+        <!-- hidden file inputs (referenced by the File / Insert menus) -->
+        <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
+        <input #jsonInput type="file" accept=".json,application/json" hidden (change)="onJsonSelected($event)" />
+        <input #drawioInput type="file" accept=".drawio,.xml,application/xml,text/xml" hidden (change)="onDrawioSelected($event)" />
+        <input #supplierInput type="file" accept="image/*" hidden (change)="onSupplierImageSelected($event)" />
 
         <!-- Presence (automatic, per file) -->
         <div class="menu-wrap" *ngIf="collab.active">
@@ -228,6 +234,9 @@
               </div>
             </div>
             <div class="menu-sep"></div>
+            <button type="button" class="menu-item" (click)="accountMenuOpen = false; openFeedback()">
+              <mat-icon>feedback</mat-icon><span>Send feedback</span>
+            </button>
             <button type="button" class="menu-item" (click)="accountMenuOpen = false; logout()">
               <mat-icon>logout</mat-icon><span>Sign out</span>
             </button>

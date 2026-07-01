@@ -261,8 +261,9 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   /** Close every header dropdown (and the canvas context menu). */
   closeMenus(): void {
     this.openMenuOpen = false;
-    this.importMenuOpen = false;
-    this.exportMenuOpen = false;
+    this.fileMenuOpen = false;
+    this.insertMenuOpen = false;
+    this.viewMenuOpen = false;
     this.langMenuOpen = false;
     this.accountMenuOpen = false;
     this.presenceOpen = false;
@@ -270,18 +271,20 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   }
 
   /** Toggle a header dropdown, closing any other that was open. */
-  toggleMenu(menu: 'open' | 'import' | 'export' | 'lang' | 'account' | 'presence', event: Event): void {
+  toggleMenu(menu: 'open' | 'file' | 'insert' | 'view' | 'lang' | 'account' | 'presence', event: Event): void {
     event.stopPropagation();
     const isOpen = {
-      open: this.openMenuOpen, import: this.importMenuOpen, export: this.exportMenuOpen,
-      lang: this.langMenuOpen, account: this.accountMenuOpen, presence: this.presenceOpen,
+      open: this.openMenuOpen, file: this.fileMenuOpen, insert: this.insertMenuOpen,
+      view: this.viewMenuOpen, lang: this.langMenuOpen, account: this.accountMenuOpen,
+      presence: this.presenceOpen,
     }[menu];
     this.closeMenus();
     if (isOpen) return; // it was open → leave it closed
     switch (menu) {
       case 'open': this.openMenuOpen = true; break;
-      case 'import': this.importMenuOpen = true; break;
-      case 'export': this.exportMenuOpen = true; break;
+      case 'file': this.fileMenuOpen = true; break;
+      case 'insert': this.insertMenuOpen = true; break;
+      case 'view': this.viewMenuOpen = true; break;
       case 'lang': this.langMenuOpen = true; break;
       case 'account': this.accountMenuOpen = true; break;
       case 'presence': this.presenceOpen = true; break;
@@ -387,8 +390,9 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
   // ---------- Language (i18n) ----------
 
   langMenuOpen = false;
-  exportMenuOpen = false;
-  importMenuOpen = false;
+  fileMenuOpen = false;
+  insertMenuOpen = false;
+  viewMenuOpen = false;
   accountMenuOpen = false;
 
   /** Languages offered in the switcher (from the translation table). */
