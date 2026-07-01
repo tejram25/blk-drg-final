@@ -3,39 +3,54 @@
   <header class="gj-topbar">
     <div class="brand">
       <span class="brand-mark"><mat-icon>schema</mat-icon></span>
-      <span class="brand-name">GoJS canvas</span>
+      <span class="brand-name">Block Diagram</span>
     </div>
-    <span class="tag">Preview</span>
 
     <input class="doc-name" [(ngModel)]="diagramName" placeholder="Diagram name" />
+    <button mat-icon-button matTooltip="Save (Ctrl+S)" (click)="save()">
+      <mat-icon>{{ saving ? 'hourglass_top' : 'save' }}</mat-icon>
+    </button>
 
     <span class="spacer"></span>
 
     <div class="grp">
       <button mat-icon-button matTooltip="Undo" (click)="undo()"><mat-icon>undo</mat-icon></button>
       <button mat-icon-button matTooltip="Redo" (click)="redo()"><mat-icon>redo</mat-icon></button>
+    </div>
+    <div class="grp">
+      <button mat-icon-button matTooltip="Copy" (click)="copySelection()"><mat-icon>content_copy</mat-icon></button>
+      <button mat-icon-button matTooltip="Paste" (click)="pasteClipboard()"><mat-icon>content_paste</mat-icon></button>
+      <button mat-icon-button matTooltip="Duplicate" (click)="duplicateSelection()"><mat-icon>library_add</mat-icon></button>
+    </div>
+    <div class="grp">
+      <button mat-icon-button matTooltip="Align left" (click)="align('left')"><mat-icon>align_horizontal_left</mat-icon></button>
+      <button mat-icon-button matTooltip="Align centers" (click)="align('center')"><mat-icon>align_horizontal_center</mat-icon></button>
+      <button mat-icon-button matTooltip="Align top" (click)="align('top')"><mat-icon>align_vertical_top</mat-icon></button>
+      <button mat-icon-button matTooltip="Distribute horizontally" (click)="distribute('h')"><mat-icon>horizontal_distribute</mat-icon></button>
+      <button mat-icon-button matTooltip="Distribute vertically" (click)="distribute('v')"><mat-icon>vertical_distribute</mat-icon></button>
+    </div>
+    <div class="grp">
       <button mat-icon-button matTooltip="Zoom out" (click)="zoomOut()"><mat-icon>remove</mat-icon></button>
       <button mat-icon-button matTooltip="Fit" (click)="zoomToFit()"><mat-icon>fit_screen</mat-icon></button>
       <button mat-icon-button matTooltip="Zoom in" (click)="zoomIn()"><mat-icon>add</mat-icon></button>
     </div>
     <span class="vsep"></span>
     <button mat-icon-button matTooltip="New" (click)="newDiagram()"><mat-icon>note_add</mat-icon></button>
+    <button mat-icon-button matTooltip="Insert image" (click)="imageInput.click()"><mat-icon>image</mat-icon></button>
     <button mat-icon-button matTooltip="Import JSON" (click)="fileInput.click()"><mat-icon>upload</mat-icon></button>
     <button mat-icon-button matTooltip="Export JSON" (click)="exportJson()"><mat-icon>data_object</mat-icon></button>
-    <button mat-icon-button matTooltip="Export PNG" (click)="exportPng()"><mat-icon>image</mat-icon></button>
+    <button mat-icon-button matTooltip="Export SVG" (click)="exportSvg()"><mat-icon>shape_line</mat-icon></button>
+    <button mat-icon-button matTooltip="Export PNG" (click)="exportPng()"><mat-icon>photo_camera</mat-icon></button>
     <input #fileInput type="file" accept=".json,application/json" hidden (change)="importJson($event)" />
-    <span class="vsep"></span>
-    <a class="x6-link" routerLink="/editor" matTooltip="Back to the classic (X6) editor">
-      <mat-icon>arrow_back</mat-icon><span>Classic editor</span>
-    </a>
+    <input #imageInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
   </header>
 
   <div class="gj-body">
     <!-- Palette -->
     <aside class="gj-palette">
-      <div class="panel-title">Blocks</div>
+      <div class="panel-title">Components</div>
       <div #palette class="palette-surface"></div>
-      <p class="hint">Drag a block onto the canvas. Draw a link by dragging from one block's edge to another.</p>
+      <p class="hint">Drag a component onto the canvas. Draw a link by dragging from a node's edge or a pin.</p>
     </aside>
 
     <!-- Canvas -->
@@ -47,16 +62,27 @@
     <!-- Properties -->
     <aside class="gj-props">
       <h3>Properties</h3>
-      <p class="props-empty" *ngIf="!sel">Select a block to edit it.</p>
+      <p class="props-empty" *ngIf="!sel">Select a component to edit it.</p>
       <ng-container *ngIf="sel as s">
         <label><span>Label</span>
           <input [ngModel]="s.text" (ngModelChange)="setField('text', $event)" />
         </label>
-        <label><span>Colour</span>
-          <input type="color" [ngModel]="s.color" (ngModelChange)="setField('color', $event)" />
+        <label *ngIf="!s.isPart"><span>Colour</span>
+          <input type="color" [ngModel]="s.color" (ngModelChange)="setColor($event)" />
         </label>
+        <ng-container *ngIf="s.isPart">
+          <label><span>Part number</span>
+            <input [ngModel]="s.partNumber" (ngModelChange)="setField('partNumber', $event)" />
+          </label>
+          <label><span>Supplier</span>
+            <input [ngModel]="s.supplier" (ngModelChange)="setField('supplier', $event)" />
+          </label>
+          <label><span>Quantity</span>
+            <input type="number" min="1" [ngModel]="s.quantity" (ngModelChange)="setQuantity($event)" />
+          </label>
+        </ng-container>
         <button class="del-btn" (click)="deleteSelection()">
-          <mat-icon>delete</mat-icon><span>Delete block</span>
+          <mat-icon>delete</mat-icon><span>Delete</span>
         </button>
       </ng-container>
     </aside>
