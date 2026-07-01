@@ -11,6 +11,10 @@
       <mat-icon>{{ saving ? 'hourglass_top' : 'save' }}</mat-icon>
     </button>
 
+    <span class="linked" *ngIf="linkedProject" [matTooltip]="linkedProject.customer">
+      <mat-icon>work</mat-icon>{{ linkedProject.id }}
+    </span>
+
     <span class="spacer"></span>
 
     <div class="presence" *ngIf="collab.active">
@@ -21,9 +25,7 @@
           {{ initials(p.name) }}
         </span>
       </span>
-      <button mat-icon-button matTooltip="Session chat" (click)="toggleChat()">
-        <mat-icon>chat</mat-icon>
-      </button>
+      <button mat-icon-button matTooltip="Session chat" (click)="toggleChat()"><mat-icon>chat</mat-icon></button>
     </div>
     <span class="vsep" *ngIf="collab.active"></span>
 
@@ -39,24 +41,25 @@
     <div class="grp">
       <button mat-icon-button matTooltip="Align left" (click)="align('left')"><mat-icon>align_horizontal_left</mat-icon></button>
       <button mat-icon-button matTooltip="Align centers" (click)="align('center')"><mat-icon>align_horizontal_center</mat-icon></button>
-      <button mat-icon-button matTooltip="Align top" (click)="align('top')"><mat-icon>align_vertical_top</mat-icon></button>
       <button mat-icon-button matTooltip="Distribute horizontally" (click)="distribute('h')"><mat-icon>horizontal_distribute</mat-icon></button>
-      <button mat-icon-button matTooltip="Distribute vertically" (click)="distribute('v')"><mat-icon>vertical_distribute</mat-icon></button>
     </div>
-    <div class="grp">
-      <button mat-icon-button matTooltip="Zoom out" (click)="zoomOut()"><mat-icon>remove</mat-icon></button>
-      <button mat-icon-button matTooltip="Fit" (click)="zoomToFit()"><mat-icon>fit_screen</mat-icon></button>
-      <button mat-icon-button matTooltip="Zoom in" (click)="zoomIn()"><mat-icon>add</mat-icon></button>
+    <span class="vsep"></span>
+    <!-- AI + catalogue -->
+    <div class="grp accent">
+      <button mat-icon-button matTooltip="Search parts (catalogue)" (click)="partSearchOpen = true"><mat-icon>travel_explore</mat-icon></button>
+      <button mat-icon-button matTooltip="AI recommendations" (click)="openRecommendations()"><mat-icon>auto_awesome</mat-icon></button>
+      <button mat-icon-button matTooltip="AI design review" (click)="openDesignReview()"><mat-icon>rule</mat-icon></button>
+      <button mat-icon-button matTooltip="Command palette (Ctrl+K)" (click)="commandPaletteOpen = true"><mat-icon>bolt</mat-icon></button>
     </div>
     <span class="vsep"></span>
     <button mat-icon-button matTooltip="New" (click)="newDiagram()"><mat-icon>note_add</mat-icon></button>
     <button mat-icon-button matTooltip="Insert image" (click)="imageInput.click()"><mat-icon>image</mat-icon></button>
     <button mat-icon-button matTooltip="Import JSON" (click)="fileInput.click()"><mat-icon>upload</mat-icon></button>
-    <button mat-icon-button matTooltip="Export JSON" (click)="exportJson()"><mat-icon>data_object</mat-icon></button>
-    <button mat-icon-button matTooltip="Export SVG" (click)="exportSvg()"><mat-icon>shape_line</mat-icon></button>
-    <button mat-icon-button matTooltip="Export PNG" (click)="exportPng()"><mat-icon>photo_camera</mat-icon></button>
+    <button mat-icon-button matTooltip="Import draw.io" (click)="drawioInput.click()"><mat-icon>account_tree</mat-icon></button>
+    <button mat-icon-button matTooltip="Minimap" (click)="toggleMinimap()"><mat-icon>map</mat-icon></button>
     <input #fileInput type="file" accept=".json,application/json" hidden (change)="importJson($event)" />
     <input #imageInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
+    <input #drawioInput type="file" accept=".drawio,.xml,application/xml" hidden (change)="onDrawioSelected($event)" />
   </header>
 
   <div class="gj-body">
@@ -65,12 +68,33 @@
       <div class="panel-title">Components</div>
       <div #palette class="palette-surface"></div>
       <p class="hint">Drag a component onto the canvas. Draw a link by dragging from a node's edge or a pin.</p>
+      <div class="tool-list">
+        <button (click)="openTemplates()"><mat-icon>dashboard_customize</mat-icon>Templates</button>
+        <button (click)="exportBom()"><mat-icon>receipt_long</mat-icon>Bill of Materials</button>
+        <button (click)="openVersions()"><mat-icon>history</mat-icon>Version history</button>
+        <button (click)="toggleComments()"><mat-icon>comment</mat-icon>Comments</button>
+        <button (click)="projectPanelOpen = true"><mat-icon>work</mat-icon>Project workspace</button>
+        <button (click)="openFeedback()"><mat-icon>feedback</mat-icon>Send feedback</button>
+        <button (click)="openExport('png')"><mat-icon>image</mat-icon>Export image…</button>
+        <button (click)="exportJson()"><mat-icon>data_object</mat-icon>Export JSON</button>
+        <button (click)="exportDrawioFile()"><mat-icon>account_tree</mat-icon>Export draw.io</button>
+      </div>
     </aside>
 
     <!-- Canvas -->
     <main class="gj-canvas-wrap" (mousemove)="onCanvasMouseMove($event)" (mouseleave)="onCanvasMouseLeave()">
       <div #canvas class="gj-canvas"></div>
       <span class="gj-status" *ngIf="status">{{ status }}</span>
+
+      <div #minimap class="gj-minimap" [class.open]="minimapOpen"></div>
+
+      <!-- zoom dock -->
+      <div class="zoom-dock">
+        <button mat-icon-button matTooltip="Zoom out" (click)="zoomOut()"><mat-icon>remove</mat-icon></button>
+        <span class="zoom-pct">{{ zoomPct }}%</span>
+        <button mat-icon-button matTooltip="Zoom in" (click)="zoomIn()"><mat-icon>add</mat-icon></button>
+        <button mat-icon-button matTooltip="Fit" (click)="zoomToFit()"><mat-icon>fit_screen</mat-icon></button>
+      </div>
 
       <!-- remote collaborators' cursors -->
       <div class="rcursor" *ngFor="let c of remoteCursors()"
@@ -110,15 +134,17 @@
           <input type="color" [ngModel]="s.color" (ngModelChange)="setColor($event)" />
         </label>
         <ng-container *ngIf="s.isPart">
-          <label><span>Part number</span>
-            <input [ngModel]="s.partNumber" (ngModelChange)="setField('partNumber', $event)" />
-          </label>
-          <label><span>Supplier</span>
-            <input [ngModel]="s.supplier" (ngModelChange)="setField('supplier', $event)" />
-          </label>
           <label><span>Quantity</span>
             <input type="number" min="1" [ngModel]="s.quantity" (ngModelChange)="setQuantity($event)" />
           </label>
+          <button class="secondary-btn" (click)="checkSelectedLifecycle()">
+            <mat-icon>fact_check</mat-icon><span>Check lifecycle</span>
+          </button>
+          <div class="detail-list">
+            <div class="detail-row" *ngFor="let d of s.details">
+              <span class="dl">{{ d.label }}</span><span class="dv">{{ d.value }}</span>
+            </div>
+          </div>
         </ng-container>
         <button class="del-btn" (click)="deleteSelection()">
           <mat-icon>delete</mat-icon><span>Delete</span>
@@ -127,3 +153,45 @@
     </aside>
   </div>
 </div>
+
+<!-- Dialogs / panels (all reuse the engine-agnostic components) -->
+<app-part-search-panel *ngIf="partSearchOpen" [seedQuery]="partSearchSeed"
+  (addPart)="addPartToCanvas($event)" (close)="partSearchOpen = false"></app-part-search-panel>
+
+<app-recommendations-dialog *ngIf="recsOpen" [result]="recsResult" [loading]="recsLoading"
+  (addPart)="onRecAddPart($event)" (close)="recsOpen = false"></app-recommendations-dialog>
+
+<app-design-review-dialog *ngIf="reviewOpen" [result]="reviewResult" [loading]="reviewLoading"
+  (close)="reviewOpen = false"></app-design-review-dialog>
+
+<app-bom-dialog *ngIf="bomRows" [rows]="bomRows" [diagramName]="diagramName"
+  (close)="closeBom()"></app-bom-dialog>
+
+<app-lifecycle-dialog *ngIf="lifecycleOpen" [info]="lifecycleInfo" [loading]="lifecycleLoading"
+  (addAlternative)="onAddAlternative($event)" (close)="lifecycleOpen = false"></app-lifecycle-dialog>
+
+<app-feedback-dialog *ngIf="feedbackOpen" [submitting]="feedbackSubmitting"
+  (submitFeedback)="onSubmitFeedback($event)" (close)="feedbackOpen = false"></app-feedback-dialog>
+
+<app-project-panel *ngIf="projectPanelOpen"
+  (addPart)="onAddProjectPart($event)" (attach)="onAttachProject($event)"
+  (close)="projectPanelOpen = false"></app-project-panel>
+
+<app-versions-dialog *ngIf="versionsOpen" [diagramId]="diagramIdValue" [diagramName]="diagramName"
+  [currentContentJson]="currentContentJson" (restore)="onRestoreVersion($event)"
+  (close)="versionsOpen = false"></app-versions-dialog>
+
+<app-comments-panel *ngIf="commentsOpen" [diagramId]="diagramIdValue" [selectedNodeId]="selectedNodeId"
+  [selectedNodeLabel]="selectedNodeLabel" (focusNode)="onFocusNode($event)"
+  (close)="commentsOpen = false"></app-comments-panel>
+
+<app-templates-dialog *ngIf="templatesOpen" [currentContentJson]="currentContentJson" [currentName]="diagramName"
+  (use)="onUseTemplate($event)" (improve)="onImproveTemplate($event)"
+  (close)="templatesOpen = false"></app-templates-dialog>
+
+<app-export-dialog *ngIf="exportOpen" [nodes]="exportNodes" [format]="exportFormat"
+  (toggle)="onExportToggle($event)" (showAll)="showAllHidden()" (run)="runExport($event)"
+  (close)="exportOpen = false"></app-export-dialog>
+
+<app-command-palette *ngIf="commandPaletteOpen" [commands]="commands"
+  (close)="commandPaletteOpen = false"></app-command-palette>
