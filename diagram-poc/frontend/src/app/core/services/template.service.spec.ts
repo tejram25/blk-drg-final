@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TemplateService } from './template.service';
 import { apiBaseUrl } from '../app-config';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('TemplateService', () => {
   let service: TemplateService;
@@ -9,7 +10,7 @@ describe('TemplateService', () => {
   const API = apiBaseUrl();
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [HttpClientTestingModule], providers: [TemplateService] });
+    TestBed.configureTestingModule({ imports: [], providers: [TemplateService, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()] });
     service = TestBed.inject(TemplateService);
     http = TestBed.inject(HttpTestingController);
   });

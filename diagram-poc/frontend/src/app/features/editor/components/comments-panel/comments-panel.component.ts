@@ -10,11 +10,10 @@ import { CommentItem, CommentService } from '../../../../core/services/comment.s
  * the parent to focus that block.
  */
 @Component({
-  selector: 'app-comments-panel',
-  standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
-  templateUrl: './comments-panel.component.html',
-  styleUrls: ['./comments-panel.component.css'],
+    selector: 'app-comments-panel',
+    imports: [CommonModule, FormsModule, MatIconModule],
+    templateUrl: './comments-panel.component.html',
+    styleUrls: ['./comments-panel.component.css']
 })
 export class CommentsPanelComponent implements OnInit {
   @Input({ required: true }) diagramId!: number;

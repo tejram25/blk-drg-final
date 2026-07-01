@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -11,11 +11,10 @@ import { RecommendationItem, RecommendationResult } from '../../../../core/servi
  * Presentational — the editor owns the data and adds chosen parts to the canvas.
  */
 @Component({
-  selector: 'app-recommendations-dialog',
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatTooltipModule],
-  templateUrl: './recommendations-dialog.component.html',
-  styleUrls: ['./recommendations-dialog.component.css'],
+    selector: 'app-recommendations-dialog',
+    imports: [MatButtonModule, MatIconModule, MatTooltipModule],
+    templateUrl: './recommendations-dialog.component.html',
+    styleUrls: ['./recommendations-dialog.component.css']
 })
 export class RecommendationsDialogComponent {
   @Input() result: RecommendationResult | null = null;

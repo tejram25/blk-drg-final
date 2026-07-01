@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,11 +12,10 @@ import { IntegrationService, ProjectDetail, ProjectPart, ProjectSummary } from '
  * diagram, and drop its parts onto the canvas.
  */
 @Component({
-  selector: 'app-project-panel',
-  standalone: true,
-  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule],
-  templateUrl: './project-panel.component.html',
-  styleUrls: ['./project-panel.component.css'],
+    selector: 'app-project-panel',
+    imports: [FormsModule, MatButtonModule, MatIconModule, MatTooltipModule],
+    templateUrl: './project-panel.component.html',
+    styleUrls: ['./project-panel.component.css']
 })
 export class ProjectPanelComponent implements OnInit {
   @Output() close = new EventEmitter<void>();

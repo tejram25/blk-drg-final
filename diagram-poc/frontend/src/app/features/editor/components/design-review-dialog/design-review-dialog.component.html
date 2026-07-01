@@ -3,37 +3,51 @@
     <div class="dr-head">
       <div>
         <h3 class="dr-title"><mat-icon>rule</mat-icon> Design review</h3>
-        <span class="dr-sub" *ngIf="result">
-          <span class="dr-badge" [class.ai]="result.aiGenerated">
-            {{ result.aiGenerated ? result.model : 'Rule-based' }}
+        @if (result) {
+          <span class="dr-sub">
+            <span class="dr-badge" [class.ai]="result.aiGenerated">
+              {{ result.aiGenerated ? result.model : 'Rule-based' }}
+            </span>
+            {{ result.note }}
           </span>
-          {{ result.note }}
-        </span>
+        }
       </div>
       <button type="button" class="dr-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
     </div>
 
     <div class="dr-body">
-      <p class="dr-msg" *ngIf="loading">Reviewing your design…</p>
-      <p class="dr-msg ok" *ngIf="!loading && result && !result.findings.length">
-        <mat-icon>task_alt</mat-icon> No issues found — looks solid.
-      </p>
+      @if (loading) {
+        <p class="dr-msg">Reviewing your design…</p>
+      }
+      @if (!loading && result && !result.findings.length) {
+        <p class="dr-msg ok">
+          <mat-icon>task_alt</mat-icon> No issues found — looks solid.
+        </p>
+      }
 
-      <div class="dr-item" *ngFor="let f of result?.findings" [class]="f.severity">
-        <mat-icon class="dr-ico">{{ icon(f.severity) }}</mat-icon>
-        <div class="dr-main">
-          <div class="dr-top">
-            <span class="dr-name">{{ f.title }}</span>
-            <span class="dr-cat">{{ f.category }}</span>
+      @for (f of result?.findings; track f) {
+        <div class="dr-item" [class]="f.severity">
+          <mat-icon class="dr-ico">{{ icon(f.severity) }}</mat-icon>
+          <div class="dr-main">
+            <div class="dr-top">
+              <span class="dr-name">{{ f.title }}</span>
+              <span class="dr-cat">{{ f.category }}</span>
+            </div>
+            @if (f.detail) {
+              <p class="dr-detail">{{ f.detail }}</p>
+            }
+            @if (f.suggestion) {
+              <p class="dr-fix"><mat-icon>build</mat-icon> {{ f.suggestion }}</p>
+            }
           </div>
-          <p class="dr-detail" *ngIf="f.detail">{{ f.detail }}</p>
-          <p class="dr-fix" *ngIf="f.suggestion"><mat-icon>build</mat-icon> {{ f.suggestion }}</p>
         </div>
-      </div>
+      }
     </div>
 
-    <p class="dr-disclaimer" *ngIf="result?.aiGenerated">
-      AI-assisted review — use engineering judgement; verify against your requirements.
-    </p>
+    @if (result?.aiGenerated) {
+      <p class="dr-disclaimer">
+        AI-assisted review — use engineering judgement; verify against your requirements.
+      </p>
+    }
   </div>
 </div>

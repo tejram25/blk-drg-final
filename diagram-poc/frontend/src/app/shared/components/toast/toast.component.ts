@@ -5,11 +5,10 @@ import { NotificationService, ToastKind } from '../../../core/services/notificat
 
 /** Renders the stack of toasts from NotificationService (errors, successes, info). */
 @Component({
-  selector: 'app-toast',
-  standalone: true,
-  imports: [CommonModule, MatIconModule],
-  templateUrl: './toast.component.html',
-  styleUrls: ['./toast.component.css'],
+    selector: 'app-toast',
+    imports: [CommonModule, MatIconModule],
+    templateUrl: './toast.component.html',
+    styleUrls: ['./toast.component.css']
 })
 export class ToastComponent {
   private notify = inject(NotificationService);

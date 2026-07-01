@@ -10,11 +10,10 @@ import { PartHit, PartSearchService } from '../../../../core/services/part-searc
  * order quantity, then adds a chosen part to the canvas as a part card.
  */
 @Component({
-  selector: 'app-part-search-panel',
-  standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
-  templateUrl: './part-search-panel.component.html',
-  styleUrls: ['./part-search-panel.component.css'],
+    selector: 'app-part-search-panel',
+    imports: [CommonModule, FormsModule, MatIconModule],
+    templateUrl: './part-search-panel.component.html',
+    styleUrls: ['./part-search-panel.component.css']
 })
 export class PartSearchPanelComponent implements AfterViewInit {
   @Output() close = new EventEmitter<void>();

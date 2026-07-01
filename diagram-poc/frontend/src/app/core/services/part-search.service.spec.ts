@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { PartSearchService } from './part-search.service';
 import { apiBaseUrl } from '../app-config';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('PartSearchService', () => {
   let service: PartSearchService;
@@ -9,7 +10,7 @@ describe('PartSearchService', () => {
   const API = apiBaseUrl();
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [HttpClientTestingModule], providers: [PartSearchService] });
+    TestBed.configureTestingModule({ imports: [], providers: [PartSearchService, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()] });
     service = TestBed.inject(PartSearchService);
     http = TestBed.inject(HttpTestingController);
   });

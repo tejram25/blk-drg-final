@@ -15,11 +15,10 @@ import { StarRatingComponent } from '../../../../shared/components/star-rating/s
  * Emits `saved` so the parent can refresh any badges.
  */
 @Component({
-  selector: 'app-reviews-dialog',
-  standalone: true,
-  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, StarRatingComponent],
-  templateUrl: './reviews-dialog.component.html',
-  styleUrls: ['./reviews-dialog.component.css'],
+    selector: 'app-reviews-dialog',
+    imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, StarRatingComponent],
+    templateUrl: './reviews-dialog.component.html',
+    styleUrls: ['./reviews-dialog.component.css']
 })
 export class ReviewsDialogComponent implements OnInit {
   /** Diagram backing (legacy/default). Ignored when an explicit `source` is set. */

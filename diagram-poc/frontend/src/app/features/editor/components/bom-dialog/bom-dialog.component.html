@@ -4,7 +4,7 @@
       <div>
         <h3 class="bom-title">Bill of Materials</h3>
         <span class="bom-sub">{{ rows.length }} line item{{ rows.length === 1 ? '' : 's' }} ·
-          {{ totalQuantity }} part{{ totalQuantity === 1 ? '' : 's' }}</span>
+        {{ totalQuantity }} part{{ totalQuantity === 1 ? '' : 's' }}</span>
       </div>
       <button type="button" class="bom-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
     </div>
@@ -21,13 +21,17 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of rows; let i = index">
-            <td class="num">{{ i + 1 }}</td>
-            <td class="pn">{{ r.partNumber }}<span class="desc" *ngIf="r.description">{{ r.description }}</span></td>
-            <td>{{ r.manufacturer || '—' }}</td>
-            <td>{{ r.supplier || '—' }}</td>
-            <td class="qty">{{ r.quantity }}</td>
-          </tr>
+          @for (r of rows; track r; let i = $index) {
+            <tr>
+              <td class="num">{{ i + 1 }}</td>
+              <td class="pn">{{ r.partNumber }}@if (r.description) {
+                <span class="desc">{{ r.description }}</span>
+              }</td>
+              <td>{{ r.manufacturer || '—' }}</td>
+              <td>{{ r.supplier || '—' }}</td>
+              <td class="qty">{{ r.quantity }}</td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>

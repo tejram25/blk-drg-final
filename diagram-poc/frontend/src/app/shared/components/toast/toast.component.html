@@ -1,9 +1,11 @@
 <div class="toast-stack" role="status" aria-live="polite">
-  <div *ngFor="let t of toasts()" class="toast" [ngClass]="t.kind">
-    <mat-icon class="toast-icon">{{ icon(t.kind) }}</mat-icon>
-    <span class="toast-text">{{ t.text }}</span>
-    <button type="button" class="toast-x" aria-label="Dismiss" (click)="dismiss(t.id)">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
+  @for (t of toasts(); track t) {
+    <div class="toast" [ngClass]="t.kind">
+      <mat-icon class="toast-icon">{{ icon(t.kind) }}</mat-icon>
+      <span class="toast-text">{{ t.text }}</span>
+      <button type="button" class="toast-x" aria-label="Dismiss" (click)="dismiss(t.id)">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  }
 </div>

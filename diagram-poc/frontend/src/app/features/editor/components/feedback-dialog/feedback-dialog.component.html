@@ -11,24 +11,28 @@
     <div class="fb-body">
       <label class="fb-label">Category</label>
       <div class="fb-cats">
-        <button type="button" class="fb-cat" *ngFor="let c of categories"
-                [class.active]="category === c.key" (click)="category = c.key">
-          {{ c.label }}
-        </button>
+        @for (c of categories; track c) {
+          <button type="button" class="fb-cat"
+            [class.active]="category === c.key" (click)="category = c.key">
+            {{ c.label }}
+          </button>
+        }
       </div>
 
       <label class="fb-label">How was your experience?</label>
       <div class="fb-stars">
-        <button type="button" class="fb-star" *ngFor="let s of stars"
-                [class.on]="s <= rating" (click)="rating = (rating === s ? 0 : s)"
-                [attr.aria-label]="s + ' stars'">
-          <mat-icon>{{ s <= rating ? 'star' : 'star_border' }}</mat-icon>
-        </button>
+        @for (s of stars; track s) {
+          <button type="button" class="fb-star"
+            [class.on]="s <= rating" (click)="rating = (rating === s ? 0 : s)"
+            [attr.aria-label]="s + ' stars'">
+            <mat-icon>{{ s <= rating ? 'star' : 'star_border' }}</mat-icon>
+          </button>
+        }
       </div>
 
       <label class="fb-label" for="fb-msg">Tell us more</label>
       <textarea id="fb-msg" class="fb-msg" rows="4" [(ngModel)]="message"
-                placeholder="What worked well? What was confusing? What would you add?"></textarea>
+      placeholder="What worked well? What was confusing? What would you add?"></textarea>
     </div>
 
     <div class="fb-foot">

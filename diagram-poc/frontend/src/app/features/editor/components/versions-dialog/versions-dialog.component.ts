@@ -12,11 +12,10 @@ import { NotificationService } from '../../../../core/services/notification.serv
  * parent, which loads it onto the canvas.
  */
 @Component({
-  selector: 'app-versions-dialog',
-  standalone: true,
-  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule],
-  templateUrl: './versions-dialog.component.html',
-  styleUrls: ['./versions-dialog.component.css'],
+    selector: 'app-versions-dialog',
+    imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule],
+    templateUrl: './versions-dialog.component.html',
+    styleUrls: ['./versions-dialog.component.css']
 })
 export class VersionsDialogComponent implements OnInit {
   @Input({ required: true }) diagramId!: number;

@@ -19,7 +19,7 @@
   height: 28px;
   padding: 0;
   line-height: 28px;
-  --mdc-icon-button-state-layer-size: 28px;
+  --mat-icon-button-state-layer-size: 28px;
 }
 
 .zoom-dock button[mat-icon-button] mat-icon {

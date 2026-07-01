@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,11 +10,10 @@ import { FeedbackRequest } from '../../../../core/services/feedback.service';
  * Presentational — the parent submits it and shows the toast.
  */
 @Component({
-  selector: 'app-feedback-dialog',
-  standalone: true,
-  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule],
-  templateUrl: './feedback-dialog.component.html',
-  styleUrls: ['./feedback-dialog.component.css'],
+    selector: 'app-feedback-dialog',
+    imports: [FormsModule, MatButtonModule, MatIconModule],
+    templateUrl: './feedback-dialog.component.html',
+    styleUrls: ['./feedback-dialog.component.css']
 })
 export class FeedbackDialogComponent {
   @Input() submitting = false;

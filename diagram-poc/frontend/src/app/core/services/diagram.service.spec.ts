@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { DiagramService } from './diagram.service';
 import { apiBaseUrl } from '../app-config';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('DiagramService', () => {
   let service: DiagramService;
@@ -10,9 +11,9 @@ describe('DiagramService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [DiagramService],
-    });
+    imports: [],
+    providers: [DiagramService, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+});
     service = TestBed.inject(DiagramService);
     http = TestBed.inject(HttpTestingController);
   });

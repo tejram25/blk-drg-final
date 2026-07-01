@@ -8,60 +8,66 @@
   </div>
 
   <!-- List view -->
-  <ng-container *ngIf="!selected; else detail">
+  @if (!selected) {
     <div class="pp-search">
       <mat-icon>search</mat-icon>
       <input type="text" [(ngModel)]="query" (keyup.enter)="search()"
-             placeholder="Search projects, customers, opportunities…" />
+        placeholder="Search projects, customers, opportunities…" />
     </div>
     <div class="pp-body">
-      <p class="pp-msg" *ngIf="loading">Loading…</p>
-      <p class="pp-msg" *ngIf="!loading && !projects.length">No projects match.</p>
-      <button type="button" class="pp-row" *ngFor="let p of projects" (click)="open(p)">
-        <div class="pp-row-main">
-          <span class="pp-name">{{ p.name }}</span>
-          <span class="pp-cust">{{ p.customer }}</span>
-        </div>
-        <div class="pp-row-meta">
-          <span class="pp-stage">{{ p.stage }}</span>
-          <span class="pp-lead">{{ p.leadTimeWeeks }}w lead</span>
-        </div>
-      </button>
+      @if (loading) {
+        <p class="pp-msg">Loading…</p>
+      }
+      @if (!loading && !projects.length) {
+        <p class="pp-msg">No projects match.</p>
+      }
+      @for (p of projects; track p) {
+        <button type="button" class="pp-row" (click)="open(p)">
+          <div class="pp-row-main">
+            <span class="pp-name">{{ p.name }}</span>
+            <span class="pp-cust">{{ p.customer }}</span>
+          </div>
+          <div class="pp-row-meta">
+            <span class="pp-stage">{{ p.stage }}</span>
+            <span class="pp-lead">{{ p.leadTimeWeeks }}w lead</span>
+          </div>
+        </button>
+      }
     </div>
-  </ng-container>
+  } @else {
+    @if (selected; as d) {
+      <div class="pp-body">
+        <button type="button" class="pp-back" (click)="back()"><mat-icon>arrow_back</mat-icon> All projects</button>
+        <h4 class="pp-dname">{{ d.name }}</h4>
+        <div class="pp-facts">
+          <div><span>Customer</span><b>{{ d.customer }}</b></div>
+          <div><span>Opportunity</span><b>{{ d.opportunity }}</b></div>
+          <div><span>Stage</span><b>{{ d.stage }}</b></div>
+          <div><span>Lead time</span><b>{{ d.leadTimeWeeks }} weeks</b></div>
+          <div><span>Owner</span><b>{{ d.owner }}</b></div>
+          <div><span>Region</span><b>{{ d.region }}</b></div>
+        </div>
+        <button type="button" mat-flat-button class="pp-attach" (click)="attach.emit(d)">
+          <mat-icon>link</mat-icon> Attach to diagram
+        </button>
+        <div class="pp-parts-head">Project BOM ({{ d.parts.length }})</div>
+        @for (part of d.parts; track part) {
+          <div class="pp-part">
+            <div class="pp-part-main">
+              <span class="pp-pn">{{ part.partNumber }}</span>
+              <span class="pp-pd">{{ part.description }} · {{ part.manufacturer }}</span>
+              <span class="pp-pmeta">Qty {{ part.quantity }} · {{ part.leadTimeWeeks }}w ·
+                <span class="pp-life" [class.warn]="part.lifecycle !== 'Active'">{{ part.lifecycle }}</span>
+              </span>
+            </div>
+            <button type="button" class="pp-add" matTooltip="Add to canvas" (click)="addPart.emit(part)">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+    }
+  }
 
   <!-- Detail view -->
-  <ng-template #detail>
-    <div class="pp-body" *ngIf="selected as d">
-      <button type="button" class="pp-back" (click)="back()"><mat-icon>arrow_back</mat-icon> All projects</button>
-
-      <h4 class="pp-dname">{{ d.name }}</h4>
-      <div class="pp-facts">
-        <div><span>Customer</span><b>{{ d.customer }}</b></div>
-        <div><span>Opportunity</span><b>{{ d.opportunity }}</b></div>
-        <div><span>Stage</span><b>{{ d.stage }}</b></div>
-        <div><span>Lead time</span><b>{{ d.leadTimeWeeks }} weeks</b></div>
-        <div><span>Owner</span><b>{{ d.owner }}</b></div>
-        <div><span>Region</span><b>{{ d.region }}</b></div>
-      </div>
-
-      <button type="button" mat-flat-button class="pp-attach" (click)="attach.emit(d)">
-        <mat-icon>link</mat-icon> Attach to diagram
-      </button>
-
-      <div class="pp-parts-head">Project BOM ({{ d.parts.length }})</div>
-      <div class="pp-part" *ngFor="let part of d.parts">
-        <div class="pp-part-main">
-          <span class="pp-pn">{{ part.partNumber }}</span>
-          <span class="pp-pd">{{ part.description }} · {{ part.manufacturer }}</span>
-          <span class="pp-pmeta">Qty {{ part.quantity }} · {{ part.leadTimeWeeks }}w ·
-            <span class="pp-life" [class.warn]="part.lifecycle !== 'Active'">{{ part.lifecycle }}</span>
-          </span>
-        </div>
-        <button type="button" class="pp-add" matTooltip="Add to canvas" (click)="addPart.emit(part)">
-          <mat-icon>add</mat-icon>
-        </button>
-      </div>
-    </div>
-  </ng-template>
 </div>

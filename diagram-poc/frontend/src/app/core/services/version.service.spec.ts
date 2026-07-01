@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { VersionService } from './version.service';
 import { apiBaseUrl } from '../app-config';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('VersionService', () => {
   let service: VersionService;
@@ -9,7 +10,7 @@ describe('VersionService', () => {
   const API = apiBaseUrl();
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [HttpClientTestingModule], providers: [VersionService] });
+    TestBed.configureTestingModule({ imports: [], providers: [VersionService, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()] });
     service = TestBed.inject(VersionService);
     http = TestBed.inject(HttpTestingController);
   });

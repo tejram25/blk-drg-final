@@ -20,14 +20,13 @@ import { ReviewSource } from '../../../../core/services/review.service';
  * the parent so it can drive the canvas.
  */
 @Component({
-  selector: 'app-templates-dialog',
-  standalone: true,
-  imports: [
-    CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule,
-    StarRatingComponent, ConfirmDialogComponent, ReviewsDialogComponent,
-  ],
-  templateUrl: './templates-dialog.component.html',
-  styleUrls: ['./templates-dialog.component.css'],
+    selector: 'app-templates-dialog',
+    imports: [
+        CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule,
+        StarRatingComponent, ConfirmDialogComponent, ReviewsDialogComponent,
+    ],
+    templateUrl: './templates-dialog.component.html',
+    styleUrls: ['./templates-dialog.component.css']
 })
 export class TemplatesDialogComponent implements OnInit {
   /** Current canvas content (X6 graph.toJSON()) for "Save as template". */

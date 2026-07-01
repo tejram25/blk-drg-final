@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -16,11 +16,10 @@ export interface Command {
  * navigation. Presentation only — the parent supplies the commands.
  */
 @Component({
-  selector: 'app-command-palette',
-  standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
-  templateUrl: './command-palette.component.html',
-  styleUrls: ['./command-palette.component.css'],
+    selector: 'app-command-palette',
+    imports: [FormsModule, MatIconModule],
+    templateUrl: './command-palette.component.html',
+    styleUrls: ['./command-palette.component.css']
 })
 export class CommandPaletteComponent implements AfterViewInit {
   @Input() commands: Command[] = [];

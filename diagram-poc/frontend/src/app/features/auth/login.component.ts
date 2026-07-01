@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -12,11 +12,10 @@ type Mode = 'signin' | 'register';
  * sign-in) sets AuthService.user, which flips the shell straight to the app.
  */
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css'],
+    selector: 'app-login',
+    imports: [FormsModule],
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit {
   mode: Mode = 'signin';

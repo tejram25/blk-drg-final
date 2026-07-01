@@ -93,7 +93,7 @@
     /* Uniform compact icon buttons across the whole bar (Material defaults to 40px). */
     .topbar .mat-mdc-icon-button {
       width: 30px; height: 30px; padding: 0; line-height: 30px;
-      --mdc-icon-button-state-layer-size: 30px;
+      --mat-icon-button-state-layer-size: 30px;
     }
     .topbar .mat-mdc-icon-button mat-icon {
       font-size: 19px; width: 19px; height: 19px; line-height: 19px;
@@ -144,8 +144,8 @@
     .topbar .dd-trigger { height: 30px; font-size: 12.5px; }
     .mdc-button mat-icon { margin-right: 4px; }
     button.collab-on {
-      --mdc-outlined-button-outline-color: var(--ok);
-      --mdc-outlined-button-label-text-color: #86efac;
+      --mat-button-outlined-outline-color: var(--ok);
+      --mat-button-outlined-label-text-color: #86efac;
     }
 
     /* ---- Collab panel ---- */
@@ -585,7 +585,7 @@
       padding: 2px 7px; border-radius: 8px; white-space: nowrap;
       box-shadow: 0 2px 6px rgba(0,0,0,.3);
     }
-    .dock-del { --mdc-icon-button-icon-color: #fca5a5; }
+    .dock-del { --mat-icon-button-icon-color: #fca5a5; }
     .props {
       width: clamp(190px, 17vw, 230px); padding: 10px 11px; background: var(--panel);
       border-left: 1px solid var(--border-soft); overflow-y: auto;

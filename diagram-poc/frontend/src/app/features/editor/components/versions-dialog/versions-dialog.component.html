@@ -10,23 +10,29 @@
 
     <div class="ver-save">
       <input type="text" [(ngModel)]="label" maxlength="80"
-             placeholder="Label this snapshot (optional)…" (keyup.enter)="saveSnapshot()" />
+        placeholder="Label this snapshot (optional)…" (keyup.enter)="saveSnapshot()" />
       <button type="button" mat-flat-button class="ver-save-btn" [disabled]="saving" (click)="saveSnapshot()">
         <mat-icon>save</mat-icon> Save snapshot
       </button>
     </div>
 
     <div class="ver-body">
-      <p class="ver-loading" *ngIf="loading">Loading…</p>
-      <p class="ver-empty" *ngIf="!loading && !versions.length">No snapshots yet — save one above.</p>
-      <div class="ver-row" *ngFor="let v of versions">
-        <mat-icon class="ver-icon">history</mat-icon>
-        <div class="ver-info">
-          <span class="ver-label">{{ v.label }}</span>
-          <span class="ver-meta">{{ v.authorName }} · {{ v.createdAt | date:'medium' }}</span>
+      @if (loading) {
+        <p class="ver-loading">Loading…</p>
+      }
+      @if (!loading && !versions.length) {
+        <p class="ver-empty">No snapshots yet — save one above.</p>
+      }
+      @for (v of versions; track v) {
+        <div class="ver-row">
+          <mat-icon class="ver-icon">history</mat-icon>
+          <div class="ver-info">
+            <span class="ver-label">{{ v.label }}</span>
+            <span class="ver-meta">{{ v.authorName }} · {{ v.createdAt | date:'medium' }}</span>
+          </div>
+          <button type="button" mat-stroked-button (click)="restoreVersion(v)">Restore</button>
         </div>
-        <button type="button" mat-stroked-button (click)="restoreVersion(v)">Restore</button>
-      </div>
+      }
     </div>
   </div>
 </div>

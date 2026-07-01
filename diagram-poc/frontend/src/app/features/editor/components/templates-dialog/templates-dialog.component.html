@@ -15,92 +15,120 @@
     </div>
 
     <!-- Publish the current canvas -->
-    <div class="tpl-save" *ngIf="showSave">
-      <div class="tpl-save-row">
-        <input type="text" [(ngModel)]="saveName" maxlength="80" placeholder="Template name *" />
-        <input type="text" [(ngModel)]="saveCategory" maxlength="40" placeholder="Category (e.g. Robotics)" />
+    @if (showSave) {
+      <div class="tpl-save">
+        <div class="tpl-save-row">
+          <input type="text" [(ngModel)]="saveName" maxlength="80" placeholder="Template name *" />
+          <input type="text" [(ngModel)]="saveCategory" maxlength="40" placeholder="Category (e.g. Robotics)" />
+        </div>
+        <textarea [(ngModel)]="saveDescription" maxlength="280" rows="2"
+        placeholder="Short description (optional)"></textarea>
+        <div class="tpl-save-actions">
+          <button type="button" mat-flat-button class="tpl-publish-btn" [disabled]="saving" (click)="publish()">
+            <mat-icon>publish</mat-icon> Publish template
+          </button>
+        </div>
       </div>
-      <textarea [(ngModel)]="saveDescription" maxlength="280" rows="2"
-                placeholder="Short description (optional)"></textarea>
-      <div class="tpl-save-actions">
-        <button type="button" mat-flat-button class="tpl-publish-btn" [disabled]="saving" (click)="publish()">
-          <mat-icon>publish</mat-icon> Publish template
-        </button>
-      </div>
-    </div>
+    }
 
     <!-- Search -->
-    <div class="tpl-search" *ngIf="!loading && templates.length">
-      <mat-icon>search</mat-icon>
-      <input type="text" [(ngModel)]="query" placeholder="Search templates by name, description or category…" />
-      <span class="tpl-count">{{ filtered.length }} / {{ templates.length }}</span>
-    </div>
+    @if (!loading && templates.length) {
+      <div class="tpl-search">
+        <mat-icon>search</mat-icon>
+        <input type="text" [(ngModel)]="query" placeholder="Search templates by name, description or category…" />
+        <span class="tpl-count">{{ filtered.length }} / {{ templates.length }}</span>
+      </div>
+    }
 
     <!-- Gallery -->
     <div class="tpl-body">
-      <p class="tpl-msg" *ngIf="loading">Loading templates…</p>
-      <p class="tpl-msg" *ngIf="!loading && !templates.length">
-        No templates yet — design something and “Save current as template”.
-      </p>
-      <p class="tpl-msg" *ngIf="!loading && templates.length && !filtered.length">
-        No templates match “{{ query }}”.
-      </p>
+      @if (loading) {
+        <p class="tpl-msg">Loading templates…</p>
+      }
+      @if (!loading && !templates.length) {
+        <p class="tpl-msg">
+          No templates yet — design something and “Save current as template”.
+        </p>
+      }
+      @if (!loading && templates.length && !filtered.length) {
+        <p class="tpl-msg">
+          No templates match “{{ query }}”.
+        </p>
+      }
 
-      <div class="tpl-grid" *ngIf="!loading && filtered.length">
-        <div class="tpl-item" *ngFor="let t of filtered; trackBy: trackById">
-          <div class="tpl-item-top">
-            <span class="tpl-name">{{ t.name }}</span>
-            <span class="tpl-chip" *ngIf="t.category">{{ t.category }}</span>
-          </div>
-          <p class="tpl-desc" *ngIf="t.description">{{ t.description }}</p>
-
-          <!-- Rating: community average (click the count to read all reviews) + quick rate -->
-          <div class="tpl-rating">
-            <app-star-rating [rating]="t.avgRating" [readonly]="true" size="sm"></app-star-rating>
-            <button type="button" class="tpl-reviews-link" *ngIf="t.ratingCount"
+      @if (!loading && filtered.length) {
+        <div class="tpl-grid">
+          @for (t of filtered; track trackById($index, t)) {
+            <div class="tpl-item">
+              <div class="tpl-item-top">
+                <span class="tpl-name">{{ t.name }}</span>
+                @if (t.category) {
+                  <span class="tpl-chip">{{ t.category }}</span>
+                }
+              </div>
+              @if (t.description) {
+                <p class="tpl-desc">{{ t.description }}</p>
+              }
+              <!-- Rating: community average (click the count to read all reviews) + quick rate -->
+              <div class="tpl-rating">
+                <app-star-rating [rating]="t.avgRating" [readonly]="true" size="sm"></app-star-rating>
+                @if (t.ratingCount) {
+                  <button type="button" class="tpl-reviews-link"
                     matTooltip="Read reviews" (click)="openReviews(t, $event)">
-              {{ t.avgRating | number:'1.1-1' }} · {{ t.ratingCount }} review{{ t.ratingCount === 1 ? '' : 's' }}
-            </button>
-            <button type="button" class="tpl-reviews-link tpl-unrated" *ngIf="!t.ratingCount"
-                    (click)="openReviews(t, $event)">Be the first to review</button>
-            <span class="tpl-rate">
-              <span class="tpl-rate-label">{{ t.myRating ? 'Your rating' : 'Rate' }}</span>
-              <app-star-rating [rating]="t.myRating" [readonly]="false" size="sm"
-                               (ratingChange)="rate(t, $event)"></app-star-rating>
-            </span>
-          </div>
-
-          <div class="tpl-meta">
-            <span class="tpl-uses"><mat-icon>bolt</mat-icon>{{ t.usageCount }} use{{ t.usageCount === 1 ? '' : 's' }}</span>
-            <span class="tpl-by" *ngIf="t.authorName">by {{ t.authorName }}</span>
-            <span class="tpl-by" *ngIf="t.updatedByName">· improved by {{ t.updatedByName }}</span>
-          </div>
-          <div class="tpl-actions">
-            <button type="button" mat-flat-button class="tpl-use" [disabled]="busyId === t.id"
-                    (click)="useTemplate(t)">
-              <mat-icon>add_to_photos</mat-icon> Use
-            </button>
-            <button type="button" mat-stroked-button [disabled]="busyId === t.id" (click)="improveTemplate(t)">
-              <mat-icon>edit</mat-icon> Improve
-            </button>
-            <button type="button" class="tpl-del" matTooltip="Delete template"
-                    (click)="askDelete(t, $event)">
-              <mat-icon>delete_outline</mat-icon>
-            </button>
-          </div>
+                    {{ t.avgRating | number:'1.1-1' }} · {{ t.ratingCount }} review{{ t.ratingCount === 1 ? '' : 's' }}
+                  </button>
+                }
+                @if (!t.ratingCount) {
+                  <button type="button" class="tpl-reviews-link tpl-unrated"
+                  (click)="openReviews(t, $event)">Be the first to review</button>
+                }
+                <span class="tpl-rate">
+                  <span class="tpl-rate-label">{{ t.myRating ? 'Your rating' : 'Rate' }}</span>
+                  <app-star-rating [rating]="t.myRating" [readonly]="false" size="sm"
+                  (ratingChange)="rate(t, $event)"></app-star-rating>
+                </span>
+              </div>
+              <div class="tpl-meta">
+                <span class="tpl-uses"><mat-icon>bolt</mat-icon>{{ t.usageCount }} use{{ t.usageCount === 1 ? '' : 's' }}</span>
+                @if (t.authorName) {
+                  <span class="tpl-by">by {{ t.authorName }}</span>
+                }
+                @if (t.updatedByName) {
+                  <span class="tpl-by">· improved by {{ t.updatedByName }}</span>
+                }
+              </div>
+              <div class="tpl-actions">
+                <button type="button" mat-flat-button class="tpl-use" [disabled]="busyId === t.id"
+                  (click)="useTemplate(t)">
+                  <mat-icon>add_to_photos</mat-icon> Use
+                </button>
+                <button type="button" mat-stroked-button [disabled]="busyId === t.id" (click)="improveTemplate(t)">
+                  <mat-icon>edit</mat-icon> Improve
+                </button>
+                <button type="button" class="tpl-del" matTooltip="Delete template"
+                  (click)="askDelete(t, $event)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
         </div>
-      </div>
+      }
     </div>
   </div>
 </div>
 
 <!-- Reviews modal (separate root so it layers above the gallery) -->
-<app-reviews-dialog *ngIf="reviewTarget as t"
-  [source]="reviewSource!" [diagramName]="t.name" rateLabel="Review this template"
+@if (reviewTarget; as t) {
+  <app-reviews-dialog
+    [source]="reviewSource!" [diagramName]="t.name" rateLabel="Review this template"
   (saved)="onReviewSaved()" (close)="closeReviews()"></app-reviews-dialog>
+}
 
 <!-- Delete confirmation (separate root so its events don't close the gallery) -->
-<app-confirm-dialog *ngIf="pendingDelete"
-  title="Delete template?" [message]="deleteMessage"
-  confirmLabel="Delete" [danger]="true"
+@if (pendingDelete) {
+  <app-confirm-dialog
+    title="Delete template?" [message]="deleteMessage"
+    confirmLabel="Delete" [danger]="true"
   (confirm)="confirmDelete()" (cancel)="cancelDelete()"></app-confirm-dialog>
+}

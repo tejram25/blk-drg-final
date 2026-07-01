@@ -16,11 +16,10 @@ export interface ExportNode {
  * emitted to the editor, which owns the graph and runs the actual export.
  */
 @Component({
-  selector: 'app-export-dialog',
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule],
-  templateUrl: './export-dialog.component.html',
-  styleUrls: ['./export-dialog.component.css'],
+    selector: 'app-export-dialog',
+    imports: [CommonModule, MatButtonModule, MatIconModule],
+    templateUrl: './export-dialog.component.html',
+    styleUrls: ['./export-dialog.component.css']
 })
 export class ExportDialogComponent {
   @Input() nodes: ExportNode[] = [];

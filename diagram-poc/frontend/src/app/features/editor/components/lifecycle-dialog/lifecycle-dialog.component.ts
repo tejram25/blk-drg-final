@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -10,11 +10,10 @@ import { AlternativePart, LifecycleInfo } from '../../../../core/services/lifecy
  * the parent loads the data and drops chosen alternatives onto the canvas.
  */
 @Component({
-  selector: 'app-lifecycle-dialog',
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatTooltipModule],
-  templateUrl: './lifecycle-dialog.component.html',
-  styleUrls: ['./lifecycle-dialog.component.css'],
+    selector: 'app-lifecycle-dialog',
+    imports: [MatButtonModule, MatIconModule, MatTooltipModule],
+    templateUrl: './lifecycle-dialog.component.html',
+    styleUrls: ['./lifecycle-dialog.component.css']
 })
 export class LifecycleDialogComponent {
   @Input() info: LifecycleInfo | null = null;

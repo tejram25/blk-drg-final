@@ -1,16 +1,15 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { BomRow, BomService } from '../../../../core/services/bom.service';
 
 /** Shows the Bill of Materials as a table with a CSV download. */
 @Component({
-  selector: 'app-bom-dialog',
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule],
-  templateUrl: './bom-dialog.component.html',
-  styleUrls: ['./bom-dialog.component.css'],
+    selector: 'app-bom-dialog',
+    imports: [MatButtonModule, MatIconModule],
+    templateUrl: './bom-dialog.component.html',
+    styleUrls: ['./bom-dialog.component.css']
 })
 export class BomDialogComponent {
   @Input() rows: BomRow[] = [];

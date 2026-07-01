@@ -16,20 +16,28 @@
 
     <div class="exp-listhead">
       <span>Components ({{ nodes.length }})</span>
-      <button type="button" class="exp-showall" *ngIf="hiddenCount" (click)="showAll.emit()">
-        Include all ({{ hiddenCount }} excluded)
-      </button>
+      @if (hiddenCount) {
+        <button type="button" class="exp-showall" (click)="showAll.emit()">
+          Include all ({{ hiddenCount }} excluded)
+        </button>
+      }
     </div>
 
     <div class="exp-body">
-      <p class="exp-empty" *ngIf="!nodes.length">Nothing on the canvas to export.</p>
-      <button type="button" class="exp-row" *ngFor="let n of nodes" [class.off]="!n.visible"
-              (click)="toggle.emit(n.id)"
-              [attr.title]="n.visible ? 'Click to exclude from export' : 'Click to include in export'">
-        <mat-icon>{{ n.visible ? 'visibility' : 'visibility_off' }}</mat-icon>
-        <span class="exp-name">{{ n.label }}</span>
-        <span class="exp-tag" *ngIf="!n.visible">Excluded</span>
-      </button>
+      @if (!nodes.length) {
+        <p class="exp-empty">Nothing on the canvas to export.</p>
+      }
+      @for (n of nodes; track n) {
+        <button type="button" class="exp-row" [class.off]="!n.visible"
+          (click)="toggle.emit(n.id)"
+          [attr.title]="n.visible ? 'Click to exclude from export' : 'Click to include in export'">
+          <mat-icon>{{ n.visible ? 'visibility' : 'visibility_off' }}</mat-icon>
+          <span class="exp-name">{{ n.label }}</span>
+          @if (!n.visible) {
+            <span class="exp-tag">Excluded</span>
+          }
+        </button>
+      }
     </div>
 
     <div class="exp-actions">

@@ -8,55 +8,66 @@
       <button type="button" class="review-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
     </div>
 
-    <div class="review-body" *ngIf="data as rd; else loading">
-      <!-- summary -->
-      <div class="review-summary">
-        <div class="rs-avg">
-          <span class="rs-num">{{ rd.count ? (rd.average | number:'1.1-1') : '–' }}</span>
-          <app-star-rating [rating]="rd.average" size="sm"></app-star-rating>
-          <span class="rs-count">{{ rd.count }} review{{ rd.count === 1 ? '' : 's' }}</span>
-        </div>
-        <div class="rs-dist">
-          <div class="rs-bar" *ngFor="let s of distKeys">
-            <span class="rs-bk">{{ s }}</span>
-            <span class="rs-track"><span class="rs-fill"
-                  [style.width.%]="rd.count ? (rd.distribution[s] || 0) / rd.count * 100 : 0"></span></span>
-            <span class="rs-bn">{{ rd.distribution[s] || 0 }}</span>
+    @if (data; as rd) {
+      <div class="review-body">
+        <!-- summary -->
+        <div class="review-summary">
+          <div class="rs-avg">
+            <span class="rs-num">{{ rd.count ? (rd.average | number:'1.1-1') : '–' }}</span>
+            <app-star-rating [rating]="rd.average" size="sm"></app-star-rating>
+            <span class="rs-count">{{ rd.count }} review{{ rd.count === 1 ? '' : 's' }}</span>
+          </div>
+          <div class="rs-dist">
+            @for (s of distKeys; track s) {
+              <div class="rs-bar">
+                <span class="rs-bk">{{ s }}</span>
+                <span class="rs-track"><span class="rs-fill"
+                [style.width.%]="rd.count ? (rd.distribution[s] || 0) / rd.count * 100 : 0"></span></span>
+                <span class="rs-bn">{{ rd.distribution[s] || 0 }}</span>
+              </div>
+            }
           </div>
         </div>
-      </div>
-
-      <!-- your review -->
-      <div class="review-mine">
-        <span class="rm-label">{{ rd.mine ? 'Your review' : rateLabel }}</span>
-        <app-star-rating [rating]="myRating" [readonly]="false" size="lg"
-                         (ratingChange)="myRating = $event"></app-star-rating>
-        <textarea class="rm-text" [(ngModel)]="myComment" rows="2"
-                  placeholder="Share what's good (or what could be better)…" maxlength="2000"></textarea>
-        <div class="rm-actions">
-          <button type="button" mat-flat-button class="rm-submit"
-                  [disabled]="!myRating || saving" (click)="submit()">
-            {{ rd.mine ? 'Update review' : 'Submit review' }}
-          </button>
+        <!-- your review -->
+        <div class="review-mine">
+          <span class="rm-label">{{ rd.mine ? 'Your review' : rateLabel }}</span>
+          <app-star-rating [rating]="myRating" [readonly]="false" size="lg"
+          (ratingChange)="myRating = $event"></app-star-rating>
+          <textarea class="rm-text" [(ngModel)]="myComment" rows="2"
+          placeholder="Share what's good (or what could be better)…" maxlength="2000"></textarea>
+          <div class="rm-actions">
+            <button type="button" mat-flat-button class="rm-submit"
+              [disabled]="!myRating || saving" (click)="submit()">
+              {{ rd.mine ? 'Update review' : 'Submit review' }}
+            </button>
+          </div>
         </div>
-      </div>
-
-      <!-- list -->
-      <div class="review-list">
-        <div class="rv" *ngFor="let r of rd.reviews">
-          <div class="rv-avatar">{{ (r.userName || '?').charAt(0).toUpperCase() }}</div>
-          <div class="rv-body">
-            <div class="rv-head">
-              <b class="rv-name">{{ r.userName }}<span class="rv-you" *ngIf="r.self"> (you)</span></b>
-              <span class="rv-date">{{ r.updatedAt | date:'mediumDate' }}</span>
+        <!-- list -->
+        <div class="review-list">
+          @for (r of rd.reviews; track r) {
+            <div class="rv">
+              <div class="rv-avatar">{{ (r.userName || '?').charAt(0).toUpperCase() }}</div>
+              <div class="rv-body">
+                <div class="rv-head">
+                  <b class="rv-name">{{ r.userName }}@if (r.self) {
+                    <span class="rv-you"> (you)</span>
+                  }</b>
+                  <span class="rv-date">{{ r.updatedAt | date:'mediumDate' }}</span>
+                </div>
+                <app-star-rating [rating]="r.rating" size="sm"></app-star-rating>
+                @if (r.comment) {
+                  <div class="rv-comment">{{ r.comment }}</div>
+                }
+              </div>
             </div>
-            <app-star-rating [rating]="r.rating" size="sm"></app-star-rating>
-            <div class="rv-comment" *ngIf="r.comment">{{ r.comment }}</div>
-          </div>
+          }
+          @if (!rd.reviews.length) {
+            <p class="rv-empty">No reviews yet — be the first.</p>
+          }
         </div>
-        <p class="rv-empty" *ngIf="!rd.reviews.length">No reviews yet — be the first.</p>
       </div>
-    </div>
-    <ng-template #loading><p class="review-loading">Loading reviews…</p></ng-template>
+    } @else {
+      <p class="review-loading">Loading reviews…</p>
+    }
   </div>
 </div>

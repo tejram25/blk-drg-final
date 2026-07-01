@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatIconModule } from '@angular/material/icon';
 
 /**
@@ -8,11 +8,10 @@ import { MatIconModule } from '@angular/material/icon';
  * hover preview and emits `ratingChange`.
  */
 @Component({
-  selector: 'app-star-rating',
-  standalone: true,
-  imports: [CommonModule, MatIconModule],
-  templateUrl: './star-rating.component.html',
-  styleUrls: ['./star-rating.component.css'],
+    selector: 'app-star-rating',
+    imports: [MatIconModule],
+    templateUrl: './star-rating.component.html',
+    styleUrls: ['./star-rating.component.css']
 })
 export class StarRatingComponent {
   @Input() rating = 0;

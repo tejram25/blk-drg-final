@@ -3,18 +3,24 @@
     <div class="cp-search">
       <mat-icon>search</mat-icon>
       <input #search type="text" [(ngModel)]="query" (ngModelChange)="onInput()"
-             (keydown)="onKeydown($event)" placeholder="Type a command…" />
+        (keydown)="onKeydown($event)" placeholder="Type a command…" />
       <kbd>esc</kbd>
     </div>
     <ul class="cp-list">
-      <li *ngFor="let cmd of filtered; let i = index" class="cp-item"
+      @for (cmd of filtered; track cmd; let i = $index) {
+        <li class="cp-item"
           [class.active]="i === selected"
           (mouseenter)="selected = i" (mousedown)="run(cmd)">
-        <mat-icon class="cp-icon">{{ cmd.icon || 'chevron_right' }}</mat-icon>
-        <span class="cp-label">{{ cmd.label }}</span>
-        <span class="cp-hint" *ngIf="cmd.hint">{{ cmd.hint }}</span>
-      </li>
-      <li class="cp-empty" *ngIf="!filtered.length">No matching commands</li>
+          <mat-icon class="cp-icon">{{ cmd.icon || 'chevron_right' }}</mat-icon>
+          <span class="cp-label">{{ cmd.label }}</span>
+          @if (cmd.hint) {
+            <span class="cp-hint">{{ cmd.hint }}</span>
+          }
+        </li>
+      }
+      @if (!filtered.length) {
+        <li class="cp-empty">No matching commands</li>
+      }
     </ul>
   </div>
 </div>

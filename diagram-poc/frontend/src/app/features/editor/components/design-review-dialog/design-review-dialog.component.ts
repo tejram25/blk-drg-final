@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DesignReviewResult } from '../../../../core/services/design-review.service';
@@ -9,11 +9,10 @@ import { DesignReviewResult } from '../../../../core/services/design-review.serv
  * severity (risk / warn / info) with a suggested fix. Presentational.
  */
 @Component({
-  selector: 'app-design-review-dialog',
-  standalone: true,
-  imports: [CommonModule, MatIconModule, MatTooltipModule],
-  templateUrl: './design-review-dialog.component.html',
-  styleUrls: ['./design-review-dialog.component.css'],
+    selector: 'app-design-review-dialog',
+    imports: [MatIconModule, MatTooltipModule],
+    templateUrl: './design-review-dialog.component.html',
+    styleUrls: ['./design-review-dialog.component.css']
 })
 export class DesignReviewDialogComponent {
   @Input() result: DesignReviewResult | null = null;

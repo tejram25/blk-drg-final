@@ -55,18 +55,17 @@ import { Command, CommandPaletteComponent } from '../../shared/components/comman
  * presence, language, account) matches the established workspace design.
  */
 @Component({
-  selector: 'app-gojs-editor',
-  standalone: true,
-  imports: [
-    CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe,
-    BomDialogComponent, RecommendationsDialogComponent, DesignReviewDialogComponent,
-    LifecycleDialogComponent, FeedbackDialogComponent, ProjectPanelComponent,
-    PartSearchPanelComponent, VersionsDialogComponent, CommentsPanelComponent,
-    TemplatesDialogComponent, ExportDialogComponent, CommandPaletteComponent,
-    ReviewsDialogComponent, ZoomDockComponent, ConfirmDialogComponent,
-  ],
-  templateUrl: './gojs-editor.component.html',
-  styleUrls: ['./gojs-editor.component.css'],
+    selector: 'app-gojs-editor',
+    imports: [
+        CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe,
+        BomDialogComponent, RecommendationsDialogComponent, DesignReviewDialogComponent,
+        LifecycleDialogComponent, FeedbackDialogComponent, ProjectPanelComponent,
+        PartSearchPanelComponent, VersionsDialogComponent, CommentsPanelComponent,
+        TemplatesDialogComponent, ExportDialogComponent, CommandPaletteComponent,
+        ReviewsDialogComponent, ZoomDockComponent, ConfirmDialogComponent,
+    ],
+    templateUrl: './gojs-editor.component.html',
+    styleUrls: ['./gojs-editor.component.css']
 })
 export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLDivElement>;
@@ -294,12 +293,21 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       'relinkingTool.portGravity': 20,
       minScale: 0.15, maxScale: 4,
     });
+    // A single, coarse, subtle grid (the default GoJS grid draws several dense
+    // line sets that look noisy on the dark canvas).
+    this.diagram.grid =
+      $(go.Panel, 'Grid', { gridCellSize: new go.Size(24, 24) },
+        $(go.Shape, 'LineH', { strokeWidth: 0.5 }),
+        $(go.Shape, 'LineV', { strokeWidth: 0.5 }));
+    this.applyGridTheme();
     this.buildTemplates($);
     this.diagram.model = this.emptyModel();
 
     this.diagram.addDiagramListener('ChangedSelection', () => this.zone.run(() => this.syncSelection()));
     this.diagram.addDiagramListener('TextEdited', () => this.zone.run(() => this.syncSelection()));
-    this.diagram.addModelChangedListener((e) => { if (e.isTransactionFinished) this.zone.run(() => this.scheduleAutosave()); });
+    this.diagram.addModelChangedListener((e) => {
+      if (e.isTransactionFinished) this.zone.run(() => { this.updateCanvasEmpty(); this.scheduleAutosave(); });
+    });
     this.diagram.addDiagramListener('ViewportBoundsChanged', () => this.onViewport());
     // apply current wire style to newly drawn links
     this.diagram.addDiagramListener('LinkDrawn', (e) => {
@@ -608,7 +616,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       (m as go.GraphLinksModel).addNodeData(this.nodeDataFor(b, pt)), 'add node'));
   }
 
-  get isCanvasEmpty(): boolean { return !!this.diagram && this.diagram.model.nodeDataArray.length === 0; }
+  /** Cached (not a live getter) so template change-detection stays stable even
+   * when the model mutates from collaboration/imports mid-cycle. */
+  canvasEmpty = true;
+  private updateCanvasEmpty(): void {
+    this.canvasEmpty = !this.diagram || this.diagram.model.nodeDataArray.length === 0;
+  }
 
   // ---- selection / properties ----
 
@@ -628,6 +641,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       this.sel = null;
     }
+    this.updateCanvasEmpty();
     this.cdr.detectChanges();
   }
 
@@ -744,6 +758,16 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   toggleCanvasTheme(): void {
     this.lightCanvas = !this.lightCanvas;
     this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
+    this.applyGridTheme();
+  }
+
+  /** Subtle grid line colour tuned per canvas theme. */
+  private applyGridTheme(): void {
+    if (!this.diagram || !this.diagram.grid) return;
+    const color = this.lightCanvas ? 'rgba(2,6,23,0.06)' : 'rgba(148,163,184,0.10)';
+    this.zone.runOutsideAngular(() => this.diagram.grid.elements.each((e) => {
+      if (e instanceof go.Shape) e.stroke = color;
+    }));
   }
   toggleMinimap(): void {
     this.minimapOpen = !this.minimapOpen;
