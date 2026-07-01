@@ -356,27 +356,6 @@
             <span class="cursor-name" [style.background]="c.color">{{ c.name }}</span>
           </div>
 
-          <!-- Block ↔ component overlay: hover/select "link" badge + linked-part chip -->
-          <div class="block-overlay" *ngFor="let bo of blockOverlays()"
-               [style.left.px]="bo.x" [style.top.px]="bo.y" [style.width.px]="bo.w">
-            <button type="button" class="bl-link" *ngIf="bo.show && !bo.part && !linkTarget"
-                    matTooltip="Link a component" (click)="openBlockLink(bo.id, $event)"
-                    (mouseenter)="setBlockHover(bo.id)" (mouseleave)="scheduleBlockHoverClear()">
-              <mat-icon>add_link</mat-icon>
-            </button>
-            <button type="button" class="bl-chip" *ngIf="bo.part"
-                    matTooltip="Linked component — click to change"
-                    (click)="openBlockLink(bo.id, $event)">
-              <span class="bl-dot" [class]="bo.dot"></span>
-              <span class="bl-pn">{{ bo.pn }}</span>
-            </button>
-          </div>
-
-          <!-- Glass popover to pick a supplier/part for the block -->
-          <app-block-part-popover *ngIf="linkTarget"
-            [blockName]="linkBlockName" [x]="linkPos.x" [y]="linkPos.y"
-            (link)="onLinkPart($event)" (close)="closeBlockLink()"></app-block-part-popover>
-
           <!-- Zoom controls -->
           <app-zoom-dock [zoom]="zoomPct"
             (zoomOut)="zoomOut()" (zoomIn)="zoomIn()" (fit)="zoomFit()" (reset)="zoomReset()">
@@ -512,17 +491,6 @@
             <input type="number" min="1" [ngModel]="partQty"
                    (ngModelChange)="setPartQty($event)" />
           </label>
-
-          <!-- Linked component actions (blocks, shapes, symbols) -->
-          <div class="prop-linked" *ngIf="canLinkSelected">
-            <button type="button" class="link-btn" (click)="openBlockLink(selectedNode!.id)">
-              <mat-icon>{{ isLinkedBlock ? 'sync' : 'add_link' }}</mat-icon>
-              <span>{{ isLinkedBlock ? 'Change component' : 'Link a component' }}</span>
-            </button>
-            <button type="button" class="link-btn unlink" *ngIf="isLinkedBlock" (click)="unlinkBlock(selectedNode)">
-              <mat-icon>link_off</mat-icon><span>Unlink</span>
-            </button>
-          </div>
 
           <!-- Full catalogue + inventory info (part cards from the Arrow search) -->
           <ng-container *ngIf="isPartCard">

@@ -598,39 +598,6 @@
       word-break: break-word; overflow-wrap: anywhere;
     }
 
-    /* Linked-component actions in the properties panel */
-    .prop-linked { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-    .link-btn {
-      display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 8px;
-      cursor: pointer; border: 1px solid var(--border); background: var(--bg-deep); color: var(--text); font-size: 12px;
-    }
-    .link-btn:hover { border-color: var(--accent); }
-    .link-btn mat-icon { font-size: 16px; width: 16px; height: 16px; }
-    .link-btn.unlink { color: #ef4444; border-color: rgba(239, 68, 68, 0.4); }
-
-    /* On-canvas block ↔ component overlay (badge + linked-part chip) */
-    .block-overlay { position: absolute; pointer-events: none; z-index: 12; }
-    .bl-link {
-      pointer-events: auto; position: absolute; right: -10px; top: -10px;
-      width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--accent, #f5a623);
-      background: rgba(24, 26, 31, 0.88); color: var(--accent, #f5a623); cursor: pointer;
-      display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
-    }
-    .bl-link:hover { background: var(--accent, #f5a623); color: #1a1303; }
-    .bl-link mat-icon { font-size: 15px; width: 15px; height: 15px; }
-    .bl-chip {
-      pointer-events: auto; position: absolute; top: calc(100% + 4px); left: 0; max-width: 100%;
-      display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; cursor: pointer;
-      background: rgba(24, 26, 31, 0.82); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-      border: 1px solid rgba(148, 163, 184, 0.3); color: var(--text, #e2e8f0); font-size: 10.5px; font-weight: 600;
-    }
-    .bl-chip:hover { border-color: var(--accent, #f5a623); }
-    .bl-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; box-shadow: 0 0 5px currentColor; }
-    .bl-dot.green { background: #22c55e; color: #22c55e; }
-    .bl-dot.amber { background: #f59e0b; color: #f59e0b; }
-    .bl-dot.grey { background: #64748b; color: transparent; box-shadow: none; }
-    .bl-pn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
     /* ---- Scrollbars ---- */
     .palette::-webkit-scrollbar, .props::-webkit-scrollbar { width: 8px; }
     .palette::-webkit-scrollbar-thumb, .props::-webkit-scrollbar-thumb {
