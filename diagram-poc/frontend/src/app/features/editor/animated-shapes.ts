@@ -1,5 +1,3 @@
-import { Graph, Markup } from '@antv/x6';
-
 /**
  * Animated components (robotic arm, siren light, fan, conveyor,
  * gear motor). Each is a tree of SVG parts; moving parts carry CSS classes
@@ -335,58 +333,3 @@ export function partsToSvg(shape: string): string {
   return def.parts.map(ser).join('');
 }
 
-function toMarkup(p: Part): Markup.JSONMarkup {
-  return {
-    tagName: p.tag,
-    attrs: p.attrs,
-    children: p.children?.map(toMarkup),
-  };
-}
-
-/** Register every animated component as an X6 node shape. */
-export function registerAnimatedShapes(): void {
-  Object.entries(ANIMATED_SYMBOLS).forEach(([name, def]) => {
-    Graph.registerNode(
-      name,
-      {
-        width: def.width,
-        height: def.height,
-        markup: [
-          { tagName: 'rect', selector: 'body' },
-          // wrapper group lets the drawing scale when the node is resized
-          { tagName: 'g', selector: 'wrap', children: def.parts.map(toMarkup) },
-          { tagName: 'text', selector: 'label' },
-        ],
-        attrs: {
-          body: { refWidth: '100%', refHeight: '100%', fill: 'transparent', stroke: 'none' },
-          label: {
-            textAnchor: 'middle',
-            textVerticalAnchor: 'top',
-            refX: 0.5,
-            refY: '100%',
-            refY2: 6,
-            fontSize: 11,
-            fill: '#94a3b8',
-          },
-        },
-        ports: {
-          groups: {
-            pin: {
-              position: 'absolute',
-              attrs: {
-                circle: { r: 4, magnet: true, stroke: '#22d3ee', fill: '#0f172a', strokeWidth: 1.5 },
-              },
-            },
-          },
-          items: def.pins.map((p, i) => ({
-            id: `pin${i}`,
-            group: 'pin',
-            // percentages so pins track the node when it is resized
-            args: { x: `${(p.x / def.width) * 100}%`, y: `${(p.y / def.height) * 100}%` },
-          })),
-        },
-      },
-      true,
-    );
-  });
-}

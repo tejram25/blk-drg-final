@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import * as go from 'gojs';
@@ -51,7 +51,7 @@ import { Command, CommandPaletteComponent } from '../../shared/components/comman
   selector: 'app-gojs-editor',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, RouterLink, MatIconModule, MatTooltipModule,
+    CommonModule, FormsModule, MatIconModule, MatTooltipModule,
     BomDialogComponent, RecommendationsDialogComponent, DesignReviewDialogComponent,
     LifecycleDialogComponent, FeedbackDialogComponent, ProjectPanelComponent,
     PartSearchPanelComponent, VersionsDialogComponent, CommentsPanelComponent,

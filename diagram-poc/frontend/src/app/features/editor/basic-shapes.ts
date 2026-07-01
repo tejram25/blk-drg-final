@@ -1,5 +1,3 @@
-import { Graph } from '@antv/x6';
-
 /**
  * draw.io-style flowchart shapes: rectangle, rounded, square, circle, ellipse,
  * diamond, triangle, parallelogram, cylinder/DB, hexagon, process, step,
@@ -36,9 +34,6 @@ export interface BasicShapeDef {
   /** Equivalent draw.io/mxGraph style string for export. */
   drawioStyle: string;
 }
-
-const STROKE = '#334155';
-const FILL = '#ffffff';
 
 export const BASIC_SHAPES: Record<string, BasicShapeDef> = {
   'basic-rectangle': {
@@ -179,47 +174,4 @@ export const BASIC_SHAPES: Record<string, BasicShapeDef> = {
 
 export function isBasic(shape: string): boolean {
   return shape.startsWith('basic-');
-}
-
-const PORTS = {
-  groups: {
-    top:    { position: 'top',    attrs: { circle: { r: 4, magnet: true, stroke: '#94a3b8', fill: '#0f172a', strokeWidth: 1.5 } } },
-    right:  { position: 'right',  attrs: { circle: { r: 4, magnet: true, stroke: '#94a3b8', fill: '#0f172a', strokeWidth: 1.5 } } },
-    bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#94a3b8', fill: '#0f172a', strokeWidth: 1.5 } } },
-    left:   { position: 'left',   attrs: { circle: { r: 4, magnet: true, stroke: '#94a3b8', fill: '#0f172a', strokeWidth: 1.5 } } },
-  },
-  items: [{ group: 'top' }, { group: 'right' }, { group: 'bottom' }, { group: 'left' }],
-};
-
-export function registerBasicShapes(): void {
-  Object.entries(BASIC_SHAPES).forEach(([name, def]) => {
-    Graph.registerNode(
-      name,
-      {
-        width: def.width,
-        height: def.height,
-        markup: [
-          { tagName: def.tag, selector: 'body' },
-          { tagName: 'text', selector: 'label' },
-        ],
-        attrs: {
-          body: {
-            ...def.body,
-            fill: def.noBox ? 'none' : FILL,
-            stroke: def.noBox ? 'none' : STROKE,
-            strokeWidth: def.noBox ? 0 : 2,
-          },
-          label: {
-            text: def.label,
-            refX: '50%', refY: '50%',
-            textAnchor: 'middle', textVerticalAnchor: 'middle',
-            fontSize: 13, fill: '#1f2937',
-            fontFamily: 'Roboto, sans-serif',
-          },
-        },
-        ports: PORTS,
-      },
-      true, // overwrite on hot-reload
-    );
-  });
 }

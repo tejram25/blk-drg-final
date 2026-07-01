@@ -4,7 +4,41 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { collabServerUrl } from '../app-config';
 import { NotificationService } from './notification.service';
-import { ChatMessage, Participant, RemoteCursor } from './collab.service';
+
+/** A remote collaborator's live pointer, in diagram-document coordinates. */
+export interface RemoteCursor {
+  id: number;
+  name: string;
+  color: string;
+  x: number;
+  y: number;
+}
+
+/** A member of the current session (includes you), for the roster UI. */
+export interface Participant {
+  id: number;
+  /** Stable account id (email) shared across a user's tabs. */
+  uid: string;
+  name: string;
+  color: string;
+  isHost: boolean;
+  /** true for the local user. */
+  isSelf: boolean;
+}
+
+/** A chat message in the session, synced via the room's Yjs doc. */
+export interface ChatMessage {
+  id: string;
+  name: string;
+  color: string;
+  text: string;
+  /** epoch millis */
+  ts: number;
+  /** UI language the sender was using (source language for translation). */
+  lang?: string;
+  /** true if the local user sent it (right-aligned bubble). */
+  isSelf: boolean;
+}
 
 /**
  * Real-time collaboration for the GoJS editor, mirroring {@link CollabService}
