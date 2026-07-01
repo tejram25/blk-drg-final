@@ -72,23 +72,32 @@
     /* ---- Top bar ---- */
     .topbar {
       display: flex; align-items: center; flex-wrap: wrap;
-      gap: 6px; row-gap: 6px;
-      min-height: 48px; flex-shrink: 0; padding: 5px 10px;
+      gap: 4px; row-gap: 4px;
+      min-height: 42px; flex-shrink: 0; padding: 4px 10px;
       background: var(--panel);
       border-bottom: 1px solid var(--border-soft);
       box-shadow: 0 1px 0 rgba(0,0,0,.3);
     }
-    .brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .brand-mark {
-      width: 32px; height: 32px; border-radius: 8px;
+      width: 28px; height: 28px; border-radius: 7px;
       display: inline-flex; align-items: center; justify-content: center;
       background: linear-gradient(135deg, var(--accent), #d97706);
       box-shadow: 0 2px 8px rgba(245, 166, 35, .3);
     }
-    .brand-mark mat-icon { color: #1a1303; font-size: 20px; width: 20px; height: 20px; }
-    .brand-name { font-size: 15px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
-    .vsep { width: 1px; height: 20px; background: var(--border-soft); flex-shrink: 0; }
+    .brand-mark mat-icon { color: #1a1303; font-size: 18px; width: 18px; height: 18px; }
+    .brand-name { font-size: 14px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
+    .vsep { width: 1px; height: 18px; background: var(--border-soft); flex-shrink: 0; margin: 0 2px; }
     .spacer { flex: 1; }
+
+    /* Uniform compact icon buttons across the whole bar (Material defaults to 40px). */
+    .topbar .mat-mdc-icon-button {
+      width: 30px; height: 30px; padding: 0; line-height: 30px;
+      --mdc-icon-button-state-layer-size: 30px;
+    }
+    .topbar .mat-mdc-icon-button mat-icon {
+      font-size: 19px; width: 19px; height: 19px; line-height: 19px;
+    }
     .tool-group { display: flex; align-items: center; gap: 2px; }
 
     input, select {
@@ -114,25 +123,25 @@
     }
     select option { background: var(--panel); color: var(--text); }
     input::placeholder { color: var(--faint); }
-    .doc-name { width: 150px; min-width: 0; height: 32px; font-weight: 500; background: transparent; }
+    .doc-name { width: 128px; min-width: 0; height: 30px; font-weight: 500; background: transparent; font-size: 12.5px; }
     .doc-name:hover { background: var(--bg-deep); }
-    .open-dd { width: 140px; flex-shrink: 1; min-width: 100px; }
+    .open-dd { width: 118px; flex-shrink: 1; min-width: 92px; }
 
     /* Access-classification pill (PUBLIC / INTERNAL / RESTRICTED). */
     .cls-pill {
-      display: inline-flex; align-items: center; gap: 4px; height: 32px; flex: none;
-      padding: 0 10px; border-radius: 999px; cursor: pointer; font-size: 11px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 4px; height: 26px; flex: none;
+      padding: 0 9px; border-radius: 999px; cursor: pointer; font-size: 10.5px; font-weight: 600;
       letter-spacing: .3px; border: 1px solid transparent; white-space: nowrap;
     }
-    .cls-pill mat-icon { font-size: 15px; width: 15px; height: 15px; }
+    .cls-pill mat-icon { font-size: 14px; width: 14px; height: 14px; }
     .cls-pill.public { color: #38bdf8; border-color: rgba(56,189,248,.4); background: rgba(56,189,248,.1); }
     .cls-pill.internal { color: #94a3b8; border-color: rgba(148,163,184,.4); background: rgba(148,163,184,.1); }
     .cls-pill.restricted { color: #f87171; border-color: rgba(248,113,113,.5); background: rgba(248,113,113,.12); }
 
     /* Header controls run a touch shorter than the 36px form default so the bar
        stays compact and everything fits one row on typical desktop widths. */
-    .topbar .mdc-button { height: 32px; min-width: 0; padding: 0 12px; }
-    .topbar .dd-trigger { height: 32px; }
+    .topbar .mdc-button { height: 30px; min-width: 0; padding: 0 10px; font-size: 12.5px; }
+    .topbar .dd-trigger { height: 30px; font-size: 12.5px; }
     .mdc-button mat-icon { margin-right: 4px; }
     button.collab-on {
       --mdc-outlined-button-outline-color: var(--ok);
@@ -328,10 +337,10 @@
     /* Signed-in user chip: keep it compact so it never wraps to a second row. */
     .user-wrap { flex-shrink: 0; }
     .user-chip {
-      display: inline-flex; align-items: center; gap: 6px; height: 32px;
-      max-width: 180px; padding: 0 8px; border-radius: 8px;
+      display: inline-flex; align-items: center; gap: 5px; height: 30px;
+      max-width: 170px; padding: 0 7px; border-radius: 8px;
       background: none; border: 1px solid var(--border); color: var(--text);
-      font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap;
+      font: inherit; font-size: 12.5px; cursor: pointer; white-space: nowrap;
     }
     .user-chip:hover, .user-chip.on { border-color: var(--accent); }
     .user-chip > mat-icon { flex: none; font-size: 20px; width: 20px; height: 20px; }
@@ -354,21 +363,21 @@
 
     /* Header dropdown trigger buttons: File / Insert / View */
     .hb-menu {
-      display: inline-flex; align-items: center; gap: 5px; height: 32px; flex: none;
-      padding: 0 8px 0 10px; border-radius: 8px; border: 1px solid transparent;
-      background: transparent; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 4px; height: 30px; flex: none;
+      padding: 0 7px 0 9px; border-radius: 8px; border: 1px solid transparent;
+      background: transparent; color: var(--text); font: inherit; font-size: 12.5px; cursor: pointer; white-space: nowrap;
     }
     .hb-menu:hover { background: var(--panel-2); }
     .hb-menu.open { background: var(--panel-2); border-color: var(--border); }
-    .hb-menu > mat-icon { flex: none; font-size: 18px; width: 18px; height: 18px; color: var(--muted); }
-    .hb-menu .caret { font-size: 18px; width: 18px; height: 18px; margin-left: -3px; color: var(--muted); }
+    .hb-menu > mat-icon { flex: none; font-size: 17px; width: 17px; height: 17px; color: var(--muted); }
+    .hb-menu .caret { font-size: 17px; width: 17px; height: 17px; margin-left: -3px; color: var(--muted); }
     /* File/Insert/View menus open left-aligned (they're not on the right edge) */
     .dropdown-menu.hb-drop { left: 0; right: auto; }
     .dropdown-menu.file-menu { min-width: 236px; max-height: 78vh; overflow-y: auto; }
 
     /* Boxed primary-action group so the core tools read as one cluster */
     .tool-group.boxed {
-      gap: 1px; padding: 2px; border-radius: 9px;
+      gap: 0; padding: 1px; border-radius: 8px;
       background: var(--bg-deep); border: 1px solid var(--border-soft);
     }
     .account-head { display: flex; align-items: center; gap: 10px; padding: 8px 10px 4px; }
