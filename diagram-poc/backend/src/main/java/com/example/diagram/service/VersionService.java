@@ -11,7 +11,7 @@ public interface VersionService {
 
     VersionSummary snapshot(Long diagramId, VersionRequest request, String userEmail);
 
-    List<VersionSummary> list(Long diagramId);
+    List<VersionSummary> list(Long diagramId, String viewerEmail);
 
-    VersionDetail get(Long versionId);
+    VersionDetail get(Long versionId, String viewerEmail);
 }

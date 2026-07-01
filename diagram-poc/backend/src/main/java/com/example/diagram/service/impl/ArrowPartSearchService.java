@@ -55,7 +55,9 @@ public class ArrowPartSearchService implements PartSearchService {
         if (designWin) {
             url.queryParam("dw", "true");
         }
-        return client.getJson(url.build().toUriString());
+        // encode() percent-encodes the query values (spaces, &, etc.) so a search
+        // term can't inject extra query parameters into the upstream URL.
+        return client.getJson(url.encode().build().toUriString());
     }
 
     @Override

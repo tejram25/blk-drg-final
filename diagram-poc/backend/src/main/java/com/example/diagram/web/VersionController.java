@@ -31,12 +31,12 @@ public class VersionController {
     }
 
     @GetMapping("/diagrams/{id}/versions")
-    public List<VersionSummary> list(@PathVariable Long id) {
-        return versions.list(id);
+    public List<VersionSummary> list(@PathVariable Long id, Authentication auth) {
+        return versions.list(id, auth.getName());
     }
 
     @GetMapping("/versions/{versionId}")
-    public VersionDetail get(@PathVariable Long versionId) {
-        return versions.get(versionId);
+    public VersionDetail get(@PathVariable Long versionId, Authentication auth) {
+        return versions.get(versionId, auth.getName());
     }
 }

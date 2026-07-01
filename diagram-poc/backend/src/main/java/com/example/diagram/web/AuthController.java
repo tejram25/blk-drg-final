@@ -166,6 +166,14 @@ public class AuthController {
                               HttpServletRequest request, HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, rawPassword));
+        // Prevent session fixation: issue a fresh session id on authentication so a
+        // pre-login (possibly attacker-fixed) session id can't carry into the
+        // authenticated session.
+        HttpSession existing = request.getSession(false);
+        if (existing != null) {
+            existing.invalidate();
+        }
+        request.getSession(true);
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);

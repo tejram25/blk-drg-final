@@ -1,5 +1,6 @@
 package com.example.diagram.service.impl;
 
+import com.example.diagram.domain.Diagram;
 import com.example.diagram.domain.DiagramVersion;
 import com.example.diagram.repository.DiagramRepository;
 import com.example.diagram.repository.DiagramVersionRepository;
@@ -30,16 +31,22 @@ class VersionServiceImplTest {
     @Mock private UserRepository users;
     @InjectMocks private VersionServiceImpl service;
 
+    private Diagram viewable() {
+        Diagram d = new Diagram();
+        d.setClassification("INTERNAL");
+        return d;
+    }
+
     @Test
     void snapshot_notFoundWhenDiagramMissing() {
-        when(diagrams.existsById(9L)).thenReturn(false);
+        when(diagrams.findById(9L)).thenReturn(Optional.empty());
         assertThrows(NotFoundException.class,
                 () -> service.snapshot(9L, new VersionRequest("v1", "{}"), "a@x.com"));
     }
 
     @Test
     void snapshot_savesWithLabelAuthorAndContent() {
-        when(diagrams.existsById(1L)).thenReturn(true);
+        when(diagrams.findById(1L)).thenReturn(Optional.of(viewable()));
         when(users.findByEmail("a@x.com")).thenReturn(Optional.empty());
         when(versions.save(any(DiagramVersion.class))).thenAnswer(inv -> {
             DiagramVersion v = inv.getArgument(0);
@@ -61,7 +68,7 @@ class VersionServiceImplTest {
 
     @Test
     void snapshot_defaultsBlankLabel() {
-        when(diagrams.existsById(1L)).thenReturn(true);
+        when(diagrams.findById(1L)).thenReturn(Optional.of(viewable()));
         when(users.findByEmail("a@x.com")).thenReturn(Optional.empty());
         when(versions.save(any(DiagramVersion.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -75,6 +82,18 @@ class VersionServiceImplTest {
     @Test
     void get_notFoundWhenMissing() {
         when(versions.findById(7L)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> service.get(7L));
+        assertThrows(NotFoundException.class, () -> service.get(7L, "a@x.com"));
+    }
+
+    @Test
+    void get_restrictedVersionHiddenFromNonOwner() {
+        DiagramVersion v = new DiagramVersion();
+        v.setId(7L); v.setDiagramId(2L); v.setContentJson("{}");
+        Diagram restricted = new Diagram();
+        restricted.setClassification("RESTRICTED");
+        restricted.setOwnerEmail("owner@x.com");
+        when(versions.findById(7L)).thenReturn(Optional.of(v));
+        when(diagrams.findById(2L)).thenReturn(Optional.of(restricted));
+        assertThrows(NotFoundException.class, () -> service.get(7L, "intruder@x.com"));
     }
 }

@@ -82,7 +82,13 @@ public class DiagramServiceImpl implements DiagramService {
         Diagram d = repository.findById(id).orElse(null);
         if (d == null) return;
         if (!canView(d, viewerEmail)) {
-            throw new AccessDeniedException("Not allowed to delete this diagram");
+            throw new NotFoundException("Diagram not found"); // hide restricted files
+        }
+        // Deleting is owner-only: a shared (INTERNAL/PUBLIC) diagram is visible and
+        // editable by the team, but only its owner may permanently remove it.
+        // (Ownerless legacy diagrams can be deleted by any authenticated user.)
+        if (d.getOwnerEmail() != null && !d.getOwnerEmail().equalsIgnoreCase(viewerEmail)) {
+            throw new AccessDeniedException("Only the owner can delete this diagram");
         }
         audit.record("diagram.delete", viewerEmail, id, d.getClassification());
         repository.deleteById(id);

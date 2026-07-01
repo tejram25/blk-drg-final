@@ -28,7 +28,7 @@ public class ArrowDesignWinService implements DesignWinService {
                 .queryParamIfPresent("customerName", opt(customerName))
                 .queryParamIfPresent("billToNumber", opt(billToNumber))
                 .queryParamIfPresent("operatingUnit", opt(operatingUnit))
-                .build().toUriString());
+                .encode().build().toUriString());
     }
 
     @Override
@@ -39,7 +39,7 @@ public class ArrowDesignWinService implements DesignWinService {
                 .queryParamIfPresent("customerName", opt(customerName))
                 .queryParamIfPresent("projectName", opt(projectName))
                 .queryParamIfPresent("billToNumber", opt(billToNumber))
-                .build().toUriString());
+                .encode().build().toUriString());
     }
 
     @Override
@@ -48,7 +48,7 @@ public class ArrowDesignWinService implements DesignWinService {
         return client.getJson(url("/boards")
                 .queryParamIfPresent("projectId", opt(projectId))
                 .queryParamIfPresent("projectName", opt(projectName))
-                .build().toUriString());
+                .encode().build().toUriString());
     }
 
     @Override
@@ -62,7 +62,7 @@ public class ArrowDesignWinService implements DesignWinService {
                 .queryParamIfPresent("registrationNum", opt(registrationNum))
                 .queryParamIfPresent("boardNum", opt(boardNum))
                 .queryParamIfPresent("trackingNum", opt(trackingNum))
-                .build().toUriString());
+                .encode().build().toUriString());
     }
 
     @Override
@@ -75,7 +75,7 @@ public class ArrowDesignWinService implements DesignWinService {
                 .queryParamIfPresent("projectId", opt(projectId))
                 .queryParamIfPresent("boardNum", opt(boardNum))
                 .queryParamIfPresent("projectName", opt(projectName))
-                .build().toUriString());
+                .encode().build().toUriString());
     }
 
     @Override
@@ -84,7 +84,7 @@ public class ArrowDesignWinService implements DesignWinService {
         return client.getJson(url("/sales")
                 .queryParamIfPresent("partNumber", opt(partNumber))
                 .queryParamIfPresent("mfrName", opt(mfrName))
-                .build().toUriString());
+                .encode().build().toUriString());
     }
 
     private UriComponentsBuilder url(String path) {
