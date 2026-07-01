@@ -110,6 +110,8 @@
                   (click)="partSearchOpen = !partSearchOpen"><mat-icon>travel_explore</mat-icon></button>
           <button mat-icon-button [class.on]="recsOpen" matTooltip="Recommendations (AI)"
                   (click)="openRecommendations()"><mat-icon>auto_awesome</mat-icon></button>
+          <button mat-icon-button [class.on]="reviewOpen" matTooltip="Design review (AI)"
+                  (click)="openDesignReview()"><mat-icon>rule</mat-icon></button>
         </div>
 
         <!-- Insert menu -->
@@ -693,6 +695,11 @@
       <app-recommendations-dialog *ngIf="recsOpen"
         [result]="recsResult" [loading]="recsLoading"
         (addPart)="onRecAddPart($event)" (close)="recsOpen = false"></app-recommendations-dialog>
+
+      <!-- AI design review -->
+      <app-design-review-dialog *ngIf="reviewOpen"
+        [result]="reviewResult" [loading]="reviewLoading"
+        (close)="reviewOpen = false"></app-design-review-dialog>
 
       <!-- Lifecycle & alternatives -->
       <app-lifecycle-dialog *ngIf="lifecycleOpen"

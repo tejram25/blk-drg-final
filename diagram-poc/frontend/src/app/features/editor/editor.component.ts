@@ -45,6 +45,8 @@ import { RecommendationsDialogComponent } from './components/recommendations-dia
 import { RecommendationItem, RecommendationResult, RecommendationService } from '../../core/services/recommendation.service';
 import { FeedbackDialogComponent } from './components/feedback-dialog/feedback-dialog.component';
 import { FeedbackRequest, FeedbackService } from '../../core/services/feedback.service';
+import { DesignReviewDialogComponent } from './components/design-review-dialog/design-review-dialog.component';
+import { DesignReviewResult, DesignReviewService, ReviewBlock, ReviewLink } from '../../core/services/design-review.service';
 import { TemplateDetail, TemplateService } from '../../core/services/template.service';
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { ELECTRICAL_SYMBOLS, registerElectricalShapes } from './electrical-shapes';
@@ -183,6 +185,7 @@ const PORT_GROUPS = {
     BomDialogComponent, CommandPaletteComponent, VersionsDialogComponent, CommentsPanelComponent,
     PartSearchPanelComponent, TemplatesDialogComponent, ExportDialogComponent, ProjectPanelComponent,
     LifecycleDialogComponent, RecommendationsDialogComponent, FeedbackDialogComponent,
+    DesignReviewDialogComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
@@ -205,6 +208,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
       { label: 'Save', icon: 'save', hint: 'Ctrl+S', run: () => this.save() },
       { label: 'Template repository', icon: 'dashboard_customize', run: () => this.openTemplates() },
       { label: 'Recommendations (AI)', icon: 'auto_awesome', run: () => this.openRecommendations() },
+      { label: 'Design review (AI)', icon: 'rule', run: () => this.openDesignReview() },
       { label: 'Save as template', icon: 'bookmark_add', run: () => this.openTemplates() },
       { label: 'Search parts', icon: 'travel_explore', run: () => (this.partSearchOpen = true) },
       { label: 'Project workspace', icon: 'work', run: () => (this.projectPanelOpen = true) },
@@ -357,6 +361,7 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     private lifecycleApi: LifecycleService,
     private recsApi: RecommendationService,
     private feedbackApi: FeedbackService,
+    private reviewApi: DesignReviewService,
     private sanitizer: DomSanitizer,
     public collab: CollabService,
     public i18n: TranslateService,
@@ -1900,6 +1905,42 @@ export class EditorComponent implements OnInit, AfterViewInit, AfterViewChecked,
     this.recsApi.recommend(goal, parts).subscribe({
       next: (res) => { this.recsResult = res; this.recsLoading = false; },
       error: () => { this.recsLoading = false; this.recsOpen = false; },
+    });
+  }
+
+  // ---------- AI design review ----------
+
+  reviewOpen = false;
+  reviewLoading = false;
+  reviewResult: DesignReviewResult | null = null;
+
+  /** Send the diagram's blocks + connections for an AI/rule-based design review. */
+  openDesignReview(): void {
+    const nodes = this.graph.getNodes()
+      .filter((n) => n.shape !== 'img-node' && n.shape !== 'supplier-trace');
+    const idToName = new Map<string, string>();
+    const blocks: ReviewBlock[] = [];
+    for (const n of nodes) {
+      const name = String(n.attr('title/text') || n.attr('label/text') || '').trim();
+      idToName.set(n.id, name);
+      if (name) blocks.push({ name, type: String(n.getData()?.typeKey || n.shape || '') });
+    }
+    const links: ReviewLink[] = this.graph.getEdges().map((e) => ({
+      from: idToName.get(e.getSourceCellId()) || '',
+      to: idToName.get(e.getTargetCellId()) || '',
+    })).filter((l) => l.from && l.to);
+
+    if (!blocks.length) {
+      this.notify.info('Add some blocks to the canvas first, then run a design review.');
+      return;
+    }
+    const goal = this.diagramName && this.diagramName !== 'Untitled diagram' ? this.diagramName : '';
+    this.reviewResult = null;
+    this.reviewLoading = true;
+    this.reviewOpen = true;
+    this.reviewApi.review(goal, blocks, links).subscribe({
+      next: (res) => { this.reviewResult = res; this.reviewLoading = false; },
+      error: () => { this.reviewLoading = false; this.reviewOpen = false; },
     });
   }
 
