@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import * as go from 'gojs';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
@@ -95,7 +95,7 @@ export class GojsCollabService {
   followUid: string | null = null;
   applyingViewport = false;
 
-  constructor(private notify: NotificationService) {}
+  constructor(private notify: NotificationService, private zone: NgZone) {}
 
   get active(): boolean { return this.provider != null; }
   get isApplyingRemote(): boolean { return this.applyingRemote; }
@@ -116,7 +116,7 @@ export class GojsCollabService {
     this.cells = this.doc.getMap('cells');
     this.chatArr = this.doc.getArray('chat');
 
-    this.provider.on('status', (e: { status: string }) => { this.connected = e.status === 'connected'; });
+    this.provider.on('status', (e: { status: string }) => this.zone.run(() => { this.connected = e.status === 'connected'; }));
 
     // ---- presence / cursors ----
     const awareness = this.provider.awareness;
@@ -130,8 +130,8 @@ export class GojsCollabService {
     this.myColor = color;
 
     this.refreshMessages();
-    this.chatArr.observe(() => this.refreshMessages());
-    awareness.on('change', () => this.onAwarenessChange(awareness));
+    this.chatArr.observe(() => this.zone.run(() => this.refreshMessages()));
+    awareness.on('change', () => this.zone.run(() => this.onAwarenessChange(awareness)));
 
     // seed-vs-adopt on first sync
     this.provider.on('sync', (isSynced: boolean) => {

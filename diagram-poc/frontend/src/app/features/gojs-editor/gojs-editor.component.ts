@@ -179,6 +179,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.autosaveTimer) clearTimeout(this.autosaveTimer);
+    if (this.raf) cancelAnimationFrame(this.raf);
     this.collab.leave();
     if (this.overview) this.overview.div = null;
     if (this.diagram) this.diagram.div = null;
@@ -311,6 +312,32 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       }, 'style link');
     });
     this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
+    this.startAnimations();
+  }
+
+  /** Rotary animated symbols spin; the rest pulse — GoJS canvas can't run the
+   * original CSS keyframes, so motion is driven here instead. */
+  private readonly spinShapes = new Set(['anim-fan', 'anim-gear', 'anim-generator', 'anim-wind-turbine']);
+  private raf = 0;
+  private startAnimations(): void {
+    let t = 0;
+    const loop = () => {
+      t += 1;
+      const pulse = 0.55 + 0.45 * Math.abs(Math.sin(t / 22));
+      const angle = (t * 3) % 360;
+      if (this.diagram) {
+        this.diagram.nodes.each((n) => {
+          const shape = n.data?.shape;
+          if (typeof shape !== 'string' || !shape.startsWith('anim-')) return;
+          const main = n.findMainElement();
+          if (!main) return;
+          if (this.spinShapes.has(shape)) main.angle = angle;
+          else main.opacity = pulse;
+        });
+      }
+      this.raf = requestAnimationFrame(loop);
+    };
+    this.zone.runOutsideAngular(() => { this.raf = requestAnimationFrame(loop); });
   }
 
   private emptyModel(): go.GraphLinksModel {
@@ -323,23 +350,49 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return m;
   }
 
+  /** Show/hide a node's link ports on hover (the body itself stays movable). */
+  private hoverPorts(obj: go.GraphObject, on: boolean): void {
+    const node = obj.part;
+    if (node instanceof go.Node) node.ports.each((p) => { if (p.portId) p.opacity = on ? 1 : 0; });
+  }
+
   private buildTemplates($: typeof go.GraphObject.make): void {
-    const portItem = $(
+    // A small edge port (hidden until hover) used as a link handle.
+    const sidePort = (id: string, spot: go.Spot) => $(
+      go.Shape, 'Circle',
+      {
+        desiredSize: new go.Size(9, 9), fill: '#0f172a', stroke: '#22d3ee', strokeWidth: 1.5,
+        cursor: 'crosshair', opacity: 0, alignment: spot, alignmentFocus: go.Spot.Center,
+        portId: id, fromLinkable: true, toLinkable: true, fromSpot: spot, toSpot: spot,
+      });
+    const sidePorts = () => [
+      sidePort('T', go.Spot.Top), sidePort('R', go.Spot.Right),
+      sidePort('B', go.Spot.Bottom), sidePort('L', go.Spot.Left),
+    ];
+    // Data-driven pin port for schematic / basic shapes (hidden until hover).
+    const pinPort = $(
       go.Panel, 'Spot',
       new go.Binding('alignment', 'spot', go.Spot.parse),
       $(go.Shape, 'Circle',
-        { width: 8, height: 8, fill: '#0f172a', stroke: '#22d3ee', strokeWidth: 1.5, cursor: 'crosshair',
-          fromLinkable: true, toLinkable: true, fromSpot: go.Spot.AllSides, toSpot: go.Spot.AllSides },
+        { desiredSize: new go.Size(9, 9), fill: '#0f172a', stroke: '#22d3ee', strokeWidth: 1.5,
+          cursor: 'crosshair', opacity: 0, fromLinkable: true, toLinkable: true },
         new go.Binding('portId', 'portId')),
     );
+    // Common node options: hover reveals ports; body is movable (not a link starter).
+    const hover = {
+      mouseEnter: (_e: go.InputEvent, o: go.GraphObject) => this.hoverPorts(o, true),
+      mouseLeave: (_e: go.InputEvent, o: go.GraphObject) => this.hoverPorts(o, false),
+    };
+    // The body is a non-linkable port "" so imported links can still attach to it,
+    // while dragging the body moves the node instead of drawing a link.
+    const body = { portId: '', fromLinkable: false, toLinkable: false, cursor: 'move' };
 
     const block = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center },
+      { locationSpot: go.Spot.Center, ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
-      $(go.Panel, 'Auto',
-        { portId: '', cursor: 'pointer', fromLinkable: true, toLinkable: true, fromSpot: go.Spot.AllSides, toSpot: go.Spot.AllSides },
+      $(go.Panel, 'Auto', body,
         $(go.Shape, 'RoundedRectangle',
           { parameter1: 10, fill: '#ffffff', stroke: '#d2d6dc', strokeWidth: 1.5, minSize: new go.Size(150, 52) },
           new go.Binding('stroke', 'color')),
@@ -353,17 +406,17 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
               new go.Binding('text').makeTwoWay()),
             $(go.TextBlock, { font: '10px Roboto, sans-serif', stroke: '#9aa0a8', alignment: go.Spot.Left },
               new go.Binding('text', 'subtitle'))))),
+      ...sidePorts(),
     );
     this.diagram.nodeTemplateMap.set('block', block);
     this.diagram.nodeTemplate = block;
 
     const part = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center },
+      { locationSpot: go.Spot.Center, ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
-      $(go.Panel, 'Auto',
-        { portId: '', cursor: 'pointer', fromLinkable: true, toLinkable: true, fromSpot: go.Spot.AllSides, toSpot: go.Spot.AllSides },
+      $(go.Panel, 'Auto', body,
         $(go.Shape, 'RoundedRectangle', { parameter1: 10, fill: '#ffffff', stroke: '#d2d6dc', strokeWidth: 1.5 }),
         $(go.Panel, 'Table', { margin: 12, minSize: new go.Size(216, 0) },
           $(go.RowColumnDefinition, { column: 0, stretch: go.GraphObject.Horizontal }),
@@ -381,53 +434,54 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
             { itemTemplate: $(go.Panel, 'Auto', { alignment: go.Spot.Left },
                 $(go.TextBlock, { font: '10.5px Roboto, sans-serif', stroke: '#374151', alignment: go.Spot.Left },
                   new go.Binding('text', ''))) }))),
+      ...sidePorts(),
     );
     this.diagram.nodeTemplateMap.set('part', part);
 
     const image = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true },
+      { locationSpot: go.Spot.Center, resizable: true, ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
-      $(go.Panel, 'Vertical',
-        { portId: '', cursor: 'pointer', fromLinkable: true, toLinkable: true, fromSpot: go.Spot.AllSides, toSpot: go.Spot.AllSides },
+      $(go.Panel, 'Vertical', body,
         $(go.Picture, { width: 120, height: 90, imageStretch: go.GraphObject.Uniform },
           new go.Binding('source', 'img'),
           new go.Binding('desiredSize', 'size', go.Size.parse).makeTwoWay(go.Size.stringify)),
         $(go.TextBlock, { font: '11px Roboto, sans-serif', stroke: '#94a3b8', editable: true, margin: new go.Margin(4, 0, 0, 0) },
           new go.Binding('text').makeTwoWay())),
+      ...sidePorts(),
     );
     this.diagram.nodeTemplateMap.set('image', image);
 
     const symbol = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true },
+      { locationSpot: go.Spot.Center, resizable: true, itemTemplate: pinPort, ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('desiredSize', 'size', go.Size.parse).makeTwoWay(go.Size.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
-      $(go.Picture, { imageStretch: go.GraphObject.Fill, background: 'transparent' },
+      new go.Binding('itemArray', 'ports'),
+      $(go.Picture, { isPanelMain: true, imageStretch: go.GraphObject.Fill, background: 'transparent', ...body },
         new go.Binding('source', 'source'),
         new go.Binding('desiredSize', 'size', go.Size.parse)),
       $(go.TextBlock, { alignment: new go.Spot(0.5, 1, 0, 14), alignmentFocus: go.Spot.Top,
         font: '11px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
         new go.Binding('text').makeTwoWay()),
-      $(go.Panel, 'Spot', new go.Binding('itemArray', 'ports'), { itemTemplate: portItem }),
     );
     this.diagram.nodeTemplateMap.set('symbol', symbol);
 
     const basic = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true },
+      { locationSpot: go.Spot.Center, resizable: true, itemTemplate: pinPort, ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('desiredSize', 'size', go.Size.parse).makeTwoWay(go.Size.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
-      $(go.Picture, { imageStretch: go.GraphObject.Fill, background: 'transparent' },
+      new go.Binding('itemArray', 'ports'),
+      $(go.Picture, { isPanelMain: true, imageStretch: go.GraphObject.Fill, background: 'transparent', ...body },
         new go.Binding('source', 'source'),
         new go.Binding('desiredSize', 'size', go.Size.parse)),
       $(go.TextBlock, { alignment: go.Spot.Center, font: '13px Roboto, sans-serif', stroke: '#1f2937',
         editable: true, maxSize: new go.Size(160, NaN), textAlign: 'center' },
         new go.Binding('text').makeTwoWay()),
-      $(go.Panel, 'Spot', new go.Binding('itemArray', 'ports'), { itemTemplate: portItem }),
     );
     this.diagram.nodeTemplateMap.set('basic', basic);
 
@@ -1027,9 +1081,19 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private applyContent(contentJson: string): void {
     if (!contentJson) { this.newDiagram(); return; }
     let parsed: any; try { parsed = JSON.parse(contentJson); } catch { parsed = null; }
+    // Legacy X6 diagrams ({cells:[...]}) are converted to the GoJS model.
     if (parsed && Array.isArray(parsed.cells)) {
-      this.zone.run(() => this.notify.info('This diagram was created in the previous editor and cannot be shown here yet.'));
-      this.newDiagram(); return;
+      const { nodes, links } = this.convertX6(parsed.cells);
+      this.suppressAutosave = true;
+      this.zone.runOutsideAngular(() => {
+        const gm = this.emptyModel();
+        gm.nodeDataArray = nodes; gm.linkDataArray = links;
+        this.diagram.model = gm;
+        this.diagram.commandHandler.zoomToFit();
+      });
+      this.suppressAutosave = false;
+      this.syncSelection();
+      return;
     }
     this.suppressAutosave = true;
     this.zone.runOutsideAngular(() => {
@@ -1041,6 +1105,49 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     this.suppressAutosave = false;
     this.syncSelection();
+  }
+
+  /** Convert a legacy AntV X6 graph.toJSON() ({cells:[...]}) into GoJS data. */
+  private convertX6(cells: any[]): { nodes: go.ObjectData[]; links: go.ObjectData[] } {
+    const nodes: go.ObjectData[] = [];
+    const links: go.ObjectData[] = [];
+    for (const c of cells || []) {
+      const isEdge = c?.shape === 'edge' || c?.source || c?.target;
+      if (isEdge) {
+        const from = c.source?.cell ?? (typeof c.source === 'string' ? c.source : null);
+        const to = c.target?.cell ?? (typeof c.target === 'string' ? c.target : null);
+        if (from && to) links.push({ category: 'link', from, to, fromPort: '', toPort: '' });
+        continue;
+      }
+      const pos = c.position ?? { x: c.x ?? 0, y: c.y ?? 0 };
+      const size = c.size ?? { width: c.width ?? 140, height: c.height ?? 60 };
+      const loc = go.Point.stringify(new go.Point(pos.x + size.width / 2, pos.y + size.height / 2));
+      const a = c.attrs ?? {};
+      const key = c.id;
+      const shape: string = c.shape ?? '';
+      if (shape === 'block-card') {
+        nodes.push({ key, category: 'block', loc, text: a.title?.text ?? '',
+          color: a.badge?.fill ?? '#1d4ed8', icon: a.icon?.text ?? 'widgets', subtitle: a.subtitle?.text ?? 'Module' });
+      } else if (shape === 'part-card') {
+        const part = c.data?.part;
+        const base = part ? this.buildPartData(part) : { category: 'part', text: a.title?.text ?? 'Part', supplier: a.supplier?.text ?? '', specs: [], quantity: 1 };
+        nodes.push({ ...base, key, loc });
+      } else if (shape === 'img-node') {
+        nodes.push({ key, category: 'image', loc, size: `${size.width} ${size.height}`,
+          img: a.img?.['xlink:href'] ?? a.img?.xlinkHref ?? '', text: a.label?.text ?? '' });
+      } else {
+        const info = symbolInfo(shape);
+        if (info) {
+          nodes.push({ key, category: info.basic ? 'basic' : 'symbol', shape, source: info.source,
+            size: `${info.width} ${info.height}`, loc, text: a.label?.text ?? '',
+            ports: info.pins.map((p, i) => ({ portId: `p${i}`, spot: `${p.fx} ${p.fy}` })) });
+        } else {
+          nodes.push({ key, category: 'block', loc, text: a.label?.text ?? a.title?.text ?? shape ?? 'Node',
+            color: '#64748b', icon: 'crop_square', subtitle: 'Imported' });
+        }
+      }
+    }
+    return { nodes, links };
   }
   private scheduleAutosave(): void {
     if (this.suppressAutosave || this.collab.isApplyingRemote) return;
