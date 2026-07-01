@@ -1,9 +1,26 @@
+/* Self-hosted fonts (no Google Fonts CDN dependency, so icons and text always
+   render even when that CDN is blocked/slow). */
+@import 'material-icons/iconfont/filled.css';
+@import '@fontsource/roboto/400.css';
+@import '@fontsource/roboto/500.css';
+@import '@fontsource/roboto/700.css';
+
 /* Angular Material base theme (dark) — component colors are
    re-tokenized below to match the graphite/amber app theme. */
 @import '@angular/material/prebuilt-themes/purple-green.css';
 
 /* Global styles */
 * { box-sizing: border-box; }
+
+/* The Material Icons font ligatures need these base styles (mat-icon sets its
+   own font-family). Ensure the class is available for plain <span> usage too. */
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal; font-style: normal; line-height: 1;
+  letter-spacing: normal; text-transform: none; white-space: nowrap;
+  word-wrap: normal; direction: ltr; -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
 
 /* ---- Material token overrides → graphite/amber theme ---- */
 body {
