@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -56,11 +57,25 @@ public class ArrowApiClient {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Arrow API is not configured. Please try again later.");
         }
+        // The callers already fully percent-encode the URL (UriComponentsBuilder.encode()).
+        // Passing that String to RestClient.uri(String) would treat it as a URI *template*
+        // and encode it a second time ('%20' -> '%2520'), so query values like a customer
+        // name with spaces reach Arrow garbled and it returns "Success" with no data.
+        // Passing a java.net.URI sends the URL verbatim, with no further encoding.
+        final URI uri;
+        try {
+            uri = URI.create(url);
+        } catch (IllegalArgumentException ex) {
+            log.error("Arrow GET URL is not a valid URI: {}", url);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Could not build a valid Arrow API request URL.");
+        }
         long started = System.currentTimeMillis();
-        log.info("→ Arrow API GET {}", url);
+        log.info("→ Arrow API GET {}", uri);
         try {
             String body = http.get()
-                    .uri(url)
+                    .uri(uri)
+                    .accept(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + token())
                     .retrieve()
                     .body(String.class);
