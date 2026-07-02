@@ -89,3 +89,11 @@
 @keyframes pol-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes pol-pop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .bom-backdrop, .bom-card { animation: none; } }
+
+/* Supplier picker inside the BOM table */
+.bom-supplier {
+  font: inherit; font-size: 12px; color: var(--text, #ececef);
+  background: var(--bg-deep, #0e0f11); border: 1px solid var(--border, #34353c);
+  border-radius: 6px; padding: 3px 6px; max-width: 160px;
+}
+.bom-supplier:focus { outline: none; border-color: var(--accent, #f5a623); }

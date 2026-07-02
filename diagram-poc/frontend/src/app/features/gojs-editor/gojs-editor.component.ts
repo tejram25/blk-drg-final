@@ -1235,10 +1235,23 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ---- BOM / AI / lifecycle / feedback / project ----
 
+  /** Boxes (shapes/blocks) that carry an AI-linked component. */
+  private linkedComponentNodes(): go.Node[] {
+    const out: go.Node[] = [];
+    this.diagram.nodes.each((n) => {
+      const d = n.data;
+      if (d && d.category !== 'part' && d.partNumber && String(d.partNumber).trim()) out.push(n);
+    });
+    return out;
+  }
   exportBom(): void {
     const parts = this.partNodes().map((n) => ({ ...n.data.part, __bomQty: n.data.quantity || 1 })).filter((p) => p && Object.keys(p).length > 1);
-    if (!parts.length) { this.notify.info('No catalogue parts on the canvas to build a BOM from. Search and add parts first.'); return; }
-    this.bomRows = this.bomService.build(parts);
+    const linked = this.linkedComponentNodes().map((n) => ({ ...n.data }));
+    if (!parts.length && !linked.length) {
+      this.notify.info('No parts to build a BOM from. Add catalogue parts, or link components to boxes (Suggest component).');
+      return;
+    }
+    this.bomRows = this.bomService.buildCombined(parts, linked);
   }
   closeBom(): void { this.bomRows = null; }
 

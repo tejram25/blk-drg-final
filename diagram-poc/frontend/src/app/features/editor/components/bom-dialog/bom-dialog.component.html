@@ -28,7 +28,15 @@
                 <span class="desc">{{ r.description }}</span>
               }</td>
               <td>{{ r.manufacturer || '—' }}</td>
-              <td>{{ r.supplier || '—' }}</td>
+              <td>
+                @if (r.suppliers && r.suppliers.length > 1) {
+                  <select class="bom-supplier" [(ngModel)]="r.supplier">
+                    @for (s of r.suppliers; track s.name) { <option [value]="s.name">{{ s.name }}</option> }
+                  </select>
+                } @else {
+                  {{ r.supplier || '—' }}
+                }
+              </td>
               <td class="qty">{{ r.quantity }}</td>
             </tr>
           }
