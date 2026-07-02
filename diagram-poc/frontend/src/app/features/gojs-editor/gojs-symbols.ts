@@ -31,9 +31,17 @@ export interface SymbolInfo {
   basic: boolean;
 }
 
+/**
+ * Padding around the drawing so strokes on the geometry boundary (stroke-width 2
+ * + round caps) aren't clipped by the viewBox — without it, shapes lose their
+ * right/bottom edges and wire-end caps get cut off.
+ */
+const PAD = 3;
+
 function encodeSvg(inner: string, w: number, h: number): string {
   const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${inner}</svg>`;
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-PAD} ${-PAD} ${w + PAD * 2} ${h + PAD * 2}" ` +
+    `width="${w + PAD * 2}" height="${h + PAD * 2}">${inner}</svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
@@ -86,13 +94,18 @@ function basicInner(def: BasicShapeDef, dark: boolean): string {
 export function symbolInfo(shape: string | undefined, dark = true): SymbolInfo | null {
   if (!shape) return null;
 
+  // Padded dimensions/pin fractions so the drawing (incl. boundary strokes)
+  // fits fully inside the picture. Pins shift by PAD in the padded space.
+  const dims = (w: number, h: number) => ({ width: w + PAD * 2, height: h + PAD * 2 });
+  const pinsOf = (pins: { x: number; y: number }[], w: number, h: number) =>
+    pins.map((p) => ({ fx: (p.x + PAD) / (w + PAD * 2), fy: (p.y + PAD) / (h + PAD * 2) }));
+
   const elec = ELECTRICAL_SYMBOLS[shape];
   if (elec) {
     return {
       source: encodeSvg(electricalInner(elec, dark), elec.width, elec.height),
-      width: elec.width,
-      height: elec.height,
-      pins: elec.pins.map((p) => ({ fx: p.x / elec.width, fy: p.y / elec.height })),
+      ...dims(elec.width, elec.height),
+      pins: pinsOf(elec.pins, elec.width, elec.height),
       basic: false,
     };
   }
@@ -102,9 +115,8 @@ export function symbolInfo(shape: string | undefined, dark = true): SymbolInfo |
     // Animated components use their own baked mid-tone palette (readable on both).
     return {
       source: encodeSvg(partsToSvg(shape), anim.width, anim.height),
-      width: anim.width,
-      height: anim.height,
-      pins: anim.pins.map((p) => ({ fx: p.x / anim.width, fy: p.y / anim.height })),
+      ...dims(anim.width, anim.height),
+      pins: pinsOf(anim.pins, anim.width, anim.height),
       basic: false,
     };
   }
@@ -113,8 +125,7 @@ export function symbolInfo(shape: string | undefined, dark = true): SymbolInfo |
   if (basic) {
     return {
       source: encodeSvg(basicInner(basic, dark), basic.width, basic.height),
-      width: basic.width,
-      height: basic.height,
+      ...dims(basic.width, basic.height),
       // basic shapes get four side ports (top/right/bottom/left)
       pins: [
         { fx: 0.5, fy: 0 },

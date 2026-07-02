@@ -37,3 +37,9 @@
 @media (max-width: 720px) {
   .kbd-hints { display: none; }
 }
+
+/* ---- Modern polish ---- */
+.statusbar {
+  background: color-mix(in srgb, var(--panel, #1d1e23) 88%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}

@@ -122,7 +122,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   // wire dock
   readonly wireColors = ['#22d3ee', '#22c55e', '#f5a623', '#ef4444', '#a78bfa', '#64748b'];
   wireColor = '#22d3ee';
-  wireStyle: 'flow' | 'dashed' | 'solid' = 'solid';
+  /** Animated "flowing current" dashes by default, matching the classic editor. */
+  wireStyle: 'flow' | 'dashed' | 'solid' = 'flow';
   wireWidth = 2;
   wireRouter: 'manhattan' | 'normal' | 'smooth' = 'manhattan';
   wirePop: 'color' | 'style' | null = null;
@@ -318,6 +319,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         m.set(link.data, 'color', this.wireColor);
         m.set(link.data, 'width', this.wireWidth);
         m.set(link.data, 'dash', this.wireStyle === 'solid' ? null : [6, 3]);
+        m.set(link.data, 'flow', this.wireStyle === 'flow');
         m.set(link.data, 'routing', this.wireRouter);
       }, 'style link');
     });
@@ -343,6 +345,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           if (!main) return;
           if (this.spinShapes.has(shape)) main.angle = angle;
           else main.opacity = pulse;
+        });
+        // "Flowing current" wires: march the dash pattern along flow-style links.
+        // strokeDashOffset must be non-negative in GoJS, so run a decreasing
+        // positive sawtooth over one dash period (6 + 3) — dashes flow forward.
+        const dashOffset = 9 - ((t * 0.6) % 9);
+        this.diagram.links.each((l) => {
+          if (l.data?.flow && l.path) l.path.strokeDashOffset = dashOffset;
         });
       }
       this.raf = requestAnimationFrame(loop);
@@ -737,7 +746,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
   setWireColor(c: string): void { this.wireColor = c; this.applyWire('color', c); }
-  setWireStyle(s: 'flow' | 'dashed' | 'solid'): void { this.wireStyle = s; this.applyWire('dash', this.wireLineDash()); }
+  setWireStyle(s: 'flow' | 'dashed' | 'solid'): void {
+    this.wireStyle = s;
+    this.applyWire('dash', this.wireLineDash());
+    this.applyWire('flow', s === 'flow');
+  }
   setWireWidth(w: number): void { this.wireWidth = w; this.applyWire('width', w); }
   setWireRouter(r: 'manhattan' | 'normal' | 'smooth'): void { this.wireRouter = r; this.applyWire('routing', r); }
   toggleWirePop(which: 'color' | 'style'): void { this.wirePop = this.wirePop === which ? null : which; }
@@ -749,7 +762,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const d = link.data || {};
     this.wireColor = d.color || this.wireColor;
     this.wireWidth = d.width || this.wireWidth;
-    this.wireStyle = !d.dash ? 'solid' : 'dashed';
+    this.wireStyle = !d.dash ? 'solid' : (d.flow ? 'flow' : 'dashed');
     this.wireRouter = d.routing || this.wireRouter;
   }
 

@@ -67,3 +67,10 @@
 }
 .cm-send[disabled] { opacity: 0.5; cursor: default; }
 .cm-send mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+/* ---- Modern polish: glass dock ---- */
+.cm-dock {
+  background: color-mix(in srgb, var(--panel, #1d1e23) 86%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: -14px 0 40px rgba(0, 0, 0, .45);
+}

@@ -49,3 +49,20 @@
 .rc-add mat-icon { font-size: 18px; width: 18px; height: 18px; }
 
 .rc-disclaimer { flex: none; margin: 0; padding: 10px 20px; font-size: 11px; color: var(--faint, #6b7280); border-top: 1px solid var(--border-soft, #2b2c32); }
+
+/* ---- Modern polish: glass dialog ---- */
+.rc-backdrop {
+  background: rgba(8, 9, 12, .55);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: pol-fade .15s ease;
+}
+.rc-card {
+  background: color-mix(in srgb, var(--panel, #1d1e23) 90%, transparent);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-radius: 14px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .04) inset;
+  animation: pol-pop .16s cubic-bezier(.2, .8, .25, 1);
+}
+@keyframes pol-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pol-pop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .rc-backdrop, .rc-card { animation: none; } }

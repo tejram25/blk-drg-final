@@ -51,3 +51,10 @@
 @media (max-width: 760px) {
   .zoom-dock { right: 12px; bottom: 12px; }
 }
+
+/* ---- Modern polish ---- */
+.zoom-dock {
+  background: color-mix(in srgb, var(--panel, #1d1e23) 84%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+}
