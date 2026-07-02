@@ -247,6 +247,27 @@
                                                     <span>{{ i18n.td(b.label) }}</span>
                                                   </div>
                                                 }
+                                                @if (b.shape && isElectrical(b.shape)) {
+                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)">
+                                                    <svg [attr.viewBox]="symbolViewBox(b.shape)" width="62" [attr.height]="isIc(b.shape) ? 40 : 26">
+                                                      @for (p of symbolPaths(b.shape); track p) {
+                                                        <path [attr.d]="p.d" [attr.fill]="p.fill ? '#e2e8f0' : 'none'"
+                                                          stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                                      }
+                                                      @for (t of symbolTitleTexts(b.shape); track t) {
+                                                        <text [attr.x]="t.x" [attr.y]="t.y" text-anchor="middle"
+                                                        fill="#e2e8f0" font-weight="700" [attr.font-size]="t.size ? t.size * 1.6 : 16">{{ t.text }}</text>
+                                                      }
+                                                    </svg>
+                                                    <span>{{ i18n.td(b.label) }}</span>
+                                                  </div>
+                                                }
+                                                @if (b.shape && !isShape(b.shape) && !isElectrical(b.shape)) {
+                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)">
+                                                    <svg [attr.viewBox]="symbolViewBox(b.shape)" width="62" height="40" [innerHTML]="animatedPreview(b.shape)"></svg>
+                                                    <span>{{ i18n.td(b.label) }}</span>
+                                                  </div>
+                                                }
                                                 @if (!b.shape) {
                                                   <div class="block-chip" draggable="true" (dragstart)="startDrag(b, $event)">
                                                     <span class="chip-badge" [style.background]="b.color"><span class="material-icons">{{ b.icon || 'widgets' }}</span></span>

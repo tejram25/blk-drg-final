@@ -31,7 +31,11 @@ import { exportDrawio, importDrawio } from './gojs-drawio';
 import {
   SHAPE_DEFS, shapeDef, isShapeKey, registerShapeFigures, shapePreviewInner,
 } from './gojs-shapes';
-import { legacyNativeNode } from './gojs-legacy';
+import { LEGACY_FIGURE } from './gojs-legacy';
+import { symbolInfo } from './gojs-symbols';
+import { BASIC_SHAPES, isBasic } from '../editor/basic-shapes';
+import { ELECTRICAL_SYMBOLS } from '../editor/electrical-shapes';
+import { ANIMATED_SYMBOLS, partsToSvg } from '../editor/animated-shapes';
 import { BomDialogComponent } from '../editor/components/bom-dialog/bom-dialog.component';
 import { RecommendationsDialogComponent } from '../editor/components/recommendations-dialog/recommendations-dialog.component';
 import { DesignReviewDialogComponent } from '../editor/components/design-review-dialog/design-review-dialog.component';
@@ -389,6 +393,15 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       sidePort('T', go.Spot.Top), sidePort('R', go.Spot.Right),
       sidePort('B', go.Spot.Bottom), sidePort('L', go.Spot.Left),
     ];
+    // Data-driven pin port for schematic / basic symbol shapes (hidden until hover).
+    const pinPort = $(
+      go.Panel, 'Spot',
+      new go.Binding('alignment', 'spot', go.Spot.parse),
+      $(go.Shape, 'Circle',
+        { desiredSize: new go.Size(9, 9), fill: '#0f172a', stroke: '#22d3ee', strokeWidth: 1.5,
+          cursor: 'crosshair', opacity: 0, fromLinkable: true, toLinkable: true },
+        new go.Binding('portId', 'portId')),
+    );
     // Common node options: hover reveals ports; body is movable (not a link starter).
     const hover = {
       mouseEnter: (_e: go.InputEvent, o: go.GraphObject) => this.hoverPorts(o, true),
@@ -492,6 +505,43 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     );
     this.diagram.nodeTemplateMap.set('shape', shape);
 
+    // Electrical schematic / animated symbols: an SVG picture (from the symbol
+    // libraries) with data-driven connection pins. Kept alongside the native
+    // GoJS figures so the full component palette and legacy diagrams render.
+    const symbol = $(
+      go.Node, 'Spot',
+      { locationSpot: go.Spot.Center, resizable: true, itemTemplate: pinPort, ...hover },
+      new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
+      new go.Binding('desiredSize', 'size', go.Size.parse).makeTwoWay(go.Size.stringify),
+      new go.Binding('visible', 'hidden', (h) => !h),
+      new go.Binding('itemArray', 'ports'),
+      $(go.Picture, { isPanelMain: true, imageStretch: go.GraphObject.Fill, background: 'transparent', ...body },
+        new go.Binding('source', 'source'),
+        new go.Binding('desiredSize', 'size', go.Size.parse)),
+      $(go.TextBlock, { alignment: new go.Spot(0.5, 1, 0, 14), alignmentFocus: go.Spot.Top,
+        font: '11px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
+        new go.Binding('text').makeTwoWay(),
+        new go.Binding('stroke', 'labelColor')),
+    );
+    this.diagram.nodeTemplateMap.set('symbol', symbol);
+
+    const basicSym = $(
+      go.Node, 'Spot',
+      { locationSpot: go.Spot.Center, resizable: true, itemTemplate: pinPort, ...hover },
+      new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
+      new go.Binding('desiredSize', 'size', go.Size.parse).makeTwoWay(go.Size.stringify),
+      new go.Binding('visible', 'hidden', (h) => !h),
+      new go.Binding('itemArray', 'ports'),
+      $(go.Picture, { isPanelMain: true, imageStretch: go.GraphObject.Fill, background: 'transparent', ...body },
+        new go.Binding('source', 'source'),
+        new go.Binding('desiredSize', 'size', go.Size.parse)),
+      $(go.TextBlock, { alignment: go.Spot.Center, font: '13px Roboto, sans-serif', stroke: '#1f2937',
+        editable: true, maxSize: new go.Size(160, NaN), textAlign: 'center' },
+        new go.Binding('text').makeTwoWay(),
+        new go.Binding('stroke', 'labelColor')),
+    );
+    this.diagram.nodeTemplateMap.set('basic', basicSym);
+
     this.diagram.linkTemplate = $(
       go.Link,
       { routing: go.Link.AvoidsNodes, corner: 8, relinkableFrom: true, relinkableTo: true, reshapable: true, resegmentable: true },
@@ -525,13 +575,19 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  /** Append the native GoJS shape / flowchart / logic figures to the palette. */
+  /** Append the native GoJS figures (Shapes / Flowchart / Logic) plus the
+   * electrical and animated symbol libraries to the palette. */
   private mergeShapeTypes(types: BlockType[]): BlockType[] {
     const present = new Set(types.map((t) => t.shape).filter(Boolean));
+    const add = (entries: [string, string][], cat: string, color: string): BlockType[] =>
+      entries.filter(([shape]) => !present.has(shape))
+        .map(([shape, label]) => ({ key: shape, label, color, category: cat, shape }));
     const shapes: BlockType[] = SHAPE_DEFS.filter((d) => !present.has(d.key)).map((d) => ({
       key: d.key, label: d.label, color: '#e2e8f0', category: d.category, shape: d.key,
     }));
-    return [...types, ...shapes];
+    const elec = add(Object.keys(ELECTRICAL_SYMBOLS).map((s) => [s, this.symbolLabel(s)]), 'Electrical', '#e2e8f0');
+    const anim = add(Object.keys(ANIMATED_SYMBOLS).map((s) => [s, this.symbolLabel(s)]), 'Animated', '#e2e8f0');
+    return [...types, ...shapes, ...elec, ...anim];
   }
 
   get categories(): string[] {
@@ -555,6 +611,40 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return html;
   }
 
+  isElectrical(shape: string): boolean { return shape.startsWith('elec-'); }
+  isBasicShape(shape: string): boolean { return isBasic(shape); }
+  isIc(shape: string): boolean { return (ELECTRICAL_SYMBOLS[shape]?.texts?.length ?? 0) > 0; }
+  symbolViewBox(shape: string): string {
+    const def = ELECTRICAL_SYMBOLS[shape] ?? ANIMATED_SYMBOLS[shape];
+    return def ? `-4 -4 ${def.width + 8} ${def.height + 8}` : '0 0 100 40';
+  }
+  symbolPaths(shape: string) { return ELECTRICAL_SYMBOLS[shape]?.paths ?? []; }
+  symbolTitleTexts(shape: string) { return (ELECTRICAL_SYMBOLS[shape]?.texts ?? []).filter((t) => t.bold); }
+  animatedPreview(shape: string): SafeHtml { return this.cachedSvg(shape, () => partsToSvg(shape)); }
+  private cachedSvg(key: string, make: () => string): SafeHtml {
+    let html = this.previewCache.get(key);
+    if (!html) { html = this.sanitizer.bypassSecurityTrustHtml(make()); this.previewCache.set(key, html); }
+    return html;
+  }
+  private symbolLabel(shape: string): string {
+    const k = shape.replace(/^(elec|anim)-/, '');
+    const names: Record<string, string> = {
+      resistor: 'Resistor', capacitor: 'Capacitor', inductor: 'Inductor', diode: 'Diode', led: 'LED',
+      npn: 'NPN Transistor', ground: 'Ground', vdc: 'DC Source', vac: 'AC Source', switch: 'Switch', fuse: 'Fuse',
+      pnp: 'PNP Transistor', nmos: 'N-MOSFET', zener: 'Zener Diode', pot: 'Potentiometer', 'cap-pol': 'Polarized Cap',
+      cell: 'Battery Cell', opamp: 'Op-Amp', crystal: 'Crystal', pushbutton: 'Push Button', lamp: 'Lamp',
+      ammeter: 'Ammeter', voltmeter: 'Voltmeter', motor: 'DC Motor', ic555: '555 Timer IC', lm741: 'LM741 Op-Amp',
+      '7805': '7805 Regulator', lm317: 'LM317 Regulator', '7400': '7400 NAND', '7404': '7404 Inverter',
+      '74hc595': '74HC595 Shift Reg', l293d: 'L293D Motor Drv', pc817: 'PC817 Optocoupler', mcu: 'ATmega328 MCU',
+      esp32: 'ESP32 Module', 'robot-arm': 'Robotic Arm', siren: 'Siren Light', fan: 'Fan', conveyor: 'Conveyor',
+      gear: 'Gear Motor', antenna: 'Antenna Tower', pump: 'Pump', 'stack-light': 'Stack Light', piston: 'Piston',
+      tank: 'Liquid Tank', drone: 'Drone', 'glow-battery': 'Battery (Charging)', inverter: 'Inverter',
+      transformer: 'Transformer', solar: 'Solar Panel', 'wind-turbine': 'Wind Turbine', generator: 'Generator',
+      'ev-charger': 'EV Charger', pylon: 'Power Pylon', relay: 'Relay', heater: 'Heater', bulb: 'Bulb',
+    };
+    return names[k] ?? k;
+  }
+
   /** Label colour for shape captions, tuned to the current canvas theme. */
   private get labelColor(): string { return this.lightCanvas ? '#1f2937' : '#e2e8f0'; }
 
@@ -574,20 +664,41 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         size: `${def.w} ${def.h}`, loc: go.Point.stringify(loc), ...this.shapeTheme(),
       };
     }
+    const info = symbolInfo(b.shape, !this.lightCanvas);
+    if (info) {
+      return {
+        category: info.basic ? 'basic' : 'symbol', text: b.label, shape: b.shape, source: info.source,
+        size: `${info.width} ${info.height}`, loc: go.Point.stringify(loc), labelColor: this.labelColor,
+        ports: info.pins.map((p, i) => ({ portId: `p${i}`, spot: `${p.fx} ${p.fy}` })),
+      };
+    }
     return { category: 'block', text: b.label, subtitle: b.category || 'Module',
       color: b.color || '#1d4ed8', icon: b.icon || 'widgets', loc: go.Point.stringify(loc) };
   }
 
-  /** Recolour native shapes + labels for the current canvas theme. */
+  /** Recolour native shapes and regenerate symbol pictures for the canvas theme. */
   private retheme(): void {
     if (!this.diagram) return;
+    const dark = !this.lightCanvas;
     const theme = this.shapeTheme();
     this.zone.runOutsideAngular(() => this.diagram.commit((d) => {
       d.nodes.each((n) => {
-        if (n.data?.category !== 'shape') return;
-        d.model.set(n.data, 'fill', theme.fill);
-        d.model.set(n.data, 'stroke', theme.stroke);
-        d.model.set(n.data, 'labelColor', theme.labelColor);
+        const data = n.data;
+        if (data?.category === 'shape') {
+          // Palette shapes follow the theme; imported shapes keep their own colour.
+          if (!data.fixedColor) {
+            d.model.set(data, 'fill', theme.fill);
+            d.model.set(data, 'stroke', theme.stroke);
+          }
+          d.model.set(data, 'labelColor', theme.labelColor);
+          return;
+        }
+        const shape = data?.shape;
+        if (typeof shape !== 'string') return;
+        const info = symbolInfo(shape, dark);
+        if (!info) return;
+        d.model.set(data, 'source', info.source);
+        d.model.set(data, 'labelColor', theme.labelColor);
       });
     }, 'retheme'));
   }
@@ -655,12 +766,17 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (d?.category === 'image') return this.i18n.td('Image');
     const def = shapeDef(shape);
     if (def) return `${this.i18n.td(def.category)} · ${def.label}`;
+    if (shape.startsWith('elec-')) return `${this.i18n.td('Electrical')} · ${this.symbolLabel(shape)}`;
+    if (shape.startsWith('anim-')) return `${this.i18n.td('Animated')} · ${this.symbolLabel(shape)}`;
+    if (isBasic(shape)) return `${this.i18n.td('Shapes')} · ${BASIC_SHAPES[shape]?.label ?? 'Shape'}`;
     return this.i18n.td('Component');
   }
   get defaultCategory(): string {
     const d = this.selectedNode?.data; const shape = d?.shape ?? '';
     const def = shapeDef(shape);
     if (def) return def.category;
+    if (shape.startsWith('elec-')) return 'Electrical';
+    if (shape.startsWith('anim-')) return 'Animated';
     if (d?.category === 'image') return 'Image';
     return 'Blocks';
   }
@@ -1171,9 +1287,28 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         nodes.push({ key, category: 'image', loc, size: `${size.width} ${size.height}`,
           img: a.img?.['xlink:href'] ?? a.img?.xlinkHref ?? '', text: a.label?.text ?? '' });
       } else {
-        // Legacy schematic (elec-*) / animated (anim-*) symbols and basic shapes are
-        // remapped to native GoJS blocks/figures so old diagrams render properly.
-        nodes.push({ key, loc, ...legacyNativeNode(shape, a.label?.text ?? a.title?.text ?? '', size.width, size.height) });
+        const info = symbolInfo(shape);
+        if (info) {
+          // Electrical / animated / basic symbols → SVG-picture symbol nodes.
+          nodes.push({ key, category: info.basic ? 'basic' : 'symbol', shape, source: info.source,
+            size: `${info.width} ${info.height}`, loc, text: a.label?.text ?? '',
+            ports: info.pins.map((p, i) => ({ portId: `p${i}`, spot: `${p.fx} ${p.fy}` })) });
+        } else {
+          // Plain rectangles / geometry → native figure carrying the cell's colours.
+          const bodyAttr = a.body ?? a.rect ?? {};
+          const fill = bodyAttr.fill && bodyAttr.fill !== 'none' ? bodyAttr.fill : null;
+          const stroke = bodyAttr.stroke && bodyAttr.stroke !== 'none' ? bodyAttr.stroke : null;
+          if (LEGACY_FIGURE[shape] || fill || stroke) {
+            const figure = (bodyAttr.rx ?? 0) > 0 ? 'RoundedRectangle' : (LEGACY_FIGURE[shape] ?? 'Rectangle');
+            const t = this.shapeTheme();
+            nodes.push({ key, category: 'shape', figure, loc, size: `${size.width} ${size.height}`,
+              text: a.label?.text ?? '', fill: fill ?? t.fill, stroke: stroke ?? t.stroke,
+              labelColor: t.labelColor, fixedColor: !!(fill || stroke) });
+          } else {
+            nodes.push({ key, category: 'block', loc, text: a.label?.text ?? a.title?.text ?? shape ?? 'Node',
+              color: '#64748b', icon: 'crop_square', subtitle: 'Imported' });
+          }
+        }
       }
     }
     return { nodes, links };
