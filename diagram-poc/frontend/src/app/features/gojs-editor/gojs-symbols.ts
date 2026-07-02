@@ -12,10 +12,11 @@ import { ELECTRICAL_SYMBOLS, SymbolDef } from '../editor/electrical-shapes';
 import { ANIMATED_SYMBOLS, partsToSvg } from '../editor/animated-shapes';
 import { BASIC_SHAPES, BasicShapeDef } from '../editor/basic-shapes';
 
-/** Line/stroke colour used for schematic symbols (matches the X6 palette). */
-const SYMBOL_STROKE = '#e2e8f0';
-const BASIC_STROKE = '#334155';
-const BASIC_FILL = '#ffffff';
+/** Stroke colours per canvas theme. Light stroke reads on the dark canvas;
+ * dark stroke reads on the white canvas. */
+const STROKE_ON_DARK = '#e2e8f0';
+const STROKE_ON_LIGHT = '#334155';
+const MUTED = '#94a3b8';
 
 export interface SymbolInfo {
   /** SVG data-URI to feed a go.Picture `source`. */
@@ -37,11 +38,12 @@ function encodeSvg(inner: string, w: number, h: number): string {
 }
 
 /** Build the inner SVG for an electrical schematic symbol. */
-function electricalInner(def: SymbolDef): string {
+function electricalInner(def: SymbolDef, dark: boolean): string {
+  const s = dark ? STROKE_ON_DARK : STROKE_ON_LIGHT;
   const paths = def.paths
     .map(
       (p) =>
-        `<path d="${p.d}" fill="${p.fill ? SYMBOL_STROKE : 'none'}" stroke="${SYMBOL_STROKE}" ` +
+        `<path d="${p.d}" fill="${p.fill ? s : 'none'}" stroke="${s}" ` +
         `stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
     )
     .join('');
@@ -49,7 +51,7 @@ function electricalInner(def: SymbolDef): string {
     .map(
       (t) =>
         `<text x="${t.x}" y="${t.y}" font-size="${t.size ?? 8}" ` +
-        `font-weight="${t.bold ? 700 : 400}" fill="${t.bold ? SYMBOL_STROKE : '#94a3b8'}" ` +
+        `font-weight="${t.bold ? 700 : 400}" fill="${t.bold ? s : MUTED}" ` +
         `text-anchor="${t.anchor ?? 'middle'}" font-family="Roboto, sans-serif">${t.text}</text>`,
     )
     .join('');
@@ -57,11 +59,12 @@ function electricalInner(def: SymbolDef): string {
 }
 
 /** Build the inner SVG for a basic flowchart shape body (no label — GoJS adds it). */
-function basicInner(def: BasicShapeDef): string {
+function basicInner(def: BasicShapeDef, dark: boolean): string {
   const w = def.width;
   const h = def.height;
-  const fill = def.noBox ? 'none' : BASIC_FILL;
-  const stroke = def.noBox ? 'none' : BASIC_STROKE;
+  // Outline on the dark canvas (transparent fill); white-filled on the light canvas.
+  const fill = def.noBox ? 'none' : (dark ? 'none' : '#ffffff');
+  const stroke = def.noBox ? 'none' : (dark ? STROKE_ON_DARK : STROKE_ON_LIGHT);
   const sw = def.noBox ? 0 : 2;
   const common = `fill="${fill}" stroke="${stroke}" stroke-width="${sw}"`;
   if (def.tag === 'rect') {
@@ -75,14 +78,18 @@ function basicInner(def: BasicShapeDef): string {
   return `<path d="${def.body['refD']}" ${common} stroke-linejoin="round"/>`;
 }
 
-/** Resolve a palette shape name to its GoJS symbol rendering, or null if it's not a symbol. */
-export function symbolInfo(shape: string | undefined): SymbolInfo | null {
+/**
+ * Resolve a palette shape name to its GoJS symbol rendering, or null if it's not
+ * a symbol. `dark` = rendering on the dark canvas (light strokes); pass false for
+ * the white canvas so the symbols get dark strokes and stay legible.
+ */
+export function symbolInfo(shape: string | undefined, dark = true): SymbolInfo | null {
   if (!shape) return null;
 
   const elec = ELECTRICAL_SYMBOLS[shape];
   if (elec) {
     return {
-      source: encodeSvg(electricalInner(elec), elec.width, elec.height),
+      source: encodeSvg(electricalInner(elec, dark), elec.width, elec.height),
       width: elec.width,
       height: elec.height,
       pins: elec.pins.map((p) => ({ fx: p.x / elec.width, fy: p.y / elec.height })),
@@ -92,6 +99,7 @@ export function symbolInfo(shape: string | undefined): SymbolInfo | null {
 
   const anim = ANIMATED_SYMBOLS[shape];
   if (anim) {
+    // Animated components use their own baked mid-tone palette (readable on both).
     return {
       source: encodeSvg(partsToSvg(shape), anim.width, anim.height),
       width: anim.width,
@@ -104,7 +112,7 @@ export function symbolInfo(shape: string | undefined): SymbolInfo | null {
   const basic = BASIC_SHAPES[shape];
   if (basic) {
     return {
-      source: encodeSvg(basicInner(basic), basic.width, basic.height),
+      source: encodeSvg(basicInner(basic, dark), basic.width, basic.height),
       width: basic.width,
       height: basic.height,
       // basic shapes get four side ports (top/right/bottom/left)

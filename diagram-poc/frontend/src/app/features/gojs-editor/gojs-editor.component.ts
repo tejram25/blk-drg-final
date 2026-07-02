@@ -473,7 +473,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         new go.Binding('desiredSize', 'size', go.Size.parse)),
       $(go.TextBlock, { alignment: new go.Spot(0.5, 1, 0, 14), alignmentFocus: go.Spot.Top,
         font: '11px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
-        new go.Binding('text').makeTwoWay()),
+        new go.Binding('text').makeTwoWay(),
+        new go.Binding('stroke', 'labelColor')),
     );
     this.diagram.nodeTemplateMap.set('symbol', symbol);
 
@@ -489,7 +490,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         new go.Binding('desiredSize', 'size', go.Size.parse)),
       $(go.TextBlock, { alignment: go.Spot.Center, font: '13px Roboto, sans-serif', stroke: '#1f2937',
         editable: true, maxSize: new go.Size(160, NaN), textAlign: 'center' },
-        new go.Binding('text').makeTwoWay()),
+        new go.Binding('text').makeTwoWay(),
+        new go.Binding('stroke', 'labelColor')),
     );
     this.diagram.nodeTemplateMap.set('basic', basic);
 
@@ -586,18 +588,37 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return names[k] ?? k;
   }
 
+  /** Label colour for symbol/basic captions, tuned to the current canvas theme. */
+  private get labelColor(): string { return this.lightCanvas ? '#1f2937' : '#e2e8f0'; }
+
   /** Node data for a palette entry, positioned at `loc`. */
   private nodeDataFor(b: BlockType, loc: go.Point): go.ObjectData {
-    const info = symbolInfo(b.shape);
+    const info = symbolInfo(b.shape, !this.lightCanvas);
     if (info) {
       return {
         category: info.basic ? 'basic' : 'symbol', text: b.label, shape: b.shape, source: info.source,
-        size: `${info.width} ${info.height}`, loc: go.Point.stringify(loc),
+        size: `${info.width} ${info.height}`, loc: go.Point.stringify(loc), labelColor: this.labelColor,
         ports: info.pins.map((p, i) => ({ portId: `p${i}`, spot: `${p.fx} ${p.fy}` })),
       };
     }
     return { category: 'block', text: b.label, subtitle: b.category || 'Module',
       color: b.color || '#1d4ed8', icon: b.icon || 'widgets', loc: go.Point.stringify(loc) };
+  }
+
+  /** Re-render symbol/basic pictures + labels for the current canvas theme. */
+  private retheme(): void {
+    if (!this.diagram) return;
+    const dark = !this.lightCanvas;
+    this.zone.runOutsideAngular(() => this.diagram.commit((d) => {
+      d.nodes.each((n) => {
+        const shape = n.data?.shape;
+        if (typeof shape !== 'string') return;
+        const info = symbolInfo(shape, dark);
+        if (!info) return;
+        d.model.set(n.data, 'source', info.source);
+        d.model.set(n.data, 'labelColor', this.labelColor);
+      });
+    }, 'retheme'));
   }
 
   startDrag(b: BlockType, event: DragEvent): void {
@@ -759,6 +780,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.lightCanvas = !this.lightCanvas;
     this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
     this.applyGridTheme();
+    this.retheme();
   }
 
   /** Subtle grid line colour tuned per canvas theme. */
@@ -1116,6 +1138,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         this.diagram.commandHandler.zoomToFit();
       });
       this.suppressAutosave = false;
+      this.retheme();
       this.syncSelection();
       return;
     }
@@ -1127,6 +1150,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         this.diagram.model = model;
       } catch { this.zone.run(() => this.notify.error('That diagram could not be loaded.')); }
     });
+    this.retheme();
     this.suppressAutosave = false;
     this.syncSelection();
   }
