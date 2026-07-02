@@ -448,6 +448,44 @@
                                                     }
                                                   </div>
                                                 }
+                                                @if (isBox) {
+                                                  <div class="prop-section">Component · AI + Design Win</div>
+                                                  @if (dataField('partNumber')) {
+                                                    <div class="linked-part">
+                                                      <mat-icon>memory</mat-icon>
+                                                      <div class="lp-main">
+                                                        <b>{{ dataField('partNumber') }}</b>
+                                                        <span>{{ dataField('supplier') }}@if (dataField('fieldProven')) { · field-proven }</span>
+                                                      </div>
+                                                      <button class="lp-x" (click)="unlinkComponent()" matTooltip="Unlink component"><mat-icon>close</mat-icon></button>
+                                                    </div>
+                                                  }
+                                                  <button class="secondary-btn" (click)="suggestComponent()" [disabled]="boxSuggestLoading">
+                                                    <mat-icon>auto_awesome</mat-icon><span>{{ boxSuggestLoading ? 'Finding components…' : (dataField('partNumber') ? 'Suggest another' : 'Suggest component') }}</span></button>
+                                                  @if (boxSuggestError) { <div class="bs-err">{{ boxSuggestError }}</div> }
+                                                  @if (boxSuggestions.length) {
+                                                    <div class="bs-list">
+                                                      @for (bs of boxSuggestions; track bs.partNumber) {
+                                                        <div class="bs-item">
+                                                          <div class="bs-head"><b>{{ bs.partNumber }}</b>
+                                                            @if (bs.fieldProven) { <span class="bs-proven"><mat-icon>verified</mat-icon>Field-proven</span> }</div>
+                                                          <div class="bs-desc">{{ bs.description }}</div>
+                                                          <div class="bs-meta">{{ bs.manufacturer }} · {{ bs.stock }} in stock@if (bs.status) { · {{ bs.status }} }</div>
+                                                          <div class="bs-actions">
+                                                            @if (bs.suppliers.length > 1) {
+                                                              <select class="bs-supplier" [ngModel]="selectedSupplier[bs.partNumber] || bs.suppliers[0].name" (ngModelChange)="selectedSupplier[bs.partNumber] = $event">
+                                                                @for (sup of bs.suppliers; track sup.name) { <option [value]="sup.name">{{ sup.name }}</option> }
+                                                              </select>
+                                                            } @else if (bs.suppliers.length === 1) {
+                                                              <span class="bs-onesup">{{ bs.suppliers[0].name }}</span>
+                                                            }
+                                                            <button class="bs-link" (click)="linkSuggestion(bs)"><mat-icon>link</mat-icon>Link</button>
+                                                          </div>
+                                                        </div>
+                                                      }
+                                                    </div>
+                                                  }
+                                                }
                                                 <button class="del-btn" (click)="deleteSelection()"><mat-icon>delete</mat-icon><span>Delete</span></button>
                                               </aside>
                                             }

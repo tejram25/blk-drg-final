@@ -24,6 +24,7 @@ import {
 import { AlternativePart, LifecycleInfo, LifecycleService } from '../../core/services/lifecycle.service';
 import { FeedbackRequest, FeedbackService } from '../../core/services/feedback.service';
 import { ImageDiagramResult, ImageDiagramService } from '../../core/services/image-diagram.service';
+import { BoxSuggestion, BoxSuggestionService } from '../../core/services/box-suggestion.service';
 import { ProjectDetail, ProjectPart } from '../../core/services/integration.service';
 import { TemplateDetail } from '../../core/services/template.service';
 import { TranslateService } from '../../core/services/i18n/translate.service';
@@ -156,6 +157,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private exportHidden = new Set<string>();
   commandPaletteOpen = false;
   imageGenLoading = false;
+  // per-box AI component suggestion
+  boxSuggestLoading = false;
+  boxSuggestions: BoxSuggestion[] = [];
+  boxSuggestError = '';
+  selectedSupplier: Record<string, string> = {};
 
   constructor(
     private zone: NgZone,
@@ -172,6 +178,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private lifecycleApi: LifecycleService,
     private feedbackApi: FeedbackService,
     private imageDiagram: ImageDiagramService,
+    private boxSuggest: BoxSuggestionService,
     private route: ActivatedRoute,
     private router: Router,
   ) {}
@@ -747,10 +754,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ---- selection / properties ----
 
+  private lastSelKey: go.Key | null = null;
   private syncSelection(): void {
     const first = this.diagram.selection.first();
     this.selectedNode = first instanceof go.Node ? first : null;
     this.selectedEdge = first instanceof go.Link ? first : null;
+    // Reset AI suggestions when the selected node changes.
+    const key = this.selectedNode ? this.selectedNode.key : null;
+    if (key !== this.lastSelKey) { this.boxSuggestions = []; this.boxSuggestError = ''; this.lastSelKey = key; }
     if (this.selectedEdge) this.syncWireDock(this.selectedEdge);
     if (this.selectedNode) {
       const d = this.selectedNode.data;
@@ -1120,6 +1131,67 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (lum > 225) return '#cbd5e1';
     const d = rgb.map((c) => Math.round(c * 0.72));
     return `rgb(${d[0]},${d[1]},${d[2]})`;
+  }
+
+  // ---- per-box AI component suggestion (catalogue + Design Win) ----
+
+  /** True for a box node (functional block or shape) that can carry a component. */
+  get isBox(): boolean {
+    const c = this.selectedNode?.data?.category;
+    return c === 'shape' || c === 'block';
+  }
+
+  /** Ask the AI for the component this box needs (grounded in catalogue + POS). */
+  suggestComponent(): void {
+    const d = this.selectedNode?.data;
+    if (!d) return;
+    this.boxSuggestions = [];
+    this.boxSuggestError = '';
+    this.boxSuggestLoading = true;
+    this.cdr.detectChanges();
+    this.boxSuggest.suggest(d.text || '', d.sub || '', d.kind || '').subscribe({
+      next: (res) => {
+        this.boxSuggestLoading = false;
+        this.boxSuggestions = res.suggestions || [];
+        if (!this.boxSuggestions.length) this.boxSuggestError = res.note || 'No component matches found.';
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.boxSuggestLoading = false;
+        this.boxSuggestError = err?.error?.message || err?.error?.reason || 'Could not suggest a component (is the catalogue reachable?).';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /** Link a suggested component (and chosen supplier) to the selected box. */
+  linkSuggestion(s: BoxSuggestion): void {
+    if (!this.selectedNode) return;
+    const supplierName = this.selectedSupplier[s.partNumber] || s.suppliers?.[0]?.name || s.manufacturer;
+    const data = this.selectedNode.data;
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => {
+      m.set(data, 'partNumber', s.partNumber);
+      m.set(data, 'manufacturer', s.manufacturer);
+      m.set(data, 'partDesc', s.description);
+      m.set(data, 'supplier', supplierName);
+      m.set(data, 'suppliers', s.suppliers || []);
+      m.set(data, 'quantity', data.quantity || 1);
+      m.set(data, 'fieldProven', s.fieldProven);
+    }, 'link component'));
+    this.boxSuggestions = [];
+    this.notify.success(`Linked ${s.partNumber} (${supplierName}) to "${data.text}".`);
+    this.syncSelection();
+  }
+
+  /** Remove the linked component from the selected box. */
+  unlinkComponent(): void {
+    if (!this.selectedNode) return;
+    const data = this.selectedNode.data;
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => {
+      ['partNumber', 'manufacturer', 'partDesc', 'supplier', 'suppliers', 'fieldProven'].forEach((k) => m.set(data, k, undefined));
+    }, 'unlink component'));
+    this.notify.info('Component unlinked.');
+    this.syncSelection();
   }
 
   // ---- catalogue parts ----
