@@ -504,7 +504,20 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           { editable: true, font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937',
             textAlign: 'center', maxSize: new go.Size(150, NaN), margin: 6 },
           new go.Binding('text').makeTwoWay(),
-          new go.Binding('stroke', 'labelColor'))),
+          new go.Binding('stroke', 'labelColor')),
+        // Linked-part chip (top-right corner) once an AI component is attached.
+        $(go.Panel, 'Auto', { alignment: go.Spot.TopRight, alignmentFocus: go.Spot.TopRight, margin: 3, visible: false },
+          new go.Binding('visible', 'partNumber', (p) => !!p),
+          $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: '#f5a623', stroke: null }),
+          $(go.TextBlock, { font: '700 9px Roboto, sans-serif', stroke: '#1a1303', margin: new go.Margin(1, 5, 1, 5) },
+            new go.Binding('text', 'partNumber')))),
+      // Role caption below the box (e.g. "Digital Processing"). Follows the canvas
+      // theme (capColor), independent of the label colour inside a coloured box.
+      $(go.TextBlock, { alignment: new go.Spot(0.5, 1, 0, 7), alignmentFocus: go.Spot.Top,
+        font: '10.5px Roboto, sans-serif', stroke: '#94a3b8', editable: true, textAlign: 'center', maxSize: new go.Size(170, NaN) },
+        new go.Binding('text', 'sub').makeTwoWay(),
+        new go.Binding('stroke', 'capColor'),
+        new go.Binding('visible', 'sub', (s) => !!s && String(s).length > 0)),
       ...sidePorts(),
     );
     this.diagram.nodeTemplateMap.set('shape', shape);
@@ -689,12 +702,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       d.nodes.each((n) => {
         const data = n.data;
         if (data?.category === 'shape') {
-          // Palette shapes follow the theme; imported shapes keep their own colour.
+          // Palette shapes follow the theme; colour-imported boxes keep their fill
+          // and their contrast label, but the caption under the box tracks the theme.
+          d.model.set(data, 'capColor', theme.labelColor);
           if (!data.fixedColor) {
             d.model.set(data, 'fill', theme.fill);
             d.model.set(data, 'stroke', theme.stroke);
+            d.model.set(data, 'labelColor', theme.labelColor);
           }
-          d.model.set(data, 'labelColor', theme.labelColor);
           return;
         }
         const shape = data?.shape;
@@ -1030,19 +1045,25 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  /** Build a live block diagram from the extracted nodes/links and add it to the canvas. */
+  /** Build a live diagram of coloured shapes from the extracted nodes/links. */
   private applyExtractedDiagram(res: ImageDiagramResult): void {
     const stamp = Date.now().toString(36);
+    const cap = this.labelColor;
     const idMap = new Map<string, string>();
     const nodes: go.ObjectData[] = (res.nodes || []).map((n) => {
       const key = `img-${stamp}-${n.id}`;
       idMap.set(n.id, key);
       const style = GojsEditorComponent.KIND_STYLE[(n.kind || 'generic').toLowerCase()]
         ?? GojsEditorComponent.KIND_STYLE['generic'];
+      const fill = this.normalizeColor(n.color) ?? style.color;
       const loc = go.Point.stringify(new go.Point((n.x ?? 0) * 1.5, (n.y ?? 0) * 1.7));
-      return { key, category: 'block', text: n.label || this.prettyKind(n.kind),
-        subtitle: (n.sub && n.sub.trim()) || this.prettyKind(n.kind),
-        color: style.color, icon: style.icon, loc };
+      // Coloured rounded-rectangle "box" — a real shape node, editable and linkable,
+      // that can later carry an AI-suggested component (partNumber chip).
+      return { key, category: 'shape', figure: 'RoundedRectangle', shape: 'sh-round',
+        text: n.label || this.prettyKind(n.kind), sub: (n.sub && n.sub.trim()) || '',
+        kind: (n.kind || 'generic').toLowerCase(), size: '176 62', loc,
+        fill, stroke: this.shadeStroke(fill), labelColor: this.contrastText(fill), capColor: cap,
+        fixedColor: true };
     });
     const links: go.ObjectData[] = (res.links || [])
       .map((l) => ({ from: idMap.get(l.from), to: idMap.get(l.to), label: l.label }))
@@ -1058,13 +1079,47 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.zone.runOutsideAngular(() => this.diagram.commandHandler.zoomToFit());
     if (this.canvasEmpty || this.diagramName === 'Untitled diagram') this.diagramName = res.title || 'Imported diagram';
     this.updateCanvasEmpty();
-    this.status = `Generated ${nodes.length} block${nodes.length === 1 ? '' : 's'} from image · ${res.model}`;
-    this.notify.success(`Generated ${nodes.length} blocks and ${links.length} connections from your image.`);
+    this.status = `Generated ${nodes.length} box${nodes.length === 1 ? '' : 'es'} from image · ${res.model}`;
+    this.notify.success(`Generated ${nodes.length} boxes and ${links.length} connections from your image.`);
   }
 
   private prettyKind(kind?: string): string {
-    if (!kind) return 'Block';
+    if (!kind) return 'Box';
     return kind.charAt(0).toUpperCase() + kind.slice(1);
+  }
+
+  /** Parse #rgb / #rrggbb / rgb(...) to [r,g,b], or null. */
+  private parseColor(color?: string): [number, number, number] | null {
+    if (!color) return null;
+    const s = color.trim();
+    let m = /^#([0-9a-f]{3})$/i.exec(s);
+    if (m) return [parseInt(m[1][0] + m[1][0], 16), parseInt(m[1][1] + m[1][1], 16), parseInt(m[1][2] + m[1][2], 16)];
+    m = /^#([0-9a-f]{6})$/i.exec(s);
+    if (m) return [parseInt(m[1].slice(0, 2), 16), parseInt(m[1].slice(2, 4), 16), parseInt(m[1].slice(4, 6), 16)];
+    m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(s);
+    if (m) return [+m[1], +m[2], +m[3]];
+    return null;
+  }
+  private normalizeColor(color?: string): string | null {
+    const rgb = this.parseColor(color);
+    if (!rgb) return null;
+    return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+  }
+  /** Readable label colour (dark or white) for text on the given fill. */
+  private contrastText(color: string): string {
+    const rgb = this.parseColor(color);
+    if (!rgb) return '#1f2937';
+    const lum = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2];
+    return lum > 160 ? '#1f2937' : '#ffffff';
+  }
+  /** A border colour: a subtle grey on near-white fills, a darker shade otherwise. */
+  private shadeStroke(color: string): string {
+    const rgb = this.parseColor(color);
+    if (!rgb) return '#334155';
+    const lum = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2];
+    if (lum > 225) return '#cbd5e1';
+    const d = rgb.map((c) => Math.round(c * 0.72));
+    return `rgb(${d[0]},${d[1]},${d[2]})`;
   }
 
   // ---- catalogue parts ----

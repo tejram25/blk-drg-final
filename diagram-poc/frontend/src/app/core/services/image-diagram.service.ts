@@ -10,6 +10,8 @@ export interface ExtractedNode {
   /** Smaller role caption under the title (may be empty). */
   sub?: string;
   kind: string;
+  /** The box's fill colour from the image (hex/rgb), if any. */
+  color?: string;
   x: number;
   y: number;
 }

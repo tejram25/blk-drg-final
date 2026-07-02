@@ -38,11 +38,13 @@ public class ImageDiagramServiceImpl implements ImageDiagramService {
             Return ONLY minified JSON, no prose, of exactly this shape:
             {"title":"<short title>","nodes":[{"id":"n1","label":"<title in the block>",
             "sub":"<smaller role text under it, or empty>","kind":"<one keyword>",
-            "x":<0-1000>,"y":<0-700>}],"links":[{"from":"n1","to":"n2","label":""}]}
+            "color":"<box fill colour as #rrggbb, or empty>","x":<0-1000>,"y":<0-700>}],
+            "links":[{"from":"n1","to":"n2","label":""}]}
 
             Rules:
             - One node per distinct block. id is n1, n2, ... label is the main text in the
               block; sub is the smaller caption under/near it (e.g. "Digital Processing"), else "".
+            - color is the block's fill colour as a #rrggbb hex (approximate from the image), else "".
             - kind is ONE lowercase keyword picked from: processor, mcu, ai, memory, sensor,
               camera, motor, battery, power, dcdc, comms, wifi, antenna, display, storage,
               connector, logic, input, output, clock, amplifier, regulator, process, decision,
@@ -129,9 +131,10 @@ public class ImageDiagramServiceImpl implements ImageDiagramService {
                 String label = n.path("label").asText("").trim();
                 String sub = n.path("sub").asText("").trim();
                 String kind = n.path("kind").asText("generic").trim().toLowerCase();
+                String color = n.path("color").asText("").trim();
                 int x = clamp(n.path("x").asInt(0), 0, 1000);
                 int y = clamp(n.path("y").asInt(0), 0, 700);
-                nodes.add(new ImageDiagramResult.Node(id, label, sub, kind.isBlank() ? "generic" : kind, x, y));
+                nodes.add(new ImageDiagramResult.Node(id, label, sub, kind.isBlank() ? "generic" : kind, color, x, y));
             }
             for (JsonNode l : root.path("links")) {
                 String from = l.path("from").asText("").trim();

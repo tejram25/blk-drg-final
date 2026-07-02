@@ -19,7 +19,7 @@ public record ImageDiagramResult(
      * smaller role text (may be blank). {@code x}/{@code y} are the block centre
      * on a 0-1000 × 0-700 grid.
      */
-    public record Node(String id, String label, String sub, String kind, int x, int y) {
+    public record Node(String id, String label, String sub, String kind, String color, int x, int y) {
     }
 
     /** A directed connection between two node ids. */
