@@ -23,6 +23,7 @@ import {
 } from '../../core/services/design-review.service';
 import { AlternativePart, LifecycleInfo, LifecycleService } from '../../core/services/lifecycle.service';
 import { FeedbackRequest, FeedbackService } from '../../core/services/feedback.service';
+import { ImageDiagramResult, ImageDiagramService } from '../../core/services/image-diagram.service';
 import { ProjectDetail, ProjectPart } from '../../core/services/integration.service';
 import { TemplateDetail } from '../../core/services/template.service';
 import { TranslateService } from '../../core/services/i18n/translate.service';
@@ -78,6 +79,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('jsonInput') jsonInput!: ElementRef<HTMLInputElement>;
   @ViewChild('drawioInput') drawioInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('imageGenInput') imageGenInput!: ElementRef<HTMLInputElement>;
 
   private diagram!: go.Diagram;
   private overview: go.Overview | null = null;
@@ -153,6 +155,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   exportOpen = false; exportFormat: 'png' | 'svg' = 'png'; exportNodes: ExportNode[] = [];
   private exportHidden = new Set<string>();
   commandPaletteOpen = false;
+  imageGenLoading = false;
 
   constructor(
     private zone: NgZone,
@@ -168,6 +171,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private reviewApi: DesignReviewService,
     private lifecycleApi: LifecycleService,
     private feedbackApi: FeedbackService,
+    private imageDiagram: ImageDiagramService,
     private route: ActivatedRoute,
     private router: Router,
   ) {}
@@ -954,6 +958,114 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     (event.target as HTMLInputElement).value = '';
   }
 
+  // ---- generate a block diagram from an image (AI vision) ----
+
+  /** kind keyword (from the vision model) → block icon + accent colour. */
+  private static readonly KIND_STYLE: Record<string, { icon: string; color: string }> = {
+    processor: { icon: 'developer_board', color: '#1d4ed8' }, mcu: { icon: 'developer_board', color: '#1d4ed8' },
+    ai: { icon: 'psychology', color: '#3730a3' }, memory: { icon: 'memory', color: '#0e7490' },
+    sensor: { icon: 'sensors', color: '#15803d' }, camera: { icon: 'photo_camera', color: '#166534' },
+    motor: { icon: 'rotate_right', color: '#b45309' }, battery: { icon: 'battery_charging_full', color: '#a16207' },
+    power: { icon: 'bolt', color: '#a16207' }, dcdc: { icon: 'electrical_services', color: '#c2410c' },
+    regulator: { icon: 'electrical_services', color: '#c2410c' }, comms: { icon: 'wifi', color: '#6d28d9' },
+    wifi: { icon: 'wifi', color: '#6d28d9' }, antenna: { icon: 'cell_tower', color: '#7c3aed' },
+    display: { icon: 'monitor', color: '#0891b2' }, storage: { icon: 'storage', color: '#0e7490' },
+    data: { icon: 'storage', color: '#0e7490' }, connector: { icon: 'cable', color: '#64748b' },
+    logic: { icon: 'account_tree', color: '#7c3aed' }, input: { icon: 'input', color: '#15803d' },
+    output: { icon: 'output', color: '#b45309' }, clock: { icon: 'schedule', color: '#0891b2' },
+    amplifier: { icon: 'graphic_eq', color: '#c2410c' }, process: { icon: 'settings', color: '#475569' },
+    decision: { icon: 'help', color: '#b45309' }, generic: { icon: 'widgets', color: '#475569' },
+  };
+
+  /** Open the file picker to generate a diagram from a photo/screenshot. */
+  generateFromImage(): void {
+    this.closeMenus();
+    this.imageGenInput?.nativeElement.click();
+  }
+
+  onGenerateImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { this.notify.error('Please choose an image file (PNG, JPG…).'); return; }
+    this.imageGenLoading = true;
+    this.status = 'Analysing image…';
+    this.cdr.detectChanges();
+    this.downscaleImage(file).then((dataUrl) => {
+      this.imageDiagram.extract(dataUrl).subscribe({
+        next: (res) => { this.imageGenLoading = false; this.applyExtractedDiagram(res); this.cdr.detectChanges(); },
+        error: (err) => {
+          this.imageGenLoading = false;
+          this.status = '';
+          this.notify.error(err?.error?.message || err?.error?.reason || 'Could not generate a diagram from that image.');
+          this.cdr.detectChanges();
+        },
+      });
+    }).catch(() => { this.imageGenLoading = false; this.notify.error('Could not read that image.'); this.cdr.detectChanges(); });
+  }
+
+  /** Downscale the image (longest side ≤ 1280px) to keep the upload small and the model fast. */
+  private downscaleImage(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('read failed'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('decode failed'));
+        img.onload = () => {
+          const max = 1280;
+          const scale = Math.min(1, max / Math.max(img.width, img.height));
+          const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) { resolve(String(reader.result)); return; }
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /** Build a live block diagram from the extracted nodes/links and add it to the canvas. */
+  private applyExtractedDiagram(res: ImageDiagramResult): void {
+    const stamp = Date.now().toString(36);
+    const idMap = new Map<string, string>();
+    const nodes: go.ObjectData[] = (res.nodes || []).map((n) => {
+      const key = `img-${stamp}-${n.id}`;
+      idMap.set(n.id, key);
+      const style = GojsEditorComponent.KIND_STYLE[(n.kind || 'generic').toLowerCase()]
+        ?? GojsEditorComponent.KIND_STYLE['generic'];
+      const loc = go.Point.stringify(new go.Point((n.x ?? 0) * 1.35, (n.y ?? 0) * 1.55));
+      return { key, category: 'block', text: n.label || this.prettyKind(n.kind), subtitle: this.prettyKind(n.kind),
+        color: style.color, icon: style.icon, loc };
+    });
+    const links: go.ObjectData[] = (res.links || [])
+      .map((l) => ({ from: idMap.get(l.from), to: idMap.get(l.to), label: l.label }))
+      .filter((l) => l.from && l.to)
+      .map((l) => ({ category: 'link', from: l.from, to: l.to, fromPort: '', toPort: '',
+        color: this.wireColor, width: this.wireWidth, dash: [6, 3], flow: true }));
+
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => {
+      const gm = m as go.GraphLinksModel;
+      nodes.forEach((d) => gm.addNodeData(d));
+      links.forEach((d) => gm.addLinkData(d));
+    }, 'generate from image'));
+    this.zone.runOutsideAngular(() => this.diagram.commandHandler.zoomToFit());
+    if (this.canvasEmpty || this.diagramName === 'Untitled diagram') this.diagramName = res.title || 'Imported diagram';
+    this.updateCanvasEmpty();
+    this.status = `Generated ${nodes.length} block${nodes.length === 1 ? '' : 's'} from image · ${res.model}`;
+    this.notify.success(`Generated ${nodes.length} blocks and ${links.length} connections from your image.`);
+  }
+
+  private prettyKind(kind?: string): string {
+    if (!kind) return 'Block';
+    return kind.charAt(0).toUpperCase() + kind.slice(1);
+  }
+
   // ---- catalogue parts ----
 
   private buildPartData(part: any, loc?: go.Point): go.ObjectData {
@@ -1176,6 +1288,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return [
       { label: 'New diagram', icon: 'note_add', run: () => this.newDiagram() },
       { label: 'Save', icon: 'save', hint: 'Ctrl+S', run: () => this.save() },
+      { label: 'Generate from image (AI)', icon: 'auto_fix_high', run: () => this.generateFromImage() },
       { label: 'Template repository', icon: 'dashboard_customize', run: () => this.openTemplates() },
       { label: 'Recommendations (AI)', icon: 'auto_awesome', run: () => this.openRecommendations() },
       { label: 'Design review (AI)', icon: 'rule', run: () => this.openDesignReview() },

@@ -96,6 +96,8 @@
                                   <div class="dropdown-menu hb-drop" (click)="$event.stopPropagation()">
                                     <button type="button" class="menu-item" (click)="insertMenuOpen = false; fileInput.click()">
                                       <mat-icon>image</mat-icon><span>Insert image</span></button>
+                                      <button type="button" class="menu-item" (click)="insertMenuOpen = false; generateFromImage()">
+                                        <mat-icon>auto_fix_high</mat-icon><span>Generate from image (AI)</span></button>
                                       <button type="button" class="menu-item" [class.sel]="templatesOpen" (click)="insertMenuOpen = false; openTemplates()">
                                         <mat-icon>dashboard_customize</mat-icon><span>Template repository</span></button>
                                         <button type="button" class="menu-item" [class.sel]="projectPanelOpen" (click)="insertMenuOpen = false; projectPanelOpen = !projectPanelOpen">
@@ -130,6 +132,7 @@
                                         <button mat-icon-button [class.on]="commentsOpen" matTooltip="Comments" (click)="toggleComments()"><mat-icon>comment</mat-icon></button>
 
                                         <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
+                                        <input #imageGenInput type="file" accept="image/*" hidden (change)="onGenerateImageSelected($event)" />
                                         <input #jsonInput type="file" accept=".json,application/json" hidden (change)="onJsonSelected($event)" />
                                         <input #drawioInput type="file" accept=".drawio,.xml,application/xml,text/xml" hidden (change)="onDrawioSelected($event)" />
 
@@ -303,6 +306,16 @@
                                             }
 
                                             <div #minimap class="minimap" [class.hidden]="!minimapOpen"></div>
+
+                                            @if (imageGenLoading) {
+                                              <div class="imggen-overlay">
+                                                <div class="imggen-card">
+                                                  <div class="imggen-spin"></div>
+                                                  <div class="imggen-title">Reading your diagram…</div>
+                                                  <div class="imggen-sub">The AI is finding blocks and connections in the image.</div>
+                                                </div>
+                                              </div>
+                                            }
 
                                             @for (c of remoteCursors(); track cursorTrack($index, c)) {
                                               <div class="remote-cursor"

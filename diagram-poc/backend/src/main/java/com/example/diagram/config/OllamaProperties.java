@@ -23,6 +23,13 @@ public class OllamaProperties {
     /** Model id to run; must already be pulled in Ollama. */
     private String model = "llama3.2";
 
+    /**
+     * Vision-capable model for image-to-diagram extraction (e.g. {@code llama3.2-vision},
+     * {@code llava}, {@code minicpm-v}). Must be pulled in Ollama. Defaults to
+     * {@code llama3.2-vision}.
+     */
+    private String visionModel = "llama3.2-vision";
+
     private String baseUrl = "http://localhost:11434";
 
     private int maxTokens = 1500;
@@ -31,6 +38,9 @@ public class OllamaProperties {
     public boolean isConfigured() {
         return enabled;
     }
+
+    public String getVisionModel() { return visionModel; }
+    public void setVisionModel(String visionModel) { this.visionModel = visionModel; }
 
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
