@@ -239,31 +239,11 @@
 
                                             <div class="palette-grid">
                                               @for (b of visibleItems; track b) {
-                                                @if (b.shape && isElectrical(b.shape)) {
+                                                @if (b.shape && isShape(b.shape)) {
                                                   <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)">
-                                                    <svg [attr.viewBox]="symbolViewBox(b.shape)" width="62" [attr.height]="isIc(b.shape) ? 40 : 26">
-                                                      @for (p of symbolPaths(b.shape); track p) {
-                                                        <path [attr.d]="p.d" [attr.fill]="p.fill ? '#e2e8f0' : 'none'"
-                                                          stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                                                      }
-                                                      @for (t of symbolTitleTexts(b.shape); track t) {
-                                                        <text [attr.x]="t.x" [attr.y]="t.y" text-anchor="middle"
-                                                        fill="#e2e8f0" font-weight="700" [attr.font-size]="t.size ? t.size * 1.6 : 16">{{ t.text }}</text>
-                                                      }
-                                                    </svg>
-                                                    <span>{{ i18n.td(b.label) }}</span>
-                                                  </div>
-                                                }
-                                                @if (b.shape && isBasicShape(b.shape)) {
-                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)">
-                                                    <svg viewBox="0 0 60 40" width="62" height="40" fill="none" stroke="#e2e8f0" stroke-width="2"
-                                                    stroke-linejoin="round" [innerHTML]="basicPreview(b.shape)"></svg>
-                                                    <span>{{ i18n.td(b.label) }}</span>
-                                                  </div>
-                                                }
-                                                @if (b.shape && !isElectrical(b.shape) && !isBasicShape(b.shape)) {
-                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)">
-                                                    <svg [attr.viewBox]="symbolViewBox(b.shape)" width="62" height="40" [innerHTML]="animatedPreview(b.shape)"></svg>
+                                                    <svg viewBox="0 0 100 100" width="52" height="52" preserveAspectRatio="xMidYMid meet"
+                                                      fill="rgba(226,232,240,0.14)" stroke="#e2e8f0" stroke-width="4"
+                                                      stroke-linejoin="round" stroke-linecap="round" [innerHTML]="shapePreview(b.shape)"></svg>
                                                     <span>{{ i18n.td(b.label) }}</span>
                                                   </div>
                                                 }
