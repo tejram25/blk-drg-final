@@ -204,7 +204,20 @@ export class GojsCollabService {
       if (key) this.dirty.set(key, e.object);
     }
 
-    if (e.isTransactionFinished) this.flush();
+    if (e.isTransactionFinished) {
+      if (this.liveFlushTimer) { clearTimeout(this.liveFlushTimer); this.liveFlushTimer = null; }
+      this.flush();
+    } else if (this.dirty.size > 0) {
+      // Stream intermediate changes (e.g. a node being dragged) so remote peers
+      // see smooth movement instead of a single jump on mouse-up.
+      this.scheduleLiveFlush();
+    }
+  }
+
+  private liveFlushTimer: any = null;
+  private scheduleLiveFlush(): void {
+    if (this.liveFlushTimer) return;
+    this.liveFlushTimer = setTimeout(() => { this.liveFlushTimer = null; this.flush(); }, 40);
   }
 
   private flush(): void {

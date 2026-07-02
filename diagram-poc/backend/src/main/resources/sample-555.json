@@ -1,35 +1,367 @@
 {
-  "cells": [
-    { "id": "n-cell", "shape": "elec-cell", "position": { "x": 50, "y": 180 }, "size": { "width": 100, "height": 40 }, "zIndex": 1, "attrs": { "label": { "text": "9 V" } } },
-    { "id": "n-ic", "shape": "elec-ic555", "position": { "x": 430, "y": 140 }, "size": { "width": 120, "height": 140 }, "zIndex": 1, "attrs": { "label": { "text": "NE555" } } },
-    { "id": "n-r1", "shape": "elec-resistor", "position": { "x": 240, "y": 40 }, "size": { "width": 100, "height": 40 }, "zIndex": 1, "attrs": { "label": { "text": "R1 · 10 kΩ" } } },
-    { "id": "n-r2", "shape": "elec-resistor", "position": { "x": 250, "y": 120 }, "size": { "width": 100, "height": 40 }, "angle": 90, "zIndex": 1, "attrs": { "label": { "text": "R2 · 47 kΩ" } } },
-    { "id": "n-c1", "shape": "elec-cap-pol", "position": { "x": 250, "y": 300 }, "size": { "width": 100, "height": 40 }, "angle": 90, "zIndex": 1, "attrs": { "label": { "text": "C1 · 10 µF" } } },
-    { "id": "n-c2", "shape": "elec-capacitor", "position": { "x": 330, "y": 330 }, "size": { "width": 100, "height": 40 }, "angle": 90, "zIndex": 1, "attrs": { "label": { "text": "C2 · 10 nF" } } },
-    { "id": "n-r3", "shape": "elec-resistor", "position": { "x": 620, "y": 195 }, "size": { "width": 100, "height": 40 }, "zIndex": 1, "attrs": { "label": { "text": "R3 · 470 Ω" } } },
-    { "id": "n-led", "shape": "elec-led", "position": { "x": 760, "y": 183 }, "size": { "width": 100, "height": 52 }, "zIndex": 1, "attrs": { "label": { "text": "LED" } } },
-    { "id": "n-g1", "shape": "elec-ground", "position": { "x": 270, "y": 420 }, "size": { "width": 40, "height": 32 }, "zIndex": 1, "attrs": { "label": { "text": "" } } },
-    { "id": "n-g2", "shape": "elec-ground", "position": { "x": 470, "y": 420 }, "size": { "width": 40, "height": 32 }, "zIndex": 1, "attrs": { "label": { "text": "" } } },
-    { "id": "n-g3", "shape": "elec-ground", "position": { "x": 840, "y": 300 }, "size": { "width": 40, "height": 32 }, "zIndex": 1, "attrs": { "label": { "text": "" } } },
-    { "id": "n-g4", "shape": "elec-ground", "position": { "x": 350, "y": 420 }, "size": { "width": 40, "height": 32 }, "zIndex": 1, "attrs": { "label": { "text": "" } } },
-    { "id": "n-g5", "shape": "elec-ground", "position": { "x": 80, "y": 300 }, "size": { "width": 40, "height": 32 }, "zIndex": 1, "attrs": { "label": { "text": "" } } },
-
-    { "id": "w1", "shape": "edge", "zIndex": -1, "source": { "cell": "n-cell", "port": "pin1" }, "target": { "cell": "n-r1", "port": "pin0" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-    { "id": "w2", "shape": "edge", "zIndex": -1, "source": { "cell": "n-r1", "port": "pin1" }, "target": { "cell": "n-ic", "port": "pin2" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-    { "id": "w3", "shape": "edge", "zIndex": -1, "source": { "cell": "n-cell", "port": "pin1" }, "target": { "cell": "n-ic", "port": "pin0" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-    { "id": "w4", "shape": "edge", "zIndex": -1, "source": { "cell": "n-ic", "port": "pin0" }, "target": { "cell": "n-ic", "port": "pin6" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-    { "id": "w5", "shape": "edge", "zIndex": -1, "source": { "cell": "n-ic", "port": "pin2" }, "target": { "cell": "n-r2", "port": "pin0" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-    { "id": "w6", "shape": "edge", "zIndex": -1, "source": { "cell": "n-r2", "port": "pin1" }, "target": { "cell": "n-ic", "port": "pin3" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-    { "id": "w7", "shape": "edge", "zIndex": -1, "source": { "cell": "n-ic", "port": "pin3" }, "target": { "cell": "n-ic", "port": "pin4" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-    { "id": "w8", "shape": "edge", "zIndex": -1, "source": { "cell": "n-ic", "port": "pin4" }, "target": { "cell": "n-c1", "port": "pin0" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-    { "id": "w9", "shape": "edge", "zIndex": -1, "source": { "cell": "n-c1", "port": "pin1" }, "target": { "cell": "n-g1", "port": "pin0" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-    { "id": "w10", "shape": "edge", "zIndex": -1, "source": { "cell": "n-ic", "port": "pin1" }, "target": { "cell": "n-g2", "port": "pin0" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-    { "id": "w11", "shape": "edge", "zIndex": -1, "source": { "cell": "n-ic", "port": "pin5" }, "target": { "cell": "n-c2", "port": "pin0" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-    { "id": "w12", "shape": "edge", "zIndex": -1, "source": { "cell": "n-c2", "port": "pin1" }, "target": { "cell": "n-g4", "port": "pin0" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-    { "id": "w13", "shape": "edge", "zIndex": -1, "source": { "cell": "n-cell", "port": "pin0" }, "target": { "cell": "n-g5", "port": "pin0" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#475569", "strokeWidth": 2, "targetMarker": null } } },
-
-    { "id": "w14", "shape": "edge", "zIndex": -1, "source": { "cell": "n-ic", "port": "pin7" }, "target": { "cell": "n-r3", "port": "pin0" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#f5a623", "strokeWidth": 2, "strokeDasharray": 6, "targetMarker": null, "style": { "animation": "flowing-line 30s infinite linear" } } } },
-    { "id": "w15", "shape": "edge", "zIndex": -1, "source": { "cell": "n-r3", "port": "pin1" }, "target": { "cell": "n-led", "port": "pin0" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#f5a623", "strokeWidth": 2, "strokeDasharray": 6, "targetMarker": null, "style": { "animation": "flowing-line 30s infinite linear" } } } },
-    { "id": "w16", "shape": "edge", "zIndex": -1, "source": { "cell": "n-led", "port": "pin1" }, "target": { "cell": "n-g3", "port": "pin0" }, "router": { "name": "manhattan" }, "connector": { "name": "rounded", "args": { "radius": 6 } }, "attrs": { "line": { "stroke": "#f5a623", "strokeWidth": 2, "strokeDasharray": 6, "targetMarker": null, "style": { "animation": "flowing-line 30s infinite linear" } } } }
+  "class": "GraphLinksModel",
+  "linkFromPortIdProperty": "fromPort",
+  "linkToPortIdProperty": "toPort",
+  "linkKeyProperty": "key",
+  "nodeDataArray": [
+    {
+      "key": "n-cell",
+      "loc": "100 200",
+      "category": "block",
+      "text": "9 V",
+      "color": "#2563eb",
+      "icon": "battery_full",
+      "subtitle": "Component"
+    },
+    {
+      "key": "n-ic",
+      "loc": "490 210",
+      "category": "block",
+      "text": "NE555",
+      "color": "#2563eb",
+      "icon": "memory",
+      "subtitle": "Component"
+    },
+    {
+      "key": "n-r1",
+      "loc": "290 60",
+      "category": "block",
+      "text": "R1 · 10 kΩ",
+      "color": "#2563eb",
+      "icon": "horizontal_rule",
+      "subtitle": "Component"
+    },
+    {
+      "key": "n-r2",
+      "loc": "300 140",
+      "category": "block",
+      "text": "R2 · 47 kΩ",
+      "color": "#2563eb",
+      "icon": "horizontal_rule",
+      "subtitle": "Component"
+    },
+    {
+      "key": "n-c1",
+      "loc": "300 320",
+      "category": "block",
+      "text": "C1 · 10 µF",
+      "color": "#2563eb",
+      "icon": "battery_std",
+      "subtitle": "Component"
+    },
+    {
+      "key": "n-c2",
+      "loc": "380 350",
+      "category": "block",
+      "text": "C2 · 10 nF",
+      "color": "#2563eb",
+      "icon": "battery_std",
+      "subtitle": "Component"
+    },
+    {
+      "key": "n-r3",
+      "loc": "670 215",
+      "category": "block",
+      "text": "R3 · 470 Ω",
+      "color": "#2563eb",
+      "icon": "horizontal_rule",
+      "subtitle": "Component"
+    },
+    {
+      "key": "n-led",
+      "loc": "810 209",
+      "category": "block",
+      "text": "LED",
+      "color": "#2563eb",
+      "icon": "lightbulb",
+      "subtitle": "Component"
+    },
+    {
+      "key": "n-g1",
+      "loc": "290 436",
+      "category": "block",
+      "text": "Ground",
+      "color": "#2563eb",
+      "icon": "south",
+      "subtitle": "Component"
+    },
+    {
+      "key": "n-g2",
+      "loc": "490 436",
+      "category": "block",
+      "text": "Ground",
+      "color": "#2563eb",
+      "icon": "south",
+      "subtitle": "Component"
+    },
+    {
+      "key": "n-g3",
+      "loc": "860 316",
+      "category": "block",
+      "text": "Ground",
+      "color": "#2563eb",
+      "icon": "south",
+      "subtitle": "Component"
+    },
+    {
+      "key": "n-g4",
+      "loc": "370 436",
+      "category": "block",
+      "text": "Ground",
+      "color": "#2563eb",
+      "icon": "south",
+      "subtitle": "Component"
+    },
+    {
+      "key": "n-g5",
+      "loc": "100 316",
+      "category": "block",
+      "text": "Ground",
+      "color": "#2563eb",
+      "icon": "south",
+      "subtitle": "Component"
+    }
+  ],
+  "linkDataArray": [
+    {
+      "key": "l0",
+      "category": "link",
+      "from": "n-cell",
+      "to": "n-r1",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l1",
+      "category": "link",
+      "from": "n-r1",
+      "to": "n-ic",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l2",
+      "category": "link",
+      "from": "n-cell",
+      "to": "n-ic",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l3",
+      "category": "link",
+      "from": "n-ic",
+      "to": "n-ic",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l4",
+      "category": "link",
+      "from": "n-ic",
+      "to": "n-r2",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l5",
+      "category": "link",
+      "from": "n-r2",
+      "to": "n-ic",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l6",
+      "category": "link",
+      "from": "n-ic",
+      "to": "n-ic",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l7",
+      "category": "link",
+      "from": "n-ic",
+      "to": "n-c1",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l8",
+      "category": "link",
+      "from": "n-c1",
+      "to": "n-g1",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l9",
+      "category": "link",
+      "from": "n-ic",
+      "to": "n-g2",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l10",
+      "category": "link",
+      "from": "n-ic",
+      "to": "n-c2",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l11",
+      "category": "link",
+      "from": "n-c2",
+      "to": "n-g4",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l12",
+      "category": "link",
+      "from": "n-cell",
+      "to": "n-g5",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l13",
+      "category": "link",
+      "from": "n-ic",
+      "to": "n-r3",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l14",
+      "category": "link",
+      "from": "n-r3",
+      "to": "n-led",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l15",
+      "category": "link",
+      "from": "n-led",
+      "to": "n-g3",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    }
   ]
 }

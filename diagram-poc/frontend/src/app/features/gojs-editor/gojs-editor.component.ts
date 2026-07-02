@@ -31,6 +31,7 @@ import { exportDrawio, importDrawio } from './gojs-drawio';
 import {
   SHAPE_DEFS, shapeDef, isShapeKey, registerShapeFigures, shapePreviewInner,
 } from './gojs-shapes';
+import { legacyNativeNode } from './gojs-legacy';
 import { BomDialogComponent } from '../editor/components/bom-dialog/bom-dialog.component';
 import { RecommendationsDialogComponent } from '../editor/components/recommendations-dialog/recommendations-dialog.component';
 import { DesignReviewDialogComponent } from '../editor/components/design-review-dialog/design-review-dialog.component';
@@ -396,13 +397,16 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     // The body is a non-linkable port "" so imported links can still attach to it,
     // while dragging the body moves the node instead of drawing a link.
     const body = { portId: '', fromLinkable: false, toLinkable: false, cursor: 'move' };
+    // Two-way size binding that leaves un-resized nodes at their natural (auto) size.
+    const sizeBind = () => new go.Binding('desiredSize', 'size',
+      (s: string) => (s ? go.Size.parse(s) : new go.Size(NaN, NaN))).makeTwoWay((sz: go.Size) => go.Size.stringify(sz));
 
     const block = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, ...hover },
+      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'BODY', ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
-      $(go.Panel, 'Auto', body,
+      $(go.Panel, 'Auto', body, { name: 'BODY' }, sizeBind(),
         $(go.Shape, 'RoundedRectangle',
           { parameter1: 10, fill: '#ffffff', stroke: '#d2d6dc', strokeWidth: 1.5, minSize: new go.Size(150, 52) },
           new go.Binding('stroke', 'color')),
@@ -423,10 +427,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const part = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, ...hover },
+      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'BODY', ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
-      $(go.Panel, 'Auto', body,
+      $(go.Panel, 'Auto', body, { name: 'BODY' }, sizeBind(),
         $(go.Shape, 'RoundedRectangle', { parameter1: 10, fill: '#ffffff', stroke: '#d2d6dc', strokeWidth: 1.5 }),
         $(go.Panel, 'Table', { margin: 12, minSize: new go.Size(216, 0) },
           $(go.RowColumnDefinition, { column: 0, stretch: go.GraphObject.Horizontal }),
@@ -450,13 +454,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const image = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true, ...hover },
+      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'PIC', ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Vertical', body,
-        $(go.Picture, { width: 120, height: 90, imageStretch: go.GraphObject.Uniform },
+        $(go.Picture, { name: 'PIC', width: 120, height: 90, imageStretch: go.GraphObject.Uniform },
           new go.Binding('source', 'img'),
-          new go.Binding('desiredSize', 'size', go.Size.parse).makeTwoWay(go.Size.stringify)),
+          sizeBind()),
         $(go.TextBlock, { font: '11px Roboto, sans-serif', stroke: '#94a3b8', editable: true, margin: new go.Margin(4, 0, 0, 0) },
           new go.Binding('text').makeTwoWay())),
       ...sidePorts(),
@@ -468,15 +472,15 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     // fill/stroke, with a centred editable label. Four hover edge-ports for wiring.
     const shape = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true, ...hover },
+      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'SHAPE', ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Spot', body,
         $(go.Shape, 'Rectangle',
-          { isPanelMain: true, strokeWidth: 2, fill: '#ffffff', stroke: '#334155',
+          { name: 'SHAPE', isPanelMain: true, strokeWidth: 2, fill: '#ffffff', stroke: '#334155',
             minSize: new go.Size(48, 40) },
           new go.Binding('figure', 'figure'),
-          new go.Binding('desiredSize', 'size', go.Size.parse).makeTwoWay(go.Size.stringify),
+          sizeBind(),
           new go.Binding('fill', 'fill'),
           new go.Binding('stroke', 'stroke')),
         $(go.TextBlock,
@@ -1167,10 +1171,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         nodes.push({ key, category: 'image', loc, size: `${size.width} ${size.height}`,
           img: a.img?.['xlink:href'] ?? a.img?.xlinkHref ?? '', text: a.label?.text ?? '' });
       } else {
-        // Legacy schematic/animated symbols have no native GoJS equivalent — import
-        // them as a labelled block so the diagram structure is preserved.
-        nodes.push({ key, category: 'block', loc, text: a.label?.text ?? a.title?.text ?? shape ?? 'Node',
-          color: '#64748b', icon: 'crop_square', subtitle: 'Imported' });
+        // Legacy schematic (elec-*) / animated (anim-*) symbols and basic shapes are
+        // remapped to native GoJS blocks/figures so old diagrams render properly.
+        nodes.push({ key, loc, ...legacyNativeNode(shape, a.label?.text ?? a.title?.text ?? '', size.width, size.height) });
       }
     }
     return { nodes, links };

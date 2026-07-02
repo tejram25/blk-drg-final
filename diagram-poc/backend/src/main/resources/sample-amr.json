@@ -1,4884 +1,959 @@
 {
- "cells": [
-  {
-   "id": "chassis",
-   "shape": "rect",
-   "position": {
-    "x": 180,
-    "y": 80
-   },
-   "size": {
-    "width": 1270,
-    "height": 680
-   },
-   "zIndex": 0,
-   "attrs": {
-    "body": {
-     "fill": "#243d73",
-     "stroke": "none",
-     "rx": 42,
-     "ry": 42
-    }
-   }
-  },
-  {
-   "id": "wheel0",
-   "shape": "rect",
-   "position": {
-    "x": 360,
-    "y": 18
-   },
-   "size": {
-    "width": 185,
-    "height": 72
-   },
-   "zIndex": 0,
-   "attrs": {
-    "body": {
-     "fill": "#1c1e22",
-     "stroke": "#3a3d44",
-     "rx": 12,
-     "ry": 12
-    }
-   }
-  },
-  {
-   "id": "wheel1",
-   "shape": "rect",
-   "position": {
-    "x": 1120,
-    "y": 18
-   },
-   "size": {
-    "width": 185,
-    "height": 72
-   },
-   "zIndex": 0,
-   "attrs": {
-    "body": {
-     "fill": "#1c1e22",
-     "stroke": "#3a3d44",
-     "rx": 12,
-     "ry": 12
-    }
-   }
-  },
-  {
-   "id": "wheel2",
-   "shape": "rect",
-   "position": {
-    "x": 390,
-    "y": 752
-   },
-   "size": {
-    "width": 185,
-    "height": 72
-   },
-   "zIndex": 0,
-   "attrs": {
-    "body": {
-     "fill": "#1c1e22",
-     "stroke": "#3a3d44",
-     "rx": 12,
-     "ry": 12
-    }
-   }
-  },
-  {
-   "id": "wheel3",
-   "shape": "rect",
-   "position": {
-    "x": 1120,
-    "y": 752
-   },
-   "size": {
-    "width": 185,
-    "height": 72
-   },
-   "zIndex": 0,
-   "attrs": {
-    "body": {
-     "fill": "#1c1e22",
-     "stroke": "#3a3d44",
-     "rx": 12,
-     "ry": 12
-    }
-   }
-  },
-  {
-   "id": "antenna",
-   "shape": "rect",
-   "position": {
-    "x": 800,
-    "y": 8
-   },
-   "size": {
-    "width": 195,
-    "height": 56
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Antenna",
-     "fill": "#ffffff",
-     "fontSize": 19,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "arm-anim",
-   "shape": "anim-robot-arm",
-   "position": {
-    "x": 55,
-    "y": 120
-   },
-   "size": {
-    "width": 80,
-    "height": 80
-   },
-   "zIndex": 3,
-   "attrs": {
-    "label": {
-     "text": ""
-    }
-   }
-  },
-  {
-   "id": "p-arm",
-   "shape": "rect",
-   "position": {
-    "x": 212,
-    "y": 112
-   },
-   "size": {
-    "width": 200,
-    "height": 168
-   },
-   "zIndex": 1,
-   "attrs": {
-    "body": {
-     "fill": "#f4f5f7",
-     "stroke": "none",
-     "rx": 8,
-     "ry": 8
-    }
-   }
-  },
-  {
-   "id": "bldc-arm",
-   "shape": "rect",
-   "position": {
-    "x": 224,
-    "y": 124
-   },
-   "size": {
-    "width": 176,
-    "height": 144
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "BLDC Motor Control (Robotic Arm)",
-     "fill": "#ffffff",
-     "fontSize": 17,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "p-wheels",
-   "shape": "rect",
-   "position": {
-    "x": 1062,
-    "y": 108
-   },
-   "size": {
-    "width": 320,
-    "height": 224
-   },
-   "zIndex": 1,
-   "attrs": {
-    "body": {
-     "fill": "#f4f5f7",
-     "stroke": "none",
-     "rx": 8,
-     "ry": 8
-    }
-   }
-  },
-  {
-   "id": "bldc-wheels",
-   "shape": "rect",
-   "position": {
-    "x": 1074,
-    "y": 120
-   },
-   "size": {
-    "width": 296,
-    "height": 200
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "BLDC Motor Control (Wheels)",
-     "fill": "#ffffff",
-     "fontSize": 21,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "p-conn",
-   "shape": "rect",
-   "position": {
-    "x": 592,
-    "y": 112
-   },
-   "size": {
-    "width": 426,
-    "height": 120
-   },
-   "zIndex": 1,
-   "attrs": {
-    "body": {
-     "fill": "#f4f5f7",
-     "stroke": "none",
-     "rx": 8,
-     "ry": 8
-    },
-    "label": {
-     "text": "Connectivity",
-     "fill": "#374151",
-     "fontSize": 17,
-     "fontWeight": 700,
-     "refX": 0.5,
-     "refY": "100%",
-     "refY2": -10,
-     "textAnchor": "middle",
-     "textVerticalAnchor": "bottom",
-     "fontFamily": "Roboto, sans-serif"
-    }
-   }
-  },
-  {
-   "id": "comm",
-   "shape": "rect",
-   "position": {
-    "x": 604,
-    "y": 124
-   },
-   "size": {
-    "width": 196,
-    "height": 66
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Communication Modules",
-     "fill": "#ffffff",
-     "fontSize": 16,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "gnss",
-   "shape": "rect",
-   "position": {
-    "x": 812,
-    "y": 124
-   },
-   "size": {
-    "width": 194,
-    "height": 66
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "GNSS Modules",
-     "fill": "#ffffff",
-     "fontSize": 17,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "p-led",
-   "shape": "rect",
-   "position": {
-    "x": 222,
-    "y": 352
-   },
-   "size": {
-    "width": 412,
-    "height": 92
-   },
-   "zIndex": 1,
-   "attrs": {
-    "body": {
-     "fill": "#f4f5f7",
-     "stroke": "none",
-     "rx": 8,
-     "ry": 8
-    }
-   }
-  },
-  {
-   "id": "led",
-   "shape": "rect",
-   "position": {
-    "x": 234,
-    "y": 364
-   },
-   "size": {
-    "width": 178,
-    "height": 68
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "LED",
-     "fill": "#ffffff",
-     "fontSize": 19,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "led-drv",
-   "shape": "rect",
-   "position": {
-    "x": 424,
-    "y": 364
-   },
-   "size": {
-    "width": 198,
-    "height": 68
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "LED Drivers",
-     "fill": "#ffffff",
-     "fontSize": 18,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "p-sens",
-   "shape": "rect",
-   "position": {
-    "x": 222,
-    "y": 478
-   },
-   "size": {
-    "width": 204,
-    "height": 284
-   },
-   "zIndex": 1,
-   "attrs": {
-    "body": {
-     "fill": "#f4f5f7",
-     "stroke": "none",
-     "rx": 8,
-     "ry": 8
-    },
-    "label": {
-     "text": "Sensors",
-     "fill": "#374151",
-     "fontSize": 17,
-     "fontWeight": 700,
-     "refX": 0.5,
-     "refY": "100%",
-     "refY2": -10,
-     "textAnchor": "middle",
-     "textVerticalAnchor": "bottom",
-     "fontFamily": "Roboto, sans-serif"
-    }
-   }
-  },
-  {
-   "id": "camera",
-   "shape": "rect",
-   "position": {
-    "x": 234,
-    "y": 490
-   },
-   "size": {
-    "width": 180,
-    "height": 64
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Camera",
-     "fill": "#ffffff",
-     "fontSize": 18,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "sensors",
-   "shape": "rect",
-   "position": {
-    "x": 234,
-    "y": 566
-   },
-   "size": {
-    "width": 180,
-    "height": 64
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Sensors",
-     "fill": "#ffffff",
-     "fontSize": 18,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "radar",
-   "shape": "rect",
-   "position": {
-    "x": 234,
-    "y": 642
-   },
-   "size": {
-    "width": 180,
-    "height": 72
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "RADAR / LIDAR",
-     "fill": "#ffffff",
-     "fontSize": 16,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "p-sproc",
-   "shape": "rect",
-   "position": {
-    "x": 512,
-    "y": 478
-   },
-   "size": {
-    "width": 210,
-    "height": 284
-   },
-   "zIndex": 1,
-   "attrs": {
-    "body": {
-     "fill": "#f4f5f7",
-     "stroke": "none",
-     "rx": 8,
-     "ry": 8
-    },
-    "label": {
-     "text": "Sensor Processor",
-     "fill": "#374151",
-     "fontSize": 17,
-     "fontWeight": 700,
-     "refX": 0.5,
-     "refY": "100%",
-     "refY2": -10,
-     "textAnchor": "middle",
-     "textVerticalAnchor": "bottom",
-     "fontFamily": "Roboto, sans-serif"
-    }
-   }
-  },
-  {
-   "id": "sigagg",
-   "shape": "rect",
-   "position": {
-    "x": 524,
-    "y": 490
-   },
-   "size": {
-    "width": 186,
-    "height": 72
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Signal Aggregation",
-     "fill": "#ffffff",
-     "fontSize": 16,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "analog",
-   "shape": "rect",
-   "position": {
-    "x": 524,
-    "y": 574
-   },
-   "size": {
-    "width": 186,
-    "height": 56
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Analog",
-     "fill": "#ffffff",
-     "fontSize": 18,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "rtproc",
-   "shape": "rect",
-   "position": {
-    "x": 524,
-    "y": 642
-   },
-   "size": {
-    "width": 186,
-    "height": 72
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Real Time Processor",
-     "fill": "#ffffff",
-     "fontSize": 16,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "p-cpu",
-   "shape": "rect",
-   "position": {
-    "x": 772,
-    "y": 246
-   },
-   "size": {
-    "width": 244,
-    "height": 500
-   },
-   "zIndex": 1,
-   "attrs": {
-    "body": {
-     "fill": "#3fcf9f",
-     "stroke": "none",
-     "rx": 10,
-     "ry": 10
-    },
-    "label": {
-     "text": "Central Processor",
-     "fill": "#0b3b2e",
-     "fontSize": 17,
-     "fontWeight": 700,
-     "refX": 0.5,
-     "refY": "100%",
-     "refY2": -10,
-     "textAnchor": "middle",
-     "textVerticalAnchor": "bottom",
-     "fontFamily": "Roboto, sans-serif"
-    }
-   }
-  },
-  {
-   "id": "mainproc",
-   "shape": "rect",
-   "position": {
-    "x": 786,
-    "y": 262
-   },
-   "size": {
-    "width": 216,
-    "height": 176
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Main Processor",
-     "fill": "#ffffff",
-     "fontSize": 21,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "ai",
-   "shape": "rect",
-   "position": {
-    "x": 786,
-    "y": 450
-   },
-   "size": {
-    "width": 216,
-    "height": 66
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "AI Models",
-     "fill": "#ffffff",
-     "fontSize": 18,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "memory",
-   "shape": "rect",
-   "position": {
-    "x": 786,
-    "y": 528
-   },
-   "size": {
-    "width": 216,
-    "height": 66
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Memory",
-     "fill": "#ffffff",
-     "fontSize": 18,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "ros",
-   "shape": "rect",
-   "position": {
-    "x": 786,
-    "y": 606
-   },
-   "size": {
-    "width": 216,
-    "height": 66
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Robotics OS",
-     "fill": "#ffffff",
-     "fontSize": 18,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "p-pwr",
-   "shape": "rect",
-   "position": {
-    "x": 1062,
-    "y": 392
-   },
-   "size": {
-    "width": 322,
-    "height": 348
-   },
-   "zIndex": 1,
-   "attrs": {
-    "body": {
-     "fill": "#f6c845",
-     "stroke": "none",
-     "rx": 10,
-     "ry": 10
-    },
-    "label": {
-     "text": "Power Management",
-     "fill": "#5b3a05",
-     "fontSize": 17,
-     "fontWeight": 700,
-     "refX": 0.5,
-     "refY": "100%",
-     "refY2": -10,
-     "textAnchor": "middle",
-     "textVerticalAnchor": "bottom",
-     "fontFamily": "Roboto, sans-serif"
-    }
-   }
-  },
-  {
-   "id": "fets",
-   "shape": "rect",
-   "position": {
-    "x": 1076,
-    "y": 408
-   },
-   "size": {
-    "width": 92,
-    "height": 76
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Smart FETs",
-     "fill": "#ffffff",
-     "fontSize": 14,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "isense",
-   "shape": "rect",
-   "position": {
-    "x": 1176,
-    "y": 408
-   },
-   "size": {
-    "width": 102,
-    "height": 76
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Current Sensing",
-     "fill": "#ffffff",
-     "fontSize": 14,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "efuse",
-   "shape": "rect",
-   "position": {
-    "x": 1286,
-    "y": 408
-   },
-   "size": {
-    "width": 84,
-    "height": 76
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "eFuse",
-     "fill": "#ffffff",
-     "fontSize": 15,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "dcdc",
-   "shape": "rect",
-   "position": {
-    "x": 1076,
-    "y": 498
-   },
-   "size": {
-    "width": 136,
-    "height": 80
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "DC/DC Converters",
-     "fill": "#ffffff",
-     "fontSize": 15,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "ldo",
-   "shape": "rect",
-   "position": {
-    "x": 1236,
-    "y": 498
-   },
-   "size": {
-    "width": 134,
-    "height": 80
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "LDO",
-     "fill": "#ffffff",
-     "fontSize": 18,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "bms",
-   "shape": "rect",
-   "position": {
-    "x": 1076,
-    "y": 592
-   },
-   "size": {
-    "width": 136,
-    "height": 80
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "BMS",
-     "fill": "#ffffff",
-     "fontSize": 18,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "battery",
-   "shape": "rect",
-   "position": {
-    "x": 1236,
-    "y": 592
-   },
-   "size": {
-    "width": 134,
-    "height": 80
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Battery",
-     "fill": "#ffffff",
-     "fontSize": 17,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "p-used",
-   "shape": "rect",
-   "position": {
-    "x": 1492,
-    "y": 28
-   },
-   "size": {
-    "width": 404,
-    "height": 376
-   },
-   "zIndex": 1,
-   "attrs": {
-    "body": {
-     "fill": "#e8e9eb",
-     "stroke": "none",
-     "rx": 8,
-     "ry": 8
-    },
-    "label": {
-     "text": "Used everywhere",
-     "fill": "#374151",
-     "fontSize": 17,
-     "fontWeight": 700,
-     "refX": 0.5,
-     "refY": "100%",
-     "refY2": -10,
-     "textAnchor": "middle",
-     "textVerticalAnchor": "bottom",
-     "fontFamily": "Roboto, sans-serif"
-    }
-   }
-  },
-  {
-   "id": "cprot",
-   "shape": "rect",
-   "position": {
-    "x": 1506,
-    "y": 42
-   },
-   "size": {
-    "width": 184,
-    "height": 70
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Circuit protection",
-     "fill": "#ffffff",
-     "fontSize": 14,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "relays",
-   "shape": "rect",
-   "position": {
-    "x": 1704,
-    "y": 42
-   },
-   "size": {
-    "width": 184,
-    "height": 70
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Relays / Contactors",
-     "fill": "#ffffff",
-     "fontSize": 14,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "iocon",
-   "shape": "rect",
-   "position": {
-    "x": 1506,
-    "y": 124
-   },
-   "size": {
-    "width": 184,
-    "height": 70
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "IO Connectors",
-     "fill": "#ffffff",
-     "fontSize": 14,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "b2b",
-   "shape": "rect",
-   "position": {
-    "x": 1704,
-    "y": 124
-   },
-   "size": {
-    "width": 184,
-    "height": 70
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Board to Board Connectors",
-     "fill": "#ffffff",
-     "fontSize": 14,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "cable",
-   "shape": "rect",
-   "position": {
-    "x": 1506,
-    "y": 206
-   },
-   "size": {
-    "width": 184,
-    "height": 70
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Cable Assembly",
-     "fill": "#ffffff",
-     "fontSize": 14,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "wtw",
-   "shape": "rect",
-   "position": {
-    "x": 1704,
-    "y": 206
-   },
-   "size": {
-    "width": 184,
-    "height": 70
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "W-t-W / W-t-B Connectors",
-     "fill": "#ffffff",
-     "fontSize": 14,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "fans",
-   "shape": "rect",
-   "position": {
-    "x": 1506,
-    "y": 288
-   },
-   "size": {
-    "width": 184,
-    "height": 70
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Fans / Heatsinks",
-     "fill": "#ffffff",
-     "fontSize": 14,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "btns",
-   "shape": "rect",
-   "position": {
-    "x": 1704,
-    "y": 288
-   },
-   "size": {
-    "width": 184,
-    "height": 70
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Buttons & Switches",
-     "fill": "#ffffff",
-     "fontSize": 14,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "p-chg",
-   "shape": "rect",
-   "position": {
-    "x": 1528,
-    "y": 470
-   },
-   "size": {
-    "width": 368,
-    "height": 352
-   },
-   "zIndex": 1,
-   "attrs": {
-    "body": {
-     "fill": "#e8e9eb",
-     "stroke": "none",
-     "rx": 8,
-     "ry": 8
-    },
-    "label": {
-     "text": "Charging Station",
-     "fill": "#374151",
-     "fontSize": 17,
-     "fontWeight": 700,
-     "refX": 0.5,
-     "refY": "100%",
-     "refY2": -10,
-     "textAnchor": "middle",
-     "textVerticalAnchor": "bottom",
-     "fontFamily": "Roboto, sans-serif"
-    }
-   }
-  },
-  {
-   "id": "wcharge",
-   "shape": "rect",
-   "position": {
-    "x": 1546,
-    "y": 488
-   },
-   "size": {
-    "width": 332,
-    "height": 70
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Wireless Charging",
-     "fill": "#ffffff",
-     "fontSize": 18,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "pcon",
-   "shape": "rect",
-   "position": {
-    "x": 1546,
-    "y": 578
-   },
-   "size": {
-    "width": 332,
-    "height": 70
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "Power Connectors",
-     "fill": "#ffffff",
-     "fontSize": 18,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "acdc",
-   "shape": "rect",
-   "position": {
-    "x": 1546,
-    "y": 668
-   },
-   "size": {
-    "width": 332,
-    "height": 70
-   },
-   "zIndex": 3,
-   "ports": {
-    "groups": {
-     "top": {
-      "position": "top",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "right": {
-      "position": "right",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "bottom": {
-      "position": "bottom",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     },
-     "left": {
-      "position": "left",
-      "attrs": {
-       "circle": {
-        "r": 4,
-        "magnet": true,
-        "stroke": "#94a3b8",
-        "fill": "#0f172a",
-        "strokeWidth": 1.5
-       }
-      }
-     }
-    },
-    "items": [
-     {
-      "id": "t",
-      "group": "top"
-     },
-     {
-      "id": "r",
-      "group": "right"
-     },
-     {
-      "id": "b",
-      "group": "bottom"
-     },
-     {
-      "id": "l",
-      "group": "left"
-     }
-    ]
-   },
-   "attrs": {
-    "body": {
-     "fill": "#2e6ed5",
-     "stroke": "none",
-     "rx": 3,
-     "ry": 3
-    },
-    "label": {
-     "text": "AC/DC Power Supply",
-     "fill": "#ffffff",
-     "fontSize": 18,
-     "fontWeight": 600,
-     "fontFamily": "Roboto, sans-serif",
-     "textWrap": {
-      "width": -10,
-      "height": -6,
-      "ellipsis": false
-     }
-    }
-   }
-  },
-  {
-   "id": "w0",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "battery",
-    "port": "l"
-   },
-   "target": {
-    "cell": "bms",
-    "port": "r"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#f59e0b",
-     "strokeWidth": 4,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w1",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "bms",
-    "port": "t"
-   },
-   "target": {
-    "cell": "dcdc",
-    "port": "b"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#f59e0b",
-     "strokeWidth": 4,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w2",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "dcdc",
-    "port": "t"
-   },
-   "target": {
-    "cell": "fets",
-    "port": "b"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#f59e0b",
-     "strokeWidth": 4,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w3",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "efuse",
-    "port": "b"
-   },
-   "target": {
-    "cell": "battery",
-    "port": "t"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#f59e0b",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w4",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "fets",
-    "port": "t"
-   },
-   "target": {
-    "cell": "bldc-wheels",
-    "port": "b"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#f59e0b",
-     "strokeWidth": 4,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w5",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "dcdc",
-    "port": "l"
-   },
-   "target": {
-    "cell": "bldc-arm",
-    "port": "b"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#f59e0b",
-     "strokeWidth": 4,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w6",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "ldo",
-    "port": "b"
-   },
-   "target": {
-    "cell": "rtproc",
-    "port": "b"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#f59e0b",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w7",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "isense",
-    "port": "t"
-   },
-   "target": {
-    "cell": "bldc-wheels",
-    "port": "b"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#f59e0b",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w8",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "mainproc",
-    "port": "b"
-   },
-   "target": {
-    "cell": "ai",
-    "port": "t"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#34d399",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w9",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "ai",
-    "port": "b"
-   },
-   "target": {
-    "cell": "memory",
-    "port": "t"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#34d399",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w10",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "memory",
-    "port": "b"
-   },
-   "target": {
-    "cell": "ros",
-    "port": "t"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#34d399",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w11",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "mainproc",
-    "port": "l"
-   },
-   "target": {
-    "cell": "bldc-arm",
-    "port": "r"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#34d399",
-     "strokeWidth": 4,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w12",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "mainproc",
-    "port": "r"
-   },
-   "target": {
-    "cell": "bldc-wheels",
-    "port": "l"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#34d399",
-     "strokeWidth": 4,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w13",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "sigagg",
-    "port": "r"
-   },
-   "target": {
-    "cell": "mainproc",
-    "port": "l"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#34d399",
-     "strokeWidth": 4,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w14",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "rtproc",
-    "port": "r"
-   },
-   "target": {
-    "cell": "ai",
-    "port": "l"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#34d399",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w15",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "mainproc",
-    "port": "t"
-   },
-   "target": {
-    "cell": "comm",
-    "port": "b"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#34d399",
-     "strokeWidth": 4,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w16",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "gnss",
-    "port": "b"
-   },
-   "target": {
-    "cell": "mainproc",
-    "port": "t"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#34d399",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w17",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "camera",
-    "port": "r"
-   },
-   "target": {
-    "cell": "sigagg",
-    "port": "l"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#e5e7eb",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w18",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "sensors",
-    "port": "r"
-   },
-   "target": {
-    "cell": "analog",
-    "port": "l"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#e5e7eb",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w19",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "radar",
-    "port": "r"
-   },
-   "target": {
-    "cell": "rtproc",
-    "port": "l"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#e5e7eb",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w20",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "analog",
-    "port": "t"
-   },
-   "target": {
-    "cell": "sigagg",
-    "port": "b"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#e5e7eb",
-     "strokeWidth": 2.5,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w21",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "comm",
-    "port": "t"
-   },
-   "target": {
-    "cell": "antenna",
-    "port": "b"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#e5e7eb",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w22",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "arm-anim",
-    "port": "pin1"
-   },
-   "target": {
-    "cell": "bldc-arm",
-    "port": "l"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#e5e7eb",
-     "strokeWidth": 2.5,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w23",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "acdc",
-    "port": "t"
-   },
-   "target": {
-    "cell": "pcon",
-    "port": "b"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#fbbf24",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w24",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "pcon",
-    "port": "t"
-   },
-   "target": {
-    "cell": "wcharge",
-    "port": "b"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#fbbf24",
-     "strokeWidth": 3,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  },
-  {
-   "id": "w25",
-   "shape": "edge",
-   "zIndex": 2,
-   "source": {
-    "cell": "wcharge",
-    "port": "l"
-   },
-   "target": {
-    "cell": "battery",
-    "port": "r"
-   },
-   "router": {
-    "name": "orth"
-   },
-   "connector": {
-    "name": "rounded",
-    "args": {
-     "radius": 12
-    }
-   },
-   "attrs": {
-    "line": {
-     "stroke": "#fbbf24",
-     "strokeWidth": 4,
-     "targetMarker": null,
-     "strokeDasharray": 6,
-     "style": {
-      "animation": "flowing-line 30s infinite linear"
-     }
-    }
-   }
-  }
- ]
+  "class": "GraphLinksModel",
+  "linkFromPortIdProperty": "fromPort",
+  "linkToPortIdProperty": "toPort",
+  "linkKeyProperty": "key",
+  "nodeDataArray": [
+    {
+      "key": "chassis",
+      "loc": "815 420",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "1270 680",
+      "text": "",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "wheel0",
+      "loc": "452.5 54",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "185 72",
+      "text": "",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "wheel1",
+      "loc": "1212.5 54",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "185 72",
+      "text": "",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "wheel2",
+      "loc": "482.5 788",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "185 72",
+      "text": "",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "wheel3",
+      "loc": "1212.5 788",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "185 72",
+      "text": "",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "antenna",
+      "loc": "897.5 36",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "195 56",
+      "text": "Antenna",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "arm-anim",
+      "loc": "95 160",
+      "category": "block",
+      "text": "Robot Arm",
+      "color": "#b45309",
+      "icon": "precision_manufacturing",
+      "subtitle": "Energy"
+    },
+    {
+      "key": "p-arm",
+      "loc": "312 196",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "200 168",
+      "text": "",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "bldc-arm",
+      "loc": "312 196",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "176 144",
+      "text": "BLDC Motor Control (Robotic Arm)",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "p-wheels",
+      "loc": "1222 220",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "320 224",
+      "text": "",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "bldc-wheels",
+      "loc": "1222 220",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "296 200",
+      "text": "BLDC Motor Control (Wheels)",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "p-conn",
+      "loc": "805 172",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "426 120",
+      "text": "Connectivity",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "comm",
+      "loc": "702 157",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "196 66",
+      "text": "Communication Modules",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "gnss",
+      "loc": "909 157",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "194 66",
+      "text": "GNSS Modules",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "p-led",
+      "loc": "428 398",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "412 92",
+      "text": "",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "led",
+      "loc": "323 398",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "178 68",
+      "text": "LED",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "led-drv",
+      "loc": "523 398",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "198 68",
+      "text": "LED Drivers",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "p-sens",
+      "loc": "324 620",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "204 284",
+      "text": "Sensors",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "camera",
+      "loc": "324 522",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "180 64",
+      "text": "Camera",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "sensors",
+      "loc": "324 598",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "180 64",
+      "text": "Sensors",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "radar",
+      "loc": "324 678",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "180 72",
+      "text": "RADAR / LIDAR",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "p-sproc",
+      "loc": "617 620",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "210 284",
+      "text": "Sensor Processor",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "sigagg",
+      "loc": "617 526",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "186 72",
+      "text": "Signal Aggregation",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "analog",
+      "loc": "617 602",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "186 56",
+      "text": "Analog",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "rtproc",
+      "loc": "617 678",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "186 72",
+      "text": "Real Time Processor",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "p-cpu",
+      "loc": "894 496",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "244 500",
+      "text": "Central Processor",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "mainproc",
+      "loc": "894 350",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "216 176",
+      "text": "Main Processor",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "ai",
+      "loc": "894 483",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "216 66",
+      "text": "AI Models",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "memory",
+      "loc": "894 561",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "216 66",
+      "text": "Memory",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "ros",
+      "loc": "894 639",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "216 66",
+      "text": "Robotics OS",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "p-pwr",
+      "loc": "1223 566",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "322 348",
+      "text": "Power Management",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "fets",
+      "loc": "1122 446",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "92 76",
+      "text": "Smart FETs",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "isense",
+      "loc": "1227 446",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "102 76",
+      "text": "Current Sensing",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "efuse",
+      "loc": "1328 446",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "84 76",
+      "text": "eFuse",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "dcdc",
+      "loc": "1144 538",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "136 80",
+      "text": "DC/DC Converters",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "ldo",
+      "loc": "1303 538",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "134 80",
+      "text": "LDO",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "bms",
+      "loc": "1144 632",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "136 80",
+      "text": "BMS",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "battery",
+      "loc": "1303 632",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "134 80",
+      "text": "Battery",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "p-used",
+      "loc": "1694 216",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "404 376",
+      "text": "Used everywhere",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "cprot",
+      "loc": "1598 77",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "184 70",
+      "text": "Circuit protection",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "relays",
+      "loc": "1796 77",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "184 70",
+      "text": "Relays / Contactors",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "iocon",
+      "loc": "1598 159",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "184 70",
+      "text": "IO Connectors",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "b2b",
+      "loc": "1796 159",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "184 70",
+      "text": "Board to Board Connectors",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "cable",
+      "loc": "1598 241",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "184 70",
+      "text": "Cable Assembly",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "wtw",
+      "loc": "1796 241",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "184 70",
+      "text": "W-t-W / W-t-B Connectors",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "fans",
+      "loc": "1598 323",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "184 70",
+      "text": "Fans / Heatsinks",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "btns",
+      "loc": "1796 323",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "184 70",
+      "text": "Buttons & Switches",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "p-chg",
+      "loc": "1712 646",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "368 352",
+      "text": "Charging Station",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "wcharge",
+      "loc": "1712 523",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "332 70",
+      "text": "Wireless Charging",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "pcon",
+      "loc": "1712 613",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "332 70",
+      "text": "Power Connectors",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    },
+    {
+      "key": "acdc",
+      "loc": "1712 703",
+      "category": "shape",
+      "figure": "Rectangle",
+      "size": "332 70",
+      "text": "AC/DC Power Supply",
+      "fill": "#ffffff",
+      "stroke": "#334155",
+      "labelColor": "#1f2937"
+    }
+  ],
+  "linkDataArray": [
+    {
+      "key": "l0",
+      "category": "link",
+      "from": "battery",
+      "to": "bms",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l1",
+      "category": "link",
+      "from": "bms",
+      "to": "dcdc",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l2",
+      "category": "link",
+      "from": "dcdc",
+      "to": "fets",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l3",
+      "category": "link",
+      "from": "efuse",
+      "to": "battery",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l4",
+      "category": "link",
+      "from": "fets",
+      "to": "bldc-wheels",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l5",
+      "category": "link",
+      "from": "dcdc",
+      "to": "bldc-arm",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l6",
+      "category": "link",
+      "from": "ldo",
+      "to": "rtproc",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l7",
+      "category": "link",
+      "from": "isense",
+      "to": "bldc-wheels",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l8",
+      "category": "link",
+      "from": "mainproc",
+      "to": "ai",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l9",
+      "category": "link",
+      "from": "ai",
+      "to": "memory",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l10",
+      "category": "link",
+      "from": "memory",
+      "to": "ros",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l11",
+      "category": "link",
+      "from": "mainproc",
+      "to": "bldc-arm",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l12",
+      "category": "link",
+      "from": "mainproc",
+      "to": "bldc-wheels",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l13",
+      "category": "link",
+      "from": "sigagg",
+      "to": "mainproc",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l14",
+      "category": "link",
+      "from": "rtproc",
+      "to": "ai",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l15",
+      "category": "link",
+      "from": "mainproc",
+      "to": "comm",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l16",
+      "category": "link",
+      "from": "gnss",
+      "to": "mainproc",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l17",
+      "category": "link",
+      "from": "camera",
+      "to": "sigagg",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l18",
+      "category": "link",
+      "from": "sensors",
+      "to": "analog",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l19",
+      "category": "link",
+      "from": "radar",
+      "to": "rtproc",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l20",
+      "category": "link",
+      "from": "analog",
+      "to": "sigagg",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l21",
+      "category": "link",
+      "from": "comm",
+      "to": "antenna",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l22",
+      "category": "link",
+      "from": "arm-anim",
+      "to": "bldc-arm",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l23",
+      "category": "link",
+      "from": "acdc",
+      "to": "pcon",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l24",
+      "category": "link",
+      "from": "pcon",
+      "to": "wcharge",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    },
+    {
+      "key": "l25",
+      "category": "link",
+      "from": "wcharge",
+      "to": "battery",
+      "fromPort": "",
+      "toPort": "",
+      "color": "#22d3ee",
+      "width": 2,
+      "dash": [
+        6,
+        3
+      ],
+      "flow": true
+    }
+  ]
 }
