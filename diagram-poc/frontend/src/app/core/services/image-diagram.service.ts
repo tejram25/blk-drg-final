@@ -7,6 +7,8 @@ import { apiBaseUrl } from '../app-config';
 export interface ExtractedNode {
   id: string;
   label: string;
+  /** Smaller role caption under the title (may be empty). */
+  sub?: string;
   kind: string;
   x: number;
   y: number;

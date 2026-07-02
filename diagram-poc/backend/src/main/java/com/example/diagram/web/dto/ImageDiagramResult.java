@@ -14,8 +14,12 @@ public record ImageDiagramResult(
         String model,
         String note) {
 
-    /** A detected block. {@code x}/{@code y} are the block centre in a 0-1000 × 0-700 grid. */
-    public record Node(String id, String label, String kind, int x, int y) {
+    /**
+     * A detected block. {@code label} is the title in the block, {@code sub} the
+     * smaller role text (may be blank). {@code x}/{@code y} are the block centre
+     * on a 0-1000 × 0-700 grid.
+     */
+    public record Node(String id, String label, String sub, String kind, int x, int y) {
     }
 
     /** A directed connection between two node ids. */

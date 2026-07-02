@@ -1039,8 +1039,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       idMap.set(n.id, key);
       const style = GojsEditorComponent.KIND_STYLE[(n.kind || 'generic').toLowerCase()]
         ?? GojsEditorComponent.KIND_STYLE['generic'];
-      const loc = go.Point.stringify(new go.Point((n.x ?? 0) * 1.35, (n.y ?? 0) * 1.55));
-      return { key, category: 'block', text: n.label || this.prettyKind(n.kind), subtitle: this.prettyKind(n.kind),
+      const loc = go.Point.stringify(new go.Point((n.x ?? 0) * 1.5, (n.y ?? 0) * 1.7));
+      return { key, category: 'block', text: n.label || this.prettyKind(n.kind),
+        subtitle: (n.sub && n.sub.trim()) || this.prettyKind(n.kind),
         color: style.color, icon: style.icon, loc };
     });
     const links: go.ObjectData[] = (res.links || [])

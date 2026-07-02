@@ -36,12 +36,13 @@ public class ImageDiagramServiceImpl implements ImageDiagramService {
             connecting line/arrow between them.
 
             Return ONLY minified JSON, no prose, of exactly this shape:
-            {"title":"<short title>","nodes":[{"id":"n1","label":"<text in the block>",
-            "kind":"<one keyword>","x":<0-1000>,"y":<0-700>}],
-            "links":[{"from":"n1","to":"n2","label":""}]}
+            {"title":"<short title>","nodes":[{"id":"n1","label":"<title in the block>",
+            "sub":"<smaller role text under it, or empty>","kind":"<one keyword>",
+            "x":<0-1000>,"y":<0-700>}],"links":[{"from":"n1","to":"n2","label":""}]}
 
             Rules:
-            - One node per distinct block. id is n1, n2, ... label is the text shown in the block.
+            - One node per distinct block. id is n1, n2, ... label is the main text in the
+              block; sub is the smaller caption under/near it (e.g. "Digital Processing"), else "".
             - kind is ONE lowercase keyword picked from: processor, mcu, ai, memory, sensor,
               camera, motor, battery, power, dcdc, comms, wifi, antenna, display, storage,
               connector, logic, input, output, clock, amplifier, regulator, process, decision,
@@ -126,10 +127,11 @@ public class ImageDiagramServiceImpl implements ImageDiagramService {
             for (JsonNode n : root.path("nodes")) {
                 String id = firstNonBlank(n.path("id").asText(""), "n" + (++i));
                 String label = n.path("label").asText("").trim();
+                String sub = n.path("sub").asText("").trim();
                 String kind = n.path("kind").asText("generic").trim().toLowerCase();
                 int x = clamp(n.path("x").asInt(0), 0, 1000);
                 int y = clamp(n.path("y").asInt(0), 0, 700);
-                nodes.add(new ImageDiagramResult.Node(id, label, kind.isBlank() ? "generic" : kind, x, y));
+                nodes.add(new ImageDiagramResult.Node(id, label, sub, kind.isBlank() ? "generic" : kind, x, y));
             }
             for (JsonNode l : root.path("links")) {
                 String from = l.path("from").asText("").trim();
