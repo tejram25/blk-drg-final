@@ -731,3 +731,77 @@
   cursor: pointer; font-size: 12.5px; font-family: inherit; }
 .del-btn:hover { background: rgba(239,68,68,.1); }
 .del-btn mat-icon { font-size: 16px; width: 16px; height: 16px; }
+
+/* ================= Modern polish pass =================
+   Glass surfaces, softer depth and micro-interactions layered over the
+   established chrome (kept as overrides so the base design stays intact). */
+
+/* Header: subtle vertical gradient + hairline highlight */
+.topbar {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, #ffffff 4%), var(--panel));
+  box-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 1px 0 rgba(0,0,0,.3);
+}
+
+/* All floating menus: glass + entrance motion */
+.dropdown-menu, .dd-menu, .lang-menu, .ctx-menu {
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-radius: 12px;
+  box-shadow: 0 18px 44px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.04) inset;
+  animation: menu-in .14s cubic-bezier(.2,.8,.25,1);
+}
+@keyframes menu-in { from { opacity: 0; transform: translateY(-5px) scale(.98); } to { opacity: 1; transform: none; } }
+.menu-item, .dd-item { transition: background .12s, color .12s; border-radius: 8px; }
+
+/* Buttons + chips: gentle press/hover feedback */
+.topbar .mat-mdc-icon-button, .hb-menu, .user-chip, .cls-pill, .dd-trigger {
+  transition: background .14s, border-color .14s, color .14s, transform .1s;
+}
+.topbar .mat-mdc-icon-button:active, .hb-menu:active { transform: scale(.94); }
+
+/* Palette: glass panel + chip lift */
+.palette .block-chip, .palette .symbol-item {
+  transition: border-color .13s, transform .13s, box-shadow .13s;
+}
+.palette .block-chip:hover, .palette .symbol-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,.35);
+}
+
+/* Wire dock + chat: glass */
+.wire-dock, .chat {
+  background: color-mix(in srgb, var(--panel) 84%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.wire-dock { border-radius: 13px; }
+
+/* Onboarding: glass + soft entrance */
+.onboarding {
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  animation: ob-in .35s cubic-bezier(.2,.8,.25,1);
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+@keyframes ob-in { from { opacity: 0; transform: translate(-50%, -46%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+
+/* Properties panel rows breathe a little more */
+.props label { transition: color .12s; }
+.part-details .pd-row { transition: background .12s; border-radius: 6px; }
+.part-details .pd-row:hover { background: color-mix(in srgb, var(--panel-2) 70%, transparent); }
+
+/* Minimap: glass card */
+.minimap {
+  background: color-mix(in srgb, var(--bg-deep) 82%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+}
+
+/* Focus visibility for keyboard users */
+.hb-menu:focus-visible, .dd-trigger:focus-visible, .menu-item:focus-visible,
+.dd-item:focus-visible, .user-chip:focus-visible, .cls-pill:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-menu, .dd-menu, .lang-menu, .ctx-menu, .onboarding { animation: none; }
+  .palette .block-chip, .palette .symbol-item, .dw-row { transition: none; }
+}

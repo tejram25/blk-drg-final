@@ -1,0 +1,123 @@
+<aside class="dw-dock">
+  <div class="dw-head">
+    <span class="dw-title"><mat-icon>emoji_events</mat-icon> Design Win</span>
+    <button type="button" class="dw-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="dw-tabs">
+    <button type="button" [class.active]="tab === 'explore'" (click)="tab = 'explore'">
+      <mat-icon>account_tree</mat-icon> Explore
+    </button>
+    <button type="button" [class.active]="tab === 'pos'" (click)="tab = 'pos'">
+      <mat-icon>verified</mat-icon> POS check
+    </button>
+  </div>
+
+  <!-- ============ EXPLORE ============ -->
+  @if (tab === 'explore') {
+    <div class="dw-search">
+      <input type="text" [(ngModel)]="query" (keyup.enter)="searchCustomers()"
+             placeholder="Customer name…" />
+      <button type="button" class="dw-go" [disabled]="!query.trim() || loading" (click)="searchCustomers()">
+        <mat-icon>search</mat-icon>
+      </button>
+    </div>
+
+    <!-- Breadcrumb -->
+    @if (stack.length) {
+      <div class="dw-crumbs">
+        @for (l of stack; track $index; let i = $index; let last = $last) {
+          <button type="button" class="crumb" [class.here]="last" (click)="crumbTo(i)">{{ l.label }}</button>
+          @if (!last) { <mat-icon class="crumb-sep">chevron_right</mat-icon> }
+        }
+      </div>
+    }
+
+    <div class="dw-body">
+      @if (loading) { <div class="dw-msg"><span class="spin"></span> Loading…</div> }
+      @if (error) { <div class="dw-msg err"><mat-icon>error_outline</mat-icon> {{ error }}</div> }
+
+      @if (!loading && !error && !stack.length) {
+        <div class="dw-empty">
+          <mat-icon>emoji_events</mat-icon>
+          <p>Search a customer to explore their design-win pipeline:</p>
+          <ol>
+            <li>Customers</li><li>Projects</li><li>Boards</li>
+            <li>Registrations &amp; parts</li>
+          </ol>
+        </div>
+      }
+
+      @if (!loading && level) {
+        @if (!level.items.length) {
+          <div class="dw-msg">No records.</div>
+        }
+        @for (row of level.items; track $index) {
+          <div class="dw-row" [class.leaf]="level.kind === 'detail'" (click)="onRowClick(row)">
+            <div class="dw-row-main">
+              <span class="dw-row-title">{{ row.title }}</span>
+              @if (row.subtitle) { <span class="dw-row-sub">{{ row.subtitle }}</span> }
+            </div>
+            @if (level.kind !== 'detail') { <mat-icon class="dw-row-go">chevron_right</mat-icon> }
+            @if (level.kind === 'detail' || row.expanded) {
+              <div class="dw-kv">
+                @for (f of row.fields; track f.k) {
+                  <span class="kv"><b>{{ f.k }}</b>{{ f.v }}</span>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- ============ POS / FIELD-PROVEN ============ -->
+  @if (tab === 'pos') {
+    <div class="dw-search col">
+      <input type="text" [(ngModel)]="posPart" (keyup.enter)="checkPos()" placeholder="Part number…" />
+      <div class="dw-search-line">
+        <input type="text" [(ngModel)]="posMfr" (keyup.enter)="checkPos()" placeholder="Manufacturer (optional)" />
+        <button type="button" class="dw-go" [disabled]="!posPart.trim() || posLoading" (click)="checkPos()">
+          <mat-icon>search</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="dw-body">
+      @if (posLoading) { <div class="dw-msg"><span class="spin"></span> Checking sales history…</div> }
+      @if (posError) { <div class="dw-msg err"><mat-icon>error_outline</mat-icon> {{ posError }}</div> }
+
+      @if (!posLoading && !posError && !posResult) {
+        <div class="dw-empty">
+          <mat-icon>verified</mat-icon>
+          <p>Check whether a part has <b>real sales history</b> (point-of-sale records) — a "field-proven" signal used by the AI recommendations.</p>
+        </div>
+      }
+
+      @if (posResult; as r) {
+        <div class="pos-verdict" [class.ok]="r.proven" [class.no]="!r.proven">
+          <mat-icon>{{ r.proven ? 'verified' : 'help_outline' }}</mat-icon>
+          <div>
+            <b>{{ r.proven ? 'Field-proven' : 'No sales history found' }}</b>
+            <span>{{ r.proven ? (r.count + ' POS record' + (r.count === 1 ? '' : 's')) : 'This part has no POS records in Design Win.' }}</span>
+          </div>
+        </div>
+        @for (row of r.rows; track $index) {
+          <div class="dw-row leaf">
+            <div class="dw-row-main">
+              <span class="dw-row-title">{{ row.title }}</span>
+              @if (row.subtitle) { <span class="dw-row-sub">{{ row.subtitle }}</span> }
+            </div>
+            <div class="dw-kv">
+              @for (f of row.fields; track f.k) {
+                <span class="kv"><b>{{ f.k }}</b>{{ f.v }}</span>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+</aside>

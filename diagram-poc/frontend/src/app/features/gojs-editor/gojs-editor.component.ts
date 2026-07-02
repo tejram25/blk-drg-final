@@ -39,6 +39,7 @@ import { LifecycleDialogComponent } from '../editor/components/lifecycle-dialog/
 import { FeedbackDialogComponent } from '../editor/components/feedback-dialog/feedback-dialog.component';
 import { ProjectPanelComponent } from '../editor/components/project-panel/project-panel.component';
 import { PartSearchPanelComponent } from '../editor/components/part-search-panel/part-search-panel.component';
+import { DesignwinPanelComponent } from '../editor/components/designwin-panel/designwin-panel.component';
 import { VersionsDialogComponent } from '../editor/components/versions-dialog/versions-dialog.component';
 import { CommentsPanelComponent } from '../editor/components/comments-panel/comments-panel.component';
 import { TemplatesDialogComponent } from '../editor/components/templates-dialog/templates-dialog.component';
@@ -60,7 +61,7 @@ import { Command, CommandPaletteComponent } from '../../shared/components/comman
         CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe,
         BomDialogComponent, RecommendationsDialogComponent, DesignReviewDialogComponent,
         LifecycleDialogComponent, FeedbackDialogComponent, ProjectPanelComponent,
-        PartSearchPanelComponent, VersionsDialogComponent, CommentsPanelComponent,
+        PartSearchPanelComponent, DesignwinPanelComponent, VersionsDialogComponent, CommentsPanelComponent,
         TemplatesDialogComponent, ExportDialogComponent, CommandPaletteComponent,
         ReviewsDialogComponent, ZoomDockComponent, ConfirmDialogComponent,
     ],
@@ -134,6 +135,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // dialog state
   partSearchOpen = false; partSearchSeed = '';
+  designWinOpen = false; designWinSeed = '';
   recsOpen = false; recsLoading = false; recsResult: RecommendationResult | null = null;
   reviewOpen = false; reviewLoading = false; reviewResult: DesignReviewResult | null = null;
   bomRows: BomRow[] | null = null;
@@ -962,6 +964,18 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const pn = this.selectedNode ? this.partNumberOfData(this.selectedNode.data) : null;
     if (pn) this.checkLifecycle(pn); else this.notify.info('Select a catalogue part first.');
   }
+
+  /** Open the Design Win explorer, optionally seeding the POS tab with a part. */
+  openDesignWin(seedPart = ''): void {
+    this.designWinSeed = seedPart;
+    this.designWinOpen = false;
+    setTimeout(() => { this.designWinOpen = true; this.cdr.detectChanges(); }, 0);
+  }
+  /** POS ("field-proven") check for the selected catalogue part. */
+  checkSelectedPos(): void {
+    const pn = this.selectedNode ? this.partNumberOfData(this.selectedNode.data) : null;
+    if (pn) this.openDesignWin(pn); else this.notify.info('Select a catalogue part first.');
+  }
   onAddAlternative(alt: AlternativePart): void {
     this.addPartToCanvas({ arwPartNum: { name: alt.partNumber }, suppPartNum: { name: alt.partNumber },
       supp: { name: alt.manufacturer }, mfr: { name: alt.manufacturer }, invOrgs: [{ desc: alt.note }],
@@ -1079,6 +1093,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       { label: 'Recommendations (AI)', icon: 'auto_awesome', run: () => this.openRecommendations() },
       { label: 'Design review (AI)', icon: 'rule', run: () => this.openDesignReview() },
       { label: 'Search parts', icon: 'travel_explore', run: () => (this.partSearchOpen = true) },
+      { label: 'Design Win explorer', icon: 'emoji_events', run: () => this.openDesignWin() },
+      { label: 'Field-proven check (POS)', icon: 'verified', run: () => this.checkSelectedPos() },
       { label: 'Project workspace', icon: 'work', run: () => (this.projectPanelOpen = true) },
       { label: 'Check part lifecycle', icon: 'fact_check', run: () => this.checkSelectedLifecycle() },
       { label: 'Version history', icon: 'history', run: () => this.openVersions() },
