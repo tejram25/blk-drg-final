@@ -112,14 +112,15 @@ export class DesignwinPanelComponent implements OnInit {
     this.dw.registrationDetails({ boardNum }).subscribe({
       next: (reg) => {
         const regRows = this.normalize(reg, 'detail').map((r) => ({ ...r, subtitle: r.subtitle || 'Registration' }));
-        this.dw.custParts({ boardNum }).subscribe({
-          next: (parts) => {
-            const partRows = this.normalize(parts, 'detail').map((r) => ({ ...r, subtitle: r.subtitle || 'Registered part' }));
-            this.loading = false;
-            this.stack.push({ kind: 'detail', label: `Board ${boardNum}`, items: [...regRows, ...partRows],
-              ctx: { ...parent, boardNum } });
-          },
-          error: (e) => this.fail(e),
+        const push = (partRows: Row[]) => {
+          this.loading = false;
+          this.stack.push({ kind: 'detail', label: `Board ${boardNum}`, items: [...regRows, ...partRows],
+            ctx: { ...parent, boardNum } });
+        };
+        // cust-parts needs the customer scope (the backend rejects a bare boardNum).
+        this.dw.custParts({ boardNum, customerName: parent.customerName, custBillTo: parent.billTo, projectId: parent.projectId }).subscribe({
+          next: (parts) => push(this.normalize(parts, 'detail').map((r) => ({ ...r, subtitle: r.subtitle || 'Registered part' }))),
+          error: () => push([]), // still show the registration rows even if parts lookup fails
         });
       },
       error: (e) => this.fail(e),
