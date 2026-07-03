@@ -4,6 +4,7 @@ import com.example.diagram.service.BoxSuggestionService;
 import com.example.diagram.service.DesignWinService;
 import com.example.diagram.service.PartSearchService;
 import com.example.diagram.web.dto.BoxSuggestion;
+import com.example.diagram.web.dto.BoxSuggestionRequest;
 import com.example.diagram.web.dto.BoxSuggestionResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,8 +17,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Suggests the component a diagram box needs. The box's label/role/kind is turned
@@ -70,7 +73,8 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
     }
 
     @Override
-    public BoxSuggestionResult suggest(String label, String sub, String kind) {
+    public BoxSuggestionResult suggest(BoxSuggestionRequest req) {
+        String label = req.label(), sub = req.sub(), kind = req.kind();
         String query = queryFor(label, sub, kind);
         JsonNode arr;
         try {
@@ -88,6 +92,10 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
                     "No catalogue matches for \"" + query + "\". Try renaming the box or searching parts directly.");
         }
 
+        // When the diagram is attached to a Design Win customer, pull that customer's
+        // registered/approved parts so we can prefer parts they already use.
+        Set<String> approved = approvedMpns(req);
+
         // Group offers by manufacturer part number → one component with its suppliers.
         Map<String, List<JsonNode>> byMpn = new LinkedHashMap<>();
         for (JsonNode p : arr) {
@@ -97,21 +105,65 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
 
         List<BoxSuggestion> suggestions = new ArrayList<>();
         for (Map.Entry<String, List<JsonNode>> e : byMpn.entrySet()) {
-            suggestions.add(toSuggestion(e.getKey(), e.getValue()));
+            suggestions.add(toSuggestion(e.getKey(), e.getValue(), approved));
         }
-        // Most field-proven, then most in-stock, then active status first.
+        // Customer-approved first, then field-proven, then most in-stock.
         suggestions.sort((a, b) -> {
+            int c = Boolean.compare(b.customerApproved(), a.customerApproved());
+            if (c != 0) return c;
             int p = Boolean.compare(b.fieldProven(), a.fieldProven());
             if (p != 0) return p;
             return Long.compare(b.stock(), a.stock());
         });
         if (suggestions.size() > 6) suggestions = suggestions.subList(0, 6);
 
-        String note = "Grounded in the Arrow catalogue; field-proven items have Design Win POS shipment history.";
+        String note = approved.isEmpty()
+                ? "Grounded in the Arrow catalogue; field-proven items have Design Win POS shipment history."
+                : "Grounded in the Arrow catalogue; parts this customer has already registered are marked "
+                        + "customer-approved and ranked first, then field-proven (POS) parts.";
         return new BoxSuggestionResult(query, suggestions, note);
     }
 
-    private BoxSuggestion toSuggestion(String mpn, List<JsonNode> offers) {
+    /**
+     * The manufacturer part numbers the attached Design Win customer has registered
+     * (their approved parts), lower-cased for matching. Empty when no customer is
+     * attached or the lookup is unavailable.
+     */
+    private Set<String> approvedMpns(BoxSuggestionRequest req) {
+        Set<String> out = new LinkedHashSet<>();
+        if (req == null || (!present(req.customerName()) && !present(req.custBillTo()))) return out;
+        try {
+            String json = designWin.custPartSearch(req.customerName(), req.custBillTo(),
+                    req.projectId(), req.boardNum(), null);
+            collectPartNumbers(mapper.readTree(json == null ? "" : json), out);
+        } catch (Exception ex) {
+            log.debug("Customer approved-parts lookup failed for '{}': {}", req.customerName(), ex.toString());
+        }
+        return out;
+    }
+
+    private static final Set<String> PART_NUM_KEYS =
+            Set.of("partnumber", "mfrpartnum", "custpartnum", "arwpartnum", "supppartnum");
+
+    /** Deep-scans a Design Win response for any part-number field and collects them (lower-cased). */
+    private static void collectPartNumbers(JsonNode node, Set<String> out) {
+        if (node == null) return;
+        if (node.isObject()) {
+            node.fields().forEachRemaining(e -> {
+                JsonNode v = e.getValue();
+                if (PART_NUM_KEYS.contains(e.getKey().toLowerCase())) {
+                    String pn = v.isTextual() ? v.asText() : (v.has("name") ? v.path("name").asText("") : "");
+                    if (!pn.isBlank()) out.add(pn.trim().toLowerCase());
+                } else {
+                    collectPartNumbers(v, out);
+                }
+            });
+        } else if (node.isArray()) {
+            node.forEach(c -> collectPartNumbers(c, out));
+        }
+    }
+
+    private BoxSuggestion toSuggestion(String mpn, List<JsonNode> offers, Set<String> approved) {
         JsonNode best = offers.get(0);
         String mfr = firstText(best.at("/mfr/name"), best.at("/supp/name"), "");
         JsonNode org = best.at("/invOrgs/0");
@@ -120,10 +172,11 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
         String status = org.at("/status").asText("");
         String lead = best.at("/leadTime/arwLT").asText("");
         boolean proven = fieldProven(mpn, mfr);
+        boolean customerApproved = !approved.isEmpty() && approved.contains(mpn.trim().toLowerCase());
 
         List<BoxSuggestion.Supplier> suppliers = new ArrayList<>();
         long totalStock = 0;
-        java.util.Set<String> seen = new java.util.LinkedHashSet<>();
+        Set<String> seen = new LinkedHashSet<>();
         for (JsonNode p : offers) {
             String sName = firstText(p.at("/supp/name"), p.at("/mfr/name"), "Arrow");
             if (!seen.add(sName.toLowerCase())) continue;
@@ -134,7 +187,7 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
                     s, p.at("/leadTime/arwLT").asText(""), priceOf(p), moqOf(p)));
         }
         return new BoxSuggestion(mpn, mfr, desc, category, status, totalStock, lead, proven,
-                priceOf(best), moqOf(best), suppliers);
+                customerApproved, priceOf(best), moqOf(best), suppliers);
     }
 
     /** Best-effort unit price from the Arrow part JSON (several shapes exist); 0 if none. */

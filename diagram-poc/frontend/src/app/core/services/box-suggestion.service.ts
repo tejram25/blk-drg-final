@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { apiBaseUrl } from '../app-config';
+import { DesignWinContext } from './designwin.service';
 
 export interface SupplierOffer {
   name: string;
@@ -20,6 +21,7 @@ export interface BoxSuggestion {
   stock: number;
   leadWeeks: string;
   fieldProven: boolean;
+  customerApproved?: boolean;
   unitPrice?: number;
   moq?: number;
   suppliers: SupplierOffer[];
@@ -49,7 +51,11 @@ const API = apiBaseUrl();
 @Injectable({ providedIn: 'root' })
 export class BoxSuggestionService {
   constructor(private http: HttpClient) {}
-  suggest(label: string, sub: string, kind: string): Observable<BoxSuggestionResult> {
-    return this.http.post<BoxSuggestionResult>(`${API}/box-suggestions`, { label, sub, kind });
+  suggest(label: string, sub: string, kind: string, ctx?: DesignWinContext | null): Observable<BoxSuggestionResult> {
+    return this.http.post<BoxSuggestionResult>(`${API}/box-suggestions`, {
+      label, sub, kind,
+      customerName: ctx?.customerName, custBillTo: ctx?.billTo,
+      projectId: ctx?.projectId, boardNum: ctx?.boardNum,
+    });
   }
 }

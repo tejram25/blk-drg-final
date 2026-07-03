@@ -22,6 +22,6 @@ public class BoxSuggestionController {
     @PostMapping
     public BoxSuggestionResult suggest(@RequestBody BoxSuggestionRequest req) {
         if (req == null) return new BoxSuggestionResult("", java.util.List.of(), "No box provided.");
-        return service.suggest(req.label(), req.sub(), req.kind());
+        return service.suggest(req);
     }
 }

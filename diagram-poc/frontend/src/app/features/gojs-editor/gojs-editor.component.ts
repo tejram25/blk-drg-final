@@ -1162,7 +1162,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.boxSuggestError = '';
     this.boxSuggestLoading = true;
     this.cdr.detectChanges();
-    this.boxSuggest.suggest(d.text || '', d.sub || '', d.kind || '').subscribe({
+    this.boxSuggest.suggest(d.text || '', d.sub || '', d.kind || '', this.designWinContext).subscribe({
       next: (res) => {
         this.boxSuggestLoading = false;
         this.boxSuggestions = res.suggestions || [];
@@ -1266,7 +1266,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.status = `Finding components for ${boxes.length} boxes…`;
     this.cdr.detectChanges();
     const calls = boxes.map((n) => this.boxSuggest
-      .suggest(n.data.text || '', n.data.sub || '', n.data.kind || '')
+      .suggest(n.data.text || '', n.data.sub || '', n.data.kind || '', this.designWinContext)
       .pipe(catchError(() => of({ query: '', suggestions: [] as BoxSuggestion[] }))));
     forkJoin(calls).subscribe({
       next: (results) => {

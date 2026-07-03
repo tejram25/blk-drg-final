@@ -5,8 +5,9 @@ import java.util.List;
 /**
  * A suggested electronic component for a box, grounded in the Arrow catalogue and
  * cross-checked against Design Win POS ({@code fieldProven} = has shipment
- * history). {@code suppliers} are the offers for this part the user can choose
- * from when exporting a BOM.
+ * history) and, when the diagram is attached to a customer, against that
+ * customer's registered/approved parts ({@code customerApproved}). {@code suppliers}
+ * are the offers for this part the user can choose from when exporting a BOM.
  */
 public record BoxSuggestion(
         String partNumber,
@@ -17,6 +18,7 @@ public record BoxSuggestion(
         long stock,
         String leadWeeks,
         boolean fieldProven,
+        boolean customerApproved,
         double unitPrice,
         int moq,
         List<Supplier> suppliers) {

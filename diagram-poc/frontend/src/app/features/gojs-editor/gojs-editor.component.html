@@ -487,6 +487,7 @@
                                                       @for (bs of boxSuggestions; track bs.partNumber) {
                                                         <div class="bs-item">
                                                           <div class="bs-head"><b>{{ bs.partNumber }}</b>
+                                                            @if (bs.customerApproved) { <span class="bs-approved"><mat-icon>emoji_events</mat-icon>Customer-approved</span> }
                                                             @if (bs.fieldProven) { <span class="bs-proven"><mat-icon>verified</mat-icon>Field-proven</span> }</div>
                                                           <div class="bs-desc">{{ bs.description }}</div>
                                                           <div class="bs-meta">{{ bs.manufacturer }} · {{ bs.stock }} in stock@if (bs.status) { · {{ bs.status }} }</div>
