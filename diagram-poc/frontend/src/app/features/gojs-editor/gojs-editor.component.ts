@@ -606,7 +606,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Append the native GoJS figures (Shapes / Flowchart / Logic) plus the
    * electrical and animated symbol libraries to the palette. */
   private mergeShapeTypes(types: BlockType[]): BlockType[] {
-    const present = new Set(types.map((t) => t.shape).filter(Boolean));
+    // The backend still lists the legacy X6 "basic-*" shapes; they're superseded
+    // by the native GoJS figures (and have no palette preview → blank cards), so
+    // drop them from the palette. Old diagrams that reference them still render.
+    const base = types.filter((t) => !(t.shape && t.shape.startsWith('basic-')));
+    const present = new Set(base.map((t) => t.shape).filter(Boolean));
     const add = (entries: [string, string][], cat: string, color: string): BlockType[] =>
       entries.filter(([shape]) => !present.has(shape))
         .map(([shape, label]) => ({ key: shape, label, color, category: cat, shape }));
@@ -615,7 +619,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }));
     const elec = add(Object.keys(ELECTRICAL_SYMBOLS).map((s) => [s, this.symbolLabel(s)]), 'Electrical', '#e2e8f0');
     const anim = add(Object.keys(ANIMATED_SYMBOLS).map((s) => [s, this.symbolLabel(s)]), 'Animated', '#e2e8f0');
-    return [...types, ...shapes, ...elec, ...anim];
+    return [...base, ...shapes, ...elec, ...anim];
   }
 
   get categories(): string[] {
