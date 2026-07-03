@@ -1428,6 +1428,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       supp: { name: part.manufacturer }, mfr: { name: part.manufacturer }, invOrgs: [{ desc: part.description }], paramData: [] });
   }
 
+  /** Add a part pulled from the Design Win explorer (a registered/POS part) to the canvas. */
+  onDesignWinAddPart(part: { partNumber: string; manufacturer: string; description: string; quantity: number }): void {
+    this.addPartToCanvas({ arwPartNum: { name: part.partNumber }, suppPartNum: { name: part.partNumber },
+      supp: { name: part.manufacturer }, mfr: { name: part.manufacturer },
+      invOrgs: [{ desc: part.description || 'Design Win registered part' }], paramData: [],
+      __designWin: true });
+  }
+
   // ---- versions / comments / templates / export dialog ----
 
   get currentContentJson(): string { return this.diagram ? this.diagram.model.toJson() : ''; }

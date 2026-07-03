@@ -98,6 +98,11 @@
         @if (!level.items.length) {
           <div class="dw-msg">No records.</div>
         }
+        @if (level.kind === 'detail' && partRows.length > 1) {
+          <button type="button" class="dw-addall" (click)="addAllParts()">
+            <mat-icon>library_add</mat-icon> Add all {{ partRows.length }} registered parts to the diagram
+          </button>
+        }
         @for (row of level.items; track $index) {
           <div class="dw-row" [class.leaf]="level.kind === 'detail'" (click)="onRowClick(row)">
             <div class="dw-row-main">
@@ -105,12 +110,17 @@
               @if (row.subtitle) { <span class="dw-row-sub">{{ row.subtitle }}</span> }
             </div>
             @if (level.kind !== 'detail') { <mat-icon class="dw-row-go">chevron_right</mat-icon> }
-            @if (level.kind === 'detail' || row.expanded) {
+            @if (row.fields.length) {
               <div class="dw-kv">
                 @for (f of row.fields; track f.k) {
                   <span class="kv"><b>{{ f.k }}</b>{{ f.v }}</span>
                 }
               </div>
+            }
+            @if (level.kind === 'detail' && partNumberOf(row)) {
+              <button type="button" class="dw-addbtn" (click)="$event.stopPropagation(); addRowToDiagram(row)">
+                <mat-icon>add</mat-icon> Add to diagram
+              </button>
             }
           </div>
         }

@@ -37,6 +37,8 @@ export class DesignwinPanelComponent implements OnInit {
   /** Optional part number to preseed the POS tab with (from a selected part card). */
   @Input() seedPart = '';
   @Output() close = new EventEmitter<void>();
+  /** Emitted when the user adds a Design Win part to the diagram. */
+  @Output() addPart = new EventEmitter<{ partNumber: string; manufacturer: string; description: string; quantity: number }>();
 
   tab: 'explore' | 'pos' = 'explore';
   /** Show the "what is Design Win?" explainer. */
@@ -74,36 +76,38 @@ export class DesignwinPanelComponent implements OnInit {
   searchCustomers(): void {
     const q = this.query.trim();
     if (!q) return;
-    this.run(this.dw.customers(q), (rows) => {
+    this.run(this.dw.customers(q), 'customers', (rows) => {
       this.stack = [{ kind: 'customers', label: `Customers · "${q}"`, items: rows }];
     });
   }
 
   openCustomer(row: Row): void {
-    const name = row.title;
-    this.run(this.dw.projects(name), (rows) => {
+    // Search this customer's projects by name AND bill-to (more precise than name alone).
+    const name = this.pickDeep(row.raw, ['customerName', 'custName']) || row.title;
+    const billTo = this.pickDeep(row.raw, ['billTo', 'billToNumber', 'custBillTo', 'siteNumber']);
+    this.run(this.dw.projects(name, undefined, billTo || undefined), 'projects', (rows) => {
       this.stack.push({ kind: 'projects', label: name, items: rows });
     });
   }
 
   openProject(row: Row): void {
-    const id = this.pick(row.raw, ['projectId', 'projectID', 'project_id', 'id']);
-    const name = this.pick(row.raw, ['projectName', 'project_name', 'name']) || row.title;
-    this.run(this.dw.boards(id || undefined, id ? undefined : name), (rows) => {
+    const id = this.pickDeep(row.raw, ['projectId', 'projectID', 'project_id', 'id']);
+    const name = this.pickDeep(row.raw, ['projectName', 'project_name', 'name']) || row.title;
+    this.run(this.dw.boards(id || undefined, id ? undefined : name), 'boards', (rows) => {
       this.stack.push({ kind: 'boards', label: name || 'Project', items: rows });
     });
   }
 
   openBoard(row: Row): void {
-    const boardNum = this.pick(row.raw, ['boardNum', 'boardNumber', 'board_num', 'boardId']) || row.title;
+    const boardNum = this.pickDeep(row.raw, ['boardNum', 'boardNumber', 'board_num', 'boardId']) || row.title;
     this.loading = true; this.error = '';
     // Registration details + the board's customer parts, merged into one detail level.
     this.dw.registrationDetails({ boardNum }).subscribe({
       next: (reg) => {
-        const regRows = this.normalize(reg).map((r) => ({ ...r, subtitle: r.subtitle || 'Registration' }));
+        const regRows = this.normalize(reg, 'detail').map((r) => ({ ...r, subtitle: r.subtitle || 'Registration' }));
         this.dw.custParts({ boardNum }).subscribe({
           next: (parts) => {
-            const partRows = this.normalize(parts).map((r) => ({ ...r, subtitle: r.subtitle || 'Customer part' }));
+            const partRows = this.normalize(parts, 'detail').map((r) => ({ ...r, subtitle: r.subtitle || 'Registered part' }));
             this.loading = false;
             this.stack.push({ kind: 'detail', label: `Board ${boardNum}`, items: [...regRows, ...partRows] });
           },
@@ -123,6 +127,28 @@ export class DesignwinPanelComponent implements OnInit {
     else row.expanded = !row.expanded;
   }
 
+  // ---- using the data: pull registered parts into the diagram ----
+
+  /** A detail row is a "part" if we can find a part number in it. */
+  partNumberOf(row: Row): string {
+    return this.pickDeep(row.raw, ['partNumber', 'mfrPartNum', 'custPartNum', 'arwPartNum', 'suppPartNum']);
+  }
+  /** Detail rows that carry a part number (registered / customer parts). */
+  get partRows(): Row[] {
+    return this.level?.kind === 'detail' ? this.level.items.filter((r) => !!this.partNumberOf(r)) : [];
+  }
+  addRowToDiagram(row: Row): void {
+    const pn = this.partNumberOf(row);
+    if (!pn) return;
+    this.addPart.emit({
+      partNumber: pn,
+      manufacturer: this.pickDeep(row.raw, ['mfrName', 'manufacturer', 'mfr']),
+      description: this.pickDeep(row.raw, ['description', 'desc']),
+      quantity: Math.max(1, Number(this.pickDeep(row.raw, ['eau', 'quantity', 'qty', 'annualUsage'])) || 1),
+    });
+  }
+  addAllParts(): void { this.partRows.forEach((r) => this.addRowToDiagram(r)); }
+
   checkPos(): void {
     const pn = this.posPart.trim();
     if (!pn) return;
@@ -130,7 +156,7 @@ export class DesignwinPanelComponent implements OnInit {
     this.dw.sales(pn, this.posMfr.trim() || undefined).subscribe({
       next: (json) => {
         this.posLoading = false;
-        const rows = this.normalize(json);
+        const rows = this.normalize(json, 'detail');
         this.posResult = { proven: rows.length > 0, count: rows.length, rows: rows.slice(0, 12) };
       },
       error: (e) => {
@@ -142,10 +168,10 @@ export class DesignwinPanelComponent implements OnInit {
 
   // ---- plumbing ----
 
-  private run(obs: any, apply: (rows: Row[]) => void): void {
+  private run(obs: any, kind: Level['kind'], apply: (rows: Row[]) => void): void {
     this.loading = true; this.error = '';
     obs.subscribe({
-      next: (json: any) => { this.loading = false; apply(this.normalize(json)); },
+      next: (json: any) => { this.loading = false; apply(this.normalize(json, kind)); },
       error: (e: any) => this.fail(e),
     });
   }
@@ -180,22 +206,102 @@ export class DesignwinPanelComponent implements OnInit {
     return '';
   }
 
-  /** Normalise raw Design Win JSON into displayable rows. */
-  private normalize(json: any): Row[] {
+  /** Like {@link pick} but also reaches into nested `{name}`/`{value}` objects. */
+  private pickDeep(obj: any, keys: string[]): string {
+    for (const k of keys) {
+      let v = obj?.[k];
+      if (v && typeof v === 'object') v = v.name ?? v.value ?? v.desc ?? '';
+      if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+    }
+    return '';
+  }
+
+  /** The title field(s), curated field labels, per drill-down level. */
+  private static readonly TITLE: Record<string, string[]> = {
+    customers: ['customerName', 'custName', 'custSiteName', 'name'],
+    projects: ['projectName', 'project_name', 'name'],
+    boards: ['boardName', 'boardNum', 'boardNumber', 'board_num', 'name'],
+    detail: ['partNumber', 'mfrPartNum', 'custPartNum', 'registrationNum', 'arrowUniqueNum', 'name'],
+  };
+  private static readonly SUBTITLE: Record<string, string[]> = {
+    customers: ['enteringBranch', 'billTo', 'accountNumber', 'type'],
+    projects: ['stage', 'projectStatus', 'status', 'phase'],
+    boards: ['status', 'boardStatus', 'stage'],
+    detail: ['mfrName', 'manufacturer', 'status', 'trackingNum'],
+  };
+  /** Curated [label, aliases] per level so the important fields always surface. */
+  private static readonly FIELDS: Record<string, [string, string[]][]> = {
+    customers: [
+      ['Account #', ['accountNumber', 'acctNumber']],
+      ['Bill-to', ['billTo', 'billToNumber', 'siteNumber']],
+      ['Branch', ['enteringBranch', 'branch']],
+      ['Site', ['custSiteName', 'internalSiteName']],
+      ['FSR / ISR', ['fsrName', 'isrName']],
+      ['Status', ['status', 'siteStatus']],
+      ['Address', ['address']],
+    ],
+    projects: [
+      ['Project ID', ['projectId', 'projectID', 'project_id', 'id']],
+      ['Stage', ['stage', 'phase', 'projectStage']],
+      ['Status', ['projectStatus', 'status']],
+      ['Est. EAU', ['eau', 'estAnnualUsage', 'annualUsage']],
+      ['FAE / FSR', ['fsrName', 'faeName', 'fae']],
+      ['Created', ['createDate', 'createdDate', 'startDate']],
+    ],
+    boards: [
+      ['Board #', ['boardNum', 'boardNumber', 'board_num', 'boardId']],
+      ['Status', ['status', 'boardStatus', 'stage']],
+      ['Registration #', ['registrationNum', 'regNum']],
+      ['Arrow #', ['arrowUniqueNum', 'aun']],
+      ['Created', ['createDate', 'createdDate']],
+    ],
+    detail: [
+      ['Part #', ['partNumber', 'mfrPartNum', 'custPartNum']],
+      ['Manufacturer', ['mfrName', 'manufacturer', 'mfr']],
+      ['Description', ['description', 'desc']],
+      ['EAU / Qty', ['eau', 'quantity', 'qty', 'annualUsage']],
+      ['Status', ['designStatus', 'regStatus', 'status']],
+      ['Registration #', ['registrationNum', 'regNum']],
+      ['Tracking #', ['trackingNum']],
+      ['Last shipment', ['lastShipDate', 'posDate', 'shipDate']],
+      ['POS amount', ['posAmount', 'salesAmount']],
+    ],
+  };
+
+  /** Normalise raw Design Win JSON into displayable rows for a given level. */
+  private normalize(json: any, kind: Level['kind']): Row[] {
     let data = json;
     if (typeof data === 'string') { try { data = JSON.parse(data); } catch { return []; } }
     const arr = this.firstArray(data) ?? (data && typeof data === 'object' && Object.keys(data).length ? [data] : []);
+    const titleKeys = DesignwinPanelComponent.TITLE[kind];
+    const subKeys = DesignwinPanelComponent.SUBTITLE[kind];
+    const fieldDefs = DesignwinPanelComponent.FIELDS[kind];
     return arr.slice(0, 50).map((item: any) => {
-      const title = this.pick(item, [
-        'customerName', 'custName', 'projectName', 'boardNum', 'boardNumber', 'boardName',
-        'partNumber', 'mfrPartNum', 'registrationNum', 'arrowUniqueNum', 'name', 'id',
-      ]) || 'Record';
-      const subtitle = this.pick(item, ['operatingUnit', 'billToNumber', 'custBillTo', 'status', 'stage', 'mfrName', 'trackingNum']);
-      const fields = Object.entries(item)
-        .filter(([, v]) => v !== null && v !== undefined && typeof v !== 'object' && String(v).trim() !== '')
-        .slice(0, 10)
-        .map(([k, v]) => ({ k, v: String(v) }));
+      const title = this.pickDeep(item, titleKeys) || 'Record';
+      const subtitle = this.pickDeep(item, subKeys);
+      // Curated fields first (only those with a value); then any other scalar
+      // fields we didn't already show, so nothing is silently dropped.
+      const used = new Set<string>();
+      const fields: { k: string; v: string }[] = [];
+      for (const [label, aliases] of fieldDefs) {
+        const v = this.pickDeep(item, aliases);
+        if (v) { fields.push({ k: label, v }); aliases.forEach((a) => used.add(a)); }
+      }
+      for (const [k, v] of Object.entries(item)) {
+        if (used.has(k) || fields.length >= 12) continue;
+        let sv: any = v;
+        if (sv && typeof sv === 'object') sv = sv.name ?? sv.value ?? '';
+        if (sv !== null && sv !== undefined && String(sv).trim() !== '' && typeof sv !== 'object') {
+          fields.push({ k: this.humanize(k), v: String(sv) });
+        }
+      }
       return { title, subtitle, fields, raw: item };
     });
+  }
+
+  /** camelCase / snake_case → "Title Case" for un-curated field labels. */
+  private humanize(k: string): string {
+    return k.replace(/[_-]+/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   }
 }
