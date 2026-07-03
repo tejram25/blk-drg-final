@@ -14,6 +14,51 @@
     </button>
   </div>
 
+  <!-- What is Design Win? — collapsible explainer -->
+  <div class="dw-help">
+    <button type="button" class="dw-help-toggle" (click)="helpOpen = !helpOpen">
+      <mat-icon>{{ helpOpen ? 'expand_less' : 'help_outline' }}</mat-icon>
+      <span>
+        @if (tab === 'explore') { What is Explore? }
+        @else { What is a POS / field-proven check? }
+      </span>
+      <mat-icon class="dw-help-caret">{{ helpOpen ? 'expand_less' : 'expand_more' }}</mat-icon>
+    </button>
+
+    @if (helpOpen) {
+      <div class="dw-help-body">
+        <p>
+          A <b>design win</b> is when a part gets designed into a real product. Distributors
+          (Arrow) <b>register</b> that design against a <b>customer</b> so it's tracked and gets
+          protected pricing. Use this to pick parts that are <b>proven in real designs</b>, not guesses.
+        </p>
+
+        @if (tab === 'explore') {
+          <p class="dw-help-hier">
+            <span>Customer</span><mat-icon>chevron_right</mat-icon>
+            <span>Project</span><mat-icon>chevron_right</mat-icon>
+            <span>Board</span><mat-icon>chevron_right</mat-icon>
+            <span>Registration &amp; parts</span>
+          </p>
+          <ul class="dw-help-list">
+            <li><b>Customer</b> — the company/account you're designing for.</li>
+            <li><b>Project</b> — one of that customer's product developments (project search finds them).</li>
+            <li><b>Board</b> — a specific PCB within the project.</li>
+            <li><b>Registration</b> — the recorded design win: which parts were designed in, and its status.</li>
+          </ul>
+          <p class="dw-help-tip">Use it to <b>reuse parts a customer already approved</b> instead of starting blank.</p>
+        } @else {
+          <ul class="dw-help-list">
+            <li><b>POS</b> = "point of sale" — records of the part actually <b>shipping</b> to customers.</li>
+            <li>A part with POS history is <b>field-proven</b>: it's been used in production, so it's lower risk.</li>
+            <li>The AI "Suggest component" feature ranks <b>field-proven parts first</b> using this signal.</li>
+          </ul>
+          <p class="dw-help-tip">Enter a part number to see if it's been shipped in real designs.</p>
+        }
+      </div>
+    }
+  </div>
+
   <!-- ============ EXPLORE ============ -->
   @if (tab === 'explore') {
     <div class="dw-search">

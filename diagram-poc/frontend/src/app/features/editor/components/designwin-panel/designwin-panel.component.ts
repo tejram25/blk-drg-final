@@ -39,6 +39,8 @@ export class DesignwinPanelComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
 
   tab: 'explore' | 'pos' = 'explore';
+  /** Show the "what is Design Win?" explainer. */
+  helpOpen = false;
 
   // ---- explore state ----
   query = '';
