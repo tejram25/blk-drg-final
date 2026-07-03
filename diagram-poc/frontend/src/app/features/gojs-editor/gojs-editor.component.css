@@ -897,3 +897,8 @@
 .linked-part .lp-qty:focus { outline: none; border-color: var(--accent, #f5a623); }
 .linked-part { align-items: flex-start; }
 .linked-part > mat-icon { margin-top: 1px; }
+
+/* Design Win context banner (amber-accented variant of the project bar) */
+.dw-bar { border-color: color-mix(in srgb, var(--accent, #f5a623) 34%, transparent);
+  background: color-mix(in srgb, var(--accent, #f5a623) 10%, transparent); }
+.dw-bar > mat-icon { color: var(--accent, #f5a623); }

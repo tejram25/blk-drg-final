@@ -216,6 +216,15 @@
                                           </div>
                                         }
 
+                                        <!-- Design Win context banner -->
+                                        @if (designWinContext) {
+                                          <div class="proj-bar dw-bar">
+                                            <mat-icon>emoji_events</mat-icon>
+                                            <span class="proj-text">Design Win · <strong>{{ designWinLabel }}</strong></span>
+                                            <button type="button" class="proj-x" (click)="clearDesignWin()" matTooltip="Detach"><mat-icon>close</mat-icon></button>
+                                          </div>
+                                        }
+
                                         <div class="body">
                                           <!-- Palette -->
                                           <aside class="palette" [class.open]="paletteOpen">
@@ -526,7 +535,7 @@
                                           <app-part-search-panel [seedQuery]="partSearchSeed" (addPart)="addPartToCanvas($event)" (close)="partSearchOpen = false"></app-part-search-panel>
                                         }
                                         @if (designWinOpen) {
-                                          <app-designwin-panel [seedPart]="designWinSeed" (close)="designWinOpen = false" (addPart)="onDesignWinAddPart($event)"></app-designwin-panel>
+                                          <app-designwin-panel [seedPart]="designWinSeed" (close)="designWinOpen = false" (addPart)="onDesignWinAddPart($event)" (attach)="onAttachDesignWin($event)"></app-designwin-panel>
                                         }
                                         @if (recsOpen) {
                                           <app-recommendations-dialog [result]="recsResult" [loading]="recsLoading" (addPart)="onRecAddPart($event)" (close)="recsOpen = false"></app-recommendations-dialog>

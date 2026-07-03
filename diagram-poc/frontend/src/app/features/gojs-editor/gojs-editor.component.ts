@@ -28,6 +28,7 @@ import { BoxSuggestion, BoxSuggestionService, LinkedComponent } from '../../core
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ProjectDetail, ProjectPart } from '../../core/services/integration.service';
+import { DesignWinContext } from '../../core/services/designwin.service';
 import { TemplateDetail } from '../../core/services/template.service';
 import { TranslateService } from '../../core/services/i18n/translate.service';
 import { TranslatePipe } from '../../core/services/i18n/translate.pipe';
@@ -152,6 +153,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   lifecycleOpen = false; lifecycleLoading = false; lifecycleInfo: LifecycleInfo | null = null;
   feedbackOpen = false; feedbackSubmitting = false;
   projectPanelOpen = false; linkedProject: ProjectDetail | null = null;
+  designWinContext: DesignWinContext | null = null;
   versionsOpen = false;
   commentsOpen = false;
   templatesOpen = false;
@@ -888,6 +890,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.diagramName = 'Untitled diagram';
     this.classification = 'INTERNAL';
     this.linkedProject = null;
+    this.designWinContext = null;
     this.status = 'New diagram';
     this.suppressAutosave = false;
     this.syncSelection();
@@ -1428,6 +1431,31 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       supp: { name: part.manufacturer }, mfr: { name: part.manufacturer }, invOrgs: [{ desc: part.description }], paramData: [] });
   }
 
+  /** Attach a Design Win customer/project/board to the diagram (persisted in the model). */
+  onAttachDesignWin(ctx: DesignWinContext): void {
+    this.designWinContext = ctx;
+    this.persistDesignWin();
+    const label = [ctx.customerName, ctx.projectName, ctx.boardNum].filter(Boolean).join(' · ');
+    this.notify.success(`Diagram attached to ${label || 'Design Win record'}.`);
+    this.scheduleAutosave();
+  }
+  clearDesignWin(): void {
+    this.designWinContext = null;
+    this.persistDesignWin();
+    this.scheduleAutosave();
+  }
+  get designWinLabel(): string {
+    const c = this.designWinContext; if (!c) return '';
+    return [c.customerName, c.projectName, c.boardNum ? `Board ${c.boardNum}` : ''].filter(Boolean).join(' · ');
+  }
+  /** Store the context in the GoJS model so it saves/loads with the diagram. */
+  private persistDesignWin(): void {
+    if (!this.diagram) return;
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => {
+      m.set(m.modelData, 'designWin', this.designWinContext || null);
+    }, 'design-win context'));
+  }
+
   /** Add a part pulled from the Design Win explorer (a registered/POS part) to the canvas. */
   onDesignWinAddPart(part: { partNumber: string; manufacturer: string; description: string; quantity: number }): void {
     this.addPartToCanvas({ arwPartNum: { name: part.partNumber }, suppPartNum: { name: part.partNumber },
@@ -1593,6 +1621,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       });
       this.suppressAutosave = false;
       this.retheme();
+      this.loadDesignWin();
       this.syncSelection();
       return;
     }
@@ -1605,8 +1634,16 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       } catch { this.zone.run(() => this.notify.error('That diagram could not be loaded.')); }
     });
     this.retheme();
+    this.loadDesignWin();
     this.suppressAutosave = false;
     this.syncSelection();
+  }
+
+  /** Read the attached Design Win context stored in the model. */
+  private loadDesignWin(): void {
+    const md: any = this.diagram?.model?.modelData;
+    const c = md && md.designWin;
+    this.designWinContext = c && (c.customerName || c.projectName || c.boardNum) ? c : null;
   }
 
   /** Convert a legacy AntV X6 graph.toJSON() ({cells:[...]}) into GoJS data. */

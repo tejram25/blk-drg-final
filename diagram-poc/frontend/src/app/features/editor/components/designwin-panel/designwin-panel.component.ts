@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { DesignWinService } from '../../../../core/services/designwin.service';
+import { DesignWinContext, DesignWinService } from '../../../../core/services/designwin.service';
 
 /** One drill-down level in the explorer. */
 interface Level {
   kind: 'customers' | 'projects' | 'boards' | 'detail';
   label: string;
   items: Row[];
+  /** The customer/project/board context of this level's ancestors. */
+  ctx?: DesignWinContext;
 }
 
 /** A normalised record from the raw Design Win JSON. */
@@ -39,6 +41,8 @@ export class DesignwinPanelComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
   /** Emitted when the user adds a Design Win part to the diagram. */
   @Output() addPart = new EventEmitter<{ partNumber: string; manufacturer: string; description: string; quantity: number }>();
+  /** Emitted when the user attaches a customer / project / board to the diagram. */
+  @Output() attach = new EventEmitter<DesignWinContext>();
 
   tab: 'explore' | 'pos' = 'explore';
   /** Show the "what is Design Win?" explainer. */
@@ -77,7 +81,7 @@ export class DesignwinPanelComponent implements OnInit {
     const q = this.query.trim();
     if (!q) return;
     this.run(this.dw.customers(q), 'customers', (rows) => {
-      this.stack = [{ kind: 'customers', label: `Customers · "${q}"`, items: rows }];
+      this.stack = [{ kind: 'customers', label: `Customers · "${q}"`, items: rows, ctx: {} }];
     });
   }
 
@@ -86,20 +90,23 @@ export class DesignwinPanelComponent implements OnInit {
     const name = this.pickDeep(row.raw, ['customerName', 'custName']) || row.title;
     const billTo = this.pickDeep(row.raw, ['billTo', 'billToNumber', 'custBillTo', 'siteNumber']);
     this.run(this.dw.projects(name, undefined, billTo || undefined), 'projects', (rows) => {
-      this.stack.push({ kind: 'projects', label: name, items: rows });
+      this.stack.push({ kind: 'projects', label: name, items: rows, ctx: { customerName: name, billTo: billTo || undefined } });
     });
   }
 
   openProject(row: Row): void {
     const id = this.pickDeep(row.raw, ['projectId', 'projectID', 'project_id', 'id']);
     const name = this.pickDeep(row.raw, ['projectName', 'project_name', 'name']) || row.title;
+    const parent = this.level?.ctx || {};
     this.run(this.dw.boards(id || undefined, id ? undefined : name), 'boards', (rows) => {
-      this.stack.push({ kind: 'boards', label: name || 'Project', items: rows });
+      this.stack.push({ kind: 'boards', label: name || 'Project', items: rows,
+        ctx: { ...parent, projectName: name, projectId: id || undefined } });
     });
   }
 
   openBoard(row: Row): void {
     const boardNum = this.pickDeep(row.raw, ['boardNum', 'boardNumber', 'board_num', 'boardId']) || row.title;
+    const parent = this.level?.ctx || {};
     this.loading = true; this.error = '';
     // Registration details + the board's customer parts, merged into one detail level.
     this.dw.registrationDetails({ boardNum }).subscribe({
@@ -109,7 +116,8 @@ export class DesignwinPanelComponent implements OnInit {
           next: (parts) => {
             const partRows = this.normalize(parts, 'detail').map((r) => ({ ...r, subtitle: r.subtitle || 'Registered part' }));
             this.loading = false;
-            this.stack.push({ kind: 'detail', label: `Board ${boardNum}`, items: [...regRows, ...partRows] });
+            this.stack.push({ kind: 'detail', label: `Board ${boardNum}`, items: [...regRows, ...partRows],
+              ctx: { ...parent, boardNum } });
           },
           error: (e) => this.fail(e),
         });
@@ -148,6 +156,26 @@ export class DesignwinPanelComponent implements OnInit {
     });
   }
   addAllParts(): void { this.partRows.forEach((r) => this.addRowToDiagram(r)); }
+
+  /** Attach the current customer / project / board (this row + its ancestors) to the diagram. */
+  attachRow(row: Row): void {
+    const l = this.level;
+    if (!l) return;
+    const base: DesignWinContext = { ...(l.ctx || {}) };
+    let c: DesignWinContext;
+    if (l.kind === 'customers') {
+      c = { customerName: this.pickDeep(row.raw, ['customerName', 'custName']) || row.title,
+            billTo: this.pickDeep(row.raw, ['billTo', 'billToNumber', 'custBillTo', 'siteNumber']) || undefined };
+    } else if (l.kind === 'projects') {
+      c = { ...base, projectName: this.pickDeep(row.raw, ['projectName', 'project_name', 'name']) || row.title,
+            projectId: this.pickDeep(row.raw, ['projectId', 'projectID', 'project_id', 'id']) || undefined };
+    } else if (l.kind === 'boards') {
+      c = { ...base, boardNum: this.pickDeep(row.raw, ['boardNum', 'boardNumber', 'board_num', 'boardId']) || row.title };
+    } else {
+      c = base; // detail: attach the board context
+    }
+    this.attach.emit(c);
+  }
 
   checkPos(): void {
     const pn = this.posPart.trim();

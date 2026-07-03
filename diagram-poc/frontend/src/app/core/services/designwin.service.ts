@@ -3,6 +3,15 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { apiBaseUrl } from '../app-config';
 
+/** The Design Win customer / project / board a diagram is attached to. */
+export interface DesignWinContext {
+  customerName?: string;
+  billTo?: string;
+  projectName?: string;
+  projectId?: string;
+  boardNum?: string;
+}
+
 /**
  * Arrow Design Win data, proxied by the backend (/api/designwin/*) so the OAuth
  * credentials stay server-side. Responses are the raw Design Win JSON; the

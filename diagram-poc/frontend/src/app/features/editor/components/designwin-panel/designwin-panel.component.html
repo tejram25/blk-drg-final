@@ -122,6 +122,11 @@
                 <mat-icon>add</mat-icon> Add to diagram
               </button>
             }
+            @if (level.kind !== 'detail') {
+              <button type="button" class="dw-addbtn" (click)="$event.stopPropagation(); attachRow(row)">
+                <mat-icon>push_pin</mat-icon> Attach {{ level.kind === 'customers' ? 'customer' : (level.kind === 'projects' ? 'project' : 'board') }} to diagram
+              </button>
+            }
           </div>
         }
       }
