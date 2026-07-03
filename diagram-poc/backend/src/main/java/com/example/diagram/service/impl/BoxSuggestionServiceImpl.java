@@ -131,9 +131,41 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
             totalStock += s;
             suppliers.add(new BoxSuggestion.Supplier(sName,
                     firstText(p.at("/suppPartNum/name"), p.at("/arwPartNum/name"), mpn),
-                    s, p.at("/leadTime/arwLT").asText("")));
+                    s, p.at("/leadTime/arwLT").asText(""), priceOf(p), moqOf(p)));
         }
-        return new BoxSuggestion(mpn, mfr, desc, category, status, totalStock, lead, proven, suppliers);
+        return new BoxSuggestion(mpn, mfr, desc, category, status, totalStock, lead, proven,
+                priceOf(best), moqOf(best), suppliers);
+    }
+
+    /** Best-effort unit price from the Arrow part JSON (several shapes exist); 0 if none. */
+    private static double priceOf(JsonNode p) {
+        for (String path : new String[]{"/prices/0/price", "/pricing/0/price", "/resaleList/0/price",
+                "/priceBreaks/0/price", "/price", "/prc"}) {
+            JsonNode n = p.at(path);
+            if (n.isNumber()) return n.asDouble();
+            if (n.isTextual()) {
+                try {
+                    return Double.parseDouble(n.asText().replaceAll("[^0-9.]", ""));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return 0;
+    }
+
+    /** Best-effort minimum order quantity; 0 if none. */
+    private static int moqOf(JsonNode p) {
+        for (String path : new String[]{"/minOrderQty", "/moq", "/invOrgs/0/moq", "/orderMultiple", "/invOrgs/0/pkgQty"}) {
+            JsonNode n = p.at(path);
+            if (n.isNumber()) return n.asInt();
+            if (n.isTextual()) {
+                try {
+                    return Integer.parseInt(n.asText().replaceAll("[^0-9]", ""));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return 0;
     }
 
     /** True when Design Win POS reports shipment history for the part (field-proven / most used). */

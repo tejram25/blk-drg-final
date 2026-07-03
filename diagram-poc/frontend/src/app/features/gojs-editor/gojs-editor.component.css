@@ -866,3 +866,15 @@
 }
 .bs-link:hover { filter: brightness(1.08); }
 .bs-link mat-icon { font-size: 15px; width: 15px; height: 15px; }
+
+/* Linked-component controls (multiple components per box) */
+.linked-part .lp-controls { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.linked-part .lp-controls .bs-supplier { flex: 1; min-width: 0; }
+.linked-part .lp-qty {
+  width: 52px; flex: none; font: inherit; font-size: 11px; text-align: center;
+  color: var(--text, #ececef); background: var(--bg-deep, #0e0f11);
+  border: 1px solid var(--border, #34353c); border-radius: 7px; padding: 4px 5px;
+}
+.linked-part .lp-qty:focus { outline: none; border-color: var(--accent, #f5a623); }
+.linked-part { align-items: flex-start; }
+.linked-part > mat-icon { margin-top: 1px; }

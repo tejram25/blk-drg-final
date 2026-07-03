@@ -24,7 +24,9 @@ import {
 import { AlternativePart, LifecycleInfo, LifecycleService } from '../../core/services/lifecycle.service';
 import { FeedbackRequest, FeedbackService } from '../../core/services/feedback.service';
 import { ImageDiagramResult, ImageDiagramService } from '../../core/services/image-diagram.service';
-import { BoxSuggestion, BoxSuggestionService } from '../../core/services/box-suggestion.service';
+import { BoxSuggestion, BoxSuggestionService, LinkedComponent } from '../../core/services/box-suggestion.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ProjectDetail, ProjectPart } from '../../core/services/integration.service';
 import { TemplateDetail } from '../../core/services/template.service';
 import { TranslateService } from '../../core/services/i18n/translate.service';
@@ -512,12 +514,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
             textAlign: 'center', maxSize: new go.Size(150, NaN), margin: 6 },
           new go.Binding('text').makeTwoWay(),
           new go.Binding('stroke', 'labelColor')),
-        // Linked-part chip (top-right corner) once an AI component is attached.
+        // Linked-component chip (top-right): part number when one is linked, or a
+        // count when several are.
         $(go.Panel, 'Auto', { alignment: go.Spot.TopRight, alignmentFocus: go.Spot.TopRight, margin: 3, visible: false },
-          new go.Binding('visible', 'partNumber', (p) => !!p),
+          new go.Binding('visible', 'components', (c) => Array.isArray(c) && c.length > 0),
           $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: '#f5a623', stroke: null }),
           $(go.TextBlock, { font: '700 9px Roboto, sans-serif', stroke: '#1a1303', margin: new go.Margin(1, 5, 1, 5) },
-            new go.Binding('text', 'partNumber')))),
+            new go.Binding('text', 'components',
+              (c) => !Array.isArray(c) || !c.length ? '' : (c.length === 1 ? c[0].partNumber : c.length + ' parts'))))),
       // Role caption below the box (e.g. "Digital Processing"). Follows the canvas
       // theme (capColor), independent of the label colour inside a coloured box.
       $(go.TextBlock, { alignment: new go.Spot(0.5, 1, 0, 7), alignmentFocus: go.Spot.Top,
@@ -1098,6 +1102,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!kind) return 'Box';
     return kind.charAt(0).toUpperCase() + kind.slice(1);
   }
+  /** Format a unit price for the properties panel (empty when unknown). */
+  money(n?: number): string { return n ? '$' + Number(n).toFixed(2) : ''; }
 
   /** Parse #rgb / #rrggbb / rgb(...) to [r,g,b], or null. */
   private parseColor(color?: string): [number, number, number] | null {
@@ -1164,34 +1170,117 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  /** Components linked to the selected box (a box can hold several). */
+  get boxComponents(): LinkedComponent[] {
+    const c = this.selectedNode?.data?.components;
+    return Array.isArray(c) ? c : [];
+  }
+
+  /** Turn a suggestion + chosen supplier into a linked component. */
+  private toComponent(s: BoxSuggestion): LinkedComponent {
+    const name = this.selectedSupplier[s.partNumber] || s.suppliers?.[0]?.name || s.manufacturer;
+    const offer = (s.suppliers || []).find((o) => o.name === name);
+    return {
+      partNumber: s.partNumber, manufacturer: s.manufacturer, description: s.description,
+      supplier: name, suppliers: s.suppliers || [], quantity: 1, fieldProven: s.fieldProven,
+      unitPrice: offer?.unitPrice ?? s.unitPrice, moq: offer?.moq ?? s.moq,
+    };
+  }
+
+  /** Add a component to the given node's components list (deduped by part number). */
+  private addComponent(node: go.Node, comp: LinkedComponent): boolean {
+    const data = node.data;
+    const list: LinkedComponent[] = Array.isArray(data.components) ? [...data.components] : [];
+    if (list.some((c) => c.partNumber === comp.partNumber)) return false;
+    list.push(comp);
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => m.set(data, 'components', list), 'link component'));
+    return true;
+  }
+
   /** Link a suggested component (and chosen supplier) to the selected box. */
   linkSuggestion(s: BoxSuggestion): void {
     if (!this.selectedNode) return;
-    const supplierName = this.selectedSupplier[s.partNumber] || s.suppliers?.[0]?.name || s.manufacturer;
-    const data = this.selectedNode.data;
-    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => {
-      m.set(data, 'partNumber', s.partNumber);
-      m.set(data, 'manufacturer', s.manufacturer);
-      m.set(data, 'partDesc', s.description);
-      m.set(data, 'supplier', supplierName);
-      m.set(data, 'suppliers', s.suppliers || []);
-      m.set(data, 'quantity', data.quantity || 1);
-      m.set(data, 'fieldProven', s.fieldProven);
-    }, 'link component'));
+    const comp = this.toComponent(s);
+    const added = this.addComponent(this.selectedNode, comp);
     this.boxSuggestions = [];
-    this.notify.success(`Linked ${s.partNumber} (${supplierName}) to "${data.text}".`);
+    this.notify[added ? 'success' : 'info'](
+      added ? `Linked ${comp.partNumber} (${comp.supplier}) to "${this.selectedNode.data.text}".`
+            : `${comp.partNumber} is already linked to this box.`);
     this.syncSelection();
   }
 
-  /** Remove the linked component from the selected box. */
-  unlinkComponent(): void {
+  /** Remove one linked component from the selected box. */
+  removeComponent(index: number): void {
     if (!this.selectedNode) return;
     const data = this.selectedNode.data;
-    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => {
-      ['partNumber', 'manufacturer', 'partDesc', 'supplier', 'suppliers', 'fieldProven'].forEach((k) => m.set(data, k, undefined));
-    }, 'unlink component'));
-    this.notify.info('Component unlinked.');
+    const list: LinkedComponent[] = Array.isArray(data.components) ? [...data.components] : [];
+    if (index < 0 || index >= list.length) return;
+    const [removed] = list.splice(index, 1);
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => m.set(data, 'components', list), 'unlink component'));
+    this.notify.info(`Unlinked ${removed?.partNumber}.`);
     this.syncSelection();
+  }
+
+  /** Change a linked component's supplier. */
+  setComponentSupplier(index: number, supplier: string): void {
+    if (!this.selectedNode) return;
+    const data = this.selectedNode.data;
+    const list: LinkedComponent[] = Array.isArray(data.components) ? data.components.map((c: LinkedComponent) => ({ ...c })) : [];
+    if (!list[index]) return;
+    const offer = (list[index].suppliers || []).find((o) => o.name === supplier);
+    list[index].supplier = supplier;
+    if (offer) { list[index].unitPrice = offer.unitPrice ?? list[index].unitPrice; list[index].moq = offer.moq ?? list[index].moq; }
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => m.set(data, 'components', list), 'set supplier'));
+  }
+
+  /** Change a linked component's quantity. */
+  setComponentQty(index: number, qty: any): void {
+    if (!this.selectedNode) return;
+    const data = this.selectedNode.data;
+    const list: LinkedComponent[] = Array.isArray(data.components) ? data.components.map((c: LinkedComponent) => ({ ...c })) : [];
+    if (!list[index]) return;
+    list[index].quantity = Math.max(1, Number(qty) || 1);
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => m.set(data, 'components', list), 'set qty'));
+  }
+
+  /** Nodes that are boxes (functional block / shape), i.e. can carry components. */
+  private boxNodes(): go.Node[] {
+    const out: go.Node[] = [];
+    this.diagram.nodes.each((n) => { const c = n.data?.category; if (c === 'shape' || c === 'block') out.push(n); });
+    return out;
+  }
+
+  /** One-click: AI-suggest and auto-link the top component for every empty box. */
+  suggestAllBoxes(): void {
+    this.closeMenus();
+    const boxes = this.boxNodes().filter((n) => !(Array.isArray(n.data.components) && n.data.components.length));
+    if (!boxes.length) { this.notify.info('Every box already has a component (or there are no boxes yet).'); return; }
+    this.imageGenLoading = true;
+    this.status = `Finding components for ${boxes.length} boxes…`;
+    this.cdr.detectChanges();
+    const calls = boxes.map((n) => this.boxSuggest
+      .suggest(n.data.text || '', n.data.sub || '', n.data.kind || '')
+      .pipe(catchError(() => of({ query: '', suggestions: [] as BoxSuggestion[] }))));
+    forkJoin(calls).subscribe({
+      next: (results) => {
+        let linked = 0;
+        results.forEach((res, i) => {
+          const top = res.suggestions?.[0];
+          if (top && this.addComponent(boxes[i], this.toComponent(top))) linked++;
+        });
+        this.imageGenLoading = false;
+        this.status = `Linked components to ${linked} of ${boxes.length} boxes.`;
+        if (linked) this.notify.success(`AI linked components to ${linked} of ${boxes.length} boxes.`);
+        else this.notify.info('No component matches were found (is the catalogue reachable?).');
+        this.syncSelection();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.imageGenLoading = false;
+        this.notify.error('Could not suggest components (is the catalogue reachable?).');
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   // ---- catalogue parts ----
@@ -1235,18 +1324,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ---- BOM / AI / lifecycle / feedback / project ----
 
-  /** Boxes (shapes/blocks) that carry an AI-linked component. */
-  private linkedComponentNodes(): go.Node[] {
-    const out: go.Node[] = [];
-    this.diagram.nodes.each((n) => {
-      const d = n.data;
-      if (d && d.category !== 'part' && d.partNumber && String(d.partNumber).trim()) out.push(n);
-    });
-    return out;
-  }
   exportBom(): void {
     const parts = this.partNodes().map((n) => ({ ...n.data.part, __bomQty: n.data.quantity || 1 })).filter((p) => p && Object.keys(p).length > 1);
-    const linked = this.linkedComponentNodes().map((n) => ({ ...n.data }));
+    const linked: any[] = [];
+    this.boxNodes().forEach((n) => {
+      const comps = n.data.components;
+      if (Array.isArray(comps)) comps.forEach((c: LinkedComponent) => linked.push(c));
+    });
     if (!parts.length && !linked.length) {
       this.notify.info('No parts to build a BOM from. Add catalogue parts, or link components to boxes (Suggest component).');
       return;
@@ -1430,6 +1514,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       { label: 'New diagram', icon: 'note_add', run: () => this.newDiagram() },
       { label: 'Save', icon: 'save', hint: 'Ctrl+S', run: () => this.save() },
       { label: 'Generate from image (AI)', icon: 'auto_fix_high', run: () => this.generateFromImage() },
+      { label: 'Suggest components for all boxes (AI)', icon: 'auto_awesome_motion', run: () => this.suggestAllBoxes() },
       { label: 'Template repository', icon: 'dashboard_customize', run: () => this.openTemplates() },
       { label: 'Recommendations (AI)', icon: 'auto_awesome', run: () => this.openRecommendations() },
       { label: 'Design review (AI)', icon: 'rule', run: () => this.openDesignReview() },

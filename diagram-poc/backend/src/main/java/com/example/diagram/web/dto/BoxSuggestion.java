@@ -17,9 +17,12 @@ public record BoxSuggestion(
         long stock,
         String leadWeeks,
         boolean fieldProven,
+        double unitPrice,
+        int moq,
         List<Supplier> suppliers) {
 
     /** One offer for the part (a distributor/supplier). */
-    public record Supplier(String name, String partNumber, long stock, String leadWeeks) {
+    public record Supplier(String name, String partNumber, long stock, String leadWeeks,
+                           double unitPrice, int moq) {
     }
 }

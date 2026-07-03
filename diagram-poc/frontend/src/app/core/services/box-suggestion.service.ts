@@ -8,6 +8,8 @@ export interface SupplierOffer {
   partNumber: string;
   stock: number;
   leadWeeks: string;
+  unitPrice?: number;
+  moq?: number;
 }
 export interface BoxSuggestion {
   partNumber: string;
@@ -18,7 +20,22 @@ export interface BoxSuggestion {
   stock: number;
   leadWeeks: string;
   fieldProven: boolean;
+  unitPrice?: number;
+  moq?: number;
   suppliers: SupplierOffer[];
+}
+
+/** A component linked onto a box (a box can hold several). */
+export interface LinkedComponent {
+  partNumber: string;
+  manufacturer: string;
+  description: string;
+  supplier: string;
+  suppliers: SupplierOffer[];
+  quantity: number;
+  fieldProven: boolean;
+  unitPrice?: number;
+  moq?: number;
 }
 export interface BoxSuggestionResult {
   query: string;

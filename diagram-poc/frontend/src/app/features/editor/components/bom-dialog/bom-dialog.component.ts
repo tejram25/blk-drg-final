@@ -21,6 +21,10 @@ export class BomDialogComponent {
   get totalQuantity(): number {
     return this.rows.reduce((sum, r) => sum + r.quantity, 0);
   }
+  get totalCost(): number { return this.bom.totalCost(this.rows); }
+  get hasPricing(): boolean { return this.rows.some((r) => (Number(r.unitPrice) || 0) > 0); }
+  extPrice(r: BomRow): number { return this.bom.extPrice(r); }
+  money(n: number): string { return n ? '$' + n.toFixed(2) : '—'; }
 
   downloadCsv(): void {
     const blob = new Blob([this.bom.toCsv(this.rows)], { type: 'text/csv;charset=utf-8' });
