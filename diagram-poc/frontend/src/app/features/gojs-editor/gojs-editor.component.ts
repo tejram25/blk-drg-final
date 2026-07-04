@@ -1759,12 +1759,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private convertX6(cells: any[]): { nodes: go.ObjectData[]; links: go.ObjectData[] } {
     const nodes: go.ObjectData[] = [];
     const links: go.ObjectData[] = [];
+    // Two passes: nodes first (so edges can tell which endpoints are electrical
+    // symbols), then edges.
+    const elecKeys = new Set<string>();
+    const edgeCells: any[] = [];
     for (const c of cells || []) {
       const isEdge = c?.shape === 'edge' || c?.source || c?.target;
       if (isEdge) {
-        const from = c.source?.cell ?? (typeof c.source === 'string' ? c.source : null);
-        const to = c.target?.cell ?? (typeof c.target === 'string' ? c.target : null);
-        if (from && to) links.push({ category: 'link', from, to, fromPort: '', toPort: '' });
+        edgeCells.push(c);
         continue;
       }
       const pos = c.position ?? { x: c.x ?? 0, y: c.y ?? 0 };
@@ -1787,6 +1789,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         const info = symbolInfo(shape);
         if (info) {
           // Electrical / animated / basic symbols → SVG-picture symbol nodes.
+          if (shape.startsWith('elec-')) elecKeys.add(key);
           nodes.push({ key, category: info.basic ? 'basic' : 'symbol', shape, source: info.source,
             size: `${info.width} ${info.height}`, loc, text: a.label?.text ?? '',
             ports: info.pins.map((p, i) => ({ portId: `p${i}`, spot: `${p.fx} ${p.fy}` })) });
@@ -1807,6 +1810,25 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           }
         }
       }
+    }
+    // Edges: keep the X6 pin ports (pinN → pN) so wires land on real pins, and
+    // preserve the edge's stroke/width/dash. Pin-to-pin connections between
+    // electrical symbols become schematic wires (square corners, no arrowhead).
+    for (const c of edgeCells) {
+      const from = c.source?.cell ?? (typeof c.source === 'string' ? c.source : null);
+      const to = c.target?.cell ?? (typeof c.target === 'string' ? c.target : null);
+      if (!from || !to) continue;
+      const port = (end: any) => {
+        const p = end?.port;
+        return typeof p === 'string' ? p.replace(/^pin(\d+)$/, 'p$1') : '';
+      };
+      const line = c.attrs?.line ?? {};
+      const wire = elecKeys.has(from) && elecKeys.has(to);
+      const link: go.ObjectData = { category: 'link', from, to, fromPort: port(c.source), toPort: port(c.target), wire };
+      if (line.stroke) link['color'] = line.stroke;
+      if (line.strokeWidth) link['width'] = line.strokeWidth;
+      if (line.strokeDasharray) { link['dash'] = [6, 3]; link['flow'] = true; }
+      links.push(link);
     }
     return { nodes, links };
   }
