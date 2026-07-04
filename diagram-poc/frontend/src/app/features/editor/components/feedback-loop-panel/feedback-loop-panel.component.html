@@ -1,6 +1,6 @@
 <aside class="fb-dock">
   <div class="fb-head">
-    <span class="fb-title"><mat-icon>forum</mat-icon> Feedback loop</span>
+    <span class="fb-title"><mat-icon>forum</mat-icon> Discussions</span>
     <button type="button" class="fb-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
   </div>
 
@@ -17,7 +17,7 @@
   @if (diagramId == null) {
     <div class="fb-empty">
       <mat-icon>forum</mat-icon>
-      <p>Save the diagram first — feedback loops live on saved diagrams so every participant sees the same thread.</p>
+      <p>Save the diagram first — discussions live on saved diagrams so every participant sees the same thread.</p>
     </div>
   } @else {
 
@@ -25,7 +25,7 @@
     <div class="fb-compose">
       @if (!composeOpen) {
         <button type="button" class="fb-new" (click)="composeOpen = true">
-          <mat-icon>add_comment</mat-icon> Start a feedback loop
+          <mat-icon>add_comment</mat-icon> Start a discussion
         </button>
       } @else {
         <input type="text" [(ngModel)]="newTitle" placeholder="Topic (optional)" />
@@ -51,8 +51,8 @@
       @if (!loading && !board.threads.length) {
         <div class="fb-empty">
           <mat-icon>forum</mat-icon>
-          <p>No feedback yet. Anyone working this diagram — sales, engineering, customer, or any other role —
-             can start a loop; replies carry decisions that move it:
+          <p>No discussions yet. Anyone working this diagram — sales, engineering, customer, or any other role —
+             can start one; replies carry decisions that move it:
              <b>open → changes requested → approved → closed</b>.</p>
         </div>
       }
@@ -98,7 +98,7 @@
                         (click)="reply(t, 'request-changes')"><mat-icon>published_with_changes</mat-icon> Request changes</button>
                 <button type="button" class="fb-ok" [disabled]="sending"
                         (click)="reply(t, 'approve')"><mat-icon>check_circle</mat-icon> Approve</button>
-                <button type="button" class="fb-close" [disabled]="sending" title="Close the loop"
+                <button type="button" class="fb-close" [disabled]="sending" title="Close the discussion"
                         (click)="reply(t, 'close')"><mat-icon>cancel</mat-icon></button>
               </div>
             </div>

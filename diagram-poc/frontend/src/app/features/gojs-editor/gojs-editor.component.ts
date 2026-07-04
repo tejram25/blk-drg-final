@@ -1657,7 +1657,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Toggle the feedback-loop dock (shares the right-side slot with DW / part search). */
   toggleFeedbackLoop(): void {
     if (!this.feedbackLoopOpen && this.diagramId == null) {
-      this.notify.info('Save the diagram first — feedback loops live on saved diagrams.');
+      this.notify.info('Save the diagram first — discussions live on saved diagrams.');
       return;
     }
     this.feedbackLoopOpen = !this.feedbackLoopOpen;

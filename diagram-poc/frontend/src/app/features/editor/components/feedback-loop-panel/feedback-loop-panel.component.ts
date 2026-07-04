@@ -143,7 +143,7 @@ export class FeedbackLoopPanelComponent implements OnInit {
   decisionLabel(d: string): string {
     return d === 'request-changes' ? 'requested changes'
       : d === 'approve' ? 'approved'
-      : d === 'close' ? 'closed the loop' : '';
+      : d === 'close' ? 'closed the discussion' : '';
   }
 
   private reason(e: any): string {
