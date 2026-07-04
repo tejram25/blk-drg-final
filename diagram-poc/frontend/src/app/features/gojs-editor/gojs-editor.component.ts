@@ -39,7 +39,7 @@ import {
 import { LEGACY_FIGURE } from './gojs-legacy';
 import { symbolInfo } from './gojs-symbols';
 import { BASIC_SHAPES, isBasic } from '../editor/basic-shapes';
-import { ELECTRICAL_SYMBOLS, elecMeta } from '../editor/electrical-shapes';
+import { ELECTRICAL_SYMBOLS, elecMeta, elecPinName } from '../editor/electrical-shapes';
 import { ANIMATED_SYMBOLS, partsToSvg } from '../editor/animated-shapes';
 import { BomDialogComponent } from '../editor/components/bom-dialog/bom-dialog.component';
 import { RecommendationsDialogComponent } from '../editor/components/recommendations-dialog/recommendations-dialog.component';
@@ -1181,19 +1181,23 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /** True for a box node (functional block or shape) that can carry a component. */
   get isBox(): boolean {
-    const c = this.selectedNode?.data?.category;
-    return c === 'shape' || c === 'block';
+    const d = this.selectedNode?.data;
+    const c = d?.category;
+    // Electrical schematic symbols are components too: they can carry a real MPN.
+    return c === 'shape' || c === 'block' || (c === 'symbol' && String(d?.shape || '').startsWith('elec-'));
   }
 
   /** Ask the AI for the component this box needs (grounded in catalogue + POS). */
   suggestComponent(): void {
     const d = this.selectedNode?.data;
     if (!d) return;
+    // Schematic symbols search by value/type (the refdes "R1" is useless as a query).
+    const q = this.suggestQueryFor(d);
     this.boxSuggestions = [];
     this.boxSuggestError = '';
     this.boxSuggestLoading = true;
     this.cdr.detectChanges();
-    this.boxSuggest.suggest(d.text || '', d.sub || '', d.kind || '', this.designWinContext).subscribe({
+    this.boxSuggest.suggest(q.label, q.sub, d.kind || '', this.designWinContext).subscribe({
       next: (res) => {
         this.boxSuggestLoading = false;
         this.boxSuggestions = res.suggestions || [];
@@ -1284,8 +1288,26 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Nodes that are boxes (functional block / shape), i.e. can carry components. */
   private boxNodes(): go.Node[] {
     const out: go.Node[] = [];
-    this.diagram.nodes.each((n) => { const c = n.data?.category; if (c === 'shape' || c === 'block') out.push(n); });
+    this.diagram.nodes.each((n) => {
+      const c = n.data?.category;
+      if (c === 'shape' || c === 'block') out.push(n);
+      // Electrical schematic symbols with a refdes are components too (ground
+      // and other net markers are skipped — they never carry an MPN).
+      else if (c === 'symbol' && elecMeta(n.data?.shape).ref) out.push(n);
+    });
     return out;
+  }
+
+  /** Catalogue-search label/sub for a node: schematic symbols search by value
+   * (when part-number-like) or type; boxes search by their label/role. */
+  private suggestQueryFor(d: go.ObjectData): { label: string; sub: string } {
+    if (d['category'] === 'symbol' && String(d['shape'] || '').startsWith('elec-')) {
+      const type = this.symbolLabel(d['shape']);
+      const value = String(d['value'] || '');
+      const pnLike = /[A-Za-z]/.test(value) && /\d/.test(value) && value.length >= 4;
+      return { label: pnLike ? value : type, sub: type };
+    }
+    return { label: d['text'] || '', sub: d['sub'] || '' };
   }
 
   /** One-click: AI-suggest and auto-link the top component for every empty box. */
@@ -1296,9 +1318,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.imageGenLoading = true;
     this.status = `Finding components for ${boxes.length} boxes…`;
     this.cdr.detectChanges();
-    const calls = boxes.map((n) => this.boxSuggest
-      .suggest(n.data.text || '', n.data.sub || '', n.data.kind || '', this.designWinContext)
-      .pipe(catchError(() => of({ query: '', suggestions: [] as BoxSuggestion[] }))));
+    const calls = boxes.map((n) => {
+      const q = this.suggestQueryFor(n.data);
+      return this.boxSuggest
+        .suggest(q.label, q.sub, n.data.kind || '', this.designWinContext)
+        .pipe(catchError(() => of({ query: '', suggestions: [] as BoxSuggestion[] })));
+    });
     forkJoin(calls).subscribe({
       next: (results) => {
         let linked = 0;
@@ -1767,7 +1792,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const pinId = (key: any, port: string) => `${key} ${port}`;
+    const pinId = (key: any, port: string) => `${key}/${port}`;
     const parent = new Map<string, string>();
     const find = (x: string): string => {
       if (!parent.has(x)) { parent.set(x, x); return x; }
@@ -1785,7 +1810,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       const isGnd = n.data.shape === 'elec-ground';
       (n.data.ports || []).forEach((p: any, i: number) => {
         const id = pinId(n.data.key, p.portId); find(id);
-        pinLabel.set(id, `${ref}.${i + 1}`);
+        pinLabel.set(id, `${ref}.${elecPinName(n.data.shape, i)}`);
         if (isGnd) groundPins.add(id);
       });
     });
@@ -1825,7 +1850,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       if (!meta.ref) return; // skip net markers (ground)
       const name = this.symbolLabel(nd.data.shape);
       const value = nd.data.value || meta.value || '';
-      const k = `${name} ${value}`;
+      const k = `${name}|${value}`;
       const e = bom.get(k) ?? bom.set(k, { qty: 0, refs: [], name, value }).get(k)!;
       e.qty++; e.refs.push(nd.data.text || meta.ref);
     });
@@ -1877,7 +1902,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     reader.readAsText(file); (event.target as HTMLInputElement).value = '';
   }
   exportDrawioFile(): void {
-    this.download(URL.createObjectURL(new Blob([exportDrawio(this.diagram, this.diagramName || 'diagram')], { type: 'application/xml' })), this.fileName('drawio'));
+    // Symbols export as their real artwork, drawn for draw.io's white page.
+    const src = (shape: string) => symbolInfo(shape, false)?.source ?? null;
+    this.download(URL.createObjectURL(new Blob([exportDrawio(this.diagram, this.diagramName || 'diagram', src)], { type: 'application/xml' })), this.fileName('drawio'));
   }
 
   private fileName(ext: string): string { return (this.diagramName || 'diagram').replace(/[^\w.-]+/g, '_') + '.' + ext; }

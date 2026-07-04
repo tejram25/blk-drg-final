@@ -12,8 +12,18 @@ function esc(s: string): string {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-/** Serialize a GoJS diagram to a draw.io/mxGraph XML string. */
-export function exportDrawio(diagram: go.Diagram, name: string): string {
+/**
+ * Serialize a GoJS diagram to a draw.io/mxGraph XML string.
+ *
+ * `symbolSrc` (optional) resolves a symbol shape name to an SVG data-URI drawn
+ * for a white page (dark strokes); symbol nodes then export as mxGraph image
+ * shapes showing the real schematic artwork instead of plain boxes. The URI must
+ * not contain ';' (percent-encoded SVG is fine) or it would break style parsing.
+ */
+export function exportDrawio(
+  diagram: go.Diagram, name: string,
+  symbolSrc?: (shape: string) => string | null,
+): string {
   const cells: string[] = [
     '<mxCell id="0"/>',
     '<mxCell id="1" parent="0"/>',
@@ -21,11 +31,16 @@ export function exportDrawio(diagram: go.Diagram, name: string): string {
 
   diagram.nodes.each((n) => {
     const b = n.actualBounds;
-    const label = esc(n.data?.text || n.data?.shape || '');
-    const fill = n.data?.color || '#ffffff';
-    const style = `rounded=1;whiteSpace=wrap;html=1;fillColor=${fill};`;
+    const value = n.data?.value ? String(n.data.value) : '';
+    const label = esc((n.data?.text || n.data?.shape || '') + (value ? `\n${value}` : ''));
+    const shape = String(n.data?.shape || '');
+    const src = (n.data?.category === 'symbol' || n.data?.category === 'basic') && shape && symbolSrc
+      ? symbolSrc(shape) : null;
+    const style = src && !src.includes(';')
+      ? `shape=image;html=1;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=1;image=${src};`
+      : `rounded=1;whiteSpace=wrap;html=1;fillColor=${n.data?.color || '#ffffff'};`;
     cells.push(
-      `<mxCell id="${esc(String(n.key))}" value="${label}" style="${style}" vertex="1" parent="1">` +
+      `<mxCell id="${esc(String(n.key))}" value="${label}" style="${esc(style)}" vertex="1" parent="1">` +
       `<mxGeometry x="${Math.round(b.x)}" y="${Math.round(b.y)}" width="${Math.round(b.width)}" height="${Math.round(b.height)}" as="geometry"/>` +
       `</mxCell>`,
     );

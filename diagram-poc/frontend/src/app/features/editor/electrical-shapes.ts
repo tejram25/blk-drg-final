@@ -30,6 +30,8 @@ export interface SymbolDef {
   texts?: SymbolText[];
   /** pin positions in local coordinates */
   pins: { x: number; y: number }[];
+  /** electrical pin names matching `pins` by index (A/K, B/C/E, VCC…) for netlists */
+  pinNames?: string[];
 }
 
 /**
@@ -57,6 +59,8 @@ function ic(
     { x: W / 2, y: (bodyT + bodyB) / 2 + 4, text: title, size: 11, bold: true },
   ];
   const pins: { x: number; y: number }[] = [];
+  // Pin names track the push order below (left, right, top, bottom).
+  const pinNames = [...left, ...right, ...top, ...bottom];
 
   left.forEach((label, i) => {
     const y = Math.round(bodyT + ((bodyB - bodyT) / (left.length + 1)) * (i + 1));
@@ -83,7 +87,7 @@ function ic(
     texts.push({ x, y: bodyB - 6, text: label, size: 7.5 });
   });
 
-  return { width: W, height: H, paths, texts, pins };
+  return { width: W, height: H, paths, texts, pins, pinNames };
 }
 
 export const ELECTRICAL_SYMBOLS: Record<string, SymbolDef> = {
@@ -550,5 +554,38 @@ export const ELECTRICAL_META: Record<string, { ref: string; value: string }> = {
 /** Refdes prefix + default value for an electrical symbol (empty for net markers / unknown). */
 export function elecMeta(shape: string | undefined): { ref: string; value: string } {
   return (shape && ELECTRICAL_META[shape]) || { ref: '', value: '' };
+}
+
+/**
+ * Electrical pin names for the hand-drawn symbols, by pin index (symbols built
+ * with the ic() factory already carry names from their pin labels). Used by the
+ * netlist so connections read "Q1.B" / "U1.THR" instead of bare pin numbers.
+ */
+const PIN_NAMES: Record<string, string[]> = {
+  'elec-diode': ['A', 'K'], 'elec-zener': ['A', 'K'], 'elec-schottky': ['A', 'K'],
+  'elec-led': ['A', 'K'], 'elec-photodiode': ['A', 'K'],
+  'elec-npn': ['B', 'C', 'E'], 'elec-pnp': ['B', 'C', 'E'],
+  'elec-nmos': ['G', 'D', 'S'], 'elec-pmos': ['G', 'D', 'S'], 'elec-jfet': ['G', 'D', 'S'],
+  'elec-vdc': ['+', '-'], 'elec-vac': ['~1', '~2'], 'elec-isrc': ['+', '-'],
+  'elec-cell': ['+', '-'], 'elec-battery': ['+', '-'], 'elec-cap-pol': ['+', '-'],
+  'elec-pot': ['1', '2', 'W'], 'elec-opamp': ['IN-', 'IN+', 'OUT'],
+  'elec-relay': ['A1', 'A2', 'COM', 'NO', 'NC'], 'elec-spdt': ['COM', 'A', 'B'],
+  'elec-transformer': ['P1', 'P2', 'S1', 'S2'],
+  'elec-and': ['A', 'B', 'Y'], 'elec-or': ['A', 'B', 'Y'], 'elec-nand': ['A', 'B', 'Y'],
+  'elec-nor': ['A', 'B', 'Y'], 'elec-xor': ['A', 'B', 'Y'], 'elec-xnor': ['A', 'B', 'Y'],
+  'elec-not': ['A', 'Y'], 'elec-buffer': ['A', 'Y'],
+  'elec-header4': ['1', '2', '3', '4'], 'elec-conn2': ['1', '2'],
+  'elec-speaker': ['+', '-'], 'elec-buzzer': ['+', '-'], 'elec-mic': ['+', '-'],
+  'elec-ic555': ['VCC', 'GND', 'DIS', 'THR', 'TRG', 'CTL', 'RST', 'OUT'],
+};
+for (const [k, names] of Object.entries(PIN_NAMES)) {
+  const def = ELECTRICAL_SYMBOLS[k];
+  if (def && !def.pinNames) def.pinNames = names;
+}
+
+/** Netlist pin name for a symbol's pin index: named pin or 1-based number. */
+export function elecPinName(shape: string | undefined, index: number): string {
+  const names = shape ? ELECTRICAL_SYMBOLS[shape]?.pinNames : undefined;
+  return names?.[index] ?? String(index + 1);
 }
 
