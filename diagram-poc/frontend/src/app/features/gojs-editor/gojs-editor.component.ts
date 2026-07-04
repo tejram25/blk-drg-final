@@ -448,6 +448,15 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       sidePort('T', go.Spot.Top), sidePort('R', go.Spot.Right),
       sidePort('B', go.Spot.Bottom), sidePort('L', go.Spot.Left),
     ];
+    // Wires must LEAVE a pin outward (a left-edge pin exits left, a top pin exits
+    // up…); without a directional spot the router may run the first segment back
+    // across the symbol body. Derive the exit side from the pin's spot fraction.
+    const sideSpot = (s: string) => {
+      const sp = go.Spot.parse(s);
+      const dl = sp.x, dr = 1 - sp.x, dt = sp.y, db = 1 - sp.y;
+      const m = Math.min(dl, dr, dt, db);
+      return m === dl ? go.Spot.Left : m === dr ? go.Spot.Right : m === dt ? go.Spot.Top : go.Spot.Bottom;
+    };
     // Data-driven pin port for schematic / basic symbol shapes. Pins stay faintly
     // visible so users can see where wires attach; they brighten on hover and
     // while a wire is being dragged (showAllPins). The JCT dot is revealed by
@@ -458,7 +467,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       $(go.Shape, 'Circle',
         { desiredSize: new go.Size(11, 11), fill: '#0f172a', stroke: '#22d3ee', strokeWidth: 1.5,
           cursor: 'crosshair', opacity: 0.45, fromLinkable: true, toLinkable: true },
-        new go.Binding('portId', 'portId')),
+        new go.Binding('portId', 'portId'),
+        new go.Binding('fromSpot', 'spot', sideSpot),
+        new go.Binding('toSpot', 'spot', sideSpot)),
       $(go.Shape, 'Circle',
         { name: 'JCT', desiredSize: new go.Size(7, 7), fill: '#94a3b8', strokeWidth: 0,
           opacity: 0, pickable: false }),
