@@ -399,31 +399,40 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return m;
   }
 
-  /** Resting pin opacity: schematic/basic symbols keep faint always-on pins;
-   * block/shape side handles stay hidden until hover. */
-  private static restPinOpacity(node: go.Node): number {
+  /** Restore a node's pins to their resting look: on schematic/basic symbols an
+   * UNCONNECTED pin shows a faint dot (an invitation to wire it); a connected
+   * pin hides its dot so wires read as clean joins, not half-connections.
+   * Block/shape side handles rest hidden entirely. */
+  private resetPins(node: go.Node): void {
     const c = node.data?.category;
-    return c === 'symbol' || c === 'basic' ? 0.45 : 0;
+    const symbolish = c === 'symbol' || c === 'basic';
+    node.ports.each((p) => {
+      if (!p.portId) return;
+      let count = 0;
+      node.findLinksConnected(p.portId).each(() => count++);
+      p.opacity = symbolish && count === 0 ? 0.45 : 0;
+    });
   }
 
   /** Brighten a node's link ports on hover (the body itself stays movable). */
   private hoverPorts(obj: go.GraphObject, on: boolean): void {
     const node = obj.part;
     if (!(node instanceof go.Node)) return;
-    const rest = GojsEditorComponent.restPinOpacity(node);
-    node.ports.each((p) => { if (p.portId) p.opacity = on ? 1 : rest; });
+    if (on) node.ports.each((p) => { if (p.portId) p.opacity = 1; });
+    else this.resetPins(node);
   }
 
   /** Light every pin on the canvas (used while a wire drag is in progress). */
   private showAllPins(on: boolean): void {
     if (!this.diagram) return;
     this.diagram.nodes.each((n) => {
-      const rest = GojsEditorComponent.restPinOpacity(n);
-      n.ports.each((p) => { if (p.portId) p.opacity = on ? 1 : rest; });
+      if (on) n.ports.each((p) => { if (p.portId) p.opacity = 1; });
+      else this.resetPins(n);
     });
   }
 
-  /** Reveal a junction dot on every symbol pin where 2+ wires meet (schematic convention). */
+  /** Reveal a junction dot on every symbol pin where 2+ wires meet (schematic
+   * convention), and refresh resting pin dots (connected pins hide theirs). */
   private updateJunctions(): void {
     if (!this.diagram) return;
     this.diagram.nodes.each((n) => {
@@ -437,6 +446,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         n.findLinksConnected(p.portId).each(() => count++);
         jct.opacity = count >= 2 ? 1 : 0;
       });
+      this.resetPins(n);
     });
   }
 
@@ -600,32 +610,53 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     // Electrical schematic / animated symbols: an SVG picture (from the symbol
     // libraries) with data-driven connection pins. NOTE: a panel with an
     // itemArray keeps only its main element + the item panels, so the refdes /
-    // value labels must live OUTSIDE the port-bearing panel — hence the node is
-    // a Vertical stack of [BODY (picture + pin ports), refdes, value]. Pin spot
-    // fractions stay true to the artwork because they're relative to BODY only.
+    // value labels live OUTSIDE the port-bearing BODY panel. The node itself is
+    // a Spot panel (no itemArray) so the labels can be PLACED AROUND the body:
+    // symbols with a centre-bottom pin (sources, flags, ICs with a GND stub)
+    // put their labels beside the body so the exiting wire never strikes the
+    // text; everything else keeps them underneath.
+    const pinNear = (ports: any, test: (sp: go.Spot) => boolean) =>
+      Array.isArray(ports) && ports.some((p) => test(go.Spot.parse(p?.spot || '0 0')));
+    // below when the bottom edge is free; beside when only the bottom is busy
+    // (sources, flags, grounds); bottom-left quadrant when bottom AND right are
+    // busy (ICs, thyristor gates) so no exiting wire ever strikes the text.
+    const placement = (ports: any): 'below' | 'side' | 'below-left' => {
+      const bottomBusy = pinNear(ports, (sp) => sp.y > 0.85 && sp.x > 0.2 && sp.x < 0.8);
+      if (!bottomBusy) return 'below';
+      return pinNear(ports, (sp) => sp.x > 0.85) ? 'below-left' : 'side';
+    };
+    const labelAlign = (line: number) => (ports: any) => {
+      const pl = placement(ports);
+      if (pl === 'side') return new go.Spot(1, 0.5, 7, line === 0 ? -8 : 8);
+      return new go.Spot(pl === 'below-left' ? 0.18 : 0.5, 1, 0, 5 + line * 14);
+    };
+    const labelFocus = (ports: any) => placement(ports) === 'side' ? go.Spot.Left : go.Spot.Top;
     const symbol = $(
-      go.Node, 'Vertical',
+      go.Node, 'Spot',
       { locationSpot: go.Spot.Center, locationObjectName: 'BODY', selectionObjectName: 'BODY',
         resizable: true, resizeObjectName: 'BODY', ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Spot',
-        { name: 'BODY', itemTemplate: pinPort, ...body },
+        { name: 'BODY', isPanelMain: true, itemTemplate: pinPort, ...body },
         new go.Binding('desiredSize', 'size', go.Size.parse).makeTwoWay(go.Size.stringify),
         new go.Binding('itemArray', 'ports'),
         $(go.Picture, { isPanelMain: true, stretch: go.GraphObject.Fill,
           imageStretch: go.GraphObject.Fill, background: 'transparent' },
           new go.Binding('source', 'source'))),
-      // Reference designator (R1, C1, U1…) under the part; editable in place.
-      $(go.TextBlock, { font: 'bold 11px Roboto, sans-serif', stroke: '#94a3b8', editable: true,
-        margin: new go.Margin(4, 0, 0, 0) },
+      // Reference designator (R1, C1, U1…); editable in place.
+      $(go.TextBlock, { font: 'bold 11px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
         new go.Binding('text').makeTwoWay(),
-        new go.Binding('stroke', 'labelColor')),
-      // Value / part number under the refdes; hidden when blank.
+        new go.Binding('stroke', 'labelColor'),
+        new go.Binding('alignment', 'ports', labelAlign(0)),
+        new go.Binding('alignmentFocus', 'ports', labelFocus)),
+      // Value / part number; hidden when blank.
       $(go.TextBlock, { font: '10px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
         new go.Binding('text', 'value').makeTwoWay(),
         new go.Binding('visible', 'value', (v) => !!v),
-        new go.Binding('stroke', 'labelColor')),
+        new go.Binding('stroke', 'labelColor'),
+        new go.Binding('alignment', 'ports', labelAlign(1)),
+        new go.Binding('alignmentFocus', 'ports', labelFocus)),
     );
     this.diagram.nodeTemplateMap.set('symbol', symbol);
 
