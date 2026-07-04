@@ -904,3 +904,12 @@
 .dw-bar { border-color: color-mix(in srgb, var(--accent, #f5a623) 34%, transparent);
   background: color-mix(in srgb, var(--accent, #f5a623) 10%, transparent); }
 .dw-bar > mat-icon { color: var(--accent, #f5a623); }
+
+/* ---- feedback loop header badge ---- */
+.fb-btn { position: relative; }
+.fb-count {
+  position: absolute; top: 3px; right: 2px; min-width: 15px; height: 15px; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center; padding: 0 4px;
+  font-size: 9.5px; font-weight: 700; color: #1a1303; background: var(--accent, #f5a623);
+  border-radius: 20px; pointer-events: none;
+}

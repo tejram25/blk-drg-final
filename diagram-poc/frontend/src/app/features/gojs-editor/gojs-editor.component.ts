@@ -23,6 +23,7 @@ import {
 } from '../../core/services/design-review.service';
 import { AlternativePart, LifecycleInfo, LifecycleService } from '../../core/services/lifecycle.service';
 import { FeedbackRequest, FeedbackService } from '../../core/services/feedback.service';
+import { FeedbackLoopService } from '../../core/services/feedback-loop.service';
 import { ImageDiagramResult, ImageDiagramService } from '../../core/services/image-diagram.service';
 import { BoxSuggestion, BoxSuggestionService, LinkedComponent } from '../../core/services/box-suggestion.service';
 import { forkJoin, of } from 'rxjs';
@@ -51,6 +52,7 @@ import { PartSearchPanelComponent } from '../editor/components/part-search-panel
 import { DesignwinPanelComponent } from '../editor/components/designwin-panel/designwin-panel.component';
 import { VersionsDialogComponent } from '../editor/components/versions-dialog/versions-dialog.component';
 import { CommentsPanelComponent } from '../editor/components/comments-panel/comments-panel.component';
+import { FeedbackLoopPanelComponent } from '../editor/components/feedback-loop-panel/feedback-loop-panel.component';
 import { TemplatesDialogComponent } from '../editor/components/templates-dialog/templates-dialog.component';
 import { ExportDialogComponent, ExportNode } from '../editor/components/export-dialog/export-dialog.component';
 import { ReviewsDialogComponent } from '../editor/components/reviews-dialog/reviews-dialog.component';
@@ -71,6 +73,7 @@ import { Command, CommandPaletteComponent } from '../../shared/components/comman
         BomDialogComponent, RecommendationsDialogComponent, DesignReviewDialogComponent,
         LifecycleDialogComponent, FeedbackDialogComponent, ProjectPanelComponent,
         PartSearchPanelComponent, DesignwinPanelComponent, VersionsDialogComponent, CommentsPanelComponent,
+        FeedbackLoopPanelComponent,
         TemplatesDialogComponent, ExportDialogComponent, CommandPaletteComponent,
         ReviewsDialogComponent, ZoomDockComponent, ConfirmDialogComponent,
     ],
@@ -147,6 +150,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   // dialog state
   partSearchOpen = false; partSearchSeed = '';
   designWinOpen = false; designWinSeed = '';
+  feedbackLoopOpen = false; feedbackLoopCount = 0;
   recsOpen = false; recsLoading = false; recsResult: RecommendationResult | null = null;
   reviewOpen = false; reviewLoading = false; reviewResult: DesignReviewResult | null = null;
   bomRows: BomRow[] | null = null;
@@ -181,6 +185,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private reviewApi: DesignReviewService,
     private lifecycleApi: LifecycleService,
     private feedbackApi: FeedbackService,
+    private feedbackLoop: FeedbackLoopService,
     private imageDiagram: ImageDiagramService,
     private boxSuggest: BoxSuggestionService,
     private route: ActivatedRoute,
@@ -1564,13 +1569,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   openDesignWin(seedPart = ''): void {
     this.designWinSeed = seedPart;
     this.partSearchOpen = false;
+    this.feedbackLoopOpen = false;
     this.designWinOpen = false;
     setTimeout(() => { this.designWinOpen = true; this.cdr.detectChanges(); }, 0);
   }
-  /** Toggle the part-search dock (closes the Design Win dock — same slot). */
+  /** Toggle the part-search dock (closes the other right-side docks — same slot). */
   togglePartSearch(): void {
     this.partSearchOpen = !this.partSearchOpen;
-    if (this.partSearchOpen) this.designWinOpen = false;
+    if (this.partSearchOpen) { this.designWinOpen = false; this.feedbackLoopOpen = false; }
   }
   /** POS ("field-proven") check for the selected catalogue part. */
   checkSelectedPos(): void {
@@ -1646,6 +1652,27 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   toggleComments(): void {
     if (!this.commentsOpen && this.diagramId == null) { this.notify.info('Save the diagram first to add comments.'); return; }
     this.commentsOpen = !this.commentsOpen;
+  }
+
+  /** Toggle the feedback-loop dock (shares the right-side slot with DW / part search). */
+  toggleFeedbackLoop(): void {
+    if (!this.feedbackLoopOpen && this.diagramId == null) {
+      this.notify.info('Save the diagram first — feedback loops live on saved diagrams.');
+      return;
+    }
+    this.feedbackLoopOpen = !this.feedbackLoopOpen;
+    if (this.feedbackLoopOpen) { this.designWinOpen = false; this.partSearchOpen = false; }
+  }
+  /** Open threads (open / changes-requested) — shown as the header badge. */
+  refreshFeedbackLoopCount(): void {
+    if (this.diagramId == null) { this.feedbackLoopCount = 0; return; }
+    this.feedbackLoop.board(this.diagramId).subscribe({
+      next: (b) => {
+        this.feedbackLoopCount = b.threads.filter((t) => t.status === 'open' || t.status === 'changes-requested').length;
+        this.cdr.detectChanges();
+      },
+      error: () => {},
+    });
   }
   get diagramIdValue(): number { return this.diagramId ?? 0; }
   get selectedNodeId(): string | null { return this.selectedNode ? String(this.selectedNode.key) : null; }
@@ -1772,6 +1799,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         this.diagramName = dto.name; this.diagramId = dto.id ?? id; this.selectedDiagramId = dto.id ?? id;
         this.classification = dto.classification ?? 'INTERNAL';
         this.applyContent(dto.contentJson); this.joinCollab();
+        this.refreshFeedbackLoopCount();
       },
       error: () => this.notify.error('Could not open that diagram.'),
     });

@@ -90,6 +90,10 @@
                                 <button mat-icon-button [class.on]="recsOpen" matTooltip="Recommendations (AI)" (click)="openRecommendations()"><mat-icon>auto_awesome</mat-icon></button>
                                 <button mat-icon-button [class.on]="reviewOpen" matTooltip="Design review (AI)" (click)="openDesignReview()"><mat-icon>rule</mat-icon></button>
                                 <button mat-icon-button [class.on]="designWinOpen" matTooltip="Design Win explorer" (click)="openDesignWin()"><mat-icon>emoji_events</mat-icon></button>
+                                <button mat-icon-button class="fb-btn" [class.on]="feedbackLoopOpen" matTooltip="Feedback loop (sales · engineering · customer · …)" (click)="toggleFeedbackLoop()">
+                                  <mat-icon>forum</mat-icon>
+                                  @if (feedbackLoopCount) { <span class="fb-count">{{ feedbackLoopCount }}</span> }
+                                </button>
                               </div>
 
                               <span class="menu-wrap">
@@ -541,6 +545,10 @@
                                         }
                                         @if (designWinOpen) {
                                           <app-designwin-panel [seedPart]="designWinSeed" (close)="designWinOpen = false" (addPart)="onDesignWinAddPart($event)" (attach)="onAttachDesignWin($event)"></app-designwin-panel>
+                                        }
+                                        @if (feedbackLoopOpen) {
+                                          <app-feedback-loop-panel [diagramId]="diagramIdValue || null" [selectedNodeId]="selectedNodeId" [selectedNodeLabel]="selectedNodeLabel"
+                                            (close)="feedbackLoopOpen = false" (focusNode)="onFocusNode($event)" (changed)="refreshFeedbackLoopCount()"></app-feedback-loop-panel>
                                         }
                                         @if (recsOpen) {
                                           <app-recommendations-dialog [result]="recsResult" [loading]="recsLoading" (addPart)="onRecAddPart($event)" (close)="recsOpen = false"></app-recommendations-dialog>

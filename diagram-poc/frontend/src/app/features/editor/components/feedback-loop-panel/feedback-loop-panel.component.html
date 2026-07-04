@@ -1,0 +1,110 @@
+<aside class="fb-dock">
+  <div class="fb-head">
+    <span class="fb-title"><mat-icon>forum</mat-icon> Feedback loop</span>
+    <button type="button" class="fb-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <!-- Who am I acting as? Free-form role tag — any actor, not a fixed three. -->
+  <div class="fb-role">
+    <label for="fb-role-input">Acting as</label>
+    <input id="fb-role-input" type="text" list="fb-roles" [(ngModel)]="role" (change)="saveRole()"
+           placeholder="e.g. Sales, Engineering, Customer…" />
+    <datalist id="fb-roles">
+      @for (r of roleSuggestions; track r) { <option [value]="r"></option> }
+    </datalist>
+  </div>
+
+  @if (diagramId == null) {
+    <div class="fb-empty">
+      <mat-icon>forum</mat-icon>
+      <p>Save the diagram first — feedback loops live on saved diagrams so every participant sees the same thread.</p>
+    </div>
+  } @else {
+
+    <!-- New loop -->
+    <div class="fb-compose">
+      @if (!composeOpen) {
+        <button type="button" class="fb-new" (click)="composeOpen = true">
+          <mat-icon>add_comment</mat-icon> Start a feedback loop
+        </button>
+      } @else {
+        <input type="text" [(ngModel)]="newTitle" placeholder="Topic (optional)" />
+        <textarea rows="3" [(ngModel)]="newText" placeholder="What needs attention?"></textarea>
+        @if (selectedNodeId) {
+          <label class="fb-attach">
+            <input type="checkbox" [(ngModel)]="attachToNode" />
+            Attach to “{{ selectedNodeLabel || selectedNodeId }}”
+          </label>
+        }
+        <div class="fb-compose-actions">
+          <button type="button" class="fb-send" [disabled]="sending || (!newText.trim() && !newTitle.trim())"
+                  (click)="submitThread()"><mat-icon>send</mat-icon> Post</button>
+          <button type="button" class="fb-cancel" (click)="composeOpen = false">Cancel</button>
+        </div>
+      }
+    </div>
+
+    <div class="fb-body">
+      @if (loading) { <div class="fb-msg"><span class="spin"></span> Loading…</div> }
+      @if (error) { <div class="fb-msg err"><mat-icon>error_outline</mat-icon> {{ error }}</div> }
+
+      @if (!loading && !board.threads.length) {
+        <div class="fb-empty">
+          <mat-icon>forum</mat-icon>
+          <p>No feedback yet. Anyone working this diagram — sales, engineering, customer, or any other role —
+             can start a loop; replies carry decisions that move it:
+             <b>open → changes requested → approved → closed</b>.</p>
+        </div>
+      }
+
+      @for (t of board.threads; track t.id) {
+        <div class="fb-thread" [class.expanded]="openThreadId === t.id">
+          <button type="button" class="fb-thread-head" (click)="toggleThread(t)">
+            <span class="fb-pill" [attr.data-status]="t.status">{{ statusLabel(t.status) }}</span>
+            <span class="fb-thread-title">{{ t.title }}</span>
+            <span class="fb-thread-meta">{{ t.entries.length }} turn{{ t.entries.length === 1 ? '' : 's' }}</span>
+          </button>
+          @if (t.nodeId) {
+            <button type="button" class="fb-node" (click)="focusNode.emit(t.nodeId!)">
+              <mat-icon>my_location</mat-icon> View block
+            </button>
+          }
+
+          @if (openThreadId === t.id) {
+            <div class="fb-timeline">
+              @for (e of t.entries; track e.id) {
+                <div class="fb-entry" [class.mine]="e.mine">
+                  <div class="fb-entry-head">
+                    @if (e.role) { <span class="fb-role-chip">{{ e.role }}</span> }
+                    <b>{{ e.authorName }}</b>
+                    @if (decisionLabel(e.decision)) {
+                      <span class="fb-decision" [attr.data-d]="e.decision">
+                        <mat-icon>{{ decisionIcon(e.decision) }}</mat-icon>{{ decisionLabel(e.decision) }}
+                      </span>
+                    }
+                    <span class="fb-time">{{ e.createdAt | date: 'MMM d, HH:mm' }}</span>
+                  </div>
+                  @if (e.text) { <div class="fb-entry-text">{{ e.text }}</div> }
+                </div>
+              }
+            </div>
+
+            <div class="fb-reply">
+              <textarea rows="2" [(ngModel)]="replyText" placeholder="Reply as {{ role || 'anyone' }}…"></textarea>
+              <div class="fb-reply-actions">
+                <button type="button" class="fb-send" [disabled]="sending || !replyText.trim()"
+                        (click)="reply(t, 'comment')"><mat-icon>reply</mat-icon> Reply</button>
+                <button type="button" class="fb-req" [disabled]="sending"
+                        (click)="reply(t, 'request-changes')"><mat-icon>published_with_changes</mat-icon> Request changes</button>
+                <button type="button" class="fb-ok" [disabled]="sending"
+                        (click)="reply(t, 'approve')"><mat-icon>check_circle</mat-icon> Approve</button>
+                <button type="button" class="fb-close" [disabled]="sending" title="Close the loop"
+                        (click)="reply(t, 'close')"><mat-icon>cancel</mat-icon></button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</aside>
