@@ -474,6 +474,33 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  /** Shared hover tooltip: name, value/type and linked component MPNs. */
+  private nodeTip($: typeof go.GraphObject.make): go.Adornment {
+    return $('ToolTip',
+      { 'Border.fill': '#1d1e23', 'Border.stroke': '#34353c' } as any,
+      $(go.TextBlock,
+        { margin: 7, font: '11px Roboto, sans-serif', stroke: '#ececef', maxSize: new go.Size(260, NaN) },
+        new go.Binding('text', '', (d: any) => this.tooltipFor(d)))) as go.Adornment;
+  }
+
+  /** Tooltip body for any node's data. */
+  private tooltipFor(d: any): string {
+    const lines: string[] = [];
+    if (d.category === 'part') {
+      lines.push(d.text || 'Part');
+      if (d.supplier) lines.push(d.supplier);
+    } else if (d.category === 'symbol' && String(d.shape || '').startsWith('elec-')) {
+      lines.push(`${d.text || ''} — ${this.symbolLabel(d.shape)}`.replace(/^ — /, ''));
+      if (d.value) lines.push(`Value: ${d.value}`);
+    } else {
+      lines.push(d.text || d.shape || 'Block');
+      if (d.sub || d.subtitle) lines.push(d.sub || d.subtitle);
+    }
+    const comps = Array.isArray(d.components) ? d.components : [];
+    if (comps.length) lines.push(`Parts: ${comps.map((c: any) => c.partNumber).join(', ')}`);
+    return lines.filter(Boolean).join('\n');
+  }
+
   private buildTemplates($: typeof go.GraphObject.make): void {
     // A small edge port (hidden until hover) used as a link handle.
     const sidePort = (id: string, spot: go.Spot) => $(
@@ -527,7 +554,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const block = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'BODY', ...hover },
+      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'BODY', toolTip: this.nodeTip($), ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Auto', body, { name: 'BODY' }, sizeBind(),
@@ -551,7 +578,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const part = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'BODY', ...hover },
+      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'BODY', toolTip: this.nodeTip($), ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Auto', body, { name: 'BODY' }, sizeBind(),
@@ -596,7 +623,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     // fill/stroke, with a centred editable label. Four hover edge-ports for wiring.
     const shape = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'SHAPE', ...hover },
+      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'SHAPE', toolTip: this.nodeTip($), ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Spot', body,
@@ -658,12 +685,15 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const symbol = $(
       go.Node, 'Spot',
       { locationSpot: go.Spot.Center, locationObjectName: 'BODY', selectionObjectName: 'BODY',
-        resizable: true, resizeObjectName: 'BODY', ...hover },
+        resizable: true, resizeObjectName: 'BODY',
+        rotatable: true, rotateObjectName: 'BODY',   // vertical resistors, caps…
+        toolTip: this.nodeTip($), ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Spot',
         { name: 'BODY', isPanelMain: true, itemTemplate: pinPort, ...body },
         new go.Binding('desiredSize', 'size', go.Size.parse).makeTwoWay(go.Size.stringify),
+        new go.Binding('angle', 'angle').makeTwoWay(),
         new go.Binding('itemArray', 'ports'),
         $(go.Picture, { isPanelMain: true, stretch: go.GraphObject.Fill,
           imageStretch: go.GraphObject.Fill, background: 'transparent' },
@@ -719,6 +749,16 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       $(go.Shape, { toArrow: 'Standard', fill: '#94a3b8', stroke: null },
         new go.Binding('fill', 'color'),
         new go.Binding('visible', 'wire', (w) => !w)),
+      // Wire / connection label (net name, signal, "+6V"…). Editable in place;
+      // hidden while blank (set it from the selected-wire toolbar).
+      $(go.Panel, 'Auto',
+        { segmentIndex: NaN, segmentFraction: 0.5, visible: false },
+        new go.Binding('visible', 'text', (t) => !!t),
+        $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: 'rgba(14,15,17,0.75)', stroke: null }),
+        $(go.TextBlock, { font: '600 10px Roboto, sans-serif', stroke: '#e2e8f0', editable: true,
+          margin: new go.Margin(1.5, 5, 1.5, 5) },
+          new go.Binding('text').makeTwoWay(),
+          new go.Binding('stroke', 'color'))),
     );
 
     // Junction dots follow the wiring: recompute after every committed change
@@ -747,6 +787,77 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     styleLinking(this.diagram.toolManager.linkingTool);
     styleLinking(this.diagram.toolManager.relinkingTool);
+
+    // Subsystem groups: a collapsible dashed container around selected parts
+    // (Ctrl+G / command palette). Collapse hides internals — handy when sharing
+    // a diagram with non-engineers.
+    this.diagram.groupTemplate = $(
+      go.Group, 'Auto',
+      { locationSpot: go.Spot.Center, ungroupable: true, computesBoundsAfterDrag: true,
+        handlesDragDropForMembers: true },
+      new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
+      new go.Binding('isSubGraphExpanded', 'expanded').makeTwoWay(),
+      $(go.Shape, 'RoundedRectangle',
+        { parameter1: 12, fill: 'rgba(148,163,184,0.05)', stroke: '#f5a623',
+          strokeWidth: 1.2, strokeDashArray: [7, 4] }),
+      $(go.Panel, 'Vertical', { defaultAlignment: go.Spot.Left },
+        $(go.Panel, 'Horizontal', { margin: new go.Margin(6, 8, 0, 6) },
+          $('SubGraphExpanderButton', { margin: new go.Margin(0, 6, 0, 0) }),
+          $(go.TextBlock, { font: 'bold 12px Roboto, sans-serif', stroke: '#f5a623', editable: true },
+            new go.Binding('text').makeTwoWay())),
+        $(go.Placeholder, { padding: 14 })),
+    );
+    this.diagram.commandHandler.archetypeGroupData = { isGroup: true, text: 'Subsystem' };
+  }
+
+  /** Group the current selection into a collapsible subsystem container. */
+  groupSelection(): void {
+    this.closeMenus();
+    if (this.diagram.selection.count < 2) {
+      this.notify.info('Select two or more items to group into a subsystem.');
+      return;
+    }
+    this.zone.runOutsideAngular(() => this.diagram.commandHandler.groupSelection());
+  }
+  /** Dissolve the selected subsystem group(s), keeping their members. */
+  ungroupSelection(): void {
+    this.closeMenus();
+    this.zone.runOutsideAngular(() => this.diagram.commandHandler.ungroupSelection());
+  }
+
+  /** Rotate the selected schematic symbol(s) by 90° (pins rotate with the body). */
+  rotateSelection(): void {
+    this.closeMenus();
+    const nodes: go.Node[] = [];
+    this.diagram.selection.each((p) => { if (p instanceof go.Node && p.data?.category === 'symbol') nodes.push(p); });
+    if (!nodes.length) { this.notify.info('Select a schematic symbol to rotate.'); return; }
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) =>
+      nodes.forEach((n) => m.set(n.data, 'angle', ((n.data.angle || 0) + 90) % 360)), 'rotate'));
+  }
+
+  /** Set the label (net / signal name) on the selected wire. */
+  setWireLabel(v: string): void {
+    const l = this.selectedEdge;
+    if (!l) return;
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => m.set(l.data, 'text', v), 'wire label'));
+  }
+
+  /** One-click layered auto-layout — untangles imported / AI-generated diagrams. */
+  autoArrange(): void {
+    this.closeMenus();
+    if (!this.diagram.model.nodeDataArray.length) { this.notify.info('Nothing to arrange yet.'); return; }
+    const layout = new go.LayeredDigraphLayout();
+    layout.direction = 0;
+    layout.layerSpacing = 70;
+    layout.columnSpacing = 40;
+    layout.setsPortSpots = false; // keep our directional pin spots
+    this.zone.runOutsideAngular(() => {
+      this.diagram.startTransaction('auto-arrange');
+      layout.doLayout(this.diagram);
+      this.diagram.commitTransaction('auto-arrange');
+      this.diagram.commandHandler.zoomToFit();
+    });
+    this.status = 'Auto-arranged';
   }
 
   // ---- palette ----
@@ -1825,6 +1936,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       { label: 'Toggle minimap', icon: 'map', run: () => this.toggleMinimap() },
       { label: 'Export as PNG', icon: 'image', run: () => this.openExport('png') },
       { label: 'Export as SVG', icon: 'shape_line', run: () => this.openExport('svg') },
+      { label: 'Auto-arrange diagram', icon: 'auto_fix_high', run: () => this.autoArrange() },
+      { label: 'Rotate symbol 90°', icon: 'rotate_90_degrees_cw', run: () => this.rotateSelection() },
+      { label: 'Group into subsystem', icon: 'group_work', run: () => this.groupSelection() },
+      { label: 'Ungroup', icon: 'workspaces', run: () => this.ungroupSelection() },
       { label: 'Export as JSON', icon: 'data_object', run: () => this.exportJson() },
       { label: 'Export to draw.io', icon: 'account_tree', run: () => this.exportDrawioFile() },
       { label: 'Bill of Materials (CSV)', icon: 'receipt_long', run: () => this.exportBom() },
