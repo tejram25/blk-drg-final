@@ -338,7 +338,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     this.diagram.addDiagramListener('ViewportBoundsChanged', () => this.onViewport());
     // apply current wire style to newly drawn links; pin-to-pin connections
-    // between electrical symbols become schematic wires (solid, no arrowhead).
+    // between electrical symbols become schematic wires (solid, no arrowhead)
+    // and snap the just-connected part into line so the wire draws straight.
     this.diagram.addDiagramListener('LinkDrawn', (e) => {
       const link = e.subject as go.Link;
       const elec = (n: go.Node | null) =>
@@ -352,6 +353,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         m.set(link.data, 'routing', this.wireRouter);
         m.set(link.data, 'wire', wire);
       }, 'style link');
+      if (wire) this.straightenWire(link);
+    });
+    this.diagram.addDiagramListener('LinkRelinked', (e) => {
+      const link = e.subject as go.Link;
+      if (link?.data?.wire) this.straightenWire(link);
     });
     this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
     this.startAnimations();
@@ -399,19 +405,37 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return m;
   }
 
-  /** Restore a node's pins to their resting look: on schematic/basic symbols an
-   * UNCONNECTED pin shows a faint dot (an invitation to wire it); a connected
-   * pin hides its dot so wires read as clean joins, not half-connections.
-   * Block/shape side handles rest hidden entirely. */
+  /** Restore a node's pins to their resting look: schematic/basic symbols keep
+   * a faint dot on every pin (so connection points are always visible);
+   * block/shape side handles rest hidden until hover. */
   private resetPins(node: go.Node): void {
     const c = node.data?.category;
-    const symbolish = c === 'symbol' || c === 'basic';
-    node.ports.each((p) => {
-      if (!p.portId) return;
-      let count = 0;
-      node.findLinksConnected(p.portId).each(() => count++);
-      p.opacity = symbolish && count === 0 ? 0.45 : 0;
-    });
+    const rest = c === 'symbol' || c === 'basic' ? 0.45 : 0;
+    node.ports.each((p) => { if (p.portId) p.opacity = rest; });
+  }
+
+  /**
+   * Magnetic pin alignment: if a freshly drawn wire connects two pins that are
+   * ALMOST collinear (within {@link ALIGN_SNAP}px), nudge the newly connected
+   * part so the pins line up exactly — the wire then renders as one straight
+   * run instead of a tiny Z-bend.
+   */
+  private static readonly ALIGN_SNAP = 14;
+  private straightenWire(link: go.Link): void {
+    const fp = link.fromPort, tp = link.toPort, tn = link.toNode;
+    if (!fp || !tp || !tn || link.fromNode === tn) return;
+    const a = fp.getDocumentPoint(go.Spot.Center);
+    const b = tp.getDocumentPoint(go.Spot.Center);
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const T = GojsEditorComponent.ALIGN_SNAP;
+    let moveX = 0, moveY = 0;
+    if (Math.abs(dy) > 0 && Math.abs(dy) <= T && Math.abs(dx) > T) moveY = -dy;       // near-horizontal run
+    else if (Math.abs(dx) > 0 && Math.abs(dx) <= T && Math.abs(dy) > T) moveX = -dx;  // near-vertical run
+    if (!moveX && !moveY) return;
+    const loc = tn.location.copy();
+    loc.x += moveX; loc.y += moveY;
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) =>
+      m.set(tn.data, 'loc', go.Point.stringify(loc)), 'align wire'));
   }
 
   /** Brighten a node's link ports on hover (the body itself stays movable). */
