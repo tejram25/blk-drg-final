@@ -509,6 +509,52 @@ export const ELECTRICAL_SYMBOLS: Record<string, SymbolDef> = {
     { d: 'M 20 22 L 20 44' },
     { d: 'M 14 16 a 6 6 0 1 0 12 0 a 6 6 0 1 0 -12 0', fill: true },
   ], pins: [{ x: 20, y: 44 }] },
+
+  // ---- more discretes / power ----
+  'elec-ldr': { width: 100, height: 52, paths: [
+    { d: 'M 0 32 L 20 32' }, { d: 'M 80 32 L 100 32' },
+    { d: 'M 20 22 L 80 22 L 80 42 L 20 42 Z' },
+    { d: 'M 30 2 L 38 14 M 38 14 L 33 12 M 38 14 L 36 9' },
+    { d: 'M 46 2 L 54 14 M 54 14 L 49 12 M 54 14 L 52 9' },
+  ], pins: [{ x: 0, y: 32 }, { x: 100, y: 32 }] },
+  'elec-bridge': {
+    width: 80, height: 80, paths: [
+      { d: 'M 40 8 L 72 40 L 40 72 L 8 40 Z' },
+      { d: 'M 40 0 L 40 8 M 40 72 L 40 80 M 0 40 L 8 40 M 72 40 L 80 40' },
+    ],
+    texts: [
+      { x: 40, y: 24, text: '~', size: 11 }, { x: 40, y: 66, text: '~', size: 11 },
+      { x: 16, y: 44, text: '-', size: 11 }, { x: 64, y: 44, text: '+', size: 11 },
+    ],
+    pins: [{ x: 40, y: 0 }, { x: 80, y: 40 }, { x: 40, y: 80 }, { x: 0, y: 40 }],
+  },
+  'elec-scr': { width: 100, height: 52, paths: [
+    { d: 'M 0 20 L 38 20' }, { d: 'M 62 20 L 100 20' },
+    { d: 'M 62 8 L 62 32' },
+    { d: 'M 38 8 L 38 32 L 62 20 Z', fill: true },
+    { d: 'M 62 24 L 80 44 L 80 52' },
+  ], pins: [{ x: 0, y: 20 }, { x: 100, y: 20 }, { x: 80, y: 52 }] },
+  'elec-triac': { width: 100, height: 56, paths: [
+    { d: 'M 0 20 L 38 20' }, { d: 'M 62 20 L 100 20' },
+    { d: 'M 38 8 L 38 32 L 62 20 Z', fill: true },
+    { d: 'M 62 8 L 62 32 L 38 20 Z', fill: true },
+    { d: 'M 62 28 L 80 48 L 80 56' },
+  ], pins: [{ x: 0, y: 20 }, { x: 100, y: 20 }, { x: 80, y: 56 }] },
+  'elec-tvs': { width: 100, height: 40, paths: [
+    { d: 'M 0 20 L 32 20' }, { d: 'M 68 20 L 100 20' },
+    { d: 'M 32 8 L 32 32 L 50 20 Z', fill: true },
+    { d: 'M 68 8 L 68 32 L 50 20 Z', fill: true },
+    { d: 'M 50 8 L 50 32 M 50 8 L 45 5 M 50 32 L 55 35' },
+  ], pins: [{ x: 0, y: 20 }, { x: 100, y: 20 }] },
+
+  // ---- displays / connectors / modules (ic() factory) ----
+  'elec-7seg':       ic('7-SEG',       { left: ['A', 'B', 'C', 'D'], right: ['E', 'F', 'G', 'DP'], bottom: ['COM'], width: 120 }),
+  'elec-comparator': ic('LM393',       { left: ['IN−', 'IN+'], right: ['OUT'], top: ['V+'], bottom: ['GND'], width: 120 }),
+  'elec-usb':        ic('USB',         { right: ['VBUS', 'D−', 'D+', 'GND'], width: 110 }),
+  'elec-barrel':     ic('DC JACK',     { right: ['+VDC', 'GND'], width: 110 }),
+  'elec-oled':       ic('OLED 128×64', { left: ['VCC', 'GND', 'SCL', 'SDA'], width: 150 }),
+  'elec-arduino':    ic('Arduino UNO', { left: ['RST', 'RX', 'TX', 'D2', 'D3'], right: ['A0', 'A1', 'A2', '5V', 'GND'], width: 160 }),
+  'elec-stm32':      ic('STM32F103',   { left: ['NRST', 'PA9', 'PA10', 'SWDIO', 'SWCLK'], right: ['PB6', 'PB7', 'PA0', 'PA1'], top: ['3V3'], bottom: ['GND'], width: 160 }),
 };
 
 /**
@@ -544,6 +590,12 @@ export const ELECTRICAL_META: Record<string, { ref: string; value: string }> = {
   'elec-7400': { ref: 'U', value: '7400' }, 'elec-7404': { ref: 'U', value: '7404' },
   'elec-74hc595': { ref: 'U', value: '74HC595' }, 'elec-l293d': { ref: 'U', value: 'L293D' },
   'elec-pc817': { ref: 'U', value: 'PC817' }, 'elec-mcu': { ref: 'U', value: 'ATmega328' },
+  'elec-ldr': { ref: 'R', value: 'LDR' }, 'elec-bridge': { ref: 'BR', value: '' },
+  'elec-scr': { ref: 'Q', value: 'SCR' }, 'elec-triac': { ref: 'Q', value: 'BT136' },
+  'elec-tvs': { ref: 'D', value: 'TVS' }, 'elec-7seg': { ref: 'DS', value: '7-seg' },
+  'elec-comparator': { ref: 'U', value: 'LM393' }, 'elec-usb': { ref: 'J', value: 'USB' },
+  'elec-barrel': { ref: 'J', value: 'DC jack' }, 'elec-oled': { ref: 'U', value: 'SSD1306' },
+  'elec-arduino': { ref: 'U', value: 'Arduino UNO' }, 'elec-stm32': { ref: 'U', value: 'STM32F103' },
   'elec-esp32': { ref: 'U', value: 'ESP32' }, 'elec-and': { ref: 'U', value: '7408' },
   'elec-or': { ref: 'U', value: '7432' }, 'elec-not': { ref: 'U', value: '7404' },
   'elec-nand': { ref: 'U', value: '7400' }, 'elec-nor': { ref: 'U', value: '7402' },
@@ -577,6 +629,8 @@ const PIN_NAMES: Record<string, string[]> = {
   'elec-header4': ['1', '2', '3', '4'], 'elec-conn2': ['1', '2'],
   'elec-speaker': ['+', '-'], 'elec-buzzer': ['+', '-'], 'elec-mic': ['+', '-'],
   'elec-ic555': ['VCC', 'GND', 'DIS', 'THR', 'TRG', 'CTL', 'RST', 'OUT'],
+  'elec-bridge': ['~1', '+', '~2', '-'], 'elec-scr': ['A', 'K', 'G'],
+  'elec-triac': ['MT1', 'MT2', 'G'], 'elec-tvs': ['A1', 'A2'],
 };
 for (const [k, names] of Object.entries(PIN_NAMES)) {
   const def = ELECTRICAL_SYMBOLS[k];
