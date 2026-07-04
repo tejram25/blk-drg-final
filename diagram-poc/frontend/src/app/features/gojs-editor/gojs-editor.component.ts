@@ -394,10 +394,28 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return m;
   }
 
-  /** Show/hide a node's link ports on hover (the body itself stays movable). */
+  /** Resting pin opacity: schematic/basic symbols keep faint always-on pins;
+   * block/shape side handles stay hidden until hover. */
+  private static restPinOpacity(node: go.Node): number {
+    const c = node.data?.category;
+    return c === 'symbol' || c === 'basic' ? 0.45 : 0;
+  }
+
+  /** Brighten a node's link ports on hover (the body itself stays movable). */
   private hoverPorts(obj: go.GraphObject, on: boolean): void {
     const node = obj.part;
-    if (node instanceof go.Node) node.ports.each((p) => { if (p.portId) p.opacity = on ? 1 : 0; });
+    if (!(node instanceof go.Node)) return;
+    const rest = GojsEditorComponent.restPinOpacity(node);
+    node.ports.each((p) => { if (p.portId) p.opacity = on ? 1 : rest; });
+  }
+
+  /** Light every pin on the canvas (used while a wire drag is in progress). */
+  private showAllPins(on: boolean): void {
+    if (!this.diagram) return;
+    this.diagram.nodes.each((n) => {
+      const rest = GojsEditorComponent.restPinOpacity(n);
+      n.ports.each((p) => { if (p.portId) p.opacity = on ? 1 : rest; });
+    });
   }
 
   /** Reveal a junction dot on every symbol pin where 2+ wires meet (schematic convention). */
@@ -430,14 +448,16 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       sidePort('T', go.Spot.Top), sidePort('R', go.Spot.Right),
       sidePort('B', go.Spot.Bottom), sidePort('L', go.Spot.Left),
     ];
-    // Data-driven pin port for schematic / basic symbol shapes (hidden until hover).
-    // The JCT dot is revealed by updateJunctions() wherever 2+ wires meet on a pin.
+    // Data-driven pin port for schematic / basic symbol shapes. Pins stay faintly
+    // visible so users can see where wires attach; they brighten on hover and
+    // while a wire is being dragged (showAllPins). The JCT dot is revealed by
+    // updateJunctions() wherever 2+ wires meet on a pin.
     const pinPort = $(
       go.Panel, 'Spot',
       new go.Binding('alignment', 'spot', go.Spot.parse),
       $(go.Shape, 'Circle',
-        { desiredSize: new go.Size(9, 9), fill: '#0f172a', stroke: '#22d3ee', strokeWidth: 1.5,
-          cursor: 'crosshair', opacity: 0, fromLinkable: true, toLinkable: true },
+        { desiredSize: new go.Size(11, 11), fill: '#0f172a', stroke: '#22d3ee', strokeWidth: 1.5,
+          cursor: 'crosshair', opacity: 0.45, fromLinkable: true, toLinkable: true },
         new go.Binding('portId', 'portId')),
       $(go.Shape, 'Circle',
         { name: 'JCT', desiredSize: new go.Size(7, 7), fill: '#94a3b8', strokeWidth: 0,
@@ -633,6 +653,29 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     // Junction dots follow the wiring: recompute after every committed change
     // (draw/relink/delete/undo/collab), so they stay correct from any source.
     this.diagram.addModelChangedListener((e) => { if (e.isTransactionFinished) this.updateJunctions(); });
+
+    // Wire-drawing feel: drag an orthogonal wire (not a straight rubber band),
+    // show cyan snap rings on the candidate pins, and light every pin on the
+    // canvas while the drag is in progress so targets are obvious.
+    const styleLinking = (tool: go.LinkingBaseTool) => {
+      tool.temporaryLink = $(go.Link,
+        { routing: go.Link.Orthogonal, layerName: 'Tool' },
+        $(go.Shape, { stroke: '#22d3ee', strokeWidth: 2 }));
+      for (const port of [tool.temporaryFromPort, tool.temporaryToPort]) {
+        if (!(port instanceof go.Shape)) continue;
+        port.figure = 'Circle';
+        port.desiredSize = new go.Size(14, 14);
+        port.stroke = '#22d3ee';
+        port.strokeWidth = 2;
+        port.fill = null;
+      }
+      const act = tool.doActivate.bind(tool);
+      const deact = tool.doDeactivate.bind(tool);
+      tool.doActivate = () => { act(); this.showAllPins(true); };
+      tool.doDeactivate = () => { deact(); this.showAllPins(false); };
+    };
+    styleLinking(this.diagram.toolManager.linkingTool);
+    styleLinking(this.diagram.toolManager.relinkingTool);
   }
 
   // ---- palette ----
@@ -1466,7 +1509,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   onRecAddPart(item: RecommendationItem): void {
     const q = (item.query && item.query.trim()) ? item.query.trim() : item.title;
-    this.recsOpen = false; this.partSearchSeed = q; this.partSearchOpen = false;
+    this.recsOpen = false; this.partSearchSeed = q; this.partSearchOpen = false; this.designWinOpen = false;
     setTimeout(() => { this.partSearchOpen = true; }, 0);
     this.notify.info(`Catalogue options for "${q}" — choose a supplier and add.`);
   }
@@ -1505,11 +1548,18 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (pn) this.checkLifecycle(pn); else this.notify.info('Select a catalogue part first.');
   }
 
-  /** Open the Design Win explorer, optionally seeding the POS tab with a part. */
+  /** Open the Design Win explorer, optionally seeding the POS tab with a part.
+   * The right-side docks share one slot, so opening one closes the other. */
   openDesignWin(seedPart = ''): void {
     this.designWinSeed = seedPart;
+    this.partSearchOpen = false;
     this.designWinOpen = false;
     setTimeout(() => { this.designWinOpen = true; this.cdr.detectChanges(); }, 0);
+  }
+  /** Toggle the part-search dock (closes the Design Win dock — same slot). */
+  togglePartSearch(): void {
+    this.partSearchOpen = !this.partSearchOpen;
+    if (this.partSearchOpen) this.designWinOpen = false;
   }
   /** POS ("field-proven") check for the selected catalogue part. */
   checkSelectedPos(): void {
@@ -1667,7 +1717,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       { label: 'Template repository', icon: 'dashboard_customize', run: () => this.openTemplates() },
       { label: 'Recommendations (AI)', icon: 'auto_awesome', run: () => this.openRecommendations() },
       { label: 'Design review (AI)', icon: 'rule', run: () => this.openDesignReview() },
-      { label: 'Search parts', icon: 'travel_explore', run: () => (this.partSearchOpen = true) },
+      { label: 'Search parts', icon: 'travel_explore', run: () => { this.partSearchOpen = true; this.designWinOpen = false; } },
       { label: 'Design Win explorer', icon: 'emoji_events', run: () => this.openDesignWin() },
       { label: 'Field-proven check (POS)', icon: 'verified', run: () => this.checkSelectedPos() },
       { label: 'Project workspace', icon: 'work', run: () => (this.projectPanelOpen = true) },
