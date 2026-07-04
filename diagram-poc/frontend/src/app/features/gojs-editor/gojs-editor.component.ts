@@ -291,8 +291,19 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   cursorTrack(_i: number, c: { id: number }): number { return c.id; }
   participantTrack(_i: number, p: { id: number }): number { return p.id; }
 
-  toggleChat(): void { this.showChat = !this.showChat; }
+  toggleChat(): void {
+    this.showChat = !this.showChat;
+    // Opening OR closing marks everything currently in the room as seen.
+    this.chatSeenOthers = this.collab.messages.filter((m) => !m.isSelf).length;
+  }
   get chatOpen(): boolean { return this.showChat; }
+  /** Messages from others that arrived while the chat dock was closed. */
+  private chatSeenOthers = 0;
+  get chatUnread(): number {
+    if (this.showChat) return 0;
+    const others = this.collab.messages.filter((m) => !m.isSelf).length;
+    return Math.max(0, others - this.chatSeenOthers);
+  }
   get unreadChat(): number { return 0; }
   sendChat(): void {
     const text = this.chatDraft.trim();
