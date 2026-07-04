@@ -38,6 +38,8 @@
                             <mat-icon>shape_line</mat-icon><span>Export as SVG…</span></button>
                             <button type="button" class="menu-item" (click)="fileMenuOpen = false; exportBom()">
                               <mat-icon>receipt_long</mat-icon><span>Bill of Materials (CSV)</span></button>
+                              <button type="button" class="menu-item" (click)="fileMenuOpen = false; exportNetlist()">
+                                <mat-icon>lan</mat-icon><span>Netlist + BOM (electrical)</span></button>
                               <div class="menu-sep"></div>
                               <button type="button" class="menu-item" (click)="fileMenuOpen = false; openVersions()">
                                 <mat-icon>history</mat-icon><span>Version history</span></button>

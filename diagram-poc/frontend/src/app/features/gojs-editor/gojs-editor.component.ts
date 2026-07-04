@@ -39,7 +39,7 @@ import {
 import { LEGACY_FIGURE } from './gojs-legacy';
 import { symbolInfo } from './gojs-symbols';
 import { BASIC_SHAPES, isBasic } from '../editor/basic-shapes';
-import { ELECTRICAL_SYMBOLS } from '../editor/electrical-shapes';
+import { ELECTRICAL_SYMBOLS, elecMeta } from '../editor/electrical-shapes';
 import { ANIMATED_SYMBOLS, partsToSvg } from '../editor/animated-shapes';
 import { BomDialogComponent } from '../editor/components/bom-dialog/bom-dialog.component';
 import { RecommendationsDialogComponent } from '../editor/components/recommendations-dialog/recommendations-dialog.component';
@@ -548,9 +548,16 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       $(go.Picture, { isPanelMain: true, imageStretch: go.GraphObject.Fill, background: 'transparent', ...body },
         new go.Binding('source', 'source'),
         new go.Binding('desiredSize', 'size', go.Size.parse)),
-      $(go.TextBlock, { alignment: new go.Spot(0.5, 1, 0, 14), alignmentFocus: go.Spot.Top,
-        font: '11px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
+      // Reference designator (R1, C1, U1…) above the part; editable in place.
+      $(go.TextBlock, { alignment: new go.Spot(0.5, 1, 0, 13), alignmentFocus: go.Spot.Top,
+        font: 'bold 11px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
         new go.Binding('text').makeTwoWay(),
+        new go.Binding('stroke', 'labelColor')),
+      // Value / part number under the refdes; hidden when blank.
+      $(go.TextBlock, { alignment: new go.Spot(0.5, 1, 0, 27), alignmentFocus: go.Spot.Top,
+        font: '10px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
+        new go.Binding('text', 'value').makeTwoWay(),
+        new go.Binding('visible', 'value', (v) => !!v),
         new go.Binding('stroke', 'labelColor')),
     );
     this.diagram.nodeTemplateMap.set('symbol', symbol);
@@ -675,6 +682,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       tank: 'Liquid Tank', drone: 'Drone', 'glow-battery': 'Battery (Charging)', inverter: 'Inverter',
       transformer: 'Transformer', solar: 'Solar Panel', 'wind-turbine': 'Wind Turbine', generator: 'Generator',
       'ev-charger': 'EV Charger', pylon: 'Power Pylon', relay: 'Relay', heater: 'Heater', bulb: 'Bulb',
+      and: 'AND Gate', or: 'OR Gate', not: 'NOT Gate', nand: 'NAND Gate', nor: 'NOR Gate',
+      xor: 'XOR Gate', xnor: 'XNOR Gate', buffer: 'Buffer', schottky: 'Schottky Diode',
+      photodiode: 'Photodiode', thermistor: 'Thermistor', varistor: 'Varistor', jfet: 'JFET',
+      pmos: 'P-MOSFET', battery: 'Battery', isrc: 'Current Source', spdt: 'SPDT Switch',
+      speaker: 'Speaker', buzzer: 'Buzzer', mic: 'Microphone', header4: '4-Pin Header',
+      conn2: 'Terminal Block', testpoint: 'Test Point',
     };
     return names[k] ?? k;
   }
@@ -700,14 +713,32 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     const info = symbolInfo(b.shape, !this.lightCanvas);
     if (info) {
-      return {
+      const data: go.ObjectData = {
         category: info.basic ? 'basic' : 'symbol', text: b.label, shape: b.shape, source: info.source,
         size: `${info.width} ${info.height}`, loc: go.Point.stringify(loc), labelColor: this.labelColor,
         ports: info.pins.map((p, i) => ({ portId: `p${i}`, spot: `${p.fx} ${p.fy}` })),
       };
+      // Electrical symbols become real parts: auto reference designator + value label.
+      if (b.shape?.startsWith('elec-')) {
+        const meta = elecMeta(b.shape);
+        if (meta.ref) data['text'] = this.nextRefdes(meta.ref);
+        data['value'] = meta.value;
+      }
+      return data;
     }
     return { category: 'block', text: b.label, subtitle: b.category || 'Module',
       color: b.color || '#1d4ed8', icon: b.icon || 'widgets', loc: go.Point.stringify(loc) };
+  }
+
+  /** Next free reference designator for a prefix (R → R1, R2…), scanning the canvas. */
+  private nextRefdes(prefix: string): string {
+    let max = 0;
+    const re = new RegExp('^' + prefix + '(\\d+)$');
+    this.diagram?.nodes.each((n) => {
+      const t = n.data?.text;
+      if (typeof t === 'string') { const m = re.exec(t); if (m) max = Math.max(max, +m[1]); }
+    });
+    return `${prefix}${max + 1}`;
   }
 
   /** Recolour native shapes and regenerate symbol pictures for the canvas theme. */
@@ -1719,6 +1750,94 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.download(URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' })), this.fileName('svg'));
   }
   exportJson(): void { this.download(URL.createObjectURL(new Blob([this.diagram.model.toJson()], { type: 'application/json' })), this.fileName('gojs.json')); }
+
+  /**
+   * Derive a netlist + BOM from the electrical schematic: pins wired together
+   * form nets (union-find over each link's endpoints), and components are grouped
+   * by type + value. Nets touching a Ground symbol are named GND. Downloads .txt.
+   */
+  exportNetlist(): void {
+    this.closeMenus();
+    const nodes: go.Node[] = [];
+    this.diagram.nodes.each((n) => {
+      if (n.data?.category === 'symbol' && String(n.data.shape || '').startsWith('elec-')) nodes.push(n);
+    });
+    if (!nodes.length) {
+      this.notify.info('Add components from the Electrical palette and wire their pins to build a netlist.');
+      return;
+    }
+
+    const pinId = (key: any, port: string) => `${key} ${port}`;
+    const parent = new Map<string, string>();
+    const find = (x: string): string => {
+      if (!parent.has(x)) { parent.set(x, x); return x; }
+      let root = x; while (parent.get(root)! !== root) root = parent.get(root)!;
+      let cur = x; while (parent.get(cur)! !== root) { const nxt = parent.get(cur)!; parent.set(cur, root); cur = nxt; }
+      return root;
+    };
+    const union = (a: string, b: string) => { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); };
+
+    // Register every pin so unconnected pins still appear; remember label + whether it's a ground.
+    const pinLabel = new Map<string, string>();
+    const groundPins = new Set<string>();
+    nodes.forEach((n) => {
+      const ref = n.data.text || n.data.shape;
+      const isGnd = n.data.shape === 'elec-ground';
+      (n.data.ports || []).forEach((p: any, i: number) => {
+        const id = pinId(n.data.key, p.portId); find(id);
+        pinLabel.set(id, `${ref}.${i + 1}`);
+        if (isGnd) groundPins.add(id);
+      });
+    });
+    // Wire endpoints into nets.
+    this.diagram.links.each((lk) => {
+      const fk = lk.data?.from, tk = lk.data?.to;
+      if (fk == null || tk == null) return;
+      union(pinId(fk, lk.data?.fromPort ?? ''), pinId(tk, lk.data?.toPort ?? ''));
+    });
+
+    // Group labelled pins by net root.
+    const netMembers = new Map<string, string[]>();
+    const netHasGnd = new Map<string, boolean>();
+    pinLabel.forEach((lab, id) => {
+      const r = find(id);
+      (netMembers.get(r) ?? netMembers.set(r, []).get(r)!).push(lab);
+      if (groundPins.has(id)) netHasGnd.set(r, true);
+    });
+
+    // Name nets: GND for ground nets, then N1, N2… for connected nets (2+ pins).
+    const lines: string[] = ['NETLIST', '======='];
+    let n = 0;
+    [...netMembers.entries()]
+      .sort((a, b) => (netHasGnd.get(b[0]) ? 1 : 0) - (netHasGnd.get(a[0]) ? 1 : 0))
+      .forEach(([root, members]) => {
+        if (members.length < 2 && !netHasGnd.get(root)) return; // skip dangling single pins
+        const name = netHasGnd.get(root) ? 'GND' : `N${++n}`;
+        lines.push(`${name.padEnd(6)} ${[...new Set(members)].sort().join(', ')}`);
+      });
+    const unconnected = [...pinLabel].filter(([id]) => (netMembers.get(find(id)) || []).length < 2 && !netHasGnd.get(find(id)));
+    if (unconnected.length) lines.push('', `Unconnected pins: ${unconnected.map(([, l]) => l).sort().join(', ')}`);
+
+    // BOM: group by component type + value.
+    const bom = new Map<string, { qty: number; refs: string[]; name: string; value: string }>();
+    nodes.forEach((nd) => {
+      const meta = elecMeta(nd.data.shape);
+      if (!meta.ref) return; // skip net markers (ground)
+      const name = this.symbolLabel(nd.data.shape);
+      const value = nd.data.value || meta.value || '';
+      const k = `${name} ${value}`;
+      const e = bom.get(k) ?? bom.set(k, { qty: 0, refs: [], name, value }).get(k)!;
+      e.qty++; e.refs.push(nd.data.text || meta.ref);
+    });
+    lines.push('', 'BILL OF MATERIALS', '=================', 'Qty  Value        Component            References');
+    [...bom.values()].sort((a, b) => a.name.localeCompare(b.name)).forEach((e) => {
+      lines.push(`${String(e.qty).padEnd(4)} ${(e.value || '-').padEnd(12)} ${e.name.padEnd(20)} ${e.refs.sort().join(', ')}`);
+    });
+
+    const text = `${this.diagramName || 'Schematic'} — netlist & BOM\n\n${lines.join('\n')}\n`;
+    this.download(URL.createObjectURL(new Blob([text], { type: 'text/plain' })), this.fileName('netlist.txt'));
+    this.notify.success(`Netlist: ${n} net${n === 1 ? '' : 's'}${netHasGnd.size ? ' + GND' : ''}, ${bom.size} BOM line${bom.size === 1 ? '' : 's'}.`);
+  }
   onJsonSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return;
     const reader = new FileReader();
