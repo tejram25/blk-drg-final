@@ -332,15 +332,20 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       if (e.isTransactionFinished) this.zone.run(() => { this.updateCanvasEmpty(); this.scheduleAutosave(); });
     });
     this.diagram.addDiagramListener('ViewportBoundsChanged', () => this.onViewport());
-    // apply current wire style to newly drawn links
+    // apply current wire style to newly drawn links; pin-to-pin connections
+    // between electrical symbols become schematic wires (solid, no arrowhead).
     this.diagram.addDiagramListener('LinkDrawn', (e) => {
       const link = e.subject as go.Link;
+      const elec = (n: go.Node | null) =>
+        !!n && n.data?.category === 'symbol' && String(n.data.shape || '').startsWith('elec-');
+      const wire = elec(link.fromNode) && elec(link.toNode);
       this.diagram.model.commit((m) => {
         m.set(link.data, 'color', this.wireColor);
         m.set(link.data, 'width', this.wireWidth);
-        m.set(link.data, 'dash', this.wireStyle === 'solid' ? null : [6, 3]);
-        m.set(link.data, 'flow', this.wireStyle === 'flow');
+        m.set(link.data, 'dash', wire || this.wireStyle === 'solid' ? null : [6, 3]);
+        m.set(link.data, 'flow', !wire && this.wireStyle === 'flow');
         m.set(link.data, 'routing', this.wireRouter);
+        m.set(link.data, 'wire', wire);
       }, 'style link');
     });
     this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
@@ -613,12 +618,16 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       { routing: go.Link.AvoidsNodes, corner: 8, relinkableFrom: true, relinkableTo: true, reshapable: true, resegmentable: true },
       new go.Binding('routing', 'routing', (r) => r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.AvoidsNodes),
       new go.Binding('curve', 'routing', (r) => r === 'smooth' ? go.Link.Bezier : go.Link.None),
+      // Schematic wires (pin-to-pin between electrical symbols) bend square.
+      new go.Binding('corner', 'wire', (w) => (w ? 0 : 8)),
       $(go.Shape, { strokeWidth: 2, stroke: '#94a3b8' },
         new go.Binding('stroke', 'color'),
         new go.Binding('strokeWidth', 'width'),
         new go.Binding('strokeDashArray', 'dash')),
+      // …and carry no direction arrow (wires aren't flows).
       $(go.Shape, { toArrow: 'Standard', fill: '#94a3b8', stroke: null },
-        new go.Binding('fill', 'color')),
+        new go.Binding('fill', 'color'),
+        new go.Binding('visible', 'wire', (w) => !w)),
     );
 
     // Junction dots follow the wiring: recompute after every committed change
@@ -724,6 +733,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       bridge: 'Bridge Rectifier', scr: 'SCR (Thyristor)', triac: 'TRIAC', tvs: 'TVS Diode',
       '7seg': '7-Segment Display', comparator: 'LM393 Comparator', usb: 'USB Connector',
       barrel: 'DC Barrel Jack', oled: 'OLED Display', arduino: 'Arduino UNO', stm32: 'STM32 MCU',
+      vcc: 'VCC Power Flag', netflag: 'Net Label',
     };
     return names[k] ?? k;
   }
@@ -758,6 +768,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       if (b.shape?.startsWith('elec-')) {
         const meta = elecMeta(b.shape);
         if (meta.ref) data['text'] = this.nextRefdes(meta.ref);
+        // Net flags show their net name instead (rename to join pins by name).
+        else if (GojsEditorComponent.NET_FLAG_TEXT[b.shape]) data['text'] = GojsEditorComponent.NET_FLAG_TEXT[b.shape];
         data['value'] = meta.value;
       }
       return data;
@@ -765,6 +777,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return { category: 'block', text: b.label, subtitle: b.category || 'Module',
       color: b.color || '#1d4ed8', icon: b.icon || 'widgets', loc: go.Point.stringify(loc) };
   }
+
+  /** Default net name shown on a freshly dropped net-flag symbol. */
+  private static readonly NET_FLAG_TEXT: Record<string, string> = {
+    'elec-vcc': 'VCC', 'elec-netflag': 'NET',
+  };
 
   /** Next free reference designator for a prefix (R → R1, R2…), scanning the canvas. */
   private nextRefdes(prefix: string): string {
@@ -1839,22 +1856,26 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     const union = (a: string, b: string) => { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); };
 
-    // Register every pin so unconnected pins still appear; net markers (ground)
-    // carry no refdes and are excluded from component listings.
+    // Register every pin so unconnected pins still appear; net markers (ground,
+    // VCC / net-label flags) carry no refdes and are excluded from component
+    // listings. Named flags give their net its name — and every flag with the
+    // same name joins one net ("connect by name"), like a real schematic.
     const pinInfo = new Map<string, { ref: string; pin: string; marker: boolean }>();
-    const groundIds: string[] = [];
+    const flagPins = new Map<string, string[]>(); // net name → marker pin ids
     parts.forEach((n) => {
       const ref = n.data.text || n.data.shape;
       const marker = !elecMeta(n.data.shape).ref;
-      const isGnd = n.data.shape === 'elec-ground';
+      const netName = n.data.shape === 'elec-ground'
+        ? 'GND'
+        : (marker ? String(n.data.text || 'NET').trim().toUpperCase() || 'NET' : '');
       (n.data.ports || []).forEach((p: any, i: number) => {
         const id = pinId(n.data.key, p.portId); find(id);
         pinInfo.set(id, { ref, pin: elecPinName(n.data.shape, i), marker });
-        if (isGnd) groundIds.push(id);
+        if (netName) (flagPins.get(netName) ?? flagPins.set(netName, []).get(netName)!).push(id);
       });
     });
-    // All ground symbols are electrically the same net.
-    for (let i = 1; i < groundIds.length; i++) union(groundIds[0], groundIds[i]);
+    // Same-named flags are electrically the same net.
+    flagPins.forEach((ids) => { for (let i = 1; i < ids.length; i++) union(ids[0], ids[i]); });
     // Wire endpoints into nets.
     this.diagram.links.each((lk) => {
       const fk = lk.data?.from, tk = lk.data?.to;
@@ -1862,7 +1883,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       union(pinId(fk, lk.data?.fromPort ?? ''), pinId(tk, lk.data?.toPort ?? ''));
     });
 
-    const gndRoots = new Set(groundIds.map((id) => find(id)));
+    // Root → flag name (GND applied last so it wins if someone shorts flags).
+    const rootName = new Map<string, string>();
+    [...flagPins.entries()]
+      .sort((a, b) => (a[0] === 'GND' ? 1 : 0) - (b[0] === 'GND' ? 1 : 0))
+      .forEach(([name, ids]) => rootName.set(find(ids[0]), name));
     const byRoot = new Map<string, string[]>();
     pinInfo.forEach((_, id) => {
       const r = find(id);
@@ -1870,11 +1895,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     let n = 0;
     const nets: { name: string; ids: string[] }[] = [];
+    const weight = (root: string) => rootName.get(root) === 'GND' ? 2 : (rootName.has(root) ? 1 : 0);
     [...byRoot.entries()]
-      .sort((a, b) => (gndRoots.has(b[0]) ? 1 : 0) - (gndRoots.has(a[0]) ? 1 : 0))
+      .sort((a, b) => weight(b[0]) - weight(a[0]))
       .forEach(([root, ids]) => {
-        if (ids.length < 2 && !gndRoots.has(root)) return; // dangling single pin
-        nets.push({ name: gndRoots.has(root) ? 'GND' : `N${++n}`, ids });
+        if (ids.length < 2 && !rootName.has(root)) return; // dangling single pin
+        nets.push({ name: rootName.get(root) ?? `N${++n}`, ids });
       });
     return { parts, nets, pinInfo };
   }

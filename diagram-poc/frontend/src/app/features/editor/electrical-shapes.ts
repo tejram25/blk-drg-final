@@ -547,6 +547,15 @@ export const ELECTRICAL_SYMBOLS: Record<string, SymbolDef> = {
     { d: 'M 50 8 L 50 32 M 50 8 L 45 5 M 50 32 L 55 35' },
   ], pins: [{ x: 0, y: 20 }, { x: 100, y: 20 }] },
 
+  // ---- net flags (markers, no refdes): pins wired to same-named flags join one net ----
+  'elec-vcc': { width: 40, height: 36, paths: [
+    { d: 'M 20 36 L 20 12' }, { d: 'M 6 12 L 34 12' },
+  ], pins: [{ x: 20, y: 36 }] },
+  'elec-netflag': { width: 52, height: 32, paths: [
+    { d: 'M 0 16 L 14 16' },
+    { d: 'M 14 4 L 40 4 L 50 16 L 40 28 L 14 28 Z' },
+  ], pins: [{ x: 0, y: 16 }] },
+
   // ---- displays / connectors / modules (ic() factory) ----
   'elec-7seg':       ic('7-SEG',       { left: ['A', 'B', 'C', 'D'], right: ['E', 'F', 'G', 'DP'], bottom: ['COM'], width: 120 }),
   'elec-comparator': ic('LM393',       { left: ['IN−', 'IN+'], right: ['OUT'], top: ['V+'], bottom: ['GND'], width: 120 }),
@@ -590,6 +599,7 @@ export const ELECTRICAL_META: Record<string, { ref: string; value: string }> = {
   'elec-7400': { ref: 'U', value: '7400' }, 'elec-7404': { ref: 'U', value: '7404' },
   'elec-74hc595': { ref: 'U', value: '74HC595' }, 'elec-l293d': { ref: 'U', value: 'L293D' },
   'elec-pc817': { ref: 'U', value: 'PC817' }, 'elec-mcu': { ref: 'U', value: 'ATmega328' },
+  'elec-vcc': { ref: '', value: '' }, 'elec-netflag': { ref: '', value: '' },
   'elec-ldr': { ref: 'R', value: 'LDR' }, 'elec-bridge': { ref: 'BR', value: '' },
   'elec-scr': { ref: 'Q', value: 'SCR' }, 'elec-triac': { ref: 'Q', value: 'BT136' },
   'elec-tvs': { ref: 'D', value: 'TVS' }, 'elec-7seg': { ref: 'DS', value: '7-seg' },
