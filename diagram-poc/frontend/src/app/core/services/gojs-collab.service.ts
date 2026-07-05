@@ -77,6 +77,9 @@ export class GojsCollabService {
   private dirty = new Map<string, any>();
   private removed = new Set<string>();
   private changedListener: ((e: go.ChangedEvent) => void) | null = null;
+  /** The exact model the listener is attached to — diagram.model may have been
+   * swapped since (load/adopt), and detaching must target the right object. */
+  private boundModel: go.Model | null = null;
 
   peers = 0;
   connected = false;
@@ -147,7 +150,13 @@ export class GojsCollabService {
     this.provider.on('sync', (isSynced: boolean) => {
       if (!isSynced || !this.cells || !this.diagram || this.seeded) return;
       this.seeded = true;
-      const othersPresent = this.provider!.awareness.getStates().size > 1;
+      // "Others present" must mean a DIFFERENT person: a ghost awareness state
+      // left by our own crashed/refreshed session shares our uid and must not
+      // make us adopt stale room state instead of republishing the saved truth.
+      let othersPresent = false;
+      this.provider!.awareness.getStates().forEach((s: any, id: number) => {
+        if (id !== this.provider!.awareness.clientID && s?.user?.uid && s.user.uid !== this.myUserId) othersPresent = true;
+      });
       if (this.cells.size > 0 && othersPresent) this.replaceModelFromRoom();
       else this.publishAll();
     });
@@ -155,6 +164,7 @@ export class GojsCollabService {
     // ---- outbound: model -> Yjs ----
     this.changedListener = (e: go.ChangedEvent) => this.onModelChanged(e);
     diagram.model.addChangedListener(this.changedListener);
+    this.boundModel = diagram.model;
 
     // ---- inbound: Yjs -> model ----
     this.cells.observe((event) => this.onRemoteCells(event));
@@ -170,9 +180,10 @@ export class GojsCollabService {
     this.cursors = [];
     this.participants = [];
     this.messages = [];
-    if (this.diagram && this.changedListener) {
-      this.diagram.model.removeChangedListener(this.changedListener);
+    if (this.boundModel && this.changedListener) {
+      this.boundModel.removeChangedListener(this.changedListener);
     }
+    this.boundModel = null;
     this.changedListener = null;
     this.provider?.destroy();
     this.doc?.destroy();
@@ -326,7 +337,11 @@ export class GojsCollabService {
       gm.linkDataArray = links;
       this.diagram.model = gm;
       // re-attach outbound listener to the new model
-      if (this.changedListener) gm.addChangedListener(this.changedListener);
+      if (this.changedListener) {
+        this.boundModel?.removeChangedListener(this.changedListener);
+        gm.addChangedListener(this.changedListener);
+        this.boundModel = gm;
+      }
     } finally {
       this.applyingRemote = false;
     }
