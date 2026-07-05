@@ -2,7 +2,7 @@ import {
   AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, NgZone, OnDestroy,
   OnInit, ViewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -190,7 +190,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private boxSuggest: BoxSuggestionService,
     private route: ActivatedRoute,
     private router: Router,
+    private location: Location,
   ) {}
+
+  /** Keep the URL in sync with the open diagram so a refresh reopens it. */
+  private syncUrl(): void {
+    this.location.replaceState(this.diagramId != null ? `/editor/${this.diagramId}` : '/editor');
+  }
 
   ngOnInit(): void {
     this.loadPalette();
@@ -257,11 +263,18 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   // ---- collaboration ----
 
   private joinCollab(): void {
-    if (this.diagramId == null || this.collab.active) return;
+    if (this.diagramId == null) return;
+    const room = String(this.diagramId);
+    // Already live in THIS diagram's room → nothing to do. But if a different
+    // diagram was opened, we must re-join: staying in the old room leaves the
+    // outbound listener on a discarded model (edits stop syncing) and would
+    // apply the old room's remote events to the wrong canvas.
+    if (this.collab.active && this.collab.currentRoom === room) return;
     const u = this.auth.user();
     const name = u?.name || u?.email || 'You';
     const uid = u?.email || `anon-${Math.random().toString(36).slice(2)}`;
-    this.zone.runOutsideAngular(() => this.collab.join(this.diagram, String(this.diagramId), name, uid));
+    this.chatSeenOthers = 0; // fresh room, fresh unread baseline
+    this.zone.runOutsideAngular(() => this.collab.join(this.diagram, room, name, uid));
   }
 
   onCanvasMouseMove(e: MouseEvent): void {
@@ -677,22 +690,34 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     // symbols with a centre-bottom pin (sources, flags, ICs with a GND stub)
     // put their labels beside the body so the exiting wire never strikes the
     // text; everything else keeps them underneath.
-    const pinNear = (ports: any, test: (sp: go.Spot) => boolean) =>
-      Array.isArray(ports) && ports.some((p) => test(go.Spot.parse(p?.spot || '0 0')));
+    // Pin spot fractions ROTATED by the symbol's angle, so label placement keeps
+    // avoiding the real wire exits after a 90°/180°/270° rotation.
+    const rotatedSpots = (d: any): { x: number; y: number }[] => {
+      const ports = Array.isArray(d?.ports) ? d.ports : [];
+      const a = ((d?.angle || 0) % 360 + 360) % 360;
+      return ports.map((p: any) => {
+        const sp = go.Spot.parse(p?.spot || '0 0');
+        if (a === 90) return { x: 1 - sp.y, y: sp.x };
+        if (a === 180) return { x: 1 - sp.x, y: 1 - sp.y };
+        if (a === 270) return { x: sp.y, y: 1 - sp.x };
+        return { x: sp.x, y: sp.y };
+      });
+    };
     // below when the bottom edge is free; beside when only the bottom is busy
     // (sources, flags, grounds); bottom-left quadrant when bottom AND right are
     // busy (ICs, thyristor gates) so no exiting wire ever strikes the text.
-    const placement = (ports: any): 'below' | 'side' | 'below-left' => {
-      const bottomBusy = pinNear(ports, (sp) => sp.y > 0.85 && sp.x > 0.2 && sp.x < 0.8);
+    const placement = (d: any): 'below' | 'side' | 'below-left' => {
+      const spots = rotatedSpots(d);
+      const bottomBusy = spots.some((sp) => sp.y > 0.85 && sp.x > 0.2 && sp.x < 0.8);
       if (!bottomBusy) return 'below';
-      return pinNear(ports, (sp) => sp.x > 0.85) ? 'below-left' : 'side';
+      return spots.some((sp) => sp.x > 0.85) ? 'below-left' : 'side';
     };
-    const labelAlign = (line: number) => (ports: any) => {
-      const pl = placement(ports);
+    const labelAlign = (line: number) => (d: any) => {
+      const pl = placement(d);
       if (pl === 'side') return new go.Spot(1, 0.5, 7, line === 0 ? -8 : 8);
       return new go.Spot(pl === 'below-left' ? 0.18 : 0.5, 1, 0, 5 + line * 14);
     };
-    const labelFocus = (ports: any) => placement(ports) === 'side' ? go.Spot.Left : go.Spot.Top;
+    const labelFocus = (d: any) => placement(d) === 'side' ? go.Spot.Left : go.Spot.Top;
     const symbol = $(
       go.Node, 'Spot',
       { locationSpot: go.Spot.Center, locationObjectName: 'BODY', selectionObjectName: 'BODY',
@@ -713,15 +738,15 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       $(go.TextBlock, { font: 'bold 11px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
         new go.Binding('text').makeTwoWay(),
         new go.Binding('stroke', 'labelColor'),
-        new go.Binding('alignment', 'ports', labelAlign(0)),
-        new go.Binding('alignmentFocus', 'ports', labelFocus)),
+        new go.Binding('alignment', '', labelAlign(0)),
+        new go.Binding('alignmentFocus', '', labelFocus)),
       // Value / part number; hidden when blank.
       $(go.TextBlock, { font: '10px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
         new go.Binding('text', 'value').makeTwoWay(),
         new go.Binding('visible', 'value', (v) => !!v),
         new go.Binding('stroke', 'labelColor'),
-        new go.Binding('alignment', 'ports', labelAlign(1)),
-        new go.Binding('alignmentFocus', 'ports', labelFocus)),
+        new go.Binding('alignment', '', labelAlign(1)),
+        new go.Binding('alignmentFocus', '', labelFocus)),
     );
     this.diagram.nodeTemplateMap.set('symbol', symbol);
 
@@ -1207,6 +1232,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.collab.leave();
     this.zone.runOutsideAngular(() => { this.diagram.model = this.emptyModel(); });
     this.diagramId = null; this.selectedDiagramId = null;
+    this.syncUrl();
+    this.feedbackLoopCount = 0;
     this.diagramName = 'Untitled diagram';
     this.classification = 'INTERNAL';
     this.linkedProject = null;
@@ -1967,6 +1994,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const done = (d: any) => {
       this.saving = false;
       if (d?.id) { this.diagramId = d.id; this.selectedDiagramId = d.id; }
+      this.syncUrl();
+      this.refreshFeedbackLoopCount();
       this.status = 'Saved'; this.joinCollab(); this.refreshList(); this.cdr.detectChanges(); then?.();
     };
     if (this.diagramId) this.diagrams.update(this.diagramId, dto).subscribe({ next: done, error: () => this.onSaveError() });
@@ -1979,6 +2008,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       next: (dto) => {
         this.diagramName = dto.name; this.diagramId = dto.id ?? id; this.selectedDiagramId = dto.id ?? id;
         this.classification = dto.classification ?? 'INTERNAL';
+        this.syncUrl();
         this.applyContent(dto.contentJson); this.joinCollab();
         this.refreshFeedbackLoopCount();
       },

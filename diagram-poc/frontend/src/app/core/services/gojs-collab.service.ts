@@ -95,15 +95,22 @@ export class GojsCollabService {
   followUid: string | null = null;
   applyingViewport = false;
 
-  constructor(private notify: NotificationService, private zone: NgZone) {}
+  constructor(private notify: NotificationService, private zone: NgZone) {
+    // Test/debug hook: lets e2e checks inspect sync state without UI plumbing.
+    (window as any).__collab = this;
+  }
 
   get active(): boolean { return this.provider != null; }
   get isApplyingRemote(): boolean { return this.applyingRemote; }
+  /** The room (diagram id) this service is currently bound to, or null. */
+  get currentRoom(): string | null { return this.room; }
+  private room: string | null = null;
 
   /** Join a room and two-way bind it to the diagram's model. */
   join(diagram: go.Diagram, room: string, displayName: string, userId: string, serverUrl = collabServerUrl()): void {
     this.leave();
     this.diagram = diagram;
+    this.room = room;
     this.seeded = false;
     this.presenceSeeded = false;
     this.knownNames = new Map();
@@ -133,12 +140,16 @@ export class GojsCollabService {
     this.chatArr.observe(() => this.zone.run(() => this.refreshMessages()));
     awareness.on('change', () => this.zone.run(() => this.onAwarenessChange(awareness)));
 
-    // seed-vs-adopt on first sync
+    // Seed-vs-adopt on first sync. Adopt the room's live state only when other
+    // participants are actually present; when we're alone, the freshly loaded
+    // (autosaved) diagram is the source of truth — republishing also heals rooms
+    // left with partial state by an interrupted session.
     this.provider.on('sync', (isSynced: boolean) => {
       if (!isSynced || !this.cells || !this.diagram || this.seeded) return;
       this.seeded = true;
-      if (this.cells.size === 0) this.publishAll();
-      else this.replaceModelFromRoom();
+      const othersPresent = this.provider!.awareness.getStates().size > 1;
+      if (this.cells.size > 0 && othersPresent) this.replaceModelFromRoom();
+      else this.publishAll();
     });
 
     // ---- outbound: model -> Yjs ----
@@ -151,6 +162,7 @@ export class GojsCollabService {
 
   leave(): void {
     this.clearPendingLeave();
+    this.room = null;
     this.presentUids = new Set();
     this.presenceSeeded = false;
     this.dirty.clear();
@@ -188,7 +200,11 @@ export class GojsCollabService {
   }
 
   private onModelChanged(e: go.ChangedEvent): void {
-    if (this.applyingRemote || !this.cells) return;
+    // Nothing may reach the room before the initial seed-vs-adopt decision —
+    // otherwise a background commit (e.g. the animated-symbol ticker) races the
+    // first sync, pre-populates the room with one node, and the sync handler
+    // then "adopts" that junk over the real diagram.
+    if (this.applyingRemote || !this.cells || !this.seeded) return;
 
     if (e.change === go.ChangedEvent.Insert || e.change === go.ChangedEvent.Remove) {
       const data = e.newValue ?? e.oldValue;
