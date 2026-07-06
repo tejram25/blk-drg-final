@@ -38,7 +38,7 @@ import {
   SHAPE_DEFS, shapeDef, isShapeKey, registerShapeFigures, shapePreviewInner,
 } from './gojs-shapes';
 import { LEGACY_FIGURE } from './gojs-legacy';
-import { symbolInfo } from './gojs-symbols';
+import { animFrameSources, symbolInfo } from './gojs-symbols';
 import { BASIC_SHAPES, isBasic } from '../editor/basic-shapes';
 import { ELECTRICAL_SYMBOLS, elecMeta, elecPinName } from '../editor/electrical-shapes';
 import { ANIMATED_SYMBOLS, partsToSvg } from '../editor/animated-shapes';
@@ -398,29 +398,37 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.startAnimations();
   }
 
-  /** Rotary animated symbols spin; the rest pulse — GoJS canvas can't run the
-   * original CSS keyframes, so motion is driven here instead. */
-  private readonly spinShapes = new Set(['anim-fan', 'anim-gear', 'anim-generator', 'anim-wind-turbine']);
+  /** Animated symbols play a pre-rendered SVG frame loop (the palette's CSS
+   * keyframes can't run inside a GoJS Picture). Frames are flipped directly on
+   * the Picture — never through bound properties like the BODY's two-way
+   * `angle`, which would write the model (and flood the collab room) 60×/s. */
   private raf = 0;
+  private animFrameCache = new Map<string, string[]>();
+  private animFramesFor(shape: string): string[] {
+    let f = this.animFrameCache.get(shape);
+    if (!f) { f = animFrameSources(shape); this.animFrameCache.set(shape, f); }
+    return f;
+  }
   private startAnimations(): void {
-    let t = 0;
+    let tick = 0;
     const loop = () => {
-      t += 1;
-      const pulse = 0.55 + 0.45 * Math.abs(Math.sin(t / 22));
-      const angle = (t * 3) % 360;
-      if (this.diagram) {
+      tick += 1;
+      // Flip every 3rd rAF (~20 fps) — smooth motion at a third of the paints.
+      if (tick % 3 === 0 && this.diagram) {
+        const frame = tick / 3;
         this.diagram.nodes.each((n) => {
           const shape = n.data?.shape;
           if (typeof shape !== 'string' || !shape.startsWith('anim-')) return;
-          const main = n.findMainElement();
-          if (!main) return;
-          if (this.spinShapes.has(shape)) main.angle = angle;
-          else main.opacity = pulse;
+          const frames = this.animFramesFor(shape);
+          if (!frames.length) return;
+          const body = n.findMainElement();
+          const pic = body instanceof go.Panel ? body.findMainElement() : null;
+          if (pic instanceof go.Picture) pic.source = frames[frame % frames.length];
         });
         // "Flowing current" wires: march the dash pattern along flow-style links.
         // strokeDashOffset must be non-negative in GoJS, so run a decreasing
         // positive sawtooth over one dash period (6 + 3) — dashes flow forward.
-        const dashOffset = 9 - ((t * 0.6) % 9);
+        const dashOffset = 9 - ((frame * 1.8) % 9);
         this.diagram.links.each((l) => {
           if (l.data?.flow && l.path) l.path.strokeDashOffset = dashOffset;
         });

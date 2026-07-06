@@ -333,3 +333,83 @@ export function partsToSvg(shape: string): string {
   return def.parts.map(ser).join('');
 }
 
+// ---------------------------------------------------------------------------
+// Frame rendering for the GoJS canvas.
+//
+// CSS @keyframes animate the palette previews (real DOM <svg>), but a GoJS
+// Picture draws the SVG through an <img>, where stylesheet classes never apply
+// and the canvas snapshot is static anyway. So for the canvas each symbol is
+// rendered as a short loop of SVG frames: the same part tree serialized with
+// the class-driven motion (rotation about the correct pivot, opacity pulses,
+// dash marching, light cycling…) baked in at a given phase of the loop.
+// ---------------------------------------------------------------------------
+
+/** Frames per animation loop (the editor flips through them at ~20 fps). */
+export const ANIM_FRAME_COUNT = 48;
+
+/** Rotation pivots for spinning part-groups, in order of appearance within the
+ * shape. Spinning must happen about the rotor's own axle — rotating the whole
+ * drawing (or its bounding box centre) swings towers and leads around. */
+const SPIN_PIVOTS: Record<string, { x: number; y: number }[]> = {
+  'anim-fan': [{ x: 30, y: 30 }],
+  'anim-conveyor': [{ x: 15, y: 32 }, { x: 95, y: 32 }],
+  'anim-gear': [{ x: 30, y: 30 }],
+  'anim-pump': [{ x: 40, y: 38 }],
+  'anim-drone': [{ x: 16, y: 14 }, { x: 64, y: 14 }],
+  'anim-wind-turbine': [{ x: 35, y: 26 }],
+  'anim-generator': [{ x: 35, y: 30 }],
+};
+
+/** Serialize one animation frame of a shape; `phase` runs 0..1 over the loop. */
+export function partsToSvgFrame(shape: string, phase: number): string {
+  const def = ANIMATED_SYMBOLS[shape];
+  if (!def) return '';
+  const pivots = [...(SPIN_PIVOTS[shape] ?? [])];
+  const osc = Math.sin(2 * Math.PI * phase);          // -1..1 rocking motions
+  const blink = (shift = 0) =>                         // 2 pulses per loop, 0.3..1
+    0.3 + 0.7 * (0.5 + 0.5 * Math.sin(2 * Math.PI * (phase * 2 + shift)));
+
+  const ser = (p: Part): string => {
+    const attrs: Record<string, string> = { ...p.attrs };
+    const cls = attrs['class'] ?? '';
+    delete attrs['class'];
+    let wrap = '';                                     // extra <g transform> wrapper
+
+    if (cls === 'anim-spin' || cls === 'anim-spin-slow' || cls === 'anim-spin-wind') {
+      const pv = pivots.shift() ?? { x: def.width / 2, y: def.height / 2 };
+      const deg = (cls === 'anim-spin-slow' ? 180 : 360) * phase;
+      wrap = `rotate(${deg.toFixed(2)} ${pv.x} ${pv.y})`;
+    } else if (cls === 'anim-pulse' || cls === 'anim-pulse-alt' || cls === 'anim-glow') {
+      const base = Number(attrs['opacity'] ?? 1);
+      attrs['opacity'] = (base * blink(cls === 'anim-pulse-alt' ? 0.25 : 0)).toFixed(3);
+    } else if (cls === 'anim-belt') {
+      const period = (attrs['stroke-dasharray'] ?? '6 6')
+        .split(/[ ,]+/).map(Number).reduce((a, b) => a + (b || 0), 0) || 12;
+      attrs['stroke-dashoffset'] = (-(phase * period * 2)).toFixed(2);
+    } else if (/^anim-cycle-[123]$/.test(cls)) {
+      const i = Number(cls.slice(-1)) - 1;             // stack light: one lit at a time
+      attrs['opacity'] = Math.floor(phase * 3) % 3 === i ? '1' : '0.22';
+    } else if (/^anim-charge-[123]$/.test(cls)) {
+      const i = Number(cls.slice(-1)) - 1;             // battery bars fill up, then reset
+      attrs['opacity'] = i < Math.floor((phase * 4) % 4) ? '1' : '0.15';
+    } else if (cls === 'anim-level') {
+      const s = 0.6 + 0.35 * (0.5 + 0.5 * osc);        // tank level breathes (bottom-anchored)
+      const bottom = Number(attrs['y'] ?? 0) + Number(attrs['height'] ?? 0);
+      wrap = `translate(0 ${(bottom * (1 - s)).toFixed(2)}) scale(1 ${s.toFixed(3)})`;
+    } else if (cls === 'anim-piston') {
+      wrap = `translate(${(7 * osc).toFixed(2)} 0)`;
+    } else if (cls === 'anim-relay-lever') {
+      wrap = `rotate(${(9 * osc).toFixed(2)} 26 25)`;
+    } else if (cls === 'anim-arm-upper') {
+      wrap = `rotate(${(10 * osc).toFixed(2)} 40 44)`;
+    }
+
+    const a = Object.entries(attrs).map(([k, v]) => `${k}="${v}"`).join(' ');
+    const body = p.children?.length
+      ? `<${p.tag} ${a}>${p.children.map(ser).join('')}</${p.tag}>`
+      : `<${p.tag} ${a}/>`;
+    return wrap ? `<g transform="${wrap}">${body}</g>` : body;
+  };
+  return def.parts.map(ser).join('');
+}
+

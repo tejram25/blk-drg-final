@@ -459,7 +459,10 @@ export class GojsCollabService {
     this.peers = roster.length;
     this.cursors = cursors;
     this.participants = roster;
-    this.knownNames = new Map(Array.from(byUid.entries()).map(([uid, p]) => [uid, p.name]));
+    // MERGE names (never replace the map): a leaver is no longer in the current
+    // awareness states, and the delayed "… left the session" toast must still be
+    // able to say who it was instead of "Someone".
+    byUid.forEach((p, uid) => { if (p.name) this.knownNames.set(uid, p.name); });
 
     const currentUids = new Set(byUid.keys());
     if (!this.presenceSeeded) {

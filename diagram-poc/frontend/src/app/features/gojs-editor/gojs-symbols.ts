@@ -9,7 +9,7 @@
  * an <img>). Live animation is a later-phase enhancement.
  */
 import { ELECTRICAL_SYMBOLS, SymbolDef } from '../editor/electrical-shapes';
-import { ANIMATED_SYMBOLS, partsToSvg } from '../editor/animated-shapes';
+import { ANIM_FRAME_COUNT, ANIMATED_SYMBOLS, partsToSvg, partsToSvgFrame } from '../editor/animated-shapes';
 import { BASIC_SHAPES, BasicShapeDef } from '../editor/basic-shapes';
 
 /** Stroke colours per canvas theme. Light stroke reads on the dark canvas;
@@ -138,6 +138,19 @@ export function symbolInfo(shape: string | undefined, dark = true): SymbolInfo |
   }
 
   return null;
+}
+
+/**
+ * Pre-rendered animation loop for an animated symbol: one SVG data-URI per
+ * frame, sized exactly like the static `symbolInfo` source so the editor can
+ * flip a Picture's `source` through them (GoJS caches each URI after first
+ * paint, so a loop costs one decode per frame, once).
+ */
+export function animFrameSources(shape: string): string[] {
+  const def = ANIMATED_SYMBOLS[shape];
+  if (!def) return [];
+  return Array.from({ length: ANIM_FRAME_COUNT }, (_, i) =>
+    encodeSvg(partsToSvgFrame(shape, i / ANIM_FRAME_COUNT), def.width, def.height));
 }
 
 /** Small SVG preview string (for palette rendering) for any shape, or ''. */
