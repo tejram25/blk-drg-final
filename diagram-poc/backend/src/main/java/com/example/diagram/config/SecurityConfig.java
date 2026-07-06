@@ -93,26 +93,33 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** Comma-separated allowlist of browser origins permitted to send credentialed
-     * requests. Defaults to the local dev origins. NEVER use "*" here: reflecting
-     * any origin with allowCredentials=true lets any site read a signed-in user's
-     * data cross-origin. Set APP_CORS_ALLOWED_ORIGINS for real deployments. */
-    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:4300}")
+    /** Comma-separated allowlist of browser-origin PATTERNS permitted to send
+     * credentialed requests. Wildcards are allowed (e.g. {@code https://*.arrow.com})
+     * because we use {@code setAllowedOriginPatterns}, which — unlike a bare "*"
+     * with allowCredentials — reflects ONLY origins that match a pattern, so a
+     * random site still can't read a signed-in user's data.
+     *
+     * Defaults cover local dev AND the Arrow corporate domain, so the standard
+     * same-origin reverse-proxy deployment (e.g. https://usdendrh5070.arrow.com,
+     * where the browser sends that Origin header even on same-origin POSTs and the
+     * backend can't detect same-origin behind the proxy) works out of the box.
+     * Override with APP_CORS_ALLOWED_ORIGINS for other hosts. */
+    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:4300,https://*.arrow.com}")
     private String allowedOrigins;
 
     /**
-     * CORS with credentials enabled so the session cookie can ride along when the
-     * frontend is served from a different origin than the API. Origins are an
-     * explicit allowlist (not "*") because credentials are allowed. When served
-     * same-origin (recommended — via the dev proxy or a reverse proxy), CORS isn't
-     * exercised at all.
+     * CORS with credentials enabled so the session cookie can ride along. Origins
+     * are matched against an explicit pattern allowlist (never a bare "*") because
+     * credentials are allowed. When served truly same-origin, CORS isn't exercised;
+     * but behind a reverse proxy the backend often can't tell a same-origin request
+     * from a cross-origin one, so the deployment origin must still be allowlisted.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+        List<String> patterns = Arrays.stream(allowedOrigins.split(","))
             .map(String::trim).filter(s -> !s.isEmpty()).toList();
-        config.setAllowedOrigins(origins);
+        config.setAllowedOriginPatterns(patterns);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Content-Type", "X-Requested-With", "Accept", "Origin", "X-XSRF-TOKEN"));
         config.setAllowCredentials(true);

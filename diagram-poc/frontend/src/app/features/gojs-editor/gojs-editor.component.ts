@@ -416,22 +416,33 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       // Flip every 3rd rAF (~20 fps) — smooth motion at a third of the paints.
       if (tick % 3 === 0 && this.diagram) {
         const frame = tick / 3;
-        this.diagram.nodes.each((n) => {
-          const shape = n.data?.shape;
-          if (typeof shape !== 'string' || !shape.startsWith('anim-')) return;
-          const frames = this.animFramesFor(shape);
-          if (!frames.length) return;
-          const body = n.findMainElement();
-          const pic = body instanceof go.Panel ? body.findMainElement() : null;
-          if (pic instanceof go.Picture) pic.source = frames[frame % frames.length];
-        });
-        // "Flowing current" wires: march the dash pattern along flow-style links.
-        // strokeDashOffset must be non-negative in GoJS, so run a decreasing
-        // positive sawtooth over one dash period (6 + 3) — dashes flow forward.
-        const dashOffset = 9 - ((frame * 1.8) % 9);
-        this.diagram.links.each((l) => {
-          if (l.data?.flow && l.path) l.path.strokeDashOffset = dashOffset;
-        });
+        // These are pure per-frame RENDER mutations (Picture.source, wire dash
+        // offset). GoJS records GraphObject property changes in the UndoManager,
+        // so without this guard every animation frame injects changes into the
+        // user's open transaction — corrupting undo (Ctrl+Z reverts dash offsets,
+        // not the actual edit) and bloating it with hundreds of entries.
+        const prevSkip = this.diagram.skipsUndoManager;
+        this.diagram.skipsUndoManager = true;
+        try {
+          this.diagram.nodes.each((n) => {
+            const shape = n.data?.shape;
+            if (typeof shape !== 'string' || !shape.startsWith('anim-')) return;
+            const frames = this.animFramesFor(shape);
+            if (!frames.length) return;
+            const body = n.findMainElement();
+            const pic = body instanceof go.Panel ? body.findMainElement() : null;
+            if (pic instanceof go.Picture) pic.source = frames[frame % frames.length];
+          });
+          // "Flowing current" wires: march the dash pattern along flow-style links.
+          // strokeDashOffset must be non-negative in GoJS, so run a decreasing
+          // positive sawtooth over one dash period (6 + 3) — dashes flow forward.
+          const dashOffset = 9 - ((frame * 1.8) % 9);
+          this.diagram.links.each((l) => {
+            if (l.data?.flow && l.path) l.path.strokeDashOffset = dashOffset;
+          });
+        } finally {
+          this.diagram.skipsUndoManager = prevSkip;
+        }
       }
       this.raf = requestAnimationFrame(loop);
     };
@@ -1037,7 +1048,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.diagram) return;
     const dark = !this.lightCanvas;
     const theme = this.shapeTheme();
-    this.zone.runOutsideAngular(() => this.diagram.commit((d) => {
+    // Re-theming only refreshes DERIVED render props (SVG source, colours) — it
+    // is not a user edit, so it must never enter the undo stack. Otherwise the
+    // first Ctrl+Z after opening a diagram undoes the retheme and strips every
+    // symbol's artwork instead of reverting an actual change.
+    this.runSilently(() => this.diagram.commit((d) => {
       d.nodes.each((n) => {
         const data = n.data;
         if (data?.category === 'shape') {
@@ -1059,6 +1074,20 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         d.model.set(data, 'labelColor', theme.labelColor);
       });
     }, 'retheme'));
+  }
+
+  /** Run a model mutation that is a derived/rendering concern (retheme, export
+   * masking) so it neither pollutes the undo stack nor autosaves. */
+  private runSilently(fn: () => void): void {
+    if (!this.diagram) { fn(); return; }
+    const prevSkip = this.diagram.skipsUndoManager;
+    const prevSuppress = this.suppressAutosave;
+    this.diagram.skipsUndoManager = true;
+    this.suppressAutosave = true;
+    this.zone.runOutsideAngular(() => { try { fn(); } finally {
+      this.diagram.skipsUndoManager = prevSkip;
+      this.suppressAutosave = prevSuppress;
+    } });
   }
 
   startDrag(b: BlockType, event: DragEvent): void {
@@ -1881,16 +1910,32 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.exportOpen = true;
   }
   onExportToggle(nodeId: string): void {
+    // Exclusion is only recorded here — the canvas is left untouched so nodes
+    // never vanish from the working diagram. The mask is applied briefly at
+    // capture time (runExport) and then removed.
     if (this.exportHidden.has(nodeId)) this.exportHidden.delete(nodeId); else this.exportHidden.add(nodeId);
-    this.applyHidden();
     this.exportNodes = this.exportNodes.map((n) => n.id === nodeId ? { ...n, visible: !this.exportHidden.has(nodeId) } : n);
   }
-  showAllHidden(): void { this.exportHidden.clear(); this.applyHidden(); this.exportNodes = this.exportNodes.map((n) => ({ ...n, visible: true })); }
-  private applyHidden(): void {
-    this.zone.runOutsideAngular(() => this.diagram.commit(() =>
-      this.diagram.nodes.each((n) => this.diagram.model.set(n.data, 'hidden', this.exportHidden.has(String(n.key)))), 'toggle hidden'));
+  showAllHidden(): void {
+    this.exportHidden.clear();
+    this.exportNodes = this.exportNodes.map((n) => ({ ...n, visible: true }));
   }
-  runExport(format: 'png' | 'svg'): void { this.exportOpen = false; if (format === 'png') this.exportPng(); else this.exportSvg(); }
+  runExport(format: 'png' | 'svg'): void {
+    this.exportOpen = false;
+    this.withExportMask(() => { if (format === 'png') this.exportPng(); else this.exportSvg(); });
+  }
+  /** Hide the excluded nodes just for the image capture, then restore them.
+   * The mask is silent (no undo entry, no autosave) and `hidden` never syncs to
+   * collaborators, so excluding a component from a picture can't make it vanish
+   * from anyone's canvas or from the saved diagram. */
+  private withExportMask(capture: () => void): void {
+    const hide = this.exportHidden;
+    if (!hide.size) { capture(); return; }
+    const setHidden = (v: boolean) => this.runSilently(() => this.diagram.commit((d) =>
+      d.nodes.each((n) => { if (hide.has(String(n.key))) d.model.set(n.data, 'hidden', v); }), 'export-mask'));
+    setHidden(true);
+    try { capture(); } finally { setHidden(false); }
+  }
 
   // ---- saved files / classification / reviews / delete ----
 
@@ -2018,6 +2063,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.retheme();
       this.loadDesignWin();
       this.syncSelection();
+      this.resetUndoAfterLoad();
       return;
     }
     this.suppressAutosave = true;
@@ -2025,10 +2071,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       try {
         const model = go.Model.fromJson(contentJson) as go.GraphLinksModel;
         model.linkFromPortIdProperty = 'fromPort'; model.linkToPortIdProperty = 'toPort';
-        // Scrub angles an old build's animation ticker autosaved mid-spin (any
-        // non-90°-step value) so the junk can't re-publish into collab rooms.
         for (const d of model.nodeDataArray as any[]) {
+          // Scrub angles an old build's animation ticker autosaved mid-spin (any
+          // non-90°-step value) so the junk can't re-publish into collab rooms.
           if (typeof d.angle === 'number' && d.angle % 90 !== 0) d.angle = 0;
+          // 'hidden' is a transient export-masking flag; an old build persisted it,
+          // which left nodes permanently invisible with no way to restore them.
+          if (d.hidden) d.hidden = false;
         }
         this.diagram.model = model;
       } catch { this.zone.run(() => this.notify.error('That diagram could not be loaded.')); }
@@ -2037,6 +2086,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadDesignWin();
     this.suppressAutosave = false;
     this.syncSelection();
+    this.resetUndoAfterLoad();
+  }
+
+  /** A freshly loaded diagram is the baseline — clear undo/redo so the first
+   * Ctrl+Z reverts the user's first real edit, not any load-time setup. */
+  private resetUndoAfterLoad(): void {
+    this.zone.runOutsideAngular(() => this.diagram?.undoManager.clear());
   }
 
   /** Read the attached Design Win context stored in the model. */

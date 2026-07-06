@@ -238,18 +238,23 @@ export class GojsCollabService {
         else { this.dirty.set(key, data); this.removed.delete(key); }
       }
     } else if (e.change === go.ChangedEvent.Property && e.object) {
-      // 'source' is a DERIVED property (the symbol's rendered SVG): retheme and
-      // the animated-symbol ticker regenerate it locally on every client, and
-      // the ticker rewrites it every frame — syncing it floods the room with
-      // large data-URI strings (and bloats the persisted store) for no benefit.
-      if (e.propertyName === 'source') return;
+      // Purely-local render props must not sync. 'source' is the symbol's
+      // rendered SVG (retheme/animation regenerate it per client); 'hidden' is
+      // the transient export mask (excluding a node from one user's picture must
+      // never hide it on anyone else's canvas).
+      if (e.propertyName === 'source' || e.propertyName === 'hidden') return;
       const key = this.kindKey(e.object);
       if (key) this.dirty.set(key, e.object);
     }
 
     if (e.isTransactionFinished) {
       if (this.liveFlushTimer) { clearTimeout(this.liveFlushTimer); this.liveFlushTimer = null; }
-      this.flush();
+      // Defer to a microtask so the flush — and any incoming remote updates the
+      // WebsocketProvider applies while we write to the Yjs doc — run AFTER the
+      // user's GoJS transaction has fully closed. Flushing synchronously here lets
+      // a remote reconciliation nest inside the just-finished transaction, dumping
+      // hundreds of foreign changes into it and corrupting undo/redo.
+      queueMicrotask(() => this.flush());
     } else if (this.dirty.size > 0) {
       // Stream intermediate changes (e.g. a node being dragged) so remote peers
       // see smooth movement instead of a single jump on mouse-up.
@@ -284,8 +289,15 @@ export class GojsCollabService {
     if (event.transaction.local || !this.diagram || !this.cells) return;
     const gm = this.gm();
     this.applyingRemote = true;
+    // Remote edits must never enter the LOCAL undo stack — otherwise the user's
+    // Ctrl+Z reverts a collaborator's change (or the room's initial state loaded
+    // at join). Fully disabling the UndoManager for the duration of this
+    // synchronous apply is the reliable way to skip recording.
+    const um = gm.undoManager;
     const prevSkip = gm.skipsUndoManager;
+    const prevEnabled = um.isEnabled;
     gm.skipsUndoManager = true;
+    um.isEnabled = false;
     gm.startTransaction('remote');
     try {
       event.changes.keys.forEach((change, key) => {
@@ -310,6 +322,7 @@ export class GojsCollabService {
       });
     } finally {
       gm.commitTransaction('remote');
+      um.isEnabled = prevEnabled;
       gm.skipsUndoManager = prevSkip;
       this.applyingRemote = false;
     }
