@@ -771,6 +771,15 @@
 @keyframes menu-in { from { opacity: 0; transform: translateY(-5px) scale(.98); } to { opacity: 1; transform: none; } }
 .menu-item, .dd-item { transition: background .12s, color .12s; border-radius: 8px; }
 
+/* AI action with the server's AI turned off: dimmed, with a small "AI off" tag.
+   Still clickable — clicking shows the "how to enable" hint rather than hanging. */
+.menu-item.ai-off { opacity: .55; }
+.menu-item.ai-off .ai-off-tag {
+  margin-left: auto; font-size: 9.5px; font-weight: 700; letter-spacing: .3px;
+  padding: 1px 6px; border-radius: 10px; color: #b45309;
+  background: color-mix(in srgb, #f59e0b 22%, transparent);
+}
+
 /* Buttons + chips: gentle press/hover feedback */
 .topbar .mat-mdc-icon-button, .hb-menu, .user-chip, .cls-pill, .dd-trigger {
   transition: background .14s, border-color .14s, color .14s, transform .1s;

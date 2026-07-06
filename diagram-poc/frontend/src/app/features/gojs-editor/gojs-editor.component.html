@@ -98,10 +98,13 @@
                                   <div class="dropdown-menu hb-drop" (click)="$event.stopPropagation()">
                                     <button type="button" class="menu-item" (click)="insertMenuOpen = false; fileInput.click()">
                                       <mat-icon>image</mat-icon><span>Insert image</span></button>
-                                      <button type="button" class="menu-item" (click)="insertMenuOpen = false; generateFromImage()">
-                                        <mat-icon>auto_fix_high</mat-icon><span>Generate from image (AI)</span></button>
+                                      <button type="button" class="menu-item" [class.ai-off]="!aiEnabled"
+                                        [matTooltip]="aiEnabled ? '' : aiOffTip" matTooltipPosition="right"
+                                        (click)="insertMenuOpen = false; generateFromImage()">
+                                        <mat-icon>auto_fix_high</mat-icon><span>Generate from image (AI)</span>
+                                        @if (!aiEnabled) { <span class="ai-off-tag">AI off</span> }</button>
                                       <button type="button" class="menu-item" (click)="insertMenuOpen = false; suggestAllBoxes()">
-                                        <mat-icon>auto_awesome_motion</mat-icon><span>Suggest components for all boxes (AI)</span></button>
+                                        <mat-icon>auto_awesome_motion</mat-icon><span>Suggest components for all boxes</span></button>
                                       <button type="button" class="menu-item" [class.sel]="templatesOpen" (click)="insertMenuOpen = false; openTemplates()">
                                         <mat-icon>dashboard_customize</mat-icon><span>Template repository</span></button>
                                         <button type="button" class="menu-item" [class.sel]="projectPanelOpen" (click)="insertMenuOpen = false; projectPanelOpen = !projectPanelOpen">
@@ -330,8 +333,8 @@
                                               <div class="imggen-overlay">
                                                 <div class="imggen-card">
                                                   <div class="imggen-spin"></div>
-                                                  <div class="imggen-title">Reading your diagram…</div>
-                                                  <div class="imggen-sub">The AI is finding blocks and connections in the image.</div>
+                                                  <div class="imggen-title">{{ imageGenMessage }}</div>
+                                                  <div class="imggen-sub">This can take a moment — hang tight.</div>
                                                 </div>
                                               </div>
                                             }

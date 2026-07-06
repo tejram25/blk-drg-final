@@ -10,10 +10,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
+import org.springframework.boot.web.client.ClientHttpRequestFactories;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +65,15 @@ public class ImageDiagramServiceImpl implements ImageDiagramService {
     public ImageDiagramServiceImpl(OllamaProperties props, ObjectMapper mapper) {
         this.props = props;
         this.mapper = mapper;
-        this.rest = RestClient.create();
+        // Bounded connect/read timeouts so an enabled-but-unreachable (or hung)
+        // Ollama fails in seconds instead of leaving the request — and the UI's
+        // "Reading your diagram…" overlay — hanging forever.
+        ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.DEFAULTS
+                .withConnectTimeout(Duration.ofSeconds(5))
+                .withReadTimeout(Duration.ofSeconds(90));
+        this.rest = RestClient.builder()
+                .requestFactory(ClientHttpRequestFactories.get(settings))
+                .build();
     }
 
     @Override

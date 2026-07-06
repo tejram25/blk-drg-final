@@ -26,8 +26,9 @@ import { FeedbackRequest, FeedbackService } from '../../core/services/feedback.s
 import { FeedbackLoopService } from '../../core/services/feedback-loop.service';
 import { ImageDiagramResult, ImageDiagramService } from '../../core/services/image-diagram.service';
 import { BoxSuggestion, BoxSuggestionService, LinkedComponent } from '../../core/services/box-suggestion.service';
-import { forkJoin, of, Subscription } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { forkJoin, of, Subscription, throwError, TimeoutError } from 'rxjs';
+import { catchError, timeout } from 'rxjs/operators';
+import { SystemService } from '../../core/services/system.service';
 import { ProjectDetail, ProjectPart } from '../../core/services/integration.service';
 import { DesignWinContext } from '../../core/services/designwin.service';
 import { TemplateDetail } from '../../core/services/template.service';
@@ -166,6 +167,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private exportHidden = new Set<string>();
   commandPaletteOpen = false;
   imageGenLoading = false;
+  /** Message shown under the AI spinner overlay (the action varies). */
+  imageGenMessage = 'Reading your diagram…';
+  /** Whether the server's local AI (Ollama) is on. Assume on until told
+   * otherwise so a failed status fetch never wrongly blocks a working feature. */
+  aiEnabled = true;
+  /** Tooltip for AI-only actions when the server has AI turned off. */
+  readonly aiOffTip = 'AI is turned off on the server. Set OLLAMA_ENABLED=true (and pull a vision model) to use this.';
   // per-box AI component suggestion
   boxSuggestLoading = false;
   boxSuggestions: BoxSuggestion[] = [];
@@ -189,6 +197,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private feedbackApi: FeedbackService,
     private feedbackLoop: FeedbackLoopService,
     private imageDiagram: ImageDiagramService,
+    private system: SystemService,
     private boxSuggest: BoxSuggestionService,
     private route: ActivatedRoute,
     private router: Router,
@@ -203,6 +212,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.loadPalette();
     this.refreshList();
+    // Learn whether the server's local AI is on, to gate AI-only actions.
+    this.system.info().subscribe({
+      next: (i) => { this.aiEnabled = i.aiEnabled !== false; this.cdr.detectChanges(); },
+      error: () => {}, // leave aiEnabled=true; the action still errors clearly if used
+    });
     // Live chat: badge + toast for messages that arrive while the dock is closed.
     this.chatSub = this.collab.chatNew$.subscribe((m) => this.onChatArrived(m));
   }
@@ -1370,6 +1384,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Open the file picker to generate a diagram from a photo/screenshot. */
   generateFromImage(): void {
     this.closeMenus();
+    // Image-to-diagram has no non-AI fallback, so short-circuit with a clear
+    // message when the server has AI off — never open the picker or the overlay.
+    if (!this.aiEnabled) { this.notify.info(this.aiOffTip); return; }
     this.imageGenInput?.nativeElement.click();
   }
 
@@ -1379,16 +1396,25 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     input.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) { this.notify.error('Please choose an image file (PNG, JPG…).'); return; }
+    if (!this.aiEnabled) { this.notify.info(this.aiOffTip); return; }
+    this.imageGenMessage = 'Reading your diagram…';
     this.imageGenLoading = true;
     this.status = 'Analysing image…';
     this.cdr.detectChanges();
     this.downscaleImage(file).then((dataUrl) => {
-      this.imageDiagram.extract(dataUrl).subscribe({
+      // Client-side safety net: never let the overlay hang if the server stalls.
+      this.imageDiagram.extract(dataUrl).pipe(
+        timeout(120000),
+        catchError((e) => throwError(() => e)),
+      ).subscribe({
         next: (res) => { this.imageGenLoading = false; this.applyExtractedDiagram(res); this.cdr.detectChanges(); },
         error: (err) => {
           this.imageGenLoading = false;
           this.status = '';
-          this.notify.error(err?.error?.message || err?.error?.reason || 'Could not generate a diagram from that image.');
+          const msg = err instanceof TimeoutError
+            ? 'The AI took too long to respond. Check that Ollama is running and the model is pulled.'
+            : (err?.error?.message || err?.error?.reason || 'Could not generate a diagram from that image.');
+          this.notify.error(msg);
           this.cdr.detectChanges();
         },
       });
@@ -1637,6 +1663,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.closeMenus();
     const boxes = this.boxNodes().filter((n) => !(Array.isArray(n.data.components) && n.data.components.length));
     if (!boxes.length) { this.notify.info('Every box already has a component (or there are no boxes yet).'); return; }
+    this.imageGenMessage = `Finding components for ${boxes.length} ${boxes.length === 1 ? 'box' : 'boxes'}…`;
     this.imageGenLoading = true;
     this.status = `Finding components for ${boxes.length} boxes…`;
     this.cdr.detectChanges();
@@ -1644,7 +1671,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       const q = this.suggestQueryFor(n.data);
       return this.boxSuggest
         .suggest(q.label, q.sub, n.data.kind || '', this.designWinContext)
-        .pipe(catchError(() => of({ query: '', suggestions: [] as BoxSuggestion[] })));
+        // Never let one slow/hung catalogue call keep the overlay up forever.
+        .pipe(timeout(60000), catchError(() => of({ query: '', suggestions: [] as BoxSuggestion[] })));
     });
     forkJoin(calls).subscribe({
       next: (results) => {
