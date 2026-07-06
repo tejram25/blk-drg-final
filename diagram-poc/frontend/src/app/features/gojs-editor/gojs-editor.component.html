@@ -121,15 +121,6 @@
                                             <span>{{ lightCanvas ? 'Dark canvas' : 'White canvas' }}</span></button>
                                             <button type="button" class="menu-item" [class.sel]="minimapOpen" (click)="viewMenuOpen = false; toggleMinimap()">
                                               <mat-icon>map</mat-icon><span>Minimap</span></button>
-                                              <div class="menu-sep"></div><div class="menu-label">Arrange</div>
-                                              <button type="button" class="menu-item" (click)="viewMenuOpen = false; autoArrange()">
-                                                <mat-icon>auto_fix_high</mat-icon><span>Auto-arrange diagram</span></button>
-                                              <button type="button" class="menu-item" (click)="viewMenuOpen = false; rotateSelection()">
-                                                <mat-icon>rotate_90_degrees_cw</mat-icon><span>Rotate symbol 90°</span></button>
-                                              <button type="button" class="menu-item" (click)="viewMenuOpen = false; groupSelection()">
-                                                <mat-icon>group_work</mat-icon><span>Group into subsystem</span></button>
-                                              <button type="button" class="menu-item" (click)="viewMenuOpen = false; ungroupSelection()">
-                                                <mat-icon>workspaces</mat-icon><span>Ungroup</span></button>
                                             </div>
                                           }
                                         </span>
