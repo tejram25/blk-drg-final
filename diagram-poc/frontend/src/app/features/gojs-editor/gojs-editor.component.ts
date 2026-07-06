@@ -2310,38 +2310,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.notify.success(`Netlist: ${sch.nets.length} net${sch.nets.length === 1 ? '' : 's'}, ${bom.length} BOM line${bom.length === 1 ? '' : 's'}.`);
   }
 
-  /** KiCad-style netlist (.net, s-expression) for handoff to EDA tools. */
-  exportKicadNetlist(): void {
-    this.closeMenus();
-    const sch = this.computeSchematic();
-    if (!sch) {
-      this.notify.info('Add components from the Electrical palette and wire their pins to build a netlist.');
-      return;
-    }
-    const q = (s: any) => `"${String(s ?? '').replace(/"/g, "'")}"`;
-    const comps = sch.parts
-      .filter((nd) => elecMeta(nd.data.shape).ref)
-      .map((nd) => {
-        const mpn = (nd.data.components?.[0]?.partNumber as string) || '';
-        return `    (comp (ref ${q(nd.data.text || '?')}) (value ${q(nd.data.value || this.symbolLabel(nd.data.shape))})` +
-          (mpn ? ` (footprint "") (datasheet "") (fields (field (name "MPN") ${q(mpn)}))` : '') + ')';
-      });
-    const nets = sch.nets
-      .map((net) => ({
-        name: net.name,
-        nodes: net.ids.map((id) => sch.pinInfo.get(id)!).filter((p) => !p.marker)
-          .map((p) => `(node (ref ${q(p.ref)}) (pin ${q(p.pin)}))`),
-      }))
-      // a net whose only pins are markers (e.g. two ground symbols wired
-      // together) has no component nodes — emitting it would be malformed
-      .filter((n) => n.nodes.length > 0)
-      .map((n, i) => `    (net (code ${i + 1}) (name ${q(n.name)})\n      ${n.nodes.join('\n      ')})`);
-    const out = `(export (version D)\n  (design (source ${q(this.diagramName || 'Schematic')}) ` +
-      `(date ${q(new Date().toISOString())}) (tool ${q('diagram-builder')}))\n` +
-      `  (components\n${comps.join('\n')})\n  (nets\n${nets.join('\n')}))\n`;
-    this.download(URL.createObjectURL(new Blob([out], { type: 'text/plain' })), this.fileName('net'));
-    this.notify.success(`KiCad netlist: ${sch.nets.length} net${sch.nets.length === 1 ? '' : 's'}, ${comps.length} component${comps.length === 1 ? '' : 's'}.`);
-  }
   onJsonSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return;
     const reader = new FileReader();
