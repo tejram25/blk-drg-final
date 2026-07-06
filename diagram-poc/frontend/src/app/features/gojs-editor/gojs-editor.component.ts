@@ -748,7 +748,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       $(go.Panel, 'Spot',
         { name: 'BODY', isPanelMain: true, itemTemplate: pinPort, ...body },
         new go.Binding('desiredSize', 'size', go.Size.parse).makeTwoWay(go.Size.stringify),
-        new go.Binding('angle', 'angle').makeTwoWay(),
+        // Real rotations are always 90° steps (rotate tool + Rotate 90°). Anything
+        // else is junk an old build's animation ticker autosaved into the data —
+        // rendering it would tilt/spin the whole symbol, so it displays as 0°.
+        new go.Binding('angle', 'angle', (a) => (typeof a === 'number' && a % 90 === 0 ? a : 0)).makeTwoWay(),
         new go.Binding('itemArray', 'ports'),
         $(go.Picture, { isPanelMain: true, stretch: go.GraphObject.Fill,
           imageStretch: go.GraphObject.Fill, background: 'transparent' },
@@ -842,6 +845,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     styleLinking(this.diagram.toolManager.linkingTool);
     styleLinking(this.diagram.toolManager.relinkingTool);
+    // Schematic symbols rotate in 90° steps only (matches the Rotate 90° action
+    // and keeps hand-rotation distinguishable from legacy animation junk).
+    this.diagram.toolManager.rotatingTool.snapAngleMultiple = 90;
+    this.diagram.toolManager.rotatingTool.snapAngleEpsilon = 45;
 
     // Subsystem groups: a collapsible dashed container around selected parts
     // (Ctrl+G / command palette). Collapse hides internals — handy when sharing
@@ -2071,6 +2078,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       try {
         const model = go.Model.fromJson(contentJson) as go.GraphLinksModel;
         model.linkFromPortIdProperty = 'fromPort'; model.linkToPortIdProperty = 'toPort';
+        // Scrub angles an old build's animation ticker autosaved mid-spin (any
+        // non-90°-step value) so the junk can't re-publish into collab rooms.
+        for (const d of model.nodeDataArray as any[]) {
+          if (typeof d.angle === 'number' && d.angle % 90 !== 0) d.angle = 0;
+        }
         this.diagram.model = model;
       } catch { this.zone.run(() => this.notify.error('That diagram could not be loaded.')); }
     });
