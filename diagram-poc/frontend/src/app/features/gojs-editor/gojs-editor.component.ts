@@ -13,7 +13,7 @@ import * as go from 'gojs';
 import { BlockType, Classification, DiagramService, DiagramSummary } from '../../core/services/diagram.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
-import { GojsCollabService } from '../../core/services/gojs-collab.service';
+import { ChatMessage, GojsCollabService } from '../../core/services/gojs-collab.service';
 import { BomRow, BomService } from '../../core/services/bom.service';
 import {
   RecommendationItem, RecommendationResult, RecommendationService,
@@ -26,7 +26,7 @@ import { FeedbackRequest, FeedbackService } from '../../core/services/feedback.s
 import { FeedbackLoopService } from '../../core/services/feedback-loop.service';
 import { ImageDiagramResult, ImageDiagramService } from '../../core/services/image-diagram.service';
 import { BoxSuggestion, BoxSuggestionService, LinkedComponent } from '../../core/services/box-suggestion.service';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ProjectDetail, ProjectPart } from '../../core/services/integration.service';
 import { DesignWinContext } from '../../core/services/designwin.service';
@@ -56,6 +56,7 @@ import { FeedbackLoopPanelComponent } from '../editor/components/feedback-loop-p
 import { TemplatesDialogComponent } from '../editor/components/templates-dialog/templates-dialog.component';
 import { ExportDialogComponent, ExportNode } from '../editor/components/export-dialog/export-dialog.component';
 import { ReviewsDialogComponent } from '../editor/components/reviews-dialog/reviews-dialog.component';
+import { ReviewService, ReviewSummary } from '../../core/services/review.service';
 import { ZoomDockComponent } from '../editor/components/zoom-dock/zoom-dock.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
@@ -183,6 +184,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private bomService: BomService,
     private recsApi: RecommendationService,
     private reviewApi: DesignReviewService,
+    private reviewSvc: ReviewService,
     private lifecycleApi: LifecycleService,
     private feedbackApi: FeedbackService,
     private feedbackLoop: FeedbackLoopService,
@@ -201,6 +203,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.loadPalette();
     this.refreshList();
+    // Live chat: badge + toast for messages that arrive while the dock is closed.
+    this.chatSub = this.collab.chatNew$.subscribe((m) => this.onChatArrived(m));
   }
 
   ngAfterViewInit(): void {
@@ -210,6 +214,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.chatSub?.unsubscribe();
     if (this.autosaveTimer) clearTimeout(this.autosaveTimer);
     if (this.raf) cancelAnimationFrame(this.raf);
     this.collab.leave();
@@ -273,7 +278,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const u = this.auth.user();
     const name = u?.name || u?.email || 'You';
     const uid = u?.email || `anon-${Math.random().toString(36).slice(2)}`;
-    this.chatSeenOthers = 0; // fresh room, fresh unread baseline
+    this.chatUnreadCount = 0; // fresh room, fresh unread baseline
     this.zone.runOutsideAngular(() => this.collab.join(this.diagram, room, name, uid));
   }
 
@@ -307,17 +312,23 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   toggleChat(): void {
     this.showChat = !this.showChat;
     // Opening OR closing marks everything currently in the room as seen.
-    this.chatSeenOthers = this.collab.messages.filter((m) => !m.isSelf).length;
+    this.chatUnreadCount = 0;
   }
   get chatOpen(): boolean { return this.showChat; }
-  /** Messages from others that arrived while the chat dock was closed. */
-  private chatSeenOthers = 0;
-  get chatUnread(): number {
-    if (this.showChat) return 0;
-    const others = this.collab.messages.filter((m) => !m.isSelf).length;
-    return Math.max(0, others - this.chatSeenOthers);
-  }
+  /** Live messages from others that arrived while the chat dock was closed
+   * (persisted history replayed at join is never counted — only new traffic). */
+  private chatUnreadCount = 0;
+  private chatSub?: Subscription;
+  get chatUnread(): number { return this.showChat ? 0 : this.chatUnreadCount; }
   get unreadChat(): number { return 0; }
+  /** A chat message from another participant just arrived in the live session. */
+  private onChatArrived(m: ChatMessage): void {
+    if (this.showChat) { this.cdr.detectChanges(); return; } // dock open — visible already
+    this.chatUnreadCount++;
+    const text = (m.text || '').length > 70 ? m.text.slice(0, 67) + '…' : m.text;
+    this.notify.info(`💬 ${m.name}: ${text}`);
+    this.cdr.detectChanges();
+  }
   sendChat(): void {
     const text = this.chatDraft.trim();
     if (!text) return;
@@ -1917,7 +1928,20 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ---- saved files / classification / reviews / delete ----
 
-  refreshList(): void { this.diagrams.list().subscribe({ next: (l) => { this.savedDiagrams = l; this.cdr.detectChanges(); }, error: () => {} }); }
+  refreshList(): void {
+    this.diagrams.list().subscribe({ next: (l) => { this.savedDiagrams = l; this.applyReviewBadges(); this.cdr.detectChanges(); }, error: () => {} });
+    this.reviewSvc.summary().subscribe({ next: (s) => { this.reviewSummaries = s; this.applyReviewBadges(); this.cdr.detectChanges(); }, error: () => {} });
+  }
+  private reviewSummaries: ReviewSummary[] = [];
+  /** Stamp avg rating + review count onto the Open-list rows (star chips). */
+  private applyReviewBadges(): void {
+    if (!this.reviewSummaries.length) return;
+    const byId = new Map(this.reviewSummaries.map((s) => [s.diagramId, s]));
+    for (const d of this.savedDiagrams) {
+      const s = byId.get(d.id);
+      if (s) { d.avgRating = s.average; d.reviewCount = s.count; }
+    }
+  }
   get selectedDiagramName(): string { return this.savedDiagrams.find((d) => d.id === this.selectedDiagramId)?.name ?? ''; }
   load(): void {
     if (this.selectedDiagramId == null) { this.newDiagram(); return; }
@@ -2282,11 +2306,16 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         return `    (comp (ref ${q(nd.data.text || '?')}) (value ${q(nd.data.value || this.symbolLabel(nd.data.shape))})` +
           (mpn ? ` (footprint "") (datasheet "") (fields (field (name "MPN") ${q(mpn)}))` : '') + ')';
       });
-    const nets = sch.nets.map((net, i) => {
-      const nodes = net.ids.map((id) => sch.pinInfo.get(id)!).filter((p) => !p.marker)
-        .map((p) => `(node (ref ${q(p.ref)}) (pin ${q(p.pin)}))`);
-      return `    (net (code ${i + 1}) (name ${q(net.name)})\n      ${nodes.join('\n      ')})`;
-    });
+    const nets = sch.nets
+      .map((net) => ({
+        name: net.name,
+        nodes: net.ids.map((id) => sch.pinInfo.get(id)!).filter((p) => !p.marker)
+          .map((p) => `(node (ref ${q(p.ref)}) (pin ${q(p.pin)}))`),
+      }))
+      // a net whose only pins are markers (e.g. two ground symbols wired
+      // together) has no component nodes — emitting it would be malformed
+      .filter((n) => n.nodes.length > 0)
+      .map((n, i) => `    (net (code ${i + 1}) (name ${q(n.name)})\n      ${n.nodes.join('\n      ')})`);
     const out = `(export (version D)\n  (design (source ${q(this.diagramName || 'Schematic')}) ` +
       `(date ${q(new Date().toISOString())}) (tool ${q('diagram-builder')}))\n` +
       `  (components\n${comps.join('\n')})\n  (nets\n${nets.join('\n')}))\n`;

@@ -1,4 +1,5 @@
 import { Injectable, NgZone } from '@angular/core';
+import { Subject } from 'rxjs';
 import * as go from 'gojs';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
@@ -86,6 +87,12 @@ export class GojsCollabService {
   cursors: RemoteCursor[] = [];
   participants: Participant[] = [];
   messages: ChatMessage[] = [];
+  /** Fires once per chat message from ANOTHER user that arrives live (after the
+   * initial history sync) — the hook for unread badges / toast notifications. */
+  readonly chatNew$ = new Subject<ChatMessage>();
+  private chatKnown = new Set<string>();
+  /** false while the room's persisted chat history is replaying at join. */
+  private chatLive = false;
   private lastCursorSent = 0;
 
   private knownNames = new Map<string, string>();
@@ -148,6 +155,8 @@ export class GojsCollabService {
     // (autosaved) diagram is the source of truth — republishing also heals rooms
     // left with partial state by an interrupted session.
     this.provider.on('sync', (isSynced: boolean) => {
+      // History replay is done — chat messages from here on are genuinely new.
+      if (isSynced) this.chatLive = true;
       if (!isSynced || !this.cells || !this.diagram || this.seeded) return;
       this.seeded = true;
       // "Others present" must mean a DIFFERENT person: a ghost awareness state
@@ -191,6 +200,8 @@ export class GojsCollabService {
     this.doc = null;
     this.cells = null;
     this.chatArr = null;
+    this.chatKnown.clear();
+    this.chatLive = false;
     this.diagram = null;
     this.seeded = false;
     this.connected = false;
@@ -227,6 +238,11 @@ export class GojsCollabService {
         else { this.dirty.set(key, data); this.removed.delete(key); }
       }
     } else if (e.change === go.ChangedEvent.Property && e.object) {
+      // 'source' is a DERIVED property (the symbol's rendered SVG): retheme and
+      // the animated-symbol ticker regenerate it locally on every client, and
+      // the ticker rewrites it every frame — syncing it floods the room with
+      // large data-URI strings (and bloats the persisted store) for no benefit.
+      if (e.propertyName === 'source') return;
       const key = this.kindKey(e.object);
       if (key) this.dirty.set(key, e.object);
     }
@@ -407,6 +423,13 @@ export class GojsCollabService {
       id: m.id, name: m.name, color: m.color, text: m.text, ts: m.ts, lang: m.lang,
       isSelf: m.clientId === this.myClientId,
     }));
+    // Emit messages not seen before. During the initial history replay they are
+    // only marked known — notifying about last week's chat would be noise.
+    for (const m of this.messages) {
+      if (this.chatKnown.has(m.id)) continue;
+      this.chatKnown.add(m.id);
+      if (this.chatLive && !m.isSelf) this.chatNew$.next(m);
+    }
   }
 
   // ---- awareness handling (presence roster + cursors + follow) ----

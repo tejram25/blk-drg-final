@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,7 +25,7 @@ const DEFAULT_ROLES = ['Sales', 'Engineering', 'Customer'];
   templateUrl: './feedback-loop-panel.component.html',
   styleUrls: ['./feedback-loop-panel.component.css'],
 })
-export class FeedbackLoopPanelComponent implements OnInit {
+export class FeedbackLoopPanelComponent implements OnInit, OnChanges {
   @Input() diagramId: number | null = null;
   @Input() selectedNodeId: string | null = null;
   @Input() selectedNodeLabel = '';
@@ -54,6 +54,20 @@ export class FeedbackLoopPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.reload();
+  }
+
+  /** The dock stays open while the user switches diagrams — follow along, or a
+   * stale board would show (and post to!) the previous diagram's discussions. */
+  ngOnChanges(changes: SimpleChanges): void {
+    const c = changes['diagramId'];
+    if (c && !c.firstChange && c.previousValue !== c.currentValue) {
+      this.board = { threads: [], roles: [] };
+      this.openThreadId = null;
+      this.composeOpen = false;
+      this.replyText = '';
+      this.error = '';
+      this.reload();
+    }
   }
 
   get roleSuggestions(): string[] {

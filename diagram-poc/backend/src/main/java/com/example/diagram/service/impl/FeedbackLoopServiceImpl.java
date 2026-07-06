@@ -49,7 +49,7 @@ public class FeedbackLoopServiceImpl implements FeedbackLoopService {
         List<FeedbackThread> list = threads.findByDiagramIdOrderByUpdatedAtDesc(diagramId);
         List<Long> ids = list.stream().map(FeedbackThread::getId).toList();
         Map<Long, List<FeedbackEntry>> byThread = ids.isEmpty() ? Map.of()
-                : entries.findByThreadIdInOrderByCreatedAtAsc(ids).stream()
+                : entries.findByThreadIdInOrderByCreatedAtAscIdAsc(ids).stream()
                         .collect(Collectors.groupingBy(FeedbackEntry::getThreadId));
         // Distinct roles already used on this diagram → suggestions in the UI.
         Set<String> roles = new LinkedHashSet<>();
@@ -106,7 +106,7 @@ public class FeedbackLoopServiceImpl implements FeedbackLoopService {
             }
         }
         t = threads.save(t);
-        return toDto(t, entries.findByThreadIdOrderByCreatedAtAsc(threadId), userEmail);
+        return toDto(t, entries.findByThreadIdOrderByCreatedAtAscIdAsc(threadId), userEmail);
     }
 
     private FeedbackEntry newEntry(Long threadId, String role, String decision, String text, String userEmail) {

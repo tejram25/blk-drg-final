@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface FeedbackEntryRepository extends JpaRepository<FeedbackEntry, Long> {
-    List<FeedbackEntry> findByThreadIdOrderByCreatedAtAsc(Long threadId);
-    List<FeedbackEntry> findByThreadIdInOrderByCreatedAtAsc(List<Long> threadIds);
+    List<FeedbackEntry> findByThreadIdOrderByCreatedAtAscIdAsc(Long threadId);
+    List<FeedbackEntry> findByThreadIdInOrderByCreatedAtAscIdAsc(List<Long> threadIds);
 }
