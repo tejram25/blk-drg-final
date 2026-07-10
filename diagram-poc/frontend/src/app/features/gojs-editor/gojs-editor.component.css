@@ -909,6 +909,133 @@
 .linked-part { align-items: flex-start; }
 .linked-part > mat-icon { margin-top: 1px; }
 
+/* Attached Parts (collapsible details) */
+.attached-part-details {
+  margin-bottom: 10px;
+  border: 1px solid var(--border, #34353c);
+  border-radius: 9px;
+  /* background: color-mix(in srgb, #3b82f6 8%, transparent); */
+  overflow: hidden;
+}
+.attached-part-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: background 0.2s;
+}
+.attached-part-summary::-webkit-details-marker {
+  display: none;
+}
+.attached-part-summary mat-icon {
+  color: #3b82f6;
+  font-size: 19px;
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+}
+.attached-part-summary .ap-name {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text, #ececef);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.attached-part-summary .ap-qty {
+  font-size: 10.5px;
+  color: var(--muted, #9b9ca4);
+  padding: 3px 8px;
+  background: var(--bg-deep, #0e0f11);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.attached-part-summary:hover {
+  background: color-mix(in srgb, #3b82f6 12%, transparent);
+}
+.attached-part-content {
+  padding: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--border, #34353c) 50%, transparent);
+}
+.prop-section-small {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--faint);
+  margin: 12px 0 8px;
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--border, #34353c) 30%, transparent);
+}
+.attached-part-content .part-details {
+  margin-bottom: 0;
+}
+.attached-part-content .part-details .pd-row {
+  padding: 4px 0;
+}
+.ap-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--border, #34353c) 50%, transparent);
+}
+.ap-qty-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.ap-qty-input span {
+  font-size: 11px;
+  color: var(--muted, #9b9ca4);
+  font-weight: 600;
+}
+.ap-qty-input input {
+  width: 70px;
+  flex: none;
+  font: inherit;
+  font-size: 11.5px;
+  text-align: center;
+  color: var(--text, #ececef);
+  background: var(--bg-deep, #0e0f11);
+  border: 1px solid var(--border, #34353c);
+  border-radius: 7px;
+  padding: 6px 8px;
+  transition: border-color 0.2s;
+}
+.ap-qty-input input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+.ap-remove {
+  border: none;
+  background: transparent;
+  color: var(--muted, #9b9ca4);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  transition: all 0.2s;
+}
+.ap-remove:hover {
+  color: #ef4444;
+  background: color-mix(in srgb, #ef4444 12%, transparent);
+}
+.ap-remove mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
 /* Design Win context banner (amber-accented variant of the project bar) */
 .dw-bar { border-color: color-mix(in srgb, var(--accent, #f5a623) 34%, transparent);
   background: color-mix(in srgb, var(--accent, #f5a623) 10%, transparent); }

@@ -68,6 +68,11 @@
         <div class="ps-actions">
           <input class="ps-qty" type="number" min="1" [(ngModel)]="hit.qty" (change)="clampQty(hit)"
             title="Order quantity" />
+          @if (hasSelection) {
+            <button type="button" class="ps-attach" (click)="attach(hit)" title="Attach to selected block">
+              <mat-icon>link</mat-icon>
+            </button>
+          }
           <button type="button" class="ps-add" (click)="add(hit)" title="Add to canvas">
             <mat-icon>add</mat-icon>
           </button>

@@ -564,8 +564,19 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       lines.push(d.text || d.shape || 'Block');
       if (d.sub || d.subtitle) lines.push(d.sub || d.subtitle);
     }
+    // Show attached parts (new multi-part approach)
+    const attachedParts = Array.isArray(d.attachedParts) ? d.attachedParts : [];
+    if (attachedParts.length) {
+      const partNames = attachedParts.map((ap: any) => {
+        const pn = ap.part?.arwPartNum?.name || ap.part?.suppPartNum?.name || 'Part';
+        return `${pn} (×${ap.quantity})`;
+      });
+      lines.push(`Attached Parts (${attachedParts.length}):`);
+      lines.push(...partNames);
+    }
+    // Show old-style linked components (AI suggestions)
     const comps = Array.isArray(d.components) ? d.components : [];
-    if (comps.length) lines.push(`Parts: ${comps.map((c: any) => c.partNumber).join(', ')}`);
+    if (comps.length) lines.push(`AI Components: ${comps.map((c: any) => c.partNumber).join(', ')}`);
     return lines.filter(Boolean).join('\n');
   }
 
@@ -1141,10 +1152,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.selectedNode) {
       const d = this.selectedNode.data;
       const isPart = d.category === 'part';
+      const hasAttachedPart = d.attachedPart != null;
+      // Show part details for both part cards AND blocks with attached parts
+      const partToShow = isPart ? d.part : (hasAttachedPart ? d.attachedPart : null);
       this.sel = {
-        text: d.text ?? '', color: d.color ?? '#1d4ed8', isPart,
+        text: d.text ?? '', color: d.color ?? '#1d4ed8', isPart: isPart || hasAttachedPart,
         partNumber: d.partNumber, supplier: d.supplier, quantity: d.quantity,
-        details: isPart ? this.partDetails(d.part) : [], specs: isPart ? this.partSpecs(d.part) : [],
+        details: partToShow ? this.partDetails(partToShow) : [],
+        specs: partToShow ? this.partSpecs(partToShow) : [],
       };
     } else {
       this.sel = null;
@@ -1187,7 +1202,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   get isPartCard(): boolean { return this.selectedNode?.data?.category === 'part'; }
 
-  private partDetails(part: any): { label: string; value: string }[] {
+  partDetails(part: any): { label: string; value: string }[] {
     if (!part) return [];
     const org = part?.invOrgs?.[0] ?? {}; const avail = org?.avail ?? {};
     const num = (v: any) => (v === null || v === undefined || v === '' ? '' : Number(v).toLocaleString());
@@ -1207,7 +1222,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     ];
     return rows.filter((r) => r.value != null && String(r.value).trim() !== '') as { label: string; value: string }[];
   }
-  private partSpecs(part: any): { label: string; value: string }[] {
+  partSpecs(part: any): { label: string; value: string }[] {
     const pd = Array.isArray(part?.paramData) ? part.paramData : [];
     return pd.map((p: any) => ({
       label: String(p?.name ?? '').trim(),
@@ -1566,6 +1581,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return Array.isArray(c) ? c : [];
   }
 
+  /** True if the selected box can have a part attached (allows replacement). */
+  get canAttachPart(): boolean {
+    return this.isBox; // Allow attach for all blocks (empty or with existing part)
+  }
+
   /** Turn a suggestion + chosen supplier into a linked component. */
   private toComponent(s: BoxSuggestion): LinkedComponent {
     const name = this.selectedSupplier[s.partNumber] || s.suppliers?.[0]?.name || s.manufacturer;
@@ -1730,9 +1750,97 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       (m as go.GraphLinksModel).addNodeData(this.buildPartData(part, c)), 'add part'));
     this.notify.success(`Added "${part?.arwPartNum?.name || part?.suppPartNum?.name || 'part'}"`);
   }
+
+  attachPartToSelected(part: any): void {
+    if (!this.selectedNode || !this.isBox) {
+      this.notify.info('Select a block on the canvas first to attach a part.');
+      return;
+    }
+
+    const data = this.selectedNode.data;
+    const partNumber = part?.arwPartNum?.name || part?.suppPartNum?.name || 'Unknown';
+    const qty = part?.__bomQty || 1;
+
+    // Get existing attached parts array (or create new one)
+    const attachedParts = Array.isArray(data.attachedParts) ? [...data.attachedParts] : [];
+
+    // Check if this part is already attached
+    const existingIndex = attachedParts.findIndex((p: any) => {
+      const pn = p.part?.arwPartNum?.name || p.part?.suppPartNum?.name;
+      return pn === partNumber;
+    });
+
+    if (existingIndex >= 0) {
+      this.notify.info(`${partNumber} is already attached to this block.`);
+      return;
+    }
+
+    // Add new part to the array
+    attachedParts.push({ part, quantity: qty });
+
+    // Update the block data
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => {
+      m.set(data, 'attachedParts', attachedParts);
+    }, 'attach part'));
+
+    this.notify.success(`Attached ${partNumber} to "${data.text}" (${attachedParts.length} parts total)`);
+    this.syncSelection(); // Refresh property panel to show all attached parts
+  }
+
+  /** Get all attached parts for the selected block */
+  get attachedParts(): Array<{ part: any; quantity: number }> {
+    const parts = this.selectedNode?.data?.attachedParts;
+    return Array.isArray(parts) ? parts : [];
+  }
+
+  /** Remove an attached part by index */
+  removeAttachedPart(index: number): void {
+    if (!this.selectedNode) return;
+    const data = this.selectedNode.data;
+    const attachedParts = Array.isArray(data.attachedParts) ? [...data.attachedParts] : [];
+
+    if (index < 0 || index >= attachedParts.length) return;
+
+    const removed = attachedParts[index];
+    const partNumber = removed.part?.arwPartNum?.name || removed.part?.suppPartNum?.name || 'part';
+    attachedParts.splice(index, 1);
+
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => {
+      m.set(data, 'attachedParts', attachedParts);
+    }, 'remove attached part'));
+
+    this.notify.success(`Removed ${partNumber} from "${data.text}"`);
+    this.syncSelection();
+  }
+
+  /** Update quantity for an attached part */
+  setAttachedPartQty(index: number, qty: any): void {
+    if (!this.selectedNode) return;
+    const data = this.selectedNode.data;
+    const attachedParts = Array.isArray(data.attachedParts) ? [...data.attachedParts] : [];
+
+    if (index < 0 || index >= attachedParts.length) return;
+
+    attachedParts[index] = { ...attachedParts[index], quantity: Math.max(1, Number(qty) || 1) };
+
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => {
+      m.set(data, 'attachedParts', attachedParts);
+    }, 'set attached part qty'));
+
+    this.syncSelection();
+  }
+
   private partNumberOfData(d: any): string | null {
-    if (!d || d.category !== 'part') return null;
-    return d.part?.arwPartNum?.name || d.part?.suppPartNum?.name || d.partNumber || null;
+    if (!d) return null;
+    // Part card nodes
+    if (d.category === 'part') {
+      return d.part?.arwPartNum?.name || d.part?.suppPartNum?.name || d.partNumber || null;
+    }
+    // Blocks with attached parts
+    if (d.attachedPart) {
+      return d.attachedPart?.arwPartNum?.name || d.attachedPart?.suppPartNum?.name || d.partNumber || null;
+    }
+    return null;
   }
 
   // ---- BOM / AI / lifecycle / feedback / project ----
@@ -1741,11 +1849,19 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const parts = this.partNodes().map((n) => ({ ...n.data.part, __bomQty: n.data.quantity || 1 })).filter((p) => p && Object.keys(p).length > 1);
     const linked: any[] = [];
     this.boxNodes().forEach((n) => {
+      // Include old-style linked components (from AI suggestions)
       const comps = n.data.components;
       if (Array.isArray(comps)) comps.forEach((c: LinkedComponent) => linked.push(c));
+      // Include new-style attached parts (from Attach button) - multiple parts support
+      const attachedParts = n.data.attachedParts;
+      if (Array.isArray(attachedParts)) {
+        attachedParts.forEach((ap: any) => {
+          parts.push({ ...ap.part, __bomQty: ap.quantity || 1 });
+        });
+      }
     });
     if (!parts.length && !linked.length) {
-      this.notify.info('No parts to build a BOM from. Add catalogue parts, or link components to boxes (Suggest component).');
+      this.notify.info('No parts to build a BOM from. Add catalogue parts, or attach parts to blocks.');
       return;
     }
     this.bomRows = this.bomService.buildCombined(parts, linked);
@@ -1799,7 +1915,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   checkSelectedLifecycle(): void {
     const pn = this.selectedNode ? this.partNumberOfData(this.selectedNode.data) : null;
-    if (pn) this.checkLifecycle(pn); else this.notify.info('Select a catalogue part first.');
+    if (pn) this.checkLifecycle(pn); else this.notify.info('Select a part card or block with attached part first.');
   }
 
   /** Open the Design Win explorer, optionally seeding the POS tab with a part.
@@ -1819,7 +1935,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** POS ("field-proven") check for the selected catalogue part. */
   checkSelectedPos(): void {
     const pn = this.selectedNode ? this.partNumberOfData(this.selectedNode.data) : null;
-    if (pn) this.openDesignWin(pn); else this.notify.info('Select a catalogue part first.');
+    if (pn) this.openDesignWin(pn); else this.notify.info('Select a part card or block with attached part first.');
   }
   onAddAlternative(alt: AlternativePart): void {
     this.addPartToCanvas({ arwPartNum: { name: alt.partNumber }, suppPartNum: { name: alt.partNumber },

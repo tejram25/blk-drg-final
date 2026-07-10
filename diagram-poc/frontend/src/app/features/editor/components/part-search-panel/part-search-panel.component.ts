@@ -18,8 +18,11 @@ import { PartHit, PartSearchService } from '../../../../core/services/part-searc
 export class PartSearchPanelComponent implements AfterViewInit {
   @Output() close = new EventEmitter<void>();
   @Output() addPart = new EventEmitter<any>();
+  @Output() attachPart = new EventEmitter<any>();
   /** Optional initial query (e.g. from a recommendation) — auto-searched on open. */
   @Input() seedQuery = '';
+  /** Whether a block is currently selected on canvas (enables attach mode) */
+  @Input() hasSelection = false;
   @ViewChild('box') boxRef!: ElementRef<HTMLInputElement>;
 
   query = '';
@@ -90,5 +93,11 @@ export class PartSearchPanelComponent implements AfterViewInit {
     // Carry the chosen quantity on the part so the BOM tallies it.
     const part = { ...hit.raw, __bomQty: Math.max(1, hit.qty || 1) };
     this.addPart.emit(part);
+  }
+
+  attach(hit: PartHit): void {
+    // Attach this part to the currently selected block on canvas
+    const part = { ...hit.raw, __bomQty: Math.max(1, hit.qty || 1) };
+    this.attachPart.emit(part);
   }
 }

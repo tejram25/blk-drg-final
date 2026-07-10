@@ -86,6 +86,13 @@
   width: 48px; text-align: center; background: var(--bg-deep, #0e0f11); color: var(--text, #e2e8f0);
   border: 1px solid var(--border, #34353c); border-radius: 7px; padding: 4px 4px; font-size: 12px; font-family: inherit;
 }
+.ps-attach {
+  flex: none; width: 30px; height: 30px; border: 1px solid var(--border, #34353c); border-radius: 7px;
+  background: transparent; color: #3b82f6; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.ps-attach:hover { background: rgba(59, 130, 246, 0.16); }
+.ps-attach mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
 .ps-add {
   flex: none; width: 30px; height: 30px; border: 1px solid var(--border, #34353c); border-radius: 7px;
   background: transparent; color: var(--accent, #f5a623); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;

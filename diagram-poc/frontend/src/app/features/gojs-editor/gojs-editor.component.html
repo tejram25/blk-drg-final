@@ -473,6 +473,42 @@
                                                     }
                                                   </div>
                                                 }
+                                                @if (isBox && attachedParts.length) {
+                                                  <div class="prop-section">Attached Parts ({{ attachedParts.length }})</div>
+                                                  @for (ap of attachedParts; track $index; let i = $index) {
+                                                    <details class="attached-part-details" [open]="attachedParts.length === 1">
+                                                      <summary class="attached-part-summary">
+                                                        <mat-icon>inventory_2</mat-icon>
+                                                        <span class="ap-name">{{ ap.part?.arwPartNum?.name || ap.part?.suppPartNum?.name || 'Part' }}</span>
+                                                        <span class="ap-qty">Qty: {{ ap.quantity }}</span>
+                                                      </summary>
+                                                      <div class="attached-part-content">
+                                                        <div class="part-details">
+                                                          @for (d of partDetails(ap.part); track d) {
+                                                            <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
+                                                          }
+                                                        </div>
+                                                        @if (partSpecs(ap.part).length) {
+                                                          <div class="prop-section-small">Specifications</div>
+                                                          <div class="part-details">
+                                                            @for (d of partSpecs(ap.part); track d) {
+                                                              <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
+                                                            }
+                                                          </div>
+                                                        }
+                                                        <div class="ap-controls">
+                                                          <label class="ap-qty-input">
+                                                            <span>Qty</span>
+                                                            <input type="number" min="1" [ngModel]="ap.quantity" (ngModelChange)="setAttachedPartQty(i, $event)" />
+                                                          </label>
+                                                          <button class="ap-remove" (click)="removeAttachedPart(i)" matTooltip="Remove part">
+                                                            <mat-icon>delete</mat-icon>
+                                                          </button>
+                                                        </div>
+                                                      </div>
+                                                    </details>
+                                                  }
+                                                }
                                                 @if (isBox) {
                                                   <div class="prop-section">Components · AI + Design Win</div>
                                                   @for (c of boxComponents; track c.partNumber; let i = $index) {
@@ -547,7 +583,7 @@
 
                                         <!-- Dialogs / panels -->
                                         @if (partSearchOpen) {
-                                          <app-part-search-panel [seedQuery]="partSearchSeed" (addPart)="addPartToCanvas($event)" (close)="partSearchOpen = false"></app-part-search-panel>
+                                          <app-part-search-panel [seedQuery]="partSearchSeed" [hasSelection]="canAttachPart" (addPart)="addPartToCanvas($event)" (attachPart)="attachPartToSelected($event)" (close)="partSearchOpen = false"></app-part-search-panel>
                                         }
                                         @if (designWinOpen) {
                                           <app-designwin-panel [seedPart]="designWinSeed" (close)="designWinOpen = false" (addPart)="onDesignWinAddPart($event)" (attach)="onAttachDesignWin($event)"></app-designwin-panel>
