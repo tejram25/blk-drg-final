@@ -704,20 +704,139 @@
       .chat-dock { width: min(320px, 80vw); }
     }
 
-    /* Phones */
-    @media (max-width: 560px) {
-      .topbar { padding: 6px 8px; gap: 6px; }
-      .brand { display: none; }
-      .doc-name { width: clamp(90px, 36vw, 170px); }
-      .open-dd { display: none; }
-      .topbar .mdc-button .mdc-button__label { display: none; }
-      .topbar .mdc-button mat-icon { margin-right: 0; }
-      .palette { width: min(300px, 84vw); padding: 10px; }
-      .props { width: min(320px, 88vw); }
-      .chat-dock { width: 100vw; }
+    /* ============================================================
+       Phones & small tablets (≤768px): app-like layout.
+       Top bar collapses to [brand · name · undo/redo · account];
+       everything else moves to the bottom app bar + "More" sheet.
+       ============================================================ */
+    @media (max-width: 768px) {
+      .layout { height: 100dvh; }
+
+      /* --- compact single-row top bar --- */
+      .topbar {
+        flex-wrap: nowrap; overflow: hidden; gap: 6px;
+        padding: 4px 8px; padding-top: calc(4px + env(safe-area-inset-top));
+        min-height: 44px;
+      }
+      .topbar .panel-toggle,          /* palette toggle lives in the bottom bar */
+      .topbar .menu-wrap,             /* File / Insert / View menus → More sheet */
+      .topbar .tool-group.boxed,      /* action cluster → bottom bar + More */
+      .topbar .open-dd, .topbar .cls-pill, .topbar .vsep,
+      .topbar .chat-toggle, .topbar .lang-wrap,
+      .topbar .badge-host, .topbar > .panel-toggle,
+      .topbar button[mattooltip="Comments"] { display: none !important; }
+      .brand { display: flex; }
+      .brand-name { display: none; }
+      .doc-name { flex: 1; width: auto; min-width: 60px; }
+      .mobile-keep { display: inline-flex !important; }
+
+      /* --- palette becomes a left overlay drawer above the canvas --- */
+      .palette {
+        position: absolute; left: 0; top: 0; bottom: 0; z-index: 40;
+        width: min(320px, 86vw); padding: 10px;
+        display: none;
+        box-shadow: 18px 0 44px rgba(0,0,0,.45);
+      }
+      .palette.open { display: flex; }
       .palette-grid { grid-template-columns: 1fr 1fr; }
-      .wire-dock { left: 12px; bottom: 12px; }
+
+      /* --- properties becomes a bottom sheet over the canvas --- */
+      .props {
+        position: absolute; left: 0; right: 0; bottom: 0; top: auto; z-index: 30;
+        width: 100%; max-height: 46dvh;
+        border-left: none; border-top: 1px solid var(--border);
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -14px 40px rgba(0,0,0,.45);
+      }
+      .props:not(.open) { display: none; }
+
+      /* --- bottom app bar --- */
+      .mobile-bar {
+        display: flex; flex-shrink: 0; z-index: 45;
+        height: calc(56px + env(safe-area-inset-bottom));
+        padding-bottom: env(safe-area-inset-bottom);
+        background: color-mix(in srgb, var(--panel) 92%, transparent);
+        backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+        border-top: 1px solid var(--border);
+      }
+      .mobile-bar > button {
+        flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 2px; border: none; background: none; color: var(--muted); font: inherit;
+        font-size: 10px; cursor: pointer; position: relative; min-width: 0;
+      }
+      .mobile-bar > button mat-icon { font-size: 22px; width: 22px; height: 22px; }
+      .mobile-bar > button.on { color: var(--accent); }
+      .mobile-bar > button.mb-primary mat-icon {
+        background: linear-gradient(135deg, var(--accent), #d97706); color: #1a1303;
+        border-radius: 12px; padding: 5px; font-size: 22px; width: 32px; height: 32px;
+        box-sizing: border-box; margin-top: -10px; box-shadow: 0 4px 12px rgba(245,166,35,.35);
+      }
+      .mobile-bar .hdr-badge { top: 4px; right: calc(50% - 20px); }
+
+      /* --- "More" bottom sheet --- */
+      .sheet-backdrop { position: fixed; inset: 0; z-index: 58; background: rgba(0,0,0,.5); }
+      .more-sheet {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 59;
+        max-height: 80dvh; overflow-y: auto;
+        background: var(--panel); border-top: 1px solid var(--border);
+        border-radius: 18px 18px 0 0; padding: 8px 14px calc(16px + env(safe-area-inset-bottom));
+        box-shadow: 0 -18px 50px rgba(0,0,0,.55);
+        animation: sheet-in .18s ease;
+      }
+      @keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+      .sheet-grab { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 4px auto 10px; }
+      .more-title {
+        font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+        color: var(--faint); margin: 12px 2px 8px;
+      }
+      .more-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .more-grid > button {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+        min-height: 62px; border: 1px solid var(--border-soft); border-radius: 12px;
+        background: var(--panel-2); color: var(--text); font: inherit; font-size: 10.5px;
+        cursor: pointer; position: relative; padding: 6px 2px;
+      }
+      .more-grid > button mat-icon { font-size: 21px; width: 21px; height: 21px; color: var(--accent); }
+      .more-files { display: flex; flex-direction: column; gap: 6px; }
+      .more-file {
+        display: flex; align-items: center; gap: 10px; text-align: left;
+        border: 1px solid var(--border-soft); border-radius: 10px; background: var(--panel-2);
+        color: var(--text); font: inherit; font-size: 13px; padding: 10px 12px; cursor: pointer;
+      }
+      .more-file mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--muted); flex: none; }
+      .more-file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .more-file .more-rate { margin-left: auto; color: var(--accent); font-size: 11.5px; flex: none; }
+      .more-file.sel { border-color: var(--accent); }
+      .more-account {
+        display: flex; align-items: center; gap: 8px; margin-top: 16px; padding-top: 12px;
+        border-top: 1px solid var(--border-soft); font-size: 13px;
+      }
+      .more-account mat-icon { color: var(--muted); }
+      .ma-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .ma-logout {
+        display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border);
+        border-radius: 9px; background: none; color: var(--text); font: inherit; font-size: 12px;
+        padding: 7px 12px; cursor: pointer;
+      }
+      .ma-logout mat-icon { font-size: 16px; width: 16px; height: 16px; }
+
+      /* --- overlays sized for phones --- */
+      .chat { left: 8px; right: 8px; width: auto; bottom: calc(64px + env(safe-area-inset-bottom)); }
+      .wire-dock { left: 8px; bottom: 8px; right: 8px; overflow-x: auto; }
+      .onboarding { max-width: 88vw; padding: 16px 18px; }
+      .imggen-overlay .imggen-card { max-width: 86vw; }
+      .minimap { display: none !important; }   /* no room on phones */
     }
+
+    /* Desktop: the mobile chrome never renders (guarded by @if), but keep the
+       rules scoped anyway so nothing leaks upward. */
+    .mobile-bar, .more-sheet, .sheet-backdrop { display: none; }
+    .layout.mobile .mobile-bar { display: flex; }
+    .layout.mobile .more-sheet { display: block; }
+    .layout.mobile .sheet-backdrop { display: block; }
+    /* Mobile-only top-bar buttons (undo/redo) — hidden on desktop, where the
+       boxed tool group already provides them. */
+    .topbar .mobile-keep { display: none; }
   
 /* ---- GoJS canvas background (GoJS draws the grid; the div paints the base) ---- */
 .canvas { background: var(--bg-deep); }

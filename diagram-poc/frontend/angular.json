@@ -15,12 +15,26 @@
             "outputPath": "dist/diagram-builder-frontend",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.app.json",
-            "assets": ["src/assets"],
-            "styles": ["src/styles.css"],
+            "assets": [
+              "src/assets",
+              "src/manifest.webmanifest",
+              {
+                "glob": "**/*",
+                "input": "src/icons",
+                "output": "icons"
+              }
+            ],
+            "styles": [
+              "src/styles.css"
+            ],
             "scripts": [],
-            "allowedCommonJsDependencies": ["mousetrap"]
+            "allowedCommonJsDependencies": [
+              "mousetrap"
+            ]
           },
           "configurations": {
             "production": {
@@ -30,7 +44,8 @@
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.prod.ts"
                 }
-              ]
+              ],
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {
               "optimization": false,
@@ -46,15 +61,22 @@
             "proxyConfig": "proxy.conf.json"
           },
           "configurations": {
-            "production": { "buildTarget": "diagram-builder-frontend:build:production" },
-            "development": { "buildTarget": "diagram-builder-frontend:build:development" }
+            "production": {
+              "buildTarget": "diagram-builder-frontend:build:production"
+            },
+            "development": {
+              "buildTarget": "diagram-builder-frontend:build:development"
+            }
           },
           "defaultConfiguration": "development"
         },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "polyfills": ["zone.js", "zone.js/testing"],
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js"
           }

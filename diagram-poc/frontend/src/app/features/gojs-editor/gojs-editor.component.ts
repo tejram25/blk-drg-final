@@ -111,6 +111,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   propsOpen = true;
   private viewportTick: any = null;
 
+  // ---- mobile / responsive ----
+  /** ≤768px: bottom app bar + sheet panels replace the desktop chrome. */
+  isMobile = false;
+  /** The mobile "More" bottom sheet (everything that isn't in the app bar). */
+  mobileMoreOpen = false;
+  private mobileMq?: MediaQueryList;
+  private mobileMqListener?: (e: MediaQueryListEvent) => void;
+
   // palette
   blockTypes: BlockType[] = [];
   paletteQuery = '';
@@ -212,6 +220,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.loadPalette();
     this.refreshList();
+    // Mobile layout: track the breakpoint live (rotation, window resize).
+    this.mobileMq = window.matchMedia('(max-width: 768px)');
+    this.applyMobile(this.mobileMq.matches);
+    this.mobileMqListener = (e) => this.zone.run(() => { this.applyMobile(e.matches); this.cdr.detectChanges(); });
+    this.mobileMq.addEventListener('change', this.mobileMqListener);
     // Learn whether the server's local AI is on, to gate AI-only actions.
     this.system.info().subscribe({
       next: (i) => { this.aiEnabled = i.aiEnabled !== false; this.cdr.detectChanges(); },
@@ -221,6 +234,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.chatSub = this.collab.chatNew$.subscribe((m) => this.onChatArrived(m));
   }
 
+  /** Entering phone layout: start with the canvas, not an open drawer. */
+  private applyMobile(matches: boolean): void {
+    if (this.isMobile === matches) return;
+    this.isMobile = matches;
+    if (matches) { this.paletteOpen = false; this.propsOpen = false; }
+    else { this.paletteOpen = true; this.propsOpen = true; this.mobileMoreOpen = false; }
+  }
+
   ngAfterViewInit(): void {
     this.zone.runOutsideAngular(() => this.initDiagram());
     const id = this.route.snapshot.paramMap.get('id');
@@ -228,6 +249,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.mobileMq && this.mobileMqListener) this.mobileMq.removeEventListener('change', this.mobileMqListener);
     this.chatSub?.unsubscribe();
     if (this.autosaveTimer) clearTimeout(this.autosaveTimer);
     if (this.raf) cancelAnimationFrame(this.raf);
@@ -1129,6 +1151,17 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const pt = this.diagram.transformViewToDoc(new go.Point(event.clientX - rect.left, event.clientY - rect.top));
     this.zone.runOutsideAngular(() => this.diagram.model.commit((m) =>
       (m as go.GraphLinksModel).addNodeData(this.nodeDataFor(b, pt)), 'add node'));
+  }
+
+  /** Mobile: tap a palette item to place it at the viewport centre (HTML5
+   * drag-and-drop does not exist on touch). No-op on desktop, where drag wins. */
+  tapPlace(b: BlockType): void {
+    if (!this.isMobile || !this.diagram) return;
+    const pt = this.diagram.viewportBounds.center.copy();
+    this.zone.runOutsideAngular(() => this.diagram.model.commit((m) =>
+      (m as go.GraphLinksModel).addNodeData(this.nodeDataFor(b, pt)), 'add node'));
+    this.paletteOpen = false;
+    this.notify.success(`${this.i18n.td(b.label)} added to the canvas.`);
   }
 
   /** Cached (not a live getter) so template change-detection stays stable even

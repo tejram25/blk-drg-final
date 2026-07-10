@@ -1,4 +1,4 @@
-<div class="layout">
+<div class="layout" [class.mobile]="isMobile">
   <!-- Top bar -->
   <header class="topbar">
     <span class="panel-toggle">
@@ -181,6 +181,9 @@
                                           </button>
                                           }
 
+                                          <button mat-icon-button class="mobile-keep" (click)="undo()"><mat-icon>undo</mat-icon></button>
+                                          <button mat-icon-button class="mobile-keep" (click)="redo()"><mat-icon>redo</mat-icon></button>
+
                                           <div class="lang-wrap">
                                             <button mat-stroked-button (click)="toggleMenu('lang', $event)" [matTooltip]="'lang.tooltip' | translate">
                                               <mat-icon>language</mat-icon><span class="lang-label">{{ currentLangLabel }}</span><mat-icon class="lang-caret">arrow_drop_down</mat-icon>
@@ -265,7 +268,7 @@
                                             <div class="palette-grid">
                                               @for (b of visibleItems; track b) {
                                                 @if (b.shape && isShape(b.shape)) {
-                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)">
+                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)" (click)="tapPlace(b)">
                                                     <svg viewBox="0 0 100 100" width="52" height="52" preserveAspectRatio="xMidYMid meet"
                                                       fill="rgba(226,232,240,0.14)" stroke="#e2e8f0" stroke-width="4"
                                                       stroke-linejoin="round" stroke-linecap="round" [innerHTML]="shapePreview(b.shape)"></svg>
@@ -273,7 +276,7 @@
                                                   </div>
                                                 }
                                                 @if (b.shape && isElectrical(b.shape)) {
-                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)">
+                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)" (click)="tapPlace(b)">
                                                     <svg [attr.viewBox]="symbolViewBox(b.shape)" width="62" [attr.height]="isIc(b.shape) ? 40 : 26">
                                                       @for (p of symbolPaths(b.shape); track p) {
                                                         <path [attr.d]="p.d" [attr.fill]="p.fill ? '#e2e8f0' : 'none'"
@@ -288,13 +291,13 @@
                                                   </div>
                                                 }
                                                 @if (b.shape && !isShape(b.shape) && !isElectrical(b.shape)) {
-                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)">
+                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)" (click)="tapPlace(b)">
                                                     <svg [attr.viewBox]="symbolViewBox(b.shape)" width="62" height="40" [innerHTML]="animatedPreview(b.shape)"></svg>
                                                     <span>{{ i18n.td(b.label) }}</span>
                                                   </div>
                                                 }
                                                 @if (!b.shape) {
-                                                  <div class="block-chip" draggable="true" (dragstart)="startDrag(b, $event)">
+                                                  <div class="block-chip" draggable="true" (dragstart)="startDrag(b, $event)" (click)="tapPlace(b)">
                                                     <span class="chip-badge" [style.background]="b.color"><span class="material-icons">{{ b.icon || 'widgets' }}</span></span>
                                                     <span class="chip-label">{{ i18n.td(b.label) }}</span>
                                                   </div>
@@ -579,6 +582,74 @@
                                               </form>
                                             </div>
                                           }
+                                        <!-- Mobile bottom app bar + "More" sheet (≤768px only) -->
+                                        @if (isMobile) {
+                                          <nav class="mobile-bar">
+                                            <button type="button" [class.on]="paletteOpen" (click)="paletteOpen = !paletteOpen">
+                                              <mat-icon>widgets</mat-icon><span>Blocks</span></button>
+                                            <button type="button" [class.on]="partSearchOpen" (click)="togglePartSearch()">
+                                              <mat-icon>travel_explore</mat-icon><span>Parts</span></button>
+                                            <button type="button" class="mb-primary" (click)="save()">
+                                              <mat-icon>save</mat-icon><span>Save</span></button>
+                                            <button type="button" class="badge-host" [class.on]="feedbackLoopOpen" (click)="toggleFeedbackLoop()">
+                                              <mat-icon>forum</mat-icon><span>Discuss</span>
+                                              @if (feedbackLoopCount) { <span class="hdr-badge">{{ feedbackLoopCount }}</span> }
+                                            </button>
+                                            <button type="button" [class.on]="mobileMoreOpen" (click)="mobileMoreOpen = true">
+                                              <mat-icon>more_horiz</mat-icon><span>More</span></button>
+                                          </nav>
+                                          @if (mobileMoreOpen) {
+                                            <div class="sheet-backdrop" (click)="mobileMoreOpen = false"></div>
+                                            <div class="more-sheet">
+                                              <div class="sheet-grab"></div>
+                                              <div class="more-title">Diagram</div>
+                                              <div class="more-grid">
+                                                <button type="button" (click)="mobileMoreOpen = false; newDiagram()"><mat-icon>note_add</mat-icon><span>New</span></button>
+                                                <button type="button" (click)="undo()"><mat-icon>undo</mat-icon><span>Undo</span></button>
+                                                <button type="button" (click)="redo()"><mat-icon>redo</mat-icon><span>Redo</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; propsOpen = !propsOpen"><mat-icon>tune</mat-icon><span>Properties</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; toggleComments()"><mat-icon>comment</mat-icon><span>Comments</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; openVersions()"><mat-icon>history</mat-icon><span>Versions</span></button>
+                                              </div>
+                                              <div class="more-title">Assistants &amp; catalogue</div>
+                                              <div class="more-grid">
+                                                <button type="button" (click)="mobileMoreOpen = false; openRecommendations()"><mat-icon>auto_awesome</mat-icon><span>AI ideas</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; openDesignReview()"><mat-icon>rule</mat-icon><span>AI review</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; openDesignWin()"><mat-icon>emoji_events</mat-icon><span>Design Win</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; openTemplates()"><mat-icon>dashboard_customize</mat-icon><span>Templates</span></button>
+                                                @if (collab.active) {
+                                                  <button type="button" class="badge-host" (click)="mobileMoreOpen = false; toggleChat()"><mat-icon>chat</mat-icon><span>Chat</span>
+                                                    @if (chatUnread) { <span class="hdr-badge">{{ chatUnread }}</span> }
+                                                  </button>
+                                                }
+                                                <button type="button" (click)="mobileMoreOpen = false; toggleCanvasTheme()"><mat-icon>{{ lightCanvas ? 'dark_mode' : 'light_mode' }}</mat-icon><span>Theme</span></button>
+                                              </div>
+                                              <div class="more-title">Export</div>
+                                              <div class="more-grid">
+                                                <button type="button" (click)="mobileMoreOpen = false; openExport('png')"><mat-icon>image</mat-icon><span>PNG</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; exportBom()"><mat-icon>receipt_long</mat-icon><span>BOM CSV</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; exportJson()"><mat-icon>data_object</mat-icon><span>JSON</span></button>
+                                              </div>
+                                              <div class="more-title">Open a saved diagram</div>
+                                              <div class="more-files">
+                                                @for (d of savedDiagrams; track d.id) {
+                                                  <button type="button" class="more-file" [class.sel]="selectedDiagramId === d.id"
+                                                    (click)="selectedDiagramId = d.id; mobileMoreOpen = false; load()">
+                                                    <mat-icon>description</mat-icon><span>{{ d.name }}</span>
+                                                    @if (d.reviewCount) { <span class="more-rate">★ {{ d.avgRating | number:'1.1-1' }}</span> }
+                                                  </button>
+                                                }
+                                              </div>
+                                              @if (auth.user(); as u) {
+                                                <div class="more-account">
+                                                  <mat-icon>account_circle</mat-icon><span class="ma-name">{{ u.name || u.email }}</span>
+                                                  <button type="button" class="ma-logout" (click)="logout()"><mat-icon>logout</mat-icon> Sign out</button>
+                                                </div>
+                                              }
+                                            </div>
+                                          }
+                                        }
+
                                         </div>
 
                                         <!-- Dialogs / panels -->
