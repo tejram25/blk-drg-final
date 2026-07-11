@@ -355,6 +355,15 @@
 
                                             <app-zoom-dock [zoom]="zoomPct" (zoomOut)="zoomOut()" (zoomIn)="zoomIn()" (fit)="zoomFit()" (reset)="zoomReset()"></app-zoom-dock>
 
+                                            <!-- Mobile: session chat button (top-right), only in a live session -->
+                                            @if (isMobile && collab.active) {
+                                              <button type="button" class="session-fab" [class.on]="chatOpen"
+                                                (click)="toggleChat()" matTooltip="Session chat">
+                                                <mat-icon>forum</mat-icon>
+                                                @if (chatUnread) { <span class="hdr-badge">{{ chatUnread }}</span> }
+                                              </button>
+                                            }
+
                                             <!-- Mobile: tap-to-connect (dragging thin pins with a finger is too fiddly) -->
                                             @if (isMobile) {
                                               @if (connectMode) {

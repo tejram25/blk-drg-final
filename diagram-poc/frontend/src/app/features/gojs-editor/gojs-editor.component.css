@@ -840,6 +840,24 @@
         box-shadow: 0 8px 22px rgba(245,166,35,.42); cursor: pointer;
       }
       .connect-fab mat-icon { font-size: 26px; width: 26px; height: 26px; }
+      /* Session chat button: top-right of the canvas, out of the way of the
+         bottom control row. Badge shows unread messages. */
+      .session-fab {
+        position: absolute; z-index: 46; top: 12px; right: 12px;
+        width: 46px; height: 46px; border: 1px solid var(--border); border-radius: 14px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: color-mix(in srgb, var(--panel) 88%, transparent); color: var(--text);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 6px 18px rgba(0,0,0,.4); cursor: pointer;
+      }
+      .session-fab mat-icon { font-size: 23px; width: 23px; height: 23px; }
+      .session-fab.on { border-color: var(--accent); color: var(--accent); }
+      .session-fab .hdr-badge {
+        position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px;
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 0 5px; border-radius: 9px; background: var(--accent); color: #1a1303;
+        font-size: 11px; font-weight: 700; line-height: 1;
+      }
       .connect-fab.on { background: #ef4444; color: #fff; box-shadow: 0 8px 22px rgba(239,68,68,.45); }
       /* Delete-selected-component pill (bottom-centre, above the app bar). */
       .sel-del-fab {

@@ -371,7 +371,32 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.chatUnreadCount++;
     const text = (m.text || '').length > 70 ? m.text.slice(0, 67) + '…' : m.text;
     this.notify.info(`💬 ${m.name}: ${text}`);
+    this.playPing();
     this.cdr.detectChanges();
+  }
+
+  /** Short two-note chime for an incoming message. Synthesised with Web Audio so
+   * there's no asset to ship; the context is created lazily and resumed on use
+   * (browsers keep it suspended until the first user gesture). */
+  private audioCtx?: AudioContext;
+  private playPing(): void {
+    try {
+      const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AC) return;
+      const ctx = (this.audioCtx ??= new AC()) as AudioContext;
+      if (ctx.state === 'suspended') void ctx.resume();
+      const beep = (freq: number, at: number) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = freq;
+        const t = ctx.currentTime + at;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.16, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t); o.stop(t + 0.2);
+      };
+      beep(880, 0); beep(1174, 0.12);   // A5 → D6
+    } catch { /* audio unavailable — silent */ }
   }
   sendChat(): void {
     const text = this.chatDraft.trim();
@@ -435,6 +460,16 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.diagram.addDiagramListener('BackgroundSingleClicked', () => {
       if (this.connectMode && this.connectFrom) this.zone.run(() => this.clearConnectArm());
     });
+    // On phones a tooltip pinned to the touch point sits under the finger and
+    // often runs off-screen; pin it to the top-centre of the canvas instead.
+    const tm = this.diagram.toolManager;
+    const basePositionToolTip = tm.positionToolTip.bind(tm);
+    tm.positionToolTip = (tooltip: go.Adornment, obj: go.GraphObject | null) => {
+      if (!this.isMobile) { basePositionToolTip(tooltip, obj); return; }
+      const vb = this.diagram.viewportBounds;
+      const w = tooltip.measuredBounds.width;
+      tooltip.location = new go.Point(vb.centerX - w / 2, vb.y + 12 / this.diagram.scale);
+    };
     this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
     this.startAnimations();
   }
