@@ -91,8 +91,16 @@ export class GojsCollabService {
    * initial history sync) — the hook for unread badges / toast notifications. */
   readonly chatNew$ = new Subject<ChatMessage>();
   private chatKnown = new Set<string>();
-  /** false while the room's persisted chat history is replaying at join. */
+  /** false while the room's persisted chat history is (still) loading at join.
+   * Set true a short grace period AFTER join — NOT on the y-websocket 'sync'
+   * event: with y-leveldb the server often streams persisted history in just
+   * after sync, which would otherwise toast the entire backlog every time a
+   * diagram is opened. */
   private chatLive = false;
+  private chatLiveTimer: any = null;
+  /** Wall-clock grace window after joining a room during which existing/late
+   * history is absorbed silently. */
+  private static readonly CHAT_GRACE_MS = 3000;
   private lastCursorSent = 0;
 
   private knownNames = new Map<string, string>();
@@ -146,6 +154,13 @@ export class GojsCollabService {
     this.myName = name;
     this.myColor = color;
 
+    // Absorb existing + late-loading history silently, then go live. Timed from
+    // join (not 'sync') so persisted history that y-leveldb streams in just after
+    // sync is still treated as backlog, not toasted.
+    this.chatLive = false;
+    clearTimeout(this.chatLiveTimer);
+    this.chatLiveTimer = setTimeout(() => { this.chatLive = true; }, GojsCollabService.CHAT_GRACE_MS);
+
     this.refreshMessages();
     this.chatArr.observe(() => this.zone.run(() => this.refreshMessages()));
     awareness.on('change', () => this.zone.run(() => this.onAwarenessChange(awareness)));
@@ -155,8 +170,6 @@ export class GojsCollabService {
     // (autosaved) diagram is the source of truth — republishing also heals rooms
     // left with partial state by an interrupted session.
     this.provider.on('sync', (isSynced: boolean) => {
-      // History replay is done — chat messages from here on are genuinely new.
-      if (isSynced) this.chatLive = true;
       if (!isSynced || !this.cells || !this.diagram || this.seeded) return;
       this.seeded = true;
       // "Others present" must mean a DIFFERENT person: a ghost awareness state
@@ -202,6 +215,8 @@ export class GojsCollabService {
     this.chatArr = null;
     this.chatKnown.clear();
     this.chatLive = false;
+    clearTimeout(this.chatLiveTimer);
+    this.chatLiveTimer = null;
     this.diagram = null;
     this.seeded = false;
     this.connected = false;
@@ -441,7 +456,10 @@ export class GojsCollabService {
     for (const m of this.messages) {
       if (this.chatKnown.has(m.id)) continue;
       this.chatKnown.add(m.id);
-      if (this.chatLive && !m.isSelf) this.chatNew$.next(m);
+      // Notify only for others' messages that arrive live (past the join grace)
+      // AND are recent — a stale backlog entry that slips through the grace still
+      // won't toast (60s tolerates reasonable cross-device clock skew).
+      if (this.chatLive && !m.isSelf && Date.now() - m.ts < 60_000) this.chatNew$.next(m);
     }
   }
 

@@ -821,7 +821,13 @@
       .ma-logout mat-icon { font-size: 16px; width: 16px; height: 16px; }
 
       /* --- overlays sized for phones --- */
-      .chat { left: 8px; right: 8px; width: auto; bottom: calc(64px + env(safe-area-inset-bottom)); }
+      /* Cap the height so the header (and its close button) is never pushed off
+         the top of a short landscape viewport — the chat log scrolls instead. */
+      .chat {
+        left: 8px; right: 8px; width: auto;
+        bottom: calc(64px + env(safe-area-inset-bottom));
+        max-height: calc(100% - 84px);
+      }
       /* Wire dock is contextual on phones: only when a wire is selected, and it
          floats above the FAB/zoom row so it never covers them. overflow MUST
          stay visible — `overflow-x: auto` computes overflow-y to auto too, which
