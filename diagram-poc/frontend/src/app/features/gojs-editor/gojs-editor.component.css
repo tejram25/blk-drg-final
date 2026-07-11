@@ -709,7 +709,7 @@
        Top bar collapses to [brand · name · undo/redo · account];
        everything else moves to the bottom app bar + "More" sheet.
        ============================================================ */
-    @media (max-width: 768px) {
+    @media (max-width: 768px), (orientation: landscape) and (max-height: 500px) {
       .layout { height: 100dvh; }
 
       /* --- compact single-row top bar --- */

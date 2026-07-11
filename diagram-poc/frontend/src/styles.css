@@ -267,7 +267,7 @@ a:hover { text-decoration: underline; }
    components become bottom sheets / full-screen surfaces.
    (Global on purpose — these classes live in many components.)
    ============================================================ */
-@media (max-width: 768px) {
+@media (max-width: 768px), (orientation: landscape) and (max-height: 500px) {
   /* Right-hand docks (part search, Design Win, Discussions, Comments)
      → full-width bottom sheets above the app bar. */
   .ps-dock, .dw-dock, .fb-dock, .cm-dock {

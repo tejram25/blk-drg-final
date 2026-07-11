@@ -226,7 +226,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadPalette();
     this.refreshList();
     // Mobile layout: track the breakpoint live (rotation, window resize).
-    this.mobileMq = window.matchMedia('(max-width: 768px)');
+    // Phone layout applies to narrow viewports (portrait) AND short landscape
+    // viewports — a phone rotated to landscape is wider than 768px but only
+    // ~400px tall, and must stay on the mobile chrome, not jump to desktop.
+    this.mobileMq = window.matchMedia('(max-width: 768px), (orientation: landscape) and (max-height: 500px)');
     this.applyMobile(this.mobileMq.matches);
     this.mobileMqListener = (e) => this.zone.run(() => { this.applyMobile(e.matches); this.cdr.detectChanges(); });
     this.mobileMq.addEventListener('change', this.mobileMqListener);
