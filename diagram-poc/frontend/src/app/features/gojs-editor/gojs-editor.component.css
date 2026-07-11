@@ -822,10 +822,46 @@
 
       /* --- overlays sized for phones --- */
       .chat { left: 8px; right: 8px; width: auto; bottom: calc(64px + env(safe-area-inset-bottom)); }
-      .wire-dock { left: 8px; bottom: 8px; right: 8px; overflow-x: auto; }
+      /* Wire dock is contextual on phones: only when a wire is selected, and it
+         floats above the FAB/zoom row so it never covers them. */
+      .wire-dock { display: none; left: 8px; right: 8px; bottom: 76px; overflow-x: auto; }
+      .wire-dock.show { display: flex; }
       .onboarding { max-width: 88vw; padding: 16px 18px; }
       .imggen-overlay .imggen-card { max-width: 86vw; }
       .minimap { display: none !important; }   /* no room on phones */
+
+      /* Tap-to-connect FAB (bottom-right) + guidance banner. Zoom dock is moved
+         to the bottom-left on phones (see styles.css) so nothing overlaps. */
+      .connect-fab {
+        position: absolute; z-index: 46; right: 14px; bottom: 14px;
+        width: 52px; height: 52px; border: none; border-radius: 16px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, var(--accent), #d97706); color: #1a1303;
+        box-shadow: 0 8px 22px rgba(245,166,35,.42); cursor: pointer;
+      }
+      .connect-fab mat-icon { font-size: 26px; width: 26px; height: 26px; }
+      .connect-fab.on { background: #ef4444; color: #fff; box-shadow: 0 8px 22px rgba(239,68,68,.45); }
+      /* Delete-selected-component pill (bottom-centre, above the app bar). */
+      .sel-del-fab {
+        position: absolute; z-index: 46; left: 50%; transform: translateX(-50%); bottom: 74px;
+        display: inline-flex; align-items: center; gap: 6px;
+        height: 44px; padding: 0 16px; border: 1px solid rgba(239,68,68,.5); border-radius: 22px;
+        background: color-mix(in srgb, #ef4444 18%, var(--panel)); color: #fecaca;
+        font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+        box-shadow: 0 8px 22px rgba(0,0,0,.4); backdrop-filter: blur(10px);
+      }
+      .sel-del-fab mat-icon { font-size: 20px; width: 20px; height: 20px; color: #ef4444; }
+      .sel-del-fab:active { transform: translateX(-50%) scale(.96); }
+      .connect-hint {
+        position: absolute; z-index: 46; left: 8px; right: 76px; bottom: 22px;
+        display: flex; align-items: center; gap: 8px;
+        background: color-mix(in srgb, var(--panel) 90%, transparent);
+        border: 1px solid var(--border); border-radius: 12px; padding: 9px 12px;
+        color: var(--text); font-size: 12.5px; line-height: 1.3;
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 8px 22px rgba(0,0,0,.4);
+      }
+      .connect-hint mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--accent); flex: none; }
     }
 
     /* Desktop: the mobile chrome never renders (guarded by @if), but keep the

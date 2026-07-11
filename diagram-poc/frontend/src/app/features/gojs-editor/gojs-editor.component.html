@@ -355,11 +355,32 @@
 
                                             <app-zoom-dock [zoom]="zoomPct" (zoomOut)="zoomOut()" (zoomIn)="zoomIn()" (fit)="zoomFit()" (reset)="zoomReset()"></app-zoom-dock>
 
+                                            <!-- Mobile: tap-to-connect (dragging thin pins with a finger is too fiddly) -->
+                                            @if (isMobile) {
+                                              @if (connectMode) {
+                                                <div class="connect-hint">
+                                                  <mat-icon>touch_app</mat-icon>
+                                                  <span>{{ connectArmed ? 'Now tap the component to wire it to.' : 'Tap a component to start a wire.' }}</span>
+                                                </div>
+                                              }
+                                              <!-- Delete the selected component (no keyboard on touch) -->
+                                              @if (selectedNode && !connectMode) {
+                                                <button type="button" class="sel-del-fab" (click)="deleteSelection()" matTooltip="Delete component">
+                                                  <mat-icon>delete</mat-icon><span>Delete</span>
+                                                </button>
+                                              }
+                                              <button type="button" class="connect-fab" [class.on]="connectMode"
+                                                (click)="toggleConnectMode()"
+                                                [matTooltip]="connectMode ? 'Exit connect mode' : 'Connect components'">
+                                                <mat-icon>{{ connectMode ? 'close' : 'polyline' }}</mat-icon>
+                                              </button>
+                                            }
+
                                             <!-- Wire dock -->
                                             @if (wirePop) {
                                               <div class="dock-backdrop" (click)="wirePop = null"></div>
                                             }
-                                            <div class="wire-dock">
+                                            <div class="wire-dock" [class.show]="!isMobile || selectedEdge">
                                               <span class="dock-label">
                                                 @if (selectedEdge) {
                                                   {{ 'wire.selected' | translate }}

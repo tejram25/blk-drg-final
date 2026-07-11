@@ -118,6 +118,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   mobileMoreOpen = false;
   private mobileMq?: MediaQueryList;
   private mobileMqListener?: (e: MediaQueryListEvent) => void;
+  /** Tap-to-connect mode (mobile): tap one component, then another, to wire them. */
+  connectMode = false;
+  private connectFrom: go.Node | null = null;
+  /** Template-safe read of whether a first component has been picked. */
+  get connectArmed(): boolean { return !!this.connectFrom; }
 
   // palette
   blockTypes: BlockType[] = [];
@@ -239,7 +244,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.isMobile === matches) return;
     this.isMobile = matches;
     if (matches) { this.paletteOpen = false; this.propsOpen = false; }
-    else { this.paletteOpen = true; this.propsOpen = true; this.mobileMoreOpen = false; }
+    else {
+      this.paletteOpen = true; this.propsOpen = true; this.mobileMoreOpen = false;
+      if (this.connectMode) this.toggleConnectMode();   // connect mode is mobile-only
+    }
   }
 
   ngAfterViewInit(): void {
@@ -411,24 +419,21 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     // apply current wire style to newly drawn links; pin-to-pin connections
     // between electrical symbols become schematic wires (solid, no arrowhead)
     // and snap the just-connected part into line so the wire draws straight.
-    this.diagram.addDiagramListener('LinkDrawn', (e) => {
-      const link = e.subject as go.Link;
-      const elec = (n: go.Node | null) =>
-        !!n && n.data?.category === 'symbol' && String(n.data.shape || '').startsWith('elec-');
-      const wire = elec(link.fromNode) && elec(link.toNode);
-      this.diagram.model.commit((m) => {
-        m.set(link.data, 'color', this.wireColor);
-        m.set(link.data, 'width', this.wireWidth);
-        m.set(link.data, 'dash', wire || this.wireStyle === 'solid' ? null : [6, 3]);
-        m.set(link.data, 'flow', !wire && this.wireStyle === 'flow');
-        m.set(link.data, 'routing', this.wireRouter);
-        m.set(link.data, 'wire', wire);
-      }, 'style link');
-      if (wire) this.straightenWire(link);
-    });
+    this.diagram.addDiagramListener('LinkDrawn', (e) => this.styleDrawnLink(e.subject as go.Link));
     this.diagram.addDiagramListener('LinkRelinked', (e) => {
       const link = e.subject as go.Link;
       if (link?.data?.wire) this.straightenWire(link);
+    });
+    // Mobile tap-to-connect: while connect mode is on, tapping a component picks
+    // it, and tapping a second component wires the two together (dragging a thin
+    // port with a finger is far too fiddly on touch).
+    this.diagram.addDiagramListener('ObjectSingleClicked', (e) => {
+      if (!this.connectMode) return;
+      const node = e.subject?.part;
+      if (node instanceof go.Node) this.zone.run(() => this.onConnectTap(node));
+    });
+    this.diagram.addDiagramListener('BackgroundSingleClicked', () => {
+      if (this.connectMode && this.connectFrom) this.zone.run(() => this.clearConnectArm());
     });
     this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
     this.startAnimations();
@@ -855,7 +860,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       new go.Binding('curve', 'routing', (r) => r === 'smooth' ? go.Link.Bezier : go.Link.None),
       // Schematic wires (pin-to-pin between electrical symbols) bend square.
       new go.Binding('corner', 'wire', (w) => (w ? 0 : 8)),
-      $(go.Shape, { strokeWidth: 2, stroke: '#94a3b8' },
+      // Fat, invisible path that widens the tap/click target — a 2px wire is
+      // almost impossible to hit with a finger, so this gives ~18px of slack.
+      $(go.Shape, { isPanelMain: true, stroke: 'transparent', strokeWidth: 18 }),
+      $(go.Shape, { isPanelMain: true, strokeWidth: 2, stroke: '#94a3b8' },
         new go.Binding('stroke', 'color'),
         new go.Binding('strokeWidth', 'width'),
         new go.Binding('strokeDashArray', 'dash')),
@@ -1162,6 +1170,90 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       (m as go.GraphLinksModel).addNodeData(this.nodeDataFor(b, pt)), 'add node'));
     this.paletteOpen = false;
     this.notify.success(`${this.i18n.td(b.label)} added to the canvas.`);
+  }
+
+  // ---- mobile tap-to-connect ----
+
+  /** Toggle tap-to-connect. While on, node dragging is suspended so a tap picks
+   * a component instead of moving it; panning/zoom still work. */
+  toggleConnectMode(): void {
+    this.connectMode = !this.connectMode;
+    this.clearConnectArm();
+    if (this.diagram) this.diagram.toolManager.draggingTool.isEnabled = !this.connectMode;
+    if (this.connectMode) this.notify.info('Tap a component, then tap another to wire them.');
+  }
+
+  private clearConnectArm(): void {
+    this.connectFrom = null;
+    this.showAllPins(false);
+    this.cdr.detectChanges();
+  }
+
+  /** A component was tapped while in connect mode. */
+  private onConnectTap(node: go.Node): void {
+    if (!this.connectFrom) {
+      this.connectFrom = node;          // arm: remember the first component
+      this.showAllPins(true);           // reveal every pin as a connection hint
+      this.diagram.select(node);
+      this.cdr.detectChanges();
+      return;
+    }
+    if (node === this.connectFrom) { this.clearConnectArm(); return; }  // tapped same → cancel
+    this.connectNodes(this.connectFrom, node);
+    this.clearConnectArm();
+  }
+
+  /** Wire two components together, joining their nearest pins. */
+  private connectNodes(a: go.Node, b: go.Node): void {
+    const pair = this.nearestPortPair(a, b);
+    if (!pair) { this.notify.error('These components can’t be wired directly.'); return; }
+    const data: go.ObjectData = { from: a.key, to: b.key, fromPort: pair.from, toPort: pair.to };
+    this.zone.runOutsideAngular(() => {
+      this.diagram.model.commit((m) => (m as go.GraphLinksModel).addLinkData(data), 'connect');
+      const link = this.diagram.findLinkForData(data);
+      if (link) this.styleDrawnLink(link);
+    });
+    this.notify.success('Wire added.');
+  }
+
+  /** Pick the closest linkable-pin pair between two components (least finger
+   * work — the wire lands where the components already face each other). */
+  private nearestPortPair(a: go.Node, b: go.Node): { from: string; to: string } | null {
+    const pinsOf = (n: go.Node): go.GraphObject[] => {
+      const out: go.GraphObject[] = [];
+      n.ports.each((p) => { if (p.portId) out.push(p); });
+      return out;
+    };
+    const ap = pinsOf(a), bp = pinsOf(b);
+    if (!ap.length || !bp.length) return null;
+    let best: { from: string; to: string } | null = null;
+    let bestD = Infinity;
+    for (const pa of ap) {
+      const da = pa.getDocumentPoint(go.Spot.Center);
+      for (const pb of bp) {
+        const d = da.distanceSquaredPoint(pb.getDocumentPoint(go.Spot.Center));
+        if (d < bestD) { bestD = d; best = { from: pa.portId!, to: pb.portId! }; }
+      }
+    }
+    return best;
+  }
+
+  /** Apply the current wire style to a freshly created link (drawn by drag or by
+   * tap-to-connect); pin-to-pin links between electrical symbols become
+   * schematic wires and snap straight. */
+  private styleDrawnLink(link: go.Link): void {
+    const elec = (n: go.Node | null) =>
+      !!n && n.data?.category === 'symbol' && String(n.data.shape || '').startsWith('elec-');
+    const wire = elec(link.fromNode) && elec(link.toNode);
+    this.diagram.model.commit((m) => {
+      m.set(link.data, 'color', this.wireColor);
+      m.set(link.data, 'width', this.wireWidth);
+      m.set(link.data, 'dash', wire || this.wireStyle === 'solid' ? null : [6, 3]);
+      m.set(link.data, 'flow', !wire && this.wireStyle === 'flow');
+      m.set(link.data, 'routing', this.wireRouter);
+      m.set(link.data, 'wire', wire);
+    }, 'style link');
+    if (wire) this.straightenWire(link);
   }
 
   /** Cached (not a live getter) so template change-detection stays stable even

@@ -290,8 +290,9 @@ a:hover { text-decoration: underline; }
   }
   .confirm-card { width: min(92vw, 400px) !important; }
 
-  /* Zoom dock: clear of the wire dock; slightly tighter. */
-  .zoom-dock { bottom: 10px !important; right: 10px !important; }
+  /* Zoom dock: bottom-left on phones so it clears the connect FAB (bottom-right)
+     and the contextual wire dock. */
+  .zoom-dock { bottom: 12px !important; left: 12px !important; right: auto !important; }
 
   /* Toasts above the bottom app bar. */
   .toast-wrap, .toast { bottom: calc(66px + env(safe-area-inset-bottom)) !important; }
