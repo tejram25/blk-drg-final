@@ -823,9 +823,21 @@
       /* --- overlays sized for phones --- */
       .chat { left: 8px; right: 8px; width: auto; bottom: calc(64px + env(safe-area-inset-bottom)); }
       /* Wire dock is contextual on phones: only when a wire is selected, and it
-         floats above the FAB/zoom row so it never covers them. */
-      .wire-dock { display: none; left: 8px; right: 8px; bottom: 76px; overflow-x: auto; }
+         floats above the FAB/zoom row so it never covers them. overflow MUST
+         stay visible — `overflow-x: auto` computes overflow-y to auto too, which
+         clipped the colour/style popover (it sits above the dock) so its swatches
+         couldn't be tapped. Let the row wrap instead of scrolling it. */
+      .wire-dock {
+        display: none; left: 8px; right: 8px; bottom: 76px;
+        overflow: visible; flex-wrap: wrap; row-gap: 6px;
+      }
       .wire-dock.show { display: flex; }
+      .wire-dock .dock-label { display: none; }          /* save width on phones */
+      .wire-dock .dock-label-input { flex: 1 1 80px; min-width: 0; }
+      /* Bigger touch targets inside the popovers. */
+      .wire-dock .swatch { width: 26px; height: 26px; }
+      .wire-dock .dock-btn { width: 46px; height: 40px; }
+      .wire-dock .dock-pop { max-width: calc(100vw - 24px); }
       .onboarding { max-width: 88vw; padding: 16px 18px; }
       .imggen-overlay .imggen-card { max-width: 86vw; }
       .minimap { display: none !important; }   /* no room on phones */
