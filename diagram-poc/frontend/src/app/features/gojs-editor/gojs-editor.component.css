@@ -507,7 +507,13 @@
 
     /* ---- Canvas & property panels ---- */
     .canvas-wrap { flex: 1; position: relative; min-width: 0; }
-    .canvas { width: 100%; height: 100%; }
+    .canvas {
+      width: 100%; height: 100%;
+      /* Stop iOS long-press from starting a text selection / showing the
+         magnifier loupe + callout over the canvas. */
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none;
+    }
 
     /* ---- Wire dock (floating, bottom center) ---- */
     .wire-dock {
@@ -909,6 +915,14 @@
     /* Mobile-only top-bar buttons (undo/redo) — hidden on desktop, where the
        boxed tool group already provides them. */
     .topbar .mobile-keep { display: none; }
+
+    /* On phones, a long-press must not start an iOS text selection / callout on
+       the chrome (bars, FABs, hints). Kept off desktop so text stays selectable
+       there; inputs and the chat log opt back in so they remain usable. */
+    .layout.mobile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+    .layout.mobile input, .layout.mobile textarea, .layout.mobile .chat-log {
+      -webkit-user-select: text; user-select: text;
+    }
   
 /* ---- GoJS canvas background (GoJS draws the grid; the div paints the base) ---- */
 .canvas { background: var(--bg-deep); }

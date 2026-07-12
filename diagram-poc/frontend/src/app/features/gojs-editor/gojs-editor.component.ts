@@ -426,6 +426,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       'linkingTool.isUnconnectedLinkValid': false,
       'linkingTool.portGravity': 20,
       'relinkingTool.portGravity': 20,
+      // No context menu: a long-press (touch) or right-click otherwise pops
+      // GoJS's default menu — a huge, unstyled list on phones that even offers
+      // removed features (Group Selection). All its actions are already covered
+      // by the toolbar, properties panel, delete pill and keyboard shortcuts.
+      'contextMenuTool.isEnabled': false,
       minScale: 0.15, maxScale: 4,
     });
     // A single, coarse, subtle grid (the default GoJS grid draws several dense
