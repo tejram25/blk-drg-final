@@ -670,6 +670,13 @@
                                                   </button>
                                                 }
                                               </div>
+                                              @if (!appInstalled) {
+                                                <button type="button" class="more-install" (click)="installApp()">
+                                                  <mat-icon>install_mobile</mat-icon>
+                                                  <span class="mi-main">Install app</span>
+                                                  <span class="mi-sub">Add to your home screen</span>
+                                                </button>
+                                              }
                                               @if (auth.user(); as u) {
                                                 <div class="more-account">
                                                   <mat-icon>account_circle</mat-icon><span class="ma-name">{{ u.name || u.email }}</span>
@@ -681,6 +688,28 @@
                                         }
 
                                         </div>
+
+                                        <!-- How to install (iOS Safari, or any browser without a native prompt) -->
+                                        @if (installHelpOpen) {
+                                          <div class="sheet-backdrop" (click)="installHelpOpen = false"></div>
+                                          <div class="install-help" role="dialog">
+                                            <div class="ih-head"><mat-icon>install_mobile</mat-icon><span>Install this app</span></div>
+                                            @if (isIosDevice) {
+                                              <ol class="ih-steps">
+                                                <li>Tap the <b>Share</b> button <mat-icon class="ih-ic">ios_share</mat-icon> in Safari's toolbar.</li>
+                                                <li>Scroll down and tap <b>Add to Home Screen</b>.</li>
+                                                <li>Tap <b>Add</b> — it opens full-screen, just like a native app.</li>
+                                              </ol>
+                                            } @else {
+                                              <ol class="ih-steps">
+                                                <li>Open your browser's menu <mat-icon class="ih-ic">more_vert</mat-icon>.</li>
+                                                <li>Tap <b>Install app</b> or <b>Add to Home screen</b>.</li>
+                                              </ol>
+                                              <p class="ih-note">The one-tap install prompt only appears when the app is served over <b>HTTPS</b> (a production build). On the dev server you can still add it from the browser menu.</p>
+                                            }
+                                            <button type="button" class="ih-ok" (click)="installHelpOpen = false">Got it</button>
+                                          </div>
+                                        }
 
                                         <!-- Dialogs / panels -->
                                         @if (partSearchOpen) {

@@ -118,6 +118,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   mobileMoreOpen = false;
   private mobileMq?: MediaQueryList;
   private mobileMqListener?: (e: MediaQueryListEvent) => void;
+  // ---- PWA install ----
+  private deferredInstall: any = null;
+  /** Already running as an installed/standalone app → hide the install button. */
+  appInstalled = false;
+  /** iOS Safari never fires beforeinstallprompt → we show manual instructions. */
+  isIosDevice = false;
+  installHelpOpen = false;
+
   /** Tap-to-connect mode (mobile): tap one component, then another, to wire them. */
   connectMode = false;
   private connectFrom: go.Node | null = null;
@@ -240,6 +248,46 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     // Live chat: badge + toast for messages that arrive while the dock is closed.
     this.chatSub = this.collab.chatNew$.subscribe((m) => this.onChatArrived(m));
+
+    // PWA install: detect platform + whether we're already running installed.
+    const ua = navigator.userAgent || '';
+    this.isIosDevice = /iphone|ipad|ipod/i.test(ua) ||
+      (navigator.platform === 'MacIntel' && (navigator as any).maxTouchPoints > 1); // iPadOS
+    this.appInstalled = window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as any).standalone === true;
+  }
+
+  // ---- PWA install ----
+  /** Chrome/Edge fire this when the app is installable; we stash it to trigger
+   * the native prompt on demand from our own "Install app" button. */
+  @HostListener('window:beforeinstallprompt', ['$event'])
+  onBeforeInstallPrompt(e: Event): void {
+    e.preventDefault();
+    this.deferredInstall = e;
+    this.cdr.detectChanges();
+  }
+  @HostListener('window:appinstalled')
+  onAppInstalled(): void {
+    this.deferredInstall = null;
+    this.appInstalled = true;
+    this.installHelpOpen = false;
+    this.cdr.detectChanges();
+  }
+  /** Install the app. Uses the native prompt where the browser offered one
+   * (Android/desktop Chrome/Edge); otherwise — iOS Safari, which never fires
+   * beforeinstallprompt, or a not-yet-eligible context — show step-by-step help. */
+  async installApp(): Promise<void> {
+    this.mobileMoreOpen = false;
+    if (this.deferredInstall) {
+      const e = this.deferredInstall;
+      this.deferredInstall = null;
+      e.prompt();
+      try { await e.userChoice; } catch { /* dismissed */ }
+      this.cdr.detectChanges();
+      return;
+    }
+    this.installHelpOpen = true;
+    this.cdr.detectChanges();
   }
 
   /** Entering phone layout: start with the canvas, not an open drawer. */
