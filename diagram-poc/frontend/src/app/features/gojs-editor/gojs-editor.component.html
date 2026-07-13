@@ -597,7 +597,22 @@
                                           <!-- Session chat -->
                                           @if (showChat && collab.active) {
                                             <div class="chat">
-                                              <div class="chat-head"><span>Session chat</span><button mat-icon-button (click)="toggleChat()"><mat-icon>close</mat-icon></button></div>
+                                              <div class="chat-head">
+                                                <span>Session chat</span>
+                                                <span class="chat-peers"><mat-icon>group</mat-icon>{{ collab.participants.length }}</span>
+                                                <button mat-icon-button (click)="toggleChat()"><mat-icon>close</mat-icon></button>
+                                              </div>
+                                              @if (collab.participants.length) {
+                                                <div class="chat-roster">
+                                                  @for (p of collab.participants; track participantTrack($index, p)) {
+                                                    <span class="cr-chip">
+                                                      <span class="cr-dot" [style.background]="p.color"></span>
+                                                      <span class="cr-name">{{ p.name }}</span>
+                                                      @if (p.isSelf) { <span class="cr-you">you</span> }
+                                                    </span>
+                                                  }
+                                                </div>
+                                              }
                                               <div class="chat-log">
                                                 @for (m of collab.messages; track m) {
                                                   <div class="msg" [class.self]="m.isSelf">

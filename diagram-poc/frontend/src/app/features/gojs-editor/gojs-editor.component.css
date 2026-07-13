@@ -934,6 +934,21 @@
   border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.45); overflow: hidden; }
 .chat-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 6px 12px;
   border-bottom: 1px solid var(--border-soft); font-size: 12.5px; font-weight: 600; }
+.chat-head .chat-peers { display: inline-flex; align-items: center; gap: 3px; margin-left: auto; margin-right: 2px;
+  font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.chat-head .chat-peers mat-icon { font-size: 15px; width: 15px; height: 15px; color: var(--accent); }
+/* "Who's here" roster strip — the mobile way to see everyone in the session
+   (the desktop presence button is hidden on phones). */
+.chat-roster { display: flex; gap: 6px; overflow-x: auto; padding: 7px 10px;
+  border-bottom: 1px solid var(--border-soft); scrollbar-width: none; }
+.chat-roster::-webkit-scrollbar { display: none; }
+.chat-roster .cr-chip { display: inline-flex; align-items: center; gap: 5px; flex: none;
+  background: var(--panel-2); border: 1px solid var(--border-soft); border-radius: 999px;
+  padding: 3px 9px; font-size: 11.5px; color: var(--text); }
+.chat-roster .cr-dot { width: 8px; height: 8px; border-radius: 50%; flex: none;
+  outline: 1px solid rgba(255,255,255,.18); }
+.chat-roster .cr-name { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-roster .cr-you { font-size: 9px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .04em; }
 .chat-log { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .chat .msg { display: flex; flex-direction: column; gap: 2px; max-width: 90%; }
 .chat .msg.self { align-self: flex-end; align-items: flex-end; }
