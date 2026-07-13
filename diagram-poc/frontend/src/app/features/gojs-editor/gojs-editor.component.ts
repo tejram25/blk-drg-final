@@ -361,6 +361,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     // Opening OR closing marks everything currently in the room as seen.
     this.chatUnreadCount = 0;
   }
+  /** Session roster (avatar stack in the chat header): show a few faces, then a
+   * "+N" overflow; tapping expands the full list. */
+  rosterOpen = false;
+  private static readonly ROSTER_AVATARS = 4;
+  get rosterAvatars() { return this.collab.participants.slice(0, GojsEditorComponent.ROSTER_AVATARS); }
+  get rosterOverflow(): number { return Math.max(0, this.collab.participants.length - GojsEditorComponent.ROSTER_AVATARS); }
   get chatOpen(): boolean { return this.showChat; }
   /** Live messages from others that arrived while the chat dock was closed
    * (persisted history replayed at join is never counted — only new traffic). */

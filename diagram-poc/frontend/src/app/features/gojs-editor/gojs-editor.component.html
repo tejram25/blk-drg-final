@@ -599,17 +599,31 @@
                                             <div class="chat">
                                               <div class="chat-head">
                                                 <span>Session chat</span>
-                                                <span class="chat-peers"><mat-icon>group</mat-icon>{{ collab.participants.length }}</span>
+                                                @if (collab.participants.length) {
+                                                  <button type="button" class="chat-stack" [class.on]="rosterOpen"
+                                                    (click)="rosterOpen = !rosterOpen" [matTooltip]="collab.participants.length + ' in this session'">
+                                                    @for (p of rosterAvatars; track participantTrack($index, p)) {
+                                                      <span class="cs-av" [style.background]="p.color">{{ initials(p.name) }}</span>
+                                                    }
+                                                    @if (rosterOverflow > 0) { <span class="cs-more">+{{ rosterOverflow }}</span> }
+                                                  </button>
+                                                }
                                                 <button mat-icon-button (click)="toggleChat()"><mat-icon>close</mat-icon></button>
                                               </div>
-                                              @if (collab.participants.length) {
-                                                <div class="chat-roster">
+                                              @if (rosterOpen && collab.participants.length) {
+                                                <div class="chat-roster-list">
+                                                  <div class="crl-title">In this session · {{ collab.participants.length }}</div>
                                                   @for (p of collab.participants; track participantTrack($index, p)) {
-                                                    <span class="cr-chip">
-                                                      <span class="cr-dot" [style.background]="p.color"></span>
-                                                      <span class="cr-name">{{ p.name }}</span>
-                                                      @if (p.isSelf) { <span class="cr-you">you</span> }
-                                                    </span>
+                                                    <div class="crl-row">
+                                                      <span class="crl-dot" [style.background]="p.color"></span>
+                                                      <span class="crl-name">{{ p.name }}</span>
+                                                      @if (p.isSelf) {
+                                                        <span class="crl-you">you</span>
+                                                      } @else {
+                                                        <button type="button" class="crl-follow" [class.on]="collab.followUid === p.uid"
+                                                          (click)="collab.toggleFollow(p.uid)">{{ collab.followUid === p.uid ? 'Following' : 'Follow' }}</button>
+                                                      }
+                                                    </div>
                                                   }
                                                 </div>
                                               }
