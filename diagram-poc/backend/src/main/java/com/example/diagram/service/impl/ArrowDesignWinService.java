@@ -2,15 +2,20 @@ package com.example.diagram.service.impl;
 
 import com.example.diagram.config.ArrowProperties;
 import com.example.diagram.service.DesignWinService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Live Arrow Design Win integration. Builds each documented endpoint URL,
  * validates the conditionally-required parameters, and delegates auth/transport
- * to {@link ArrowApiClient}. Always calls the real Arrow APIs.
+ * to {@link ArrowApiClient}. Calls the real Arrow APIs.
+ *
+ * <p>Disabled when {@code arrow.mock=true} — the {@link MockDesignWinService}
+ * takes over so the flow can be demoed offline.
  */
 @Service
+@ConditionalOnProperty(name = "arrow.mock", havingValue = "false", matchIfMissing = true)
 public class ArrowDesignWinService implements DesignWinService {
 
     private final ArrowProperties props;
