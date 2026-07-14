@@ -610,11 +610,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Set true just before an expand rebuilds the dock, so the single spurious
    * mouse-leave the rebuild emits doesn't schedule a close. */
   private partsDockIgnoreLeave = false;
-  /** Force-close the parts dock (background click, pointer left the canvas). */
+  /** Force-close the parts dock (background click, pointer left the canvas).
+   * Sweeps EVERY node so an orphaned dock (e.g. moving straight from one
+   * component to another) can never linger. */
   private hidePartsDock(): void {
     clearTimeout(this.partsDockTimer);
     this.partsDockIgnoreLeave = false;
-    if (this.partsDockNode) { this.partsDockNode.removeAdornment('partsDock'); this.partsDockNode = null; }
+    this.partsDockNode = null;
+    this.diagram?.nodes.each((n) => n.removeAdornment('partsDock'));
   }
   /** Hover dock (Option D): an interactive BOM sticky beside ANY component. Each
    * row copies its MPN on click; "+N more" expands the full list; "Copy all"
@@ -634,6 +637,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     clearTimeout(this.partsDockTimer);
+    // Only one dock at a time: moving straight from one component to another
+    // cancels the first's close timer, so remove its dock explicitly here.
+    if (this.partsDockNode && this.partsDockNode !== part) this.partsDockNode.removeAdornment('partsDock');
     this.partsDockNode = part;
     const parts = part.data?.attachedParts;
     if (!Array.isArray(parts) || parts.length === 0) return;
