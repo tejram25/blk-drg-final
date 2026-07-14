@@ -309,6 +309,12 @@ export class GojsCollabService {
 
   private onRemoteCells(event: Y.YMapEvent<any>): void {
     if (event.transaction.local || !this.diagram || !this.cells) return;
+    // Ignore the room's initial state that streams in at join — applying it here
+    // would MERGE the room's (possibly stale/reused) cells into the just-loaded
+    // diagram. The 'sync' handler decides the initial state authoritatively:
+    // adopt the room (replaceModelFromRoom) or publish our loaded diagram over
+    // it. Only genuine live edits AFTER that first sync are applied incrementally.
+    if (!this.seeded) return;
     const gm = this.gm();
     this.applyingRemote = true;
     // Remote edits must never enter the LOCAL undo stack — otherwise the user's

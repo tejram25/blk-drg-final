@@ -340,7 +340,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const pt = this.diagram.transformViewToDoc(new go.Point(e.clientX - rect.left, e.clientY - rect.top));
     this.collab.setLocalCursor({ x: pt.x, y: pt.y });
   }
-  onCanvasMouseLeave(): void { if (this.collab.active) this.collab.setLocalCursor(null); }
+  onCanvasMouseLeave(): void {
+    if (this.collab.active) this.collab.setLocalCursor(null);
+    this.hidePartsDock();   // pointer left the canvas entirely → dismiss the sticky
+  }
 
   private onViewport(): void {
     if (this.collab.active) {
@@ -479,6 +482,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     this.diagram.addDiagramListener('BackgroundSingleClicked', () => {
       if (this.connectMode && this.connectFrom) this.zone.run(() => this.clearConnectArm());
+      this.hidePartsDock();   // click anywhere off a component dismisses the parts sticky
     });
     // On phones a tooltip pinned to the touch point sits under the finger and
     // often runs off-screen; pin it to the top-centre of the canvas instead.
@@ -602,27 +606,35 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return it?.part?.arwPartNum?.name || it?.part?.suppPartNum?.name || 'Part';
   }
   private partsDockTimer: any = null;
+  private partsDockNode: go.Node | null = null;
+  /** Set true just before an expand rebuilds the dock, so the single spurious
+   * mouse-leave the rebuild emits doesn't schedule a close. */
+  private partsDockIgnoreLeave = false;
+  /** Force-close the parts dock (background click, pointer left the canvas). */
+  private hidePartsDock(): void {
+    clearTimeout(this.partsDockTimer);
+    this.partsDockIgnoreLeave = false;
+    if (this.partsDockNode) { this.partsDockNode.removeAdornment('partsDock'); this.partsDockNode = null; }
+  }
   /** Hover dock (Option D): an interactive BOM sticky beside ANY component. Each
    * row copies its MPN on click; "+N more" expands the full list; "Copy all"
-   * copies every MPN. Kept alive while the pointer is over it (so it's clickable)
-   * via a short close delay that the dock's own mouseEnter cancels. The node
+   * copies every MPN. A short close delay (cancelled by the dock's own
+   * mouseEnter) lets the pointer travel from the node onto the dock; the node
    * placeholder is non-pickable so hovering the node itself never flickers. */
   private showPartsDock(part: go.Part | null | undefined, on: boolean, expanded = false): void {
     if (!(part instanceof go.Node)) return;
     if (!on) {
-      // Delay removal so the pointer can travel from the node onto the dock;
-      // on fire, keep it open if the pointer is actually still over the dock
-      // (also swallows the spurious leave when the dock rebuilds on expand).
+      // The one spurious leave from an expand-rebuild must not close it.
+      if (this.partsDockIgnoreLeave) { this.partsDockIgnoreLeave = false; return; }
       clearTimeout(this.partsDockTimer);
       this.partsDockTimer = setTimeout(() => {
-        const ad = part.findAdornment('partsDock');
-        const io = this.diagram?.lastInput;
-        if (ad && io && ad.actualBounds.containsPoint(io.documentPoint)) return;
         part.removeAdornment('partsDock');
-      }, 280);
+        if (this.partsDockNode === part) this.partsDockNode = null;
+      }, 300);
       return;
     }
     clearTimeout(this.partsDockTimer);
+    this.partsDockNode = part;
     const parts = part.data?.attachedParts;
     if (!Array.isArray(parts) || parts.length === 0) return;
     const $ = go.GraphObject.make;
@@ -648,7 +660,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       ...shown.map(row),
     ];
     if (!showAll) {
-      inner.push(btn(() => this.showPartsDock(part, true, true),
+      inner.push(btn(() => { this.partsDockIgnoreLeave = true; this.showPartsDock(part, true, true); },
         $(go.TextBlock, { font: '700 9px Roboto, sans-serif', stroke: '#f5a623', margin: new go.Margin(3, 2, 1, 2) },
           `+${parts.length - CAP} more…`)));
     }
