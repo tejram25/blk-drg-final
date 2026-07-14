@@ -1023,8 +1023,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.diagram.linkTemplate = $(
       go.Link,
-      { routing: go.Link.AvoidsNodes, corner: 8, relinkableFrom: true, relinkableTo: true, reshapable: true, resegmentable: true },
-      new go.Binding('routing', 'routing', (r) => r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.AvoidsNodes),
+      // 'manhattan' → Orthogonal (clean right-angle segments that cross freely),
+      // NOT AvoidsNodes, which detours around every component and looks bendy.
+      { routing: go.Link.Orthogonal, corner: 8, relinkableFrom: true, relinkableTo: true, reshapable: true, resegmentable: true },
+      new go.Binding('routing', 'routing', (r) => r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.Orthogonal),
       new go.Binding('curve', 'routing', (r) => r === 'smooth' ? go.Link.Bezier : go.Link.None),
       // Schematic wires (pin-to-pin between electrical symbols) bend square.
       new go.Binding('corner', 'wire', (w) => (w ? 0 : 8)),
