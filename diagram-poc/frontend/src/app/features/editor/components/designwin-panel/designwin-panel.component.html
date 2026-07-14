@@ -118,9 +118,19 @@
               </div>
             }
             @if (level.kind === 'detail' && partNumberOf(row)) {
-              <button type="button" class="dw-addbtn" (click)="$event.stopPropagation(); addRowToDiagram(row)">
-                <mat-icon>add</mat-icon> Add to diagram
-              </button>
+              <div class="dw-part-actions" (click)="$event.stopPropagation()">
+                <label class="dw-qty">Qty
+                  <input type="number" min="1" [(ngModel)]="row.qty" (change)="clampQty(row)" />
+                </label>
+                <button type="button" class="dw-addbtn" (click)="addRowToDiagram(row)">
+                  <mat-icon>add</mat-icon> Add to diagram
+                </button>
+                @if (hasSelection) {
+                  <button type="button" class="dw-addbtn attach" (click)="attachPartRow(row)">
+                    <mat-icon>link</mat-icon> Link to block
+                  </button>
+                }
+              </div>
             }
             @if (level.kind !== 'detail') {
               <button type="button" class="dw-addbtn" (click)="$event.stopPropagation(); attachRow(row)">

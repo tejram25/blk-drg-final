@@ -21,6 +21,8 @@ interface Row {
   fields: { k: string; v: string }[];
   raw: any;
   expanded?: boolean;
+  /** Order quantity chosen for a part row (defaults to its EAU, min 1). */
+  qty?: number;
 }
 
 /**
@@ -38,9 +40,13 @@ interface Row {
 export class DesignwinPanelComponent implements OnInit {
   /** Optional part number to preseed the POS tab with (from a selected part card). */
   @Input() seedPart = '';
+  /** Whether a block is selected on the canvas (enables "Link to block"). */
+  @Input() hasSelection = false;
   @Output() close = new EventEmitter<void>();
-  /** Emitted when the user adds a Design Win part to the diagram. */
+  /** Emitted when the user adds a Design Win part to the diagram as a new card. */
   @Output() addPart = new EventEmitter<{ partNumber: string; manufacturer: string; description: string; quantity: number }>();
+  /** Emitted when the user links a Design Win part to the selected block. */
+  @Output() attachPart = new EventEmitter<{ partNumber: string; manufacturer: string; description: string; quantity: number }>();
   /** Emitted when the user attaches a customer / project / board to the diagram. */
   @Output() attach = new EventEmitter<DesignWinContext>();
 
@@ -146,15 +152,31 @@ export class DesignwinPanelComponent implements OnInit {
   get partRows(): Row[] {
     return this.level?.kind === 'detail' ? this.level.items.filter((r) => !!this.partNumberOf(r)) : [];
   }
-  addRowToDiagram(row: Row): void {
-    const pn = this.partNumberOf(row);
-    if (!pn) return;
-    this.addPart.emit({
-      partNumber: pn,
+  /** The chosen quantity for a part row (defaults to its EAU / qty, min 1). */
+  qtyOf(row: Row): number {
+    if (row.qty == null) {
+      row.qty = Math.max(1, Number(this.pickDeep(row.raw, ['eau', 'quantity', 'qty', 'annualUsage'])) || 1);
+    }
+    return row.qty;
+  }
+  clampQty(row: Row): void { row.qty = Math.max(1, Math.floor(Number(row.qty) || 1)); }
+
+  private partPayload(row: Row) {
+    return {
+      partNumber: this.partNumberOf(row),
       manufacturer: this.pickDeep(row.raw, ['mfrName', 'manufacturer', 'mfr']),
       description: this.pickDeep(row.raw, ['description', 'desc']),
-      quantity: Math.max(1, Number(this.pickDeep(row.raw, ['eau', 'quantity', 'qty', 'annualUsage'])) || 1),
-    });
+      quantity: this.qtyOf(row),
+    };
+  }
+  addRowToDiagram(row: Row): void {
+    if (!this.partNumberOf(row)) return;
+    this.addPart.emit(this.partPayload(row));
+  }
+  /** Link this part to the block currently selected on the canvas. */
+  attachPartRow(row: Row): void {
+    if (!this.partNumberOf(row)) return;
+    this.attachPart.emit(this.partPayload(row));
   }
   addAllParts(): void { this.partRows.forEach((r) => this.addRowToDiagram(r)); }
 
@@ -324,7 +346,10 @@ export class DesignwinPanelComponent implements OnInit {
           fields.push({ k: this.humanize(k), v: String(sv) });
         }
       }
-      return { title, subtitle, fields, raw: item };
+      const row: Row = { title, subtitle, fields, raw: item };
+      // Part rows get a default order quantity (EAU, min 1) the user can edit.
+      if (kind === 'detail') row.qty = this.qtyOf(row);
+      return row;
     });
   }
 

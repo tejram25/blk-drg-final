@@ -1916,7 +1916,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const urls: any[] = Array.isArray(part?.urls) ? part.urls : [];
     const imgUrl = urls.find((u) => /image small/i.test(u?.type))?.URL || urls.find((u) => /image/i.test(u?.type))?.URL || '';
     return { category: 'part', text: title, supplier, img: imgUrl, specs: [...invLines, ...specLines].slice(0, 4),
-      part, partNumber: title, quantity: 1, loc: loc ? go.Point.stringify(loc) : undefined };
+      part, partNumber: title, quantity: Math.max(1, part?.__bomQty || 1), loc: loc ? go.Point.stringify(loc) : undefined };
   }
   addPartToCanvas(part: any): void {
     const c = this.diagram.viewportBounds.center;
@@ -2160,12 +2160,20 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 'design-win context'));
   }
 
-  /** Add a part pulled from the Design Win explorer (a registered/POS part) to the canvas. */
-  onDesignWinAddPart(part: { partNumber: string; manufacturer: string; description: string; quantity: number }): void {
-    this.addPartToCanvas({ arwPartNum: { name: part.partNumber }, suppPartNum: { name: part.partNumber },
+  /** Shape a Design Win explorer part into the catalogue-part form the canvas uses. */
+  private designWinPart(part: { partNumber: string; manufacturer: string; description: string; quantity: number }): any {
+    return { arwPartNum: { name: part.partNumber }, suppPartNum: { name: part.partNumber },
       supp: { name: part.manufacturer }, mfr: { name: part.manufacturer },
       invOrgs: [{ desc: part.description || 'Design Win registered part' }], paramData: [],
-      __designWin: true });
+      __bomQty: Math.max(1, part.quantity || 1), __designWin: true };
+  }
+  /** Add a Design Win part (registered / POS) to the canvas as its own card. */
+  onDesignWinAddPart(part: { partNumber: string; manufacturer: string; description: string; quantity: number }): void {
+    this.addPartToCanvas(this.designWinPart(part));
+  }
+  /** Link a Design Win part to the block currently selected on the canvas. */
+  onDesignWinAttachPart(part: { partNumber: string; manufacturer: string; description: string; quantity: number }): void {
+    this.attachPartToSelected(this.designWinPart(part));
   }
 
   // ---- versions / comments / templates / export dialog ----
