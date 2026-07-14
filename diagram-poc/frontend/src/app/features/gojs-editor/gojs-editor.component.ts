@@ -590,6 +590,45 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     else this.resetPins(node);
   }
 
+  private static readonly PARTS_DOCK_CAP = 5;
+  /** Part number for an attached-part entry. */
+  private static attachedMpn(it: any): string {
+    return it?.part?.arwPartNum?.name || it?.part?.suppPartNum?.name || 'Part';
+  }
+  /** Hover dock (Option D): a small BOM sticky beside ANY component listing the
+   * parts linked to it. Built as a non-pickable Adornment so it floats without
+   * changing the node's size, and rebuilt each hover so it's always current. */
+  private showPartsDock(part: go.Part | null | undefined, on: boolean): void {
+    if (!(part instanceof go.Node)) return;
+    if (!on) { part.removeAdornment('partsDock'); return; }
+    const parts = part.data?.attachedParts;
+    if (!Array.isArray(parts) || parts.length === 0) return;
+    const $ = go.GraphObject.make;
+    const CAP = GojsEditorComponent.PARTS_DOCK_CAP;
+    const rows = parts.slice(0, CAP).map((it: any) =>
+      $(go.Panel, 'Horizontal', { margin: new go.Margin(1.5, 0, 1.5, 0), alignment: go.Spot.Left },
+        $(go.Shape, 'Circle', { desiredSize: new go.Size(5, 5), fill: '#38bdf8', stroke: null, margin: new go.Margin(0, 7, 0, 0) }),
+        $(go.TextBlock, { font: '10px Menlo, monospace', stroke: '#e5e7eb' }, GojsEditorComponent.attachedMpn(it)),
+        $(go.TextBlock, { font: '9px Roboto, sans-serif', stroke: '#9aa0a8', margin: new go.Margin(0, 0, 0, 12) },
+          '×' + (it?.quantity || 1))));
+    const inner: go.GraphObject[] = [
+      $(go.TextBlock, { font: '700 8px Roboto, sans-serif', stroke: '#8b93a1', margin: new go.Margin(0, 0, 5, 0) },
+        `PARTS · ${parts.length}`),
+      ...rows,
+    ];
+    if (parts.length > CAP) {
+      inner.push($(go.TextBlock, { font: '700 9px Roboto, sans-serif', stroke: '#f5a623', margin: new go.Margin(4, 0, 0, 0) },
+        `+${parts.length - CAP} more…`));
+    }
+    const ad = $(go.Adornment, 'Spot', { pickable: false, isShadowed: true, shadowColor: 'rgba(0,0,0,0.5)', shadowBlur: 14 },
+      $(go.Placeholder),
+      $(go.Panel, 'Auto', { alignment: new go.Spot(1, 0, 10, 0), alignmentFocus: go.Spot.TopLeft },
+        $(go.Shape, 'RoundedRectangle', { parameter1: 9, fill: '#111827', stroke: '#2c3340', strokeWidth: 1 }),
+        $(go.Panel, 'Vertical', { margin: new go.Margin(8, 10, 8, 9), defaultAlignment: go.Spot.Left }, ...inner)));
+    ad.adornedObject = part;
+    part.addAdornment('partsDock', ad);
+  }
+
   /** Light every pin on the canvas (used while a wire drag is in progress). */
   private showAllPins(on: boolean): void {
     if (!this.diagram) return;
@@ -697,8 +736,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     );
     // Common node options: hover reveals ports; body is movable (not a link starter).
     const hover = {
-      mouseEnter: (_e: go.InputEvent, o: go.GraphObject) => this.hoverPorts(o, true),
-      mouseLeave: (_e: go.InputEvent, o: go.GraphObject) => this.hoverPorts(o, false),
+      mouseEnter: (_e: go.InputEvent, o: go.GraphObject) => { this.hoverPorts(o, true); this.showPartsDock(o.part, true); },
+      mouseLeave: (_e: go.InputEvent, o: go.GraphObject) => { this.hoverPorts(o, false); this.showPartsDock(o.part, false); },
     };
     // The body is a non-linkable port "" so imported links can still attach to it,
     // while dragging the body moves the node instead of drawing a link.
@@ -1718,10 +1757,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /** True for a box node (functional block or shape) that can carry a component. */
   get isBox(): boolean {
-    const d = this.selectedNode?.data;
-    const c = d?.category;
-    // Electrical schematic symbols are components too: they can carry a real MPN.
-    return c === 'shape' || c === 'block' || (c === 'symbol' && String(d?.shape || '').startsWith('elec-'));
+    const c = this.selectedNode?.data?.category;
+    // Every placed component can carry a real MPN — blocks, drawn shapes and the
+    // electrical / animated symbol libraries. (Part cards and images can't.)
+    return c === 'block' || c === 'shape' || c === 'symbol' || c === 'basic';
   }
 
   /** Ask the AI for the component this box needs (grounded in catalogue + POS). */
