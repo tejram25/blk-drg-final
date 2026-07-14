@@ -595,38 +595,94 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private static attachedMpn(it: any): string {
     return it?.part?.arwPartNum?.name || it?.part?.suppPartNum?.name || 'Part';
   }
-  /** Hover dock (Option D): a small BOM sticky beside ANY component listing the
-   * parts linked to it. Built as a non-pickable Adornment so it floats without
-   * changing the node's size, and rebuilt each hover so it's always current. */
-  private showPartsDock(part: go.Part | null | undefined, on: boolean): void {
+  private partsDockTimer: any = null;
+  /** Hover dock (Option D): an interactive BOM sticky beside ANY component. Each
+   * row copies its MPN on click; "+N more" expands the full list; "Copy all"
+   * copies every MPN. Kept alive while the pointer is over it (so it's clickable)
+   * via a short close delay that the dock's own mouseEnter cancels. The node
+   * placeholder is non-pickable so hovering the node itself never flickers. */
+  private showPartsDock(part: go.Part | null | undefined, on: boolean, expanded = false): void {
     if (!(part instanceof go.Node)) return;
-    if (!on) { part.removeAdornment('partsDock'); return; }
+    if (!on) {
+      // Delay removal so the pointer can travel from the node onto the dock;
+      // on fire, keep it open if the pointer is actually still over the dock
+      // (also swallows the spurious leave when the dock rebuilds on expand).
+      clearTimeout(this.partsDockTimer);
+      this.partsDockTimer = setTimeout(() => {
+        const ad = part.findAdornment('partsDock');
+        const io = this.diagram?.lastInput;
+        if (ad && io && ad.actualBounds.containsPoint(io.documentPoint)) return;
+        part.removeAdornment('partsDock');
+      }, 280);
+      return;
+    }
+    clearTimeout(this.partsDockTimer);
     const parts = part.data?.attachedParts;
     if (!Array.isArray(parts) || parts.length === 0) return;
     const $ = go.GraphObject.make;
     const CAP = GojsEditorComponent.PARTS_DOCK_CAP;
-    const rows = parts.slice(0, CAP).map((it: any) =>
-      $(go.Panel, 'Horizontal', { margin: new go.Margin(1.5, 0, 1.5, 0), alignment: go.Spot.Left },
-        $(go.Shape, 'Circle', { desiredSize: new go.Size(5, 5), fill: '#38bdf8', stroke: null, margin: new go.Margin(0, 7, 0, 0) }),
-        $(go.TextBlock, { font: '10px Menlo, monospace', stroke: '#e5e7eb' }, GojsEditorComponent.attachedMpn(it)),
-        $(go.TextBlock, { font: '9px Roboto, sans-serif', stroke: '#9aa0a8', margin: new go.Margin(0, 0, 0, 12) },
-          '×' + (it?.quantity || 1))));
+    const showAll = expanded || parts.length <= CAP;
+    const shown = showAll ? parts : parts.slice(0, CAP);
+    const mpnOf = GojsEditorComponent.attachedMpn;
+    // GoJS "Button" (not a plain click handler) so clicks fire reliably inside an
+    // Adornment. Transparent border; subtle hover highlight.
+    const btn = (fn: () => void, content: go.GraphObject) => $('Button',
+      { 'ButtonBorder.fill': 'transparent', 'ButtonBorder.stroke': null,
+        '_buttonFillOver': 'rgba(56,189,248,0.14)', '_buttonStrokeOver': null,
+        margin: new go.Margin(0.5, 0, 0.5, 0), click: () => fn() }, content);
+    const row = (it: any) => btn(() => this.copyFromDock(mpnOf(it)),
+      $(go.Panel, 'Horizontal', { alignment: go.Spot.Left },
+        $(go.Shape, 'Circle', { desiredSize: new go.Size(5, 5), fill: '#38bdf8', stroke: null, margin: new go.Margin(0, 7, 0, 2) }),
+        $(go.TextBlock, { font: '10px Menlo, monospace', stroke: '#e5e7eb' }, mpnOf(it)),
+        $(go.TextBlock, { font: '9px Roboto, sans-serif', stroke: '#9aa0a8', margin: new go.Margin(0, 0, 0, 12) }, '×' + (it?.quantity || 1)),
+        $(go.TextBlock, { font: '12px "Material Icons"', stroke: '#5b6472', margin: new go.Margin(0, 2, 0, 8) }, 'content_copy')));
     const inner: go.GraphObject[] = [
-      $(go.TextBlock, { font: '700 8px Roboto, sans-serif', stroke: '#8b93a1', margin: new go.Margin(0, 0, 5, 0) },
-        `PARTS · ${parts.length}`),
-      ...rows,
+      $(go.TextBlock, { font: '700 8px Roboto, sans-serif', stroke: '#8b93a1', margin: new go.Margin(0, 0, 5, 2) },
+        `PARTS · ${parts.length}  ·  TAP TO COPY`),
+      ...shown.map(row),
     ];
-    if (parts.length > CAP) {
-      inner.push($(go.TextBlock, { font: '700 9px Roboto, sans-serif', stroke: '#f5a623', margin: new go.Margin(4, 0, 0, 0) },
-        `+${parts.length - CAP} more…`));
+    if (!showAll) {
+      inner.push(btn(() => this.showPartsDock(part, true, true),
+        $(go.TextBlock, { font: '700 9px Roboto, sans-serif', stroke: '#f5a623', margin: new go.Margin(3, 2, 1, 2) },
+          `+${parts.length - CAP} more…`)));
     }
-    const ad = $(go.Adornment, 'Spot', { pickable: false, isShadowed: true, shadowColor: 'rgba(0,0,0,0.5)', shadowBlur: 14 },
-      $(go.Placeholder),
-      $(go.Panel, 'Auto', { alignment: new go.Spot(1, 0, 10, 0), alignmentFocus: go.Spot.TopLeft },
+    inner.push(btn(() => this.copyFromDock(parts.map(mpnOf).join('\n'), parts.length),
+      $(go.Panel, 'Horizontal', { alignment: go.Spot.Left, margin: new go.Margin(5, 2, 0, 2) },
+        $(go.TextBlock, { font: '12px "Material Icons"', stroke: '#38bdf8', margin: new go.Margin(0, 5, 0, 0) }, 'content_copy'),
+        $(go.TextBlock, { font: '700 8.5px Roboto, sans-serif', stroke: '#38bdf8' }, 'COPY ALL'))));
+
+    const keepOpen = () => clearTimeout(this.partsDockTimer);
+    const ad = $(go.Adornment, 'Spot',
+      { isShadowed: true, shadowColor: 'rgba(0,0,0,0.5)', shadowBlur: 14 },
+      $(go.Placeholder, { pickable: false }),
+      $(go.Panel, 'Auto',
+        { alignment: new go.Spot(1, 0, 10, 0), alignmentFocus: go.Spot.TopLeft,
+          mouseEnter: keepOpen, mouseLeave: () => this.showPartsDock(part, false) },
         $(go.Shape, 'RoundedRectangle', { parameter1: 9, fill: '#111827', stroke: '#2c3340', strokeWidth: 1 }),
         $(go.Panel, 'Vertical', { margin: new go.Margin(8, 10, 8, 9), defaultAlignment: go.Spot.Left }, ...inner)));
     ad.adornedObject = part;
     part.addAdornment('partsDock', ad);
+  }
+
+  /** Copy MPN(s) from the dock. Uses the async Clipboard API where allowed and
+   * falls back to execCommand for insecure origins (a LAN IP over http). */
+  private copyFromDock(text: string, count = 1): void {
+    let ok = false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) { void navigator.clipboard.writeText(text); ok = true; }
+    } catch { /* fall through */ }
+    if (!ok) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.top = '-1000px'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch { ok = false; }
+    }
+    this.zone.run(() => ok
+      ? this.notify.success(count > 1 ? `Copied ${count} part numbers` : `Copied ${text}`)
+      : this.notify.error('Could not copy to clipboard'));
   }
 
   /** Light every pin on the canvas (used while a wire drag is in progress). */
