@@ -90,6 +90,10 @@ export class GojsCollabService {
   /** Fires once per chat message from ANOTHER user that arrives live (after the
    * initial history sync) — the hook for unread badges / toast notifications. */
   readonly chatNew$ = new Subject<ChatMessage>();
+  /** Fires when the whole model is adopted from the room (join/sync). The editor
+   * re-themes then, so symbols/labels authored on another participant's canvas
+   * theme are recoloured to THIS client's light/dark canvas. */
+  readonly modelReplaced$ = new Subject<void>();
   private chatKnown = new Set<string>();
   /** false while the room's persisted chat history is (still) loading at join.
    * Set true a short grace period AFTER join — NOT on the y-websocket 'sync'
@@ -254,10 +258,13 @@ export class GojsCollabService {
       }
     } else if (e.change === go.ChangedEvent.Property && e.object) {
       // Purely-local render props must not sync. 'source' is the symbol's
-      // rendered SVG (retheme/animation regenerate it per client); 'hidden' is
-      // the transient export mask (excluding a node from one user's picture must
-      // never hide it on anyone else's canvas).
-      if (e.propertyName === 'source' || e.propertyName === 'hidden') return;
+      // rendered SVG and 'labelColor'/'capColor' are the label inks — all derived
+      // PER CLIENT from its own light/dark canvas theme (retheme regenerates
+      // them), so syncing them would flip a teammate's colours to the wrong
+      // theme. 'hidden' is the transient export mask (excluding a node from one
+      // user's picture must never hide it on anyone else's canvas).
+      if (e.propertyName === 'source' || e.propertyName === 'hidden'
+          || e.propertyName === 'labelColor' || e.propertyName === 'capColor') return;
       const key = this.kindKey(e.object);
       if (key) this.dirty.set(key, e.object);
     }
@@ -389,6 +396,7 @@ export class GojsCollabService {
     } finally {
       this.applyingRemote = false;
     }
+    this.zone.run(() => this.modelReplaced$.next());
   }
 
   private emptyLike(): go.GraphLinksModel {

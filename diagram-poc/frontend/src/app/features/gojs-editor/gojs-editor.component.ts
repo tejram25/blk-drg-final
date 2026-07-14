@@ -240,6 +240,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     // Live chat: badge + toast for messages that arrive while the dock is closed.
     this.chatSub = this.collab.chatNew$.subscribe((m) => this.onChatArrived(m));
+    // When the model is adopted from a collab room, recolour symbols/labels to
+    // THIS client's canvas theme (a peer may have authored them on the other
+    // theme, which would otherwise render faint — dark artwork on a light canvas).
+    this.modelReplacedSub = this.collab.modelReplaced$.subscribe(() => { this.retheme(); this.syncSelection(); });
   }
 
   /** Entering phone layout: start with the canvas, not an open drawer. */
@@ -262,6 +266,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.mobileMq && this.mobileMqListener) this.mobileMq.removeEventListener('change', this.mobileMqListener);
     this.chatSub?.unsubscribe();
+    this.modelReplacedSub?.unsubscribe();
     if (this.autosaveTimer) clearTimeout(this.autosaveTimer);
     if (this.raf) cancelAnimationFrame(this.raf);
     this.collab.leave();
@@ -372,6 +377,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
    * (persisted history replayed at join is never counted — only new traffic). */
   private chatUnreadCount = 0;
   private chatSub?: Subscription;
+  private modelReplacedSub?: Subscription;
   get chatUnread(): number { return this.showChat ? 0 : this.chatUnreadCount; }
   get unreadChat(): number { return 0; }
   /** A chat message from another participant just arrived in the live session. */
