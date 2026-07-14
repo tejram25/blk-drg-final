@@ -225,24 +225,15 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.loadPalette();
     this.refreshList();
-    // Mobile layout: track the breakpoint live (rotation, window resize).
-    // Phone layout applies to narrow viewports (portrait) AND short landscape
-    // viewports — a phone rotated to landscape is wider than 768px but only
-    // ~400px tall, and must stay on the mobile chrome, not jump to desktop.
     this.mobileMq = window.matchMedia('(max-width: 768px), (orientation: landscape) and (max-height: 500px)');
     this.applyMobile(this.mobileMq.matches);
     this.mobileMqListener = (e) => this.zone.run(() => { this.applyMobile(e.matches); this.cdr.detectChanges(); });
     this.mobileMq.addEventListener('change', this.mobileMqListener);
-    // Learn whether the server's local AI is on, to gate AI-only actions.
     this.system.info().subscribe({
       next: (i) => { this.aiEnabled = i.aiEnabled !== false; this.cdr.detectChanges(); },
-      error: () => {}, // leave aiEnabled=true; the action still errors clearly if used
+      error: () => {},
     });
-    // Live chat: badge + toast for messages that arrive while the dock is closed.
     this.chatSub = this.collab.chatNew$.subscribe((m) => this.onChatArrived(m));
-    // When the model is adopted from a collab room, recolour symbols/labels to
-    // THIS client's canvas theme (a peer may have authored them on the other
-    // theme, which would otherwise render faint — dark artwork on a light canvas).
     this.modelReplacedSub = this.collab.modelReplaced$.subscribe(() => { this.retheme(); this.syncSelection(); });
   }
 
@@ -253,7 +244,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (matches) { this.paletteOpen = false; this.propsOpen = false; }
     else {
       this.paletteOpen = true; this.propsOpen = true; this.mobileMoreOpen = false;
-      if (this.connectMode) this.toggleConnectMode();   // connect mode is mobile-only
+      if (this.connectMode) this.toggleConnectMode();
     }
   }
 
@@ -322,15 +313,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private joinCollab(): void {
     if (this.diagramId == null) return;
     const room = String(this.diagramId);
-    // Already live in THIS diagram's room → nothing to do. But if a different
-    // diagram was opened, we must re-join: staying in the old room leaves the
-    // outbound listener on a discarded model (edits stop syncing) and would
-    // apply the old room's remote events to the wrong canvas.
     if (this.collab.active && this.collab.currentRoom === room) return;
     const u = this.auth.user();
     const name = u?.name || u?.email || 'You';
     const uid = u?.email || `anon-${Math.random().toString(36).slice(2)}`;
-    this.chatUnreadCount = 0; // fresh room, fresh unread baseline
+    this.chatUnreadCount = 0;
     this.zone.runOutsideAngular(() => this.collab.join(this.diagram, room, name, uid));
   }
 
@@ -342,7 +329,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   onCanvasMouseLeave(): void {
     if (this.collab.active) this.collab.setLocalCursor(null);
-    this.hidePartsDock();   // pointer left the canvas entirely → dismiss the sticky
+    this.hidePartsDock();
   }
 
   private onViewport(): void {
@@ -366,7 +353,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   toggleChat(): void {
     this.showChat = !this.showChat;
-    // Opening OR closing marks everything currently in the room as seen.
     this.chatUnreadCount = 0;
   }
   /** Session roster (avatar stack in the chat header): show a few faces, then a
@@ -385,7 +371,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   get unreadChat(): number { return 0; }
   /** A chat message from another participant just arrived in the live session. */
   private onChatArrived(m: ChatMessage): void {
-    if (this.showChat) { this.cdr.detectChanges(); return; } // dock open — visible already
+    if (this.showChat) { this.cdr.detectChanges(); return; }
     this.chatUnreadCount++;
     const text = (m.text || '').length > 70 ? m.text.slice(0, 67) + '…' : m.text;
     this.notify.info(`💬 ${m.name}: ${text}`);
@@ -413,7 +399,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         o.connect(g); g.connect(ctx.destination);
         o.start(t); o.stop(t + 0.2);
       };
-      beep(880, 0); beep(1174, 0.12);   // A5 → D6
+      beep(880, 0); beep(1174, 0.12);
     } catch { /* audio unavailable — silent */ }
   }
   sendChat(): void {
@@ -441,15 +427,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       'linkingTool.isUnconnectedLinkValid': false,
       'linkingTool.portGravity': 20,
       'relinkingTool.portGravity': 20,
-      // No context menu: a long-press (touch) or right-click otherwise pops
-      // GoJS's default menu — a huge, unstyled list on phones that even offers
-      // removed features (Group Selection). All its actions are already covered
-      // by the toolbar, properties panel, delete pill and keyboard shortcuts.
       'contextMenuTool.isEnabled': false,
       minScale: 0.15, maxScale: 4,
     });
-    // A single, coarse, subtle grid (the default GoJS grid draws several dense
-    // line sets that look noisy on the dark canvas).
     this.diagram.grid =
       $(go.Panel, 'Grid', { gridCellSize: new go.Size(24, 24) },
         $(go.Shape, 'LineH', { strokeWidth: 0.5 }),
@@ -464,17 +444,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       if (e.isTransactionFinished) this.zone.run(() => { this.updateCanvasEmpty(); this.scheduleAutosave(); });
     });
     this.diagram.addDiagramListener('ViewportBoundsChanged', () => this.onViewport());
-    // apply current wire style to newly drawn links; pin-to-pin connections
-    // between electrical symbols become schematic wires (solid, no arrowhead)
-    // and snap the just-connected part into line so the wire draws straight.
     this.diagram.addDiagramListener('LinkDrawn', (e) => this.styleDrawnLink(e.subject as go.Link));
     this.diagram.addDiagramListener('LinkRelinked', (e) => {
       const link = e.subject as go.Link;
       if (link?.data?.wire) this.straightenWire(link);
     });
-    // Mobile tap-to-connect: while connect mode is on, tapping a component picks
-    // it, and tapping a second component wires the two together (dragging a thin
-    // port with a finger is far too fiddly on touch).
     this.diagram.addDiagramListener('ObjectSingleClicked', (e) => {
       if (!this.connectMode) return;
       const node = e.subject?.part;
@@ -482,10 +456,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     this.diagram.addDiagramListener('BackgroundSingleClicked', () => {
       if (this.connectMode && this.connectFrom) this.zone.run(() => this.clearConnectArm());
-      this.hidePartsDock();   // click anywhere off a component dismisses the parts sticky
+      this.hidePartsDock();
     });
-    // On phones a tooltip pinned to the touch point sits under the finger and
-    // often runs off-screen; pin it to the top-centre of the canvas instead.
     const tm = this.diagram.toolManager;
     const basePositionToolTip = tm.positionToolTip.bind(tm);
     tm.positionToolTip = (tooltip: go.Adornment, obj: go.GraphObject | null) => {
@@ -513,14 +485,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     let tick = 0;
     const loop = () => {
       tick += 1;
-      // Flip every 3rd rAF (~20 fps) — smooth motion at a third of the paints.
       if (tick % 3 === 0 && this.diagram) {
         const frame = tick / 3;
-        // These are pure per-frame RENDER mutations (Picture.source, wire dash
-        // offset). GoJS records GraphObject property changes in the UndoManager,
-        // so without this guard every animation frame injects changes into the
-        // user's open transaction — corrupting undo (Ctrl+Z reverts dash offsets,
-        // not the actual edit) and bloating it with hundreds of entries.
         const prevSkip = this.diagram.skipsUndoManager;
         this.diagram.skipsUndoManager = true;
         try {
@@ -533,9 +499,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
             const pic = body instanceof go.Panel ? body.findMainElement() : null;
             if (pic instanceof go.Picture) pic.source = frames[frame % frames.length];
           });
-          // "Flowing current" wires: march the dash pattern along flow-style links.
-          // strokeDashOffset must be non-negative in GoJS, so run a decreasing
-          // positive sawtooth over one dash period (6 + 3) — dashes flow forward.
           const dashOffset = 9 - ((frame * 1.8) % 9);
           this.diagram.links.each((l) => {
             if (l.data?.flow && l.path) l.path.strokeDashOffset = dashOffset;
@@ -583,8 +546,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const dx = b.x - a.x, dy = b.y - a.y;
     const T = GojsEditorComponent.ALIGN_SNAP;
     let moveX = 0, moveY = 0;
-    if (Math.abs(dy) > 0 && Math.abs(dy) <= T && Math.abs(dx) > T) moveY = -dy;       // near-horizontal run
-    else if (Math.abs(dx) > 0 && Math.abs(dx) <= T && Math.abs(dy) > T) moveX = -dx;  // near-vertical run
+    if (Math.abs(dy) > 0 && Math.abs(dy) <= T && Math.abs(dx) > T) moveY = -dy;
+    else if (Math.abs(dx) > 0 && Math.abs(dx) <= T && Math.abs(dy) > T) moveX = -dx;
     if (!moveX && !moveY) return;
     const loc = tn.location.copy();
     loc.x += moveX; loc.y += moveY;
@@ -627,7 +590,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private showPartsDock(part: go.Part | null | undefined, on: boolean, expanded = false): void {
     if (!(part instanceof go.Node)) return;
     if (!on) {
-      // The one spurious leave from an expand-rebuild must not close it.
       if (this.partsDockIgnoreLeave) { this.partsDockIgnoreLeave = false; return; }
       clearTimeout(this.partsDockTimer);
       this.partsDockTimer = setTimeout(() => {
@@ -637,8 +599,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     clearTimeout(this.partsDockTimer);
-    // Only one dock at a time: moving straight from one component to another
-    // cancels the first's close timer, so remove its dock explicitly here.
     if (this.partsDockNode && this.partsDockNode !== part) this.partsDockNode.removeAdornment('partsDock');
     this.partsDockNode = part;
     const parts = part.data?.attachedParts;
@@ -648,8 +608,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const showAll = expanded || parts.length <= CAP;
     const shown = showAll ? parts : parts.slice(0, CAP);
     const mpnOf = GojsEditorComponent.attachedMpn;
-    // GoJS "Button" (not a plain click handler) so clicks fire reliably inside an
-    // Adornment. Transparent border; subtle hover highlight.
     const btn = (fn: () => void, content: go.GraphObject) => $('Button',
       { 'ButtonBorder.fill': 'transparent', 'ButtonBorder.stroke': null,
         '_buttonFillOver': 'rgba(56,189,248,0.14)', '_buttonStrokeOver': null,
@@ -759,7 +717,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       lines.push(d.text || d.shape || 'Block');
       if (d.sub || d.subtitle) lines.push(d.sub || d.subtitle);
     }
-    // Show attached parts (new multi-part approach)
     const attachedParts = Array.isArray(d.attachedParts) ? d.attachedParts : [];
     if (attachedParts.length) {
       const partNames = attachedParts.map((ap: any) => {
@@ -769,14 +726,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       lines.push(`Attached Parts (${attachedParts.length}):`);
       lines.push(...partNames);
     }
-    // Show old-style linked components (AI suggestions)
     const comps = Array.isArray(d.components) ? d.components : [];
     if (comps.length) lines.push(`AI Components: ${comps.map((c: any) => c.partNumber).join(', ')}`);
     return lines.filter(Boolean).join('\n');
   }
 
   private buildTemplates($: typeof go.GraphObject.make): void {
-    // A small edge port (hidden until hover) used as a link handle.
     const sidePort = (id: string, spot: go.Spot) => $(
       go.Shape, 'Circle',
       {
@@ -788,19 +743,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       sidePort('T', go.Spot.Top), sidePort('R', go.Spot.Right),
       sidePort('B', go.Spot.Bottom), sidePort('L', go.Spot.Left),
     ];
-    // Wires must LEAVE a pin outward (a left-edge pin exits left, a top pin exits
-    // up…); without a directional spot the router may run the first segment back
-    // across the symbol body. Derive the exit side from the pin's spot fraction.
     const sideSpot = (s: string) => {
       const sp = go.Spot.parse(s);
       const dl = sp.x, dr = 1 - sp.x, dt = sp.y, db = 1 - sp.y;
       const m = Math.min(dl, dr, dt, db);
       return m === dl ? go.Spot.Left : m === dr ? go.Spot.Right : m === dt ? go.Spot.Top : go.Spot.Bottom;
     };
-    // Data-driven pin port for schematic / basic symbol shapes. Pins stay faintly
-    // visible so users can see where wires attach; they brighten on hover and
-    // while a wire is being dragged (showAllPins). The JCT dot is revealed by
-    // updateJunctions() wherever 2+ wires meet on a pin.
     const pinPort = $(
       go.Panel, 'Spot',
       new go.Binding('alignment', 'spot', go.Spot.parse),
@@ -814,15 +762,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         { name: 'JCT', desiredSize: new go.Size(7, 7), fill: '#94a3b8', strokeWidth: 0,
           opacity: 0, pickable: false }),
     );
-    // Common node options: hover reveals ports; body is movable (not a link starter).
     const hover = {
       mouseEnter: (_e: go.InputEvent, o: go.GraphObject) => { this.hoverPorts(o, true); this.showPartsDock(o.part, true); },
       mouseLeave: (_e: go.InputEvent, o: go.GraphObject) => { this.hoverPorts(o, false); this.showPartsDock(o.part, false); },
     };
-    // The body is a non-linkable port "" so imported links can still attach to it,
-    // while dragging the body moves the node instead of drawing a link.
     const body = { portId: '', fromLinkable: false, toLinkable: false, cursor: 'move' };
-    // Two-way size binding that leaves un-resized nodes at their natural (auto) size.
     const sizeBind = () => new go.Binding('desiredSize', 'size',
       (s: string) => (s ? go.Size.parse(s) : new go.Size(NaN, NaN))).makeTwoWay((sz: go.Size) => go.Size.stringify(sz));
 
@@ -892,9 +836,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     );
     this.diagram.nodeTemplateMap.set('image', image);
 
-    // Native GoJS figure shape (basic geometry, flowchart, logic gates). The main
-    // element is a real go.Shape driven by a `figure` name — resizable, theme-aware
-    // fill/stroke, with a centred editable label. Four hover edge-ports for wiring.
     const shape = $(
       go.Node, 'Spot',
       { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'SHAPE', toolTip: this.nodeTip($), ...hover },
@@ -913,16 +854,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
             textAlign: 'center', maxSize: new go.Size(150, NaN), margin: 6 },
           new go.Binding('text').makeTwoWay(),
           new go.Binding('stroke', 'labelColor')),
-        // Linked-component chip (top-right): part number when one is linked, or a
-        // count when several are.
         $(go.Panel, 'Auto', { alignment: go.Spot.TopRight, alignmentFocus: go.Spot.TopRight, margin: 3, visible: false },
           new go.Binding('visible', 'components', (c) => Array.isArray(c) && c.length > 0),
           $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: '#f5a623', stroke: null }),
           $(go.TextBlock, { font: '700 9px Roboto, sans-serif', stroke: '#1a1303', margin: new go.Margin(1, 5, 1, 5) },
             new go.Binding('text', 'components',
               (c) => !Array.isArray(c) || !c.length ? '' : (c.length === 1 ? c[0].partNumber : c.length + ' parts'))))),
-      // Role caption below the box (e.g. "Digital Processing"). Follows the canvas
-      // theme (capColor), independent of the label colour inside a coloured box.
       $(go.TextBlock, { alignment: new go.Spot(0.5, 1, 0, 7), alignmentFocus: go.Spot.Top,
         font: '10.5px Roboto, sans-serif', stroke: '#94a3b8', editable: true, textAlign: 'center', maxSize: new go.Size(170, NaN) },
         new go.Binding('text', 'sub').makeTwoWay(),
@@ -932,16 +869,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     );
     this.diagram.nodeTemplateMap.set('shape', shape);
 
-    // Electrical schematic / animated symbols: an SVG picture (from the symbol
-    // libraries) with data-driven connection pins. NOTE: a panel with an
-    // itemArray keeps only its main element + the item panels, so the refdes /
-    // value labels live OUTSIDE the port-bearing BODY panel. The node itself is
-    // a Spot panel (no itemArray) so the labels can be PLACED AROUND the body:
-    // symbols with a centre-bottom pin (sources, flags, ICs with a GND stub)
-    // put their labels beside the body so the exiting wire never strikes the
-    // text; everything else keeps them underneath.
-    // Pin spot fractions ROTATED by the symbol's angle, so label placement keeps
-    // avoiding the real wire exits after a 90°/180°/270° rotation.
     const rotatedSpots = (d: any): { x: number; y: number }[] => {
       const ports = Array.isArray(d?.ports) ? d.ports : [];
       const a = ((d?.angle || 0) % 360 + 360) % 360;
@@ -953,9 +880,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         return { x: sp.x, y: sp.y };
       });
     };
-    // below when the bottom edge is free; beside when only the bottom is busy
-    // (sources, flags, grounds); bottom-left quadrant when bottom AND right are
-    // busy (ICs, thyristor gates) so no exiting wire ever strikes the text.
     const placement = (d: any): 'below' | 'side' | 'below-left' => {
       const spots = rotatedSpots(d);
       const bottomBusy = spots.some((sp) => sp.y > 0.85 && sp.x > 0.2 && sp.x < 0.8);
@@ -978,20 +902,16 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       $(go.Panel, 'Spot',
         { name: 'BODY', isPanelMain: true, itemTemplate: pinPort, ...body },
         new go.Binding('desiredSize', 'size', go.Size.parse).makeTwoWay(go.Size.stringify),
-        // Legacy 90°-step rotations still render; anything else is junk an old
-        // build's animation ticker autosaved into the data — displays as 0°.
         new go.Binding('angle', 'angle', (a) => (typeof a === 'number' && a % 90 === 0 ? a : 0)).makeTwoWay(),
         new go.Binding('itemArray', 'ports'),
         $(go.Picture, { isPanelMain: true, stretch: go.GraphObject.Fill,
           imageStretch: go.GraphObject.Fill, background: 'transparent' },
           new go.Binding('source', 'source'))),
-      // Reference designator (R1, C1, U1…); editable in place.
       $(go.TextBlock, { font: 'bold 11px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
         new go.Binding('text').makeTwoWay(),
         new go.Binding('stroke', 'labelColor'),
         new go.Binding('alignment', '', labelAlign(0)),
         new go.Binding('alignmentFocus', '', labelFocus)),
-      // Value / part number; hidden when blank.
       $(go.TextBlock, { font: '10px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
         new go.Binding('text', 'value').makeTwoWay(),
         new go.Binding('visible', 'value', (v) => !!v),
@@ -1001,8 +921,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     );
     this.diagram.nodeTemplateMap.set('symbol', symbol);
 
-    // Basic flowchart shapes keep their centered label by nesting it inside the
-    // main element (picture + label), which itemArray panels do retain.
     const basicSym = $(
       go.Node, 'Spot',
       { locationSpot: go.Spot.Center, resizable: true, itemTemplate: pinPort, ...hover },
@@ -1023,26 +941,18 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.diagram.linkTemplate = $(
       go.Link,
-      // 'manhattan' → Orthogonal (clean right-angle segments that cross freely),
-      // NOT AvoidsNodes, which detours around every component and looks bendy.
       { routing: go.Link.Orthogonal, corner: 8, relinkableFrom: true, relinkableTo: true, reshapable: true, resegmentable: true },
       new go.Binding('routing', 'routing', (r) => r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.Orthogonal),
       new go.Binding('curve', 'routing', (r) => r === 'smooth' ? go.Link.Bezier : go.Link.None),
-      // Schematic wires (pin-to-pin between electrical symbols) bend square.
       new go.Binding('corner', 'wire', (w) => (w ? 0 : 8)),
-      // Fat, invisible path that widens the tap/click target — a 2px wire is
-      // almost impossible to hit with a finger, so this gives ~18px of slack.
       $(go.Shape, { isPanelMain: true, stroke: 'transparent', strokeWidth: 18 }),
       $(go.Shape, { isPanelMain: true, strokeWidth: 2, stroke: '#94a3b8' },
         new go.Binding('stroke', 'color'),
         new go.Binding('strokeWidth', 'width'),
         new go.Binding('strokeDashArray', 'dash')),
-      // …and carry no direction arrow (wires aren't flows).
       $(go.Shape, { toArrow: 'Standard', fill: '#94a3b8', stroke: null },
         new go.Binding('fill', 'color'),
         new go.Binding('visible', 'wire', (w) => !w)),
-      // Wire / connection label (net name, signal, "+6V"…). Editable in place;
-      // hidden while blank (set it from the selected-wire toolbar).
       $(go.Panel, 'Auto',
         { segmentIndex: NaN, segmentFraction: 0.5, visible: false },
         new go.Binding('visible', 'text', (t) => !!t),
@@ -1053,13 +963,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           new go.Binding('stroke', 'color'))),
     );
 
-    // Junction dots follow the wiring: recompute after every committed change
-    // (draw/relink/delete/undo/collab), so they stay correct from any source.
     this.diagram.addModelChangedListener((e) => { if (e.isTransactionFinished) this.updateJunctions(); });
 
-    // Wire-drawing feel: drag an orthogonal wire (not a straight rubber band),
-    // show cyan snap rings on the candidate pins, and light every pin on the
-    // canvas while the drag is in progress so targets are obvious.
     const styleLinking = (tool: go.LinkingBaseTool) => {
       tool.temporaryLink = $(go.Link,
         { routing: go.Link.Orthogonal, layerName: 'Tool' },
@@ -1080,9 +985,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     styleLinking(this.diagram.toolManager.linkingTool);
     styleLinking(this.diagram.toolManager.relinkingTool);
 
-    // Subsystem groups: a collapsible dashed container around selected parts
-    // (Ctrl+G / command palette). Collapse hides internals — handy when sharing
-    // a diagram with non-engineers.
     this.diagram.groupTemplate = $(
       go.Group, 'Auto',
       { locationSpot: go.Spot.Center, ungroupable: true, computesBoundsAfterDrag: true,
@@ -1131,9 +1033,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Append the native GoJS figures (Shapes / Flowchart / Logic) plus the
    * electrical and animated symbol libraries to the palette. */
   private mergeShapeTypes(types: BlockType[]): BlockType[] {
-    // The backend still lists the legacy X6 "basic-*" shapes; they're superseded
-    // by the native GoJS figures (and have no palette preview → blank cards), so
-    // drop them from the palette. Old diagrams that reference them still render.
     const base = types.filter((t) => !(t.shape && t.shape.startsWith('basic-')));
     const present = new Set(base.map((t) => t.shape).filter(Boolean));
     const add = (entries: [string, string][], cat: string, color: string): BlockType[] =>
@@ -1238,11 +1137,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         size: `${info.width} ${info.height}`, loc: go.Point.stringify(loc), labelColor: this.labelColor,
         ports: info.pins.map((p, i) => ({ portId: `p${i}`, spot: `${p.fx} ${p.fy}` })),
       };
-      // Electrical symbols become real parts: auto reference designator + value label.
       if (b.shape?.startsWith('elec-')) {
         const meta = elecMeta(b.shape);
         if (meta.ref) data['text'] = this.nextRefdes(meta.ref);
-        // Net flags show their net name instead (rename to join pins by name).
         else if (GojsEditorComponent.NET_FLAG_TEXT[b.shape]) data['text'] = GojsEditorComponent.NET_FLAG_TEXT[b.shape];
         data['value'] = meta.value;
       }
@@ -1273,16 +1170,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.diagram) return;
     const dark = !this.lightCanvas;
     const theme = this.shapeTheme();
-    // Re-theming only refreshes DERIVED render props (SVG source, colours) — it
-    // is not a user edit, so it must never enter the undo stack. Otherwise the
-    // first Ctrl+Z after opening a diagram undoes the retheme and strips every
-    // symbol's artwork instead of reverting an actual change.
     this.runSilently(() => this.diagram.commit((d) => {
       d.nodes.each((n) => {
         const data = n.data;
         if (data?.category === 'shape') {
-          // Palette shapes follow the theme; colour-imported boxes keep their fill
-          // and their contrast label, but the caption under the box tracks the theme.
           d.model.set(data, 'capColor', theme.labelColor);
           if (!data.fixedColor) {
             d.model.set(data, 'fill', theme.fill);
@@ -1362,13 +1253,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** A component was tapped while in connect mode. */
   private onConnectTap(node: go.Node): void {
     if (!this.connectFrom) {
-      this.connectFrom = node;          // arm: remember the first component
-      this.showAllPins(true);           // reveal every pin as a connection hint
+      this.connectFrom = node;
+      this.showAllPins(true);
       this.diagram.select(node);
       this.cdr.detectChanges();
       return;
     }
-    if (node === this.connectFrom) { this.clearConnectArm(); return; }  // tapped same → cancel
+    if (node === this.connectFrom) { this.clearConnectArm(); return; }
     this.connectNodes(this.connectFrom, node);
     this.clearConnectArm();
   }
@@ -1440,7 +1331,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const first = this.diagram.selection.first();
     this.selectedNode = first instanceof go.Node ? first : null;
     this.selectedEdge = first instanceof go.Link ? first : null;
-    // Reset AI suggestions when the selected node changes.
     const key = this.selectedNode ? this.selectedNode.key : null;
     if (key !== this.lastSelKey) { this.boxSuggestions = []; this.boxSuggestError = ''; this.lastSelKey = key; }
     if (this.selectedEdge) this.syncWireDock(this.selectedEdge);
@@ -1448,7 +1338,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       const d = this.selectedNode.data;
       const isPart = d.category === 'part';
       const hasAttachedPart = d.attachedPart != null;
-      // Show part details for both part cards AND blocks with attached parts
       const partToShow = isPart ? d.part : (hasAttachedPart ? d.attachedPart : null);
       this.sel = {
         text: d.text ?? '', color: d.color ?? '#1d4ed8', isPart: isPart || hasAttachedPart,
@@ -1694,8 +1583,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Open the file picker to generate a diagram from a photo/screenshot. */
   generateFromImage(): void {
     this.closeMenus();
-    // Image-to-diagram has no non-AI fallback, so short-circuit with a clear
-    // message when the server has AI off — never open the picker or the overlay.
     if (!this.aiEnabled) { this.notify.info(this.aiOffTip); return; }
     this.imageGenInput?.nativeElement.click();
   }
@@ -1712,7 +1599,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.status = 'Analysing image…';
     this.cdr.detectChanges();
     this.downscaleImage(file).then((dataUrl) => {
-      // Client-side safety net: never let the overlay hang if the server stalls.
       this.imageDiagram.extract(dataUrl).pipe(
         timeout(120000),
         catchError((e) => throwError(() => e)),
@@ -1768,8 +1654,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         ?? GojsEditorComponent.KIND_STYLE['generic'];
       const fill = this.normalizeColor(n.color) ?? style.color;
       const loc = go.Point.stringify(new go.Point((n.x ?? 0) * 1.5, (n.y ?? 0) * 1.7));
-      // Coloured rounded-rectangle "box" — a real shape node, editable and linkable,
-      // that can later carry an AI-suggested component (partNumber chip).
       return { key, category: 'shape', figure: 'RoundedRectangle', shape: 'sh-round',
         text: n.label || this.prettyKind(n.kind), sub: (n.sub && n.sub.trim()) || '',
         kind: (n.kind || 'generic').toLowerCase(), size: '176 62', loc,
@@ -1840,8 +1724,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** True for a box node (functional block or shape) that can carry a component. */
   get isBox(): boolean {
     const c = this.selectedNode?.data?.category;
-    // Every placed component can carry a real MPN — blocks, drawn shapes and the
-    // electrical / animated symbol libraries. (Part cards and images can't.)
     return c === 'block' || c === 'shape' || c === 'symbol' || c === 'basic';
   }
 
@@ -1849,7 +1731,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   suggestComponent(): void {
     const d = this.selectedNode?.data;
     if (!d) return;
-    // Schematic symbols search by value/type (the refdes "R1" is useless as a query).
     const q = this.suggestQueryFor(d);
     this.boxSuggestions = [];
     this.boxSuggestError = '';
@@ -1878,7 +1759,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /** True if the selected box can have a part attached (allows replacement). */
   get canAttachPart(): boolean {
-    return this.isBox; // Allow attach for all blocks (empty or with existing part)
+    return this.isBox;
   }
 
   /** Turn a suggestion + chosen supplier into a linked component. */
@@ -1954,8 +1835,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.diagram.nodes.each((n) => {
       const c = n.data?.category;
       if (c === 'shape' || c === 'block') out.push(n);
-      // Electrical schematic symbols with a refdes are components too (ground
-      // and other net markers are skipped — they never carry an MPN).
       else if (c === 'symbol' && elecMeta(n.data?.shape).ref) out.push(n);
     });
     return out;
@@ -1986,7 +1865,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       const q = this.suggestQueryFor(n.data);
       return this.boxSuggest
         .suggest(q.label, q.sub, n.data.kind || '', this.designWinContext)
-        // Never let one slow/hung catalogue call keep the overlay up forever.
         .pipe(timeout(60000), catchError(() => of({ query: '', suggestions: [] as BoxSuggestion[] })));
     });
     forkJoin(calls).subscribe({
@@ -2056,10 +1934,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const partNumber = part?.arwPartNum?.name || part?.suppPartNum?.name || 'Unknown';
     const qty = part?.__bomQty || 1;
 
-    // Get existing attached parts array (or create new one)
     const attachedParts = Array.isArray(data.attachedParts) ? [...data.attachedParts] : [];
 
-    // Check if this part is already attached
     const existingIndex = attachedParts.findIndex((p: any) => {
       const pn = p.part?.arwPartNum?.name || p.part?.suppPartNum?.name;
       return pn === partNumber;
@@ -2070,16 +1946,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    // Add new part to the array
     attachedParts.push({ part, quantity: qty });
 
-    // Update the block data
     this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => {
       m.set(data, 'attachedParts', attachedParts);
     }, 'attach part'));
 
     this.notify.success(`Attached ${partNumber} to "${data.text}" (${attachedParts.length} parts total)`);
-    this.syncSelection(); // Refresh property panel to show all attached parts
+    this.syncSelection();
   }
 
   /** Get all attached parts for the selected block */
@@ -2127,11 +2001,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private partNumberOfData(d: any): string | null {
     if (!d) return null;
-    // Part card nodes
     if (d.category === 'part') {
       return d.part?.arwPartNum?.name || d.part?.suppPartNum?.name || d.partNumber || null;
     }
-    // Blocks with attached parts
     if (d.attachedPart) {
       return d.attachedPart?.arwPartNum?.name || d.attachedPart?.suppPartNum?.name || d.partNumber || null;
     }
@@ -2144,10 +2016,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const parts = this.partNodes().map((n) => ({ ...n.data.part, __bomQty: n.data.quantity || 1 })).filter((p) => p && Object.keys(p).length > 1);
     const linked: any[] = [];
     this.boxNodes().forEach((n) => {
-      // Include old-style linked components (from AI suggestions)
       const comps = n.data.components;
       if (Array.isArray(comps)) comps.forEach((c: LinkedComponent) => linked.push(c));
-      // Include new-style attached parts (from Attach button) - multiple parts support
       const attachedParts = n.data.attachedParts;
       if (Array.isArray(attachedParts)) {
         attachedParts.forEach((ap: any) => {
@@ -2357,9 +2227,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.exportOpen = true;
   }
   onExportToggle(nodeId: string): void {
-    // Exclusion is only recorded here — the canvas is left untouched so nodes
-    // never vanish from the working diagram. The mask is applied briefly at
-    // capture time (runExport) and then removed.
     if (this.exportHidden.has(nodeId)) this.exportHidden.delete(nodeId); else this.exportHidden.add(nodeId);
     this.exportNodes = this.exportNodes.map((n) => n.id === nodeId ? { ...n, visible: !this.exportHidden.has(nodeId) } : n);
   }
@@ -2496,7 +2363,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private applyContent(contentJson: string): void {
     if (!contentJson) { this.newDiagram(); return; }
     let parsed: any; try { parsed = JSON.parse(contentJson); } catch { parsed = null; }
-    // Legacy X6 diagrams ({cells:[...]}) are converted to the GoJS model.
     if (parsed && Array.isArray(parsed.cells)) {
       const { nodes, links } = this.convertX6(parsed.cells);
       this.suppressAutosave = true;
@@ -2519,11 +2385,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         const model = go.Model.fromJson(contentJson) as go.GraphLinksModel;
         model.linkFromPortIdProperty = 'fromPort'; model.linkToPortIdProperty = 'toPort';
         for (const d of model.nodeDataArray as any[]) {
-          // Scrub angles an old build's animation ticker autosaved mid-spin (any
-          // non-90°-step value) so the junk can't re-publish into collab rooms.
           if (typeof d.angle === 'number' && d.angle % 90 !== 0) d.angle = 0;
-          // 'hidden' is a transient export-masking flag; an old build persisted it,
-          // which left nodes permanently invisible with no way to restore them.
           if (d.hidden) d.hidden = false;
         }
         this.diagram.model = model;
@@ -2553,8 +2415,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private convertX6(cells: any[]): { nodes: go.ObjectData[]; links: go.ObjectData[] } {
     const nodes: go.ObjectData[] = [];
     const links: go.ObjectData[] = [];
-    // Two passes: nodes first (so edges can tell which endpoints are electrical
-    // symbols), then edges.
     const elecKeys = new Set<string>();
     const edgeCells: any[] = [];
     for (const c of cells || []) {
@@ -2582,13 +2442,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       } else {
         const info = symbolInfo(shape);
         if (info) {
-          // Electrical / animated / basic symbols → SVG-picture symbol nodes.
           if (shape.startsWith('elec-')) elecKeys.add(key);
           nodes.push({ key, category: info.basic ? 'basic' : 'symbol', shape, source: info.source,
             size: `${info.width} ${info.height}`, loc, text: a.label?.text ?? '',
             ports: info.pins.map((p, i) => ({ portId: `p${i}`, spot: `${p.fx} ${p.fy}` })) });
         } else {
-          // Plain rectangles / geometry → native figure carrying the cell's colours.
           const bodyAttr = a.body ?? a.rect ?? {};
           const fill = bodyAttr.fill && bodyAttr.fill !== 'none' ? bodyAttr.fill : null;
           const stroke = bodyAttr.stroke && bodyAttr.stroke !== 'none' ? bodyAttr.stroke : null;
@@ -2605,9 +2463,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }
     }
-    // Edges: keep the X6 pin ports (pinN → pN) so wires land on real pins, and
-    // preserve the edge's stroke/width/dash. Pin-to-pin connections between
-    // electrical symbols become schematic wires (square corners, no arrowhead).
     for (const c of edgeCells) {
       const from = c.source?.cell ?? (typeof c.source === 'string' ? c.source : null);
       const to = c.target?.cell ?? (typeof c.target === 'string' ? c.target : null);
@@ -2672,12 +2527,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     const union = (a: string, b: string) => { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); };
 
-    // Register every pin so unconnected pins still appear; net markers (ground,
-    // VCC / net-label flags) carry no refdes and are excluded from component
-    // listings. Named flags give their net its name — and every flag with the
-    // same name joins one net ("connect by name"), like a real schematic.
     const pinInfo = new Map<string, { ref: string; pin: string; marker: boolean }>();
-    const flagPins = new Map<string, string[]>(); // net name → marker pin ids
+    const flagPins = new Map<string, string[]>();
     parts.forEach((n) => {
       const ref = n.data.text || n.data.shape;
       const marker = !elecMeta(n.data.shape).ref;
@@ -2690,16 +2541,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         if (netName) (flagPins.get(netName) ?? flagPins.set(netName, []).get(netName)!).push(id);
       });
     });
-    // Same-named flags are electrically the same net.
     flagPins.forEach((ids) => { for (let i = 1; i < ids.length; i++) union(ids[0], ids[i]); });
-    // Wire endpoints into nets.
     this.diagram.links.each((lk) => {
       const fk = lk.data?.from, tk = lk.data?.to;
       if (fk == null || tk == null) return;
       union(pinId(fk, lk.data?.fromPort ?? ''), pinId(tk, lk.data?.toPort ?? ''));
     });
 
-    // Root → flag name (GND applied last so it wins if someone shorts flags).
     const rootName = new Map<string, string>();
     [...flagPins.entries()]
       .sort((a, b) => (a[0] === 'GND' ? 1 : 0) - (b[0] === 'GND' ? 1 : 0))
@@ -2715,7 +2563,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     [...byRoot.entries()]
       .sort((a, b) => weight(b[0]) - weight(a[0]))
       .forEach(([root, ids]) => {
-        if (ids.length < 2 && !rootName.has(root)) return; // dangling single pin
+        if (ids.length < 2 && !rootName.has(root)) return;
         nets.push({ name: rootName.get(root) ?? `N${++n}`, ids });
       });
     return { parts, nets, pinInfo };
@@ -2799,7 +2647,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     reader.readAsText(file); (event.target as HTMLInputElement).value = '';
   }
   exportDrawioFile(): void {
-    // Symbols export as their real artwork, drawn for draw.io's white page.
     const src = (shape: string) => symbolInfo(shape, false)?.source ?? null;
     this.download(URL.createObjectURL(new Blob([exportDrawio(this.diagram, this.diagramName || 'diagram', src)], { type: 'application/xml' })), this.fileName('drawio'));
   }

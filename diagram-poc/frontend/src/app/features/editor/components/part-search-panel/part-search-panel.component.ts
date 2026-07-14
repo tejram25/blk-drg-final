@@ -36,7 +36,6 @@ export class PartSearchPanelComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.seedQuery && this.seedQuery.trim()) {
-      // Opened from a recommendation: pre-fill and run the search immediately.
       this.query = this.seedQuery.trim();
       this.search();
     } else {
@@ -52,7 +51,7 @@ export class PartSearchPanelComponent implements AfterViewInit {
     this.supplierFilter = '';
     this.api.search(q).subscribe({
       next: (hits) => { this.results = hits; this.loading = false; },
-      error: () => { this.results = []; this.loading = false; }, // error toast shown globally
+      error: () => { this.results = []; this.loading = false; },
     });
   }
 
@@ -90,13 +89,11 @@ export class PartSearchPanelComponent implements AfterViewInit {
   }
 
   add(hit: PartHit): void {
-    // Carry the chosen quantity on the part so the BOM tallies it.
     const part = { ...hit.raw, __bomQty: Math.max(1, hit.qty || 1) };
     this.addPart.emit(part);
   }
 
   attach(hit: PartHit): void {
-    // Attach this part to the currently selected block on canvas
     const part = { ...hit.raw, __bomQty: Math.max(1, hit.qty || 1) };
     this.attachPart.emit(part);
   }

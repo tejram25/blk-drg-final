@@ -18,7 +18,6 @@ public class BlockCatalogServiceImpl implements BlockCatalogService {
     @Override
     public List<Map<String, String>> blockTypes() {
         return List.of(
-                // Functional blocks (icon = Material Icons glyph name)
                 Map.of("key", "processor",  "label", "Main Processor",   "color", "#1d4ed8", "category", "Blocks", "icon", "developer_board"),
                 Map.of("key", "ai",         "label", "AI Models",        "color", "#3730a3", "category", "Blocks", "icon", "psychology"),
                 Map.of("key", "memory",     "label", "Memory",           "color", "#0e7490", "category", "Blocks", "icon", "memory"),
@@ -29,8 +28,6 @@ public class BlockCatalogServiceImpl implements BlockCatalogService {
                 Map.of("key", "dcdc",       "label", "DC/DC Converter",  "color", "#c2410c", "category", "Blocks", "icon", "electrical_services"),
                 Map.of("key", "comms",      "label", "Comm Module",      "color", "#6d28d9", "category", "Blocks", "icon", "wifi"),
                 Map.of("key", "antenna",    "label", "Antenna",          "color", "#7c3aed", "category", "Blocks", "icon", "cell_tower"),
-                // Basic geometric shapes (Excalidraw-style; "shape" maps to a
-                // registered X6 node on the frontend, prefix "basic-")
                 Map.of("key", "rectangle",     "label", "Rectangle",     "color", "#ffffff", "category", "Shapes", "shape", "basic-rectangle"),
                 Map.of("key", "square",        "label", "Square",        "color", "#ffffff", "category", "Shapes", "shape", "basic-square"),
                 Map.of("key", "rounded",       "label", "Rounded",       "color", "#ffffff", "category", "Shapes", "shape", "basic-rounded"),
@@ -50,8 +47,6 @@ public class BlockCatalogServiceImpl implements BlockCatalogService {
                 Map.of("key", "callout",       "label", "Callout",       "color", "#ffffff", "category", "Shapes", "shape", "basic-callout"),
                 Map.of("key", "actor",         "label", "Actor",         "color", "#ffffff", "category", "Shapes", "shape", "basic-actor"),
                 Map.of("key", "text",          "label", "Text",          "color", "#ffffff", "category", "Shapes", "shape", "basic-text"),
-                // Electrical components (rendered as schematic symbols; "shape" maps
-                // to a registered X6 node shape on the frontend)
                 Map.of("key", "resistor",   "label", "Resistor",         "color", "#e2e8f0", "category", "Electrical", "shape", "elec-resistor"),
                 Map.of("key", "capacitor",  "label", "Capacitor",        "color", "#e2e8f0", "category", "Electrical", "shape", "elec-capacitor"),
                 Map.of("key", "inductor",   "label", "Inductor",         "color", "#e2e8f0", "category", "Electrical", "shape", "elec-inductor"),
@@ -87,7 +82,6 @@ public class BlockCatalogServiceImpl implements BlockCatalogService {
                 Map.of("key", "pc817",      "label", "PC817 Optocoupler","color", "#e2e8f0", "category", "Electrical", "shape", "elec-pc817"),
                 Map.of("key", "mcu",        "label", "ATmega328 MCU",    "color", "#e2e8f0", "category", "Electrical", "shape", "elec-mcu"),
                 Map.of("key", "esp32",      "label", "ESP32 Module",     "color", "#e2e8f0", "category", "Electrical", "shape", "elec-esp32"),
-                // Animated components (FAST-style moving graphics)
                 Map.of("key", "robot-arm",  "label", "Robotic Arm",      "color", "#e2e8f0", "category", "Animated", "shape", "anim-robot-arm"),
                 Map.of("key", "siren",      "label", "Siren Light",      "color", "#e2e8f0", "category", "Animated", "shape", "anim-siren"),
                 Map.of("key", "fan",        "label", "Fan",              "color", "#e2e8f0", "category", "Animated", "shape", "anim-fan"),
@@ -99,7 +93,6 @@ public class BlockCatalogServiceImpl implements BlockCatalogService {
                 Map.of("key", "piston",     "label", "Piston",           "color", "#e2e8f0", "category", "Animated", "shape", "anim-piston"),
                 Map.of("key", "tank",       "label", "Liquid Tank",      "color", "#e2e8f0", "category", "Animated", "shape", "anim-tank"),
                 Map.of("key", "drone",      "label", "Drone",            "color", "#e2e8f0", "category", "Animated", "shape", "anim-drone"),
-                // Power / energy set
                 Map.of("key", "glow-battery", "label", "Battery (Charging)", "color", "#e2e8f0", "category", "Animated", "shape", "anim-glow-battery"),
                 Map.of("key", "inverter",   "label", "Inverter",         "color", "#e2e8f0", "category", "Animated", "shape", "anim-inverter"),
                 Map.of("key", "transformer","label", "Transformer",      "color", "#e2e8f0", "category", "Animated", "shape", "anim-transformer"),

@@ -92,7 +92,6 @@ export class DesignwinPanelComponent implements OnInit {
   }
 
   openCustomer(row: Row): void {
-    // Search this customer's projects by name AND bill-to (more precise than name alone).
     const name = this.pickDeep(row.raw, ['customerName', 'custName']) || row.title;
     const billTo = this.pickDeep(row.raw, ['billTo', 'billToNumber', 'custBillTo', 'siteNumber']);
     this.run(this.dw.projects(name, undefined, billTo || undefined), 'projects', (rows) => {
@@ -114,7 +113,6 @@ export class DesignwinPanelComponent implements OnInit {
     const boardNum = this.pickDeep(row.raw, ['boardNum', 'boardNumber', 'board_num', 'boardId']) || row.title;
     const parent = this.level?.ctx || {};
     this.loading = true; this.error = '';
-    // Registration details + the board's customer parts, merged into one detail level.
     this.dw.registrationDetails({ boardNum }).subscribe({
       next: (reg) => {
         const regRows = this.normalize(reg, 'detail').map((r) => ({ ...r, subtitle: r.subtitle || 'Registration' }));
@@ -123,10 +121,9 @@ export class DesignwinPanelComponent implements OnInit {
           this.stack.push({ kind: 'detail', label: `Board ${boardNum}`, items: [...regRows, ...partRows],
             ctx: { ...parent, boardNum } });
         };
-        // cust-parts needs the customer scope (the backend rejects a bare boardNum).
         this.dw.custParts({ boardNum, customerName: parent.customerName, custBillTo: parent.billTo, projectId: parent.projectId }).subscribe({
           next: (parts) => push(this.normalize(parts, 'detail').map((r) => ({ ...r, subtitle: r.subtitle || 'Registered part' }))),
-          error: () => push([]), // still show the registration rows even if parts lookup fails
+          error: () => push([]),
         });
       },
       error: (e) => this.fail(e),
@@ -195,7 +192,7 @@ export class DesignwinPanelComponent implements OnInit {
     } else if (l.kind === 'boards') {
       c = { ...base, boardNum: this.pickDeep(row.raw, ['boardNum', 'boardNumber', 'board_num', 'boardId']) || row.title };
     } else {
-      c = base; // detail: attach the board context
+      c = base;
     }
     this.attach.emit(c);
   }
@@ -330,8 +327,6 @@ export class DesignwinPanelComponent implements OnInit {
     return arr.slice(0, 50).map((item: any) => {
       const title = this.pickDeep(item, titleKeys) || 'Record';
       const subtitle = this.pickDeep(item, subKeys);
-      // Curated fields first (only those with a value); then any other scalar
-      // fields we didn't already show, so nothing is silently dropped.
       const used = new Set<string>();
       const fields: { k: string; v: string }[] = [];
       for (const [label, aliases] of fieldDefs) {
@@ -347,7 +342,6 @@ export class DesignwinPanelComponent implements OnInit {
         }
       }
       const row: Row = { title, subtitle, fields, raw: item };
-      // Part rows get a default order quantity (EAU, min 1) the user can edit.
       if (kind === 'detail') row.qty = this.qtyOf(row);
       return row;
     });

@@ -191,7 +191,6 @@ public class DesignReviewServiceImpl implements DesignReviewService {
                     "Add a microcontroller (or connect the sensors to an existing one)."));
         }
 
-        // Structural: blocks with no connections at all.
         Set<String> connected = new LinkedHashSet<>();
         for (DesignReviewRequest.Link l : req.links()) {
             if (l.from() != null) connected.add(l.from().trim().toLowerCase());

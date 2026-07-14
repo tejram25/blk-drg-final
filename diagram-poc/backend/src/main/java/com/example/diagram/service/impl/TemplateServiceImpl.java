@@ -39,8 +39,6 @@ public class TemplateServiceImpl implements TemplateService {
 
     @Override
     public List<TemplateSummary> listAll(String viewerEmail) {
-        // Aggregate all ratings once and group in memory (fine for hundreds of
-        // templates) to avoid an N+1 query per card.
         Map<Long, List<TemplateRating>> byTemplate = ratings.findAll().stream()
                 .collect(Collectors.groupingBy(TemplateRating::getTemplateId));
         return repository.findAllByOrderByUsageCountDescUpdatedAtDesc().stream()
@@ -97,7 +95,7 @@ public class TemplateServiceImpl implements TemplateService {
 
     @Override
     public ReviewResponse getReviews(Long id, String viewerEmail) {
-        require(id); // 404 if the template is gone
+        require(id);
         return aggregate(id, viewerEmail);
     }
 
@@ -121,7 +119,7 @@ public class TemplateServiceImpl implements TemplateService {
 
     @Override
     public void delete(Long id) {
-        ratings.findByTemplateId(id).forEach(ratings::delete); // tidy up orphan ratings
+        ratings.findByTemplateId(id).forEach(ratings::delete);
         repository.deleteById(id);
     }
 
@@ -219,7 +217,7 @@ public class TemplateServiceImpl implements TemplateService {
     private double average(List<TemplateRating> rs) {
         if (rs.isEmpty()) return 0.0;
         double avg = rs.stream().mapToInt(TemplateRating::getRating).average().orElse(0.0);
-        return Math.round(avg * 10.0) / 10.0; // one decimal place
+        return Math.round(avg * 10.0) / 10.0;
     }
 
     private int myRating(List<TemplateRating> rs, String viewerEmail) {

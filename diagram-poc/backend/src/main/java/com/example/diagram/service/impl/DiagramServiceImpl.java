@@ -40,7 +40,7 @@ public class DiagramServiceImpl implements DiagramService {
     public DiagramResponse get(Long id, String viewerEmail) {
         Diagram d = require(id);
         if (!canView(d, viewerEmail)) {
-            throw new NotFoundException("Diagram not found"); // hide existence of restricted files
+            throw new NotFoundException("Diagram not found");
         }
         audit.record("diagram.open", viewerEmail, d.getId(), d.getClassification());
         return toResponse(d);
@@ -70,7 +70,7 @@ public class DiagramServiceImpl implements DiagramService {
             diagram.setClassification(level(request.classification()));
         }
         if (diagram.getOwnerEmail() == null) {
-            diagram.setOwnerEmail(viewerEmail); // adopt ownership of legacy diagrams
+            diagram.setOwnerEmail(viewerEmail);
         }
         Diagram saved = repository.save(diagram);
         audit.record("diagram.save", viewerEmail, saved.getId(), saved.getClassification());
@@ -82,11 +82,8 @@ public class DiagramServiceImpl implements DiagramService {
         Diagram d = repository.findById(id).orElse(null);
         if (d == null) return;
         if (!canView(d, viewerEmail)) {
-            throw new NotFoundException("Diagram not found"); // hide restricted files
+            throw new NotFoundException("Diagram not found");
         }
-        // Deleting is owner-only: a shared (INTERNAL/PUBLIC) diagram is visible and
-        // editable by the team, but only its owner may permanently remove it.
-        // (Ownerless legacy diagrams can be deleted by any authenticated user.)
         if (d.getOwnerEmail() != null && !d.getOwnerEmail().equalsIgnoreCase(viewerEmail)) {
             throw new AccessDeniedException("Only the owner can delete this diagram");
         }

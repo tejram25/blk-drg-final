@@ -59,37 +59,26 @@ public class SecurityConfig {
                                                    CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
-            // CSRF is disabled for this POC: it's a session-cookie SPA served same-origin
-            // (Angular dev proxy in dev, reverse proxy in prod). To turn CSRF on, switch to
-            // CookieCsrfTokenRepository.withHttpOnlyFalse() and let Angular's HttpClient echo
-            // the XSRF-TOKEN cookie back as the X-XSRF-TOKEN header. See README "Security notes".
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(reg -> {
-                // register / verify / login / logout / me are all open; the rest needs a session
                 reg.requestMatchers(antMatcher("/api/auth/**")).permitAll();
-                // Public health/info so IT monitoring can poll uptime
                 reg.requestMatchers(antMatcher("/actuator/health"), antMatcher("/actuator/info")).permitAll();
-                // Only expose the H2 console route when it is actually enabled (dev only).
                 if (h2ConsoleEnabled) {
                     reg.requestMatchers(PathRequest.toH2Console()).permitAll();
                 }
                 reg.requestMatchers(antMatcher("/error")).permitAll();
                 reg.anyRequest().authenticated();
             })
-            // Deny framing by default (clickjacking protection); allow same-origin
-            // framing only when the H2 console (which renders in a frame) is enabled.
             .headers(headers -> headers.frameOptions(frame -> {
                 if (h2ConsoleEnabled) frame.sameOrigin(); else frame.deny();
             }))
-            // Create a session at login and reuse it (this is the auth state)
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-            // Return 401 (not a 302 redirect) for unauthenticated API calls so the SPA can react
             .exceptionHandling(ex -> ex.authenticationEntryPoint(
                 (request, response, authEx) ->
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")))
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
-            .logout(logout -> logout.disable()); // logout is handled by AuthController
+            .logout(logout -> logout.disable());
         return http.build();
     }
 

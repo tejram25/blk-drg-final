@@ -54,8 +54,6 @@ public class VersionServiceImpl implements VersionService {
     public VersionDetail get(Long versionId, String viewerEmail) {
         DiagramVersion v = versions.findById(versionId)
                 .orElseThrow(() -> new NotFoundException("Version not found"));
-        // A version snapshot carries the full diagram content, so gate it by the
-        // parent diagram's access rules (RESTRICTED → owner only).
         requireViewable(v.getDiagramId(), viewerEmail);
         return new VersionDetail(v.getId(), v.getLabel(), v.getContentJson(), v.getAuthorName(), v.getCreatedAt());
     }

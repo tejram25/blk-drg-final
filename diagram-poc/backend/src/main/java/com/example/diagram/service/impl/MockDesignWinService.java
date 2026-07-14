@@ -47,8 +47,6 @@ public class MockDesignWinService implements DesignWinService {
     @Override
     public String customers(String customerName, String billToNumber, String operatingUnit) {
         require(present(customerName) || present(billToNumber), "customerName or billToNumber is required.");
-        // Filter the sample customers by the query; if nothing matches, echo the
-        // query back as a single synthesised record so the drill-down still works.
         ObjectNode section = section("customers");
         ArrayNode all = firstArray(section);
         if (present(customerName) && all != null && !all.isEmpty()) {
@@ -107,8 +105,6 @@ public class MockDesignWinService implements DesignWinService {
     @Override
     public String sales(String partNumber, String mfrName) {
         require(present(partNumber), "partNumber is required.");
-        // Stamp the queried part (and mfr, if given) onto every POS row so the
-        // "field-proven" result reflects what was asked for.
         ObjectNode section = section("sales");
         ArrayNode arr = firstArray(section);
         if (arr != null) {

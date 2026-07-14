@@ -118,7 +118,6 @@ export class GojsCollabService {
   applyingViewport = false;
 
   constructor(private notify: NotificationService, private zone: NgZone) {
-    // Test/debug hook: lets e2e checks inspect sync state without UI plumbing.
     (window as any).__collab = this;
   }
 
@@ -147,7 +146,6 @@ export class GojsCollabService {
 
     this.provider.on('status', (e: { status: string }) => this.zone.run(() => { this.connected = e.status === 'connected'; }));
 
-    // ---- presence / cursors ----
     const awareness = this.provider.awareness;
     const color = CURSOR_COLORS[awareness.clientID % CURSOR_COLORS.length];
     const name = (displayName || '').trim() || 'User ' + (awareness.clientID % 1000);
@@ -158,9 +156,6 @@ export class GojsCollabService {
     this.myName = name;
     this.myColor = color;
 
-    // Absorb existing + late-loading history silently, then go live. Timed from
-    // join (not 'sync') so persisted history that y-leveldb streams in just after
-    // sync is still treated as backlog, not toasted.
     this.chatLive = false;
     clearTimeout(this.chatLiveTimer);
     this.chatLiveTimer = setTimeout(() => { this.chatLive = true; }, GojsCollabService.CHAT_GRACE_MS);
@@ -169,16 +164,9 @@ export class GojsCollabService {
     this.chatArr.observe(() => this.zone.run(() => this.refreshMessages()));
     awareness.on('change', () => this.zone.run(() => this.onAwarenessChange(awareness)));
 
-    // Seed-vs-adopt on first sync. Adopt the room's live state only when other
-    // participants are actually present; when we're alone, the freshly loaded
-    // (autosaved) diagram is the source of truth — republishing also heals rooms
-    // left with partial state by an interrupted session.
     this.provider.on('sync', (isSynced: boolean) => {
       if (!isSynced || !this.cells || !this.diagram || this.seeded) return;
       this.seeded = true;
-      // "Others present" must mean a DIFFERENT person: a ghost awareness state
-      // left by our own crashed/refreshed session shares our uid and must not
-      // make us adopt stale room state instead of republishing the saved truth.
       let othersPresent = false;
       this.provider!.awareness.getStates().forEach((s: any, id: number) => {
         if (id !== this.provider!.awareness.clientID && s?.user?.uid && s.user.uid !== this.myUserId) othersPresent = true;
@@ -187,12 +175,10 @@ export class GojsCollabService {
       else this.publishAll();
     });
 
-    // ---- outbound: model -> Yjs ----
     this.changedListener = (e: go.ChangedEvent) => this.onModelChanged(e);
     diagram.model.addChangedListener(this.changedListener);
     this.boundModel = diagram.model;
 
-    // ---- inbound: Yjs -> model ----
     this.cells.observe((event) => this.onRemoteCells(event));
   }
 
@@ -241,10 +227,6 @@ export class GojsCollabService {
   }
 
   private onModelChanged(e: go.ChangedEvent): void {
-    // Nothing may reach the room before the initial seed-vs-adopt decision —
-    // otherwise a background commit (e.g. the animated-symbol ticker) races the
-    // first sync, pre-populates the room with one node, and the sync handler
-    // then "adopts" that junk over the real diagram.
     if (this.applyingRemote || !this.cells || !this.seeded) return;
 
     if (e.change === go.ChangedEvent.Insert || e.change === go.ChangedEvent.Remove) {
@@ -257,12 +239,6 @@ export class GojsCollabService {
         else { this.dirty.set(key, data); this.removed.delete(key); }
       }
     } else if (e.change === go.ChangedEvent.Property && e.object) {
-      // Purely-local render props must not sync. 'source' is the symbol's
-      // rendered SVG and 'labelColor'/'capColor' are the label inks — all derived
-      // PER CLIENT from its own light/dark canvas theme (retheme regenerates
-      // them), so syncing them would flip a teammate's colours to the wrong
-      // theme. 'hidden' is the transient export mask (excluding a node from one
-      // user's picture must never hide it on anyone else's canvas).
       if (e.propertyName === 'source' || e.propertyName === 'hidden'
           || e.propertyName === 'labelColor' || e.propertyName === 'capColor') return;
       const key = this.kindKey(e.object);
@@ -271,15 +247,8 @@ export class GojsCollabService {
 
     if (e.isTransactionFinished) {
       if (this.liveFlushTimer) { clearTimeout(this.liveFlushTimer); this.liveFlushTimer = null; }
-      // Defer to a microtask so the flush — and any incoming remote updates the
-      // WebsocketProvider applies while we write to the Yjs doc — run AFTER the
-      // user's GoJS transaction has fully closed. Flushing synchronously here lets
-      // a remote reconciliation nest inside the just-finished transaction, dumping
-      // hundreds of foreign changes into it and corrupting undo/redo.
       queueMicrotask(() => this.flush());
     } else if (this.dirty.size > 0) {
-      // Stream intermediate changes (e.g. a node being dragged) so remote peers
-      // see smooth movement instead of a single jump on mouse-up.
       this.scheduleLiveFlush();
     }
   }
@@ -309,18 +278,9 @@ export class GojsCollabService {
 
   private onRemoteCells(event: Y.YMapEvent<any>): void {
     if (event.transaction.local || !this.diagram || !this.cells) return;
-    // Ignore the room's initial state that streams in at join — applying it here
-    // would MERGE the room's (possibly stale/reused) cells into the just-loaded
-    // diagram. The 'sync' handler decides the initial state authoritatively:
-    // adopt the room (replaceModelFromRoom) or publish our loaded diagram over
-    // it. Only genuine live edits AFTER that first sync are applied incrementally.
     if (!this.seeded) return;
     const gm = this.gm();
     this.applyingRemote = true;
-    // Remote edits must never enter the LOCAL undo stack — otherwise the user's
-    // Ctrl+Z reverts a collaborator's change (or the room's initial state loaded
-    // at join). Fully disabling the UndoManager for the duration of this
-    // synchronous apply is the reliable way to skip recording.
     const um = gm.undoManager;
     const prevSkip = gm.skipsUndoManager;
     const prevEnabled = um.isEnabled;
@@ -393,7 +353,6 @@ export class GojsCollabService {
       gm.nodeDataArray = nodes;
       gm.linkDataArray = links;
       this.diagram.model = gm;
-      // re-attach outbound listener to the new model
       if (this.changedListener) {
         this.boundModel?.removeChangedListener(this.changedListener);
         gm.addChangedListener(this.changedListener);
@@ -465,14 +424,9 @@ export class GojsCollabService {
       id: m.id, name: m.name, color: m.color, text: m.text, ts: m.ts, lang: m.lang,
       isSelf: m.clientId === this.myClientId,
     }));
-    // Emit messages not seen before. During the initial history replay they are
-    // only marked known — notifying about last week's chat would be noise.
     for (const m of this.messages) {
       if (this.chatKnown.has(m.id)) continue;
       this.chatKnown.add(m.id);
-      // Notify only for others' messages that arrive live (past the join grace)
-      // AND are recent — a stale backlog entry that slips through the grace still
-      // won't toast (60s tolerates reasonable cross-device clock skew).
       if (this.chatLive && !m.isSelf && Date.now() - m.ts < 60_000) this.chatNew$.next(m);
     }
   }
@@ -504,9 +458,6 @@ export class GojsCollabService {
     this.peers = roster.length;
     this.cursors = cursors;
     this.participants = roster;
-    // MERGE names (never replace the map): a leaver is no longer in the current
-    // awareness states, and the delayed "… left the session" toast must still be
-    // able to say who it was instead of "Someone".
     byUid.forEach((p, uid) => { if (p.name) this.knownNames.set(uid, p.name); });
 
     const currentUids = new Set(byUid.keys());

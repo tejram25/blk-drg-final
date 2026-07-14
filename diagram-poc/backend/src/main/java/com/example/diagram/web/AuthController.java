@@ -106,7 +106,6 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(Map.of("message", "That email is already registered. Try signing in."));
             }
-            // Legacy/disabled row — treat this as a fresh registration.
         } else {
             user = new User();
             user.setEmail(email);
@@ -166,9 +165,6 @@ public class AuthController {
                               HttpServletRequest request, HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, rawPassword));
-        // Prevent session fixation: issue a fresh session id on authentication so a
-        // pre-login (possibly attacker-fixed) session id can't carry into the
-        // authenticated session.
         HttpSession existing = request.getSession(false);
         if (existing != null) {
             existing.invalidate();

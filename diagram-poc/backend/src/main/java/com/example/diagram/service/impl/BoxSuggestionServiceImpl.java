@@ -92,11 +92,8 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
                     "No catalogue matches for \"" + query + "\". Try renaming the box or searching parts directly.");
         }
 
-        // When the diagram is attached to a Design Win customer, pull that customer's
-        // registered/approved parts so we can prefer parts they already use.
         Set<String> approved = approvedMpns(req);
 
-        // Group offers by manufacturer part number → one component with its suppliers.
         Map<String, List<JsonNode>> byMpn = new LinkedHashMap<>();
         for (JsonNode p : arr) {
             String mpn = mpnOf(p);
@@ -107,7 +104,6 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
         for (Map.Entry<String, List<JsonNode>> e : byMpn.entrySet()) {
             suggestions.add(toSuggestion(e.getKey(), e.getValue(), approved));
         }
-        // Customer-approved first, then field-proven, then most in-stock.
         suggestions.sort((a, b) -> {
             int c = Boolean.compare(b.customerApproved(), a.customerApproved());
             if (c != 0) return c;

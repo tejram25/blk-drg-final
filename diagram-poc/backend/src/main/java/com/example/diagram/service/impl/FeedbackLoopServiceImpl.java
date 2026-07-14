@@ -51,7 +51,6 @@ public class FeedbackLoopServiceImpl implements FeedbackLoopService {
         Map<Long, List<FeedbackEntry>> byThread = ids.isEmpty() ? Map.of()
                 : entries.findByThreadIdInOrderByCreatedAtAscIdAsc(ids).stream()
                         .collect(Collectors.groupingBy(FeedbackEntry::getThreadId));
-        // Distinct roles already used on this diagram → suggestions in the UI.
         Set<String> roles = new LinkedHashSet<>();
         byThread.values().forEach(es -> es.forEach(e -> {
             if (e.getRole() != null && !e.getRole().isBlank()) roles.add(e.getRole());
@@ -95,13 +94,11 @@ public class FeedbackLoopServiceImpl implements FeedbackLoopService {
             throw new IllegalArgumentException("Reply cannot be empty");
         }
         newEntry(threadId, req.role(), decision, text, userEmail);
-        // The loop: each decision moves the thread's status.
         switch (decision) {
             case FeedbackEntry.REQUEST_CHANGES -> t.setStatus(FeedbackThread.CHANGES_REQUESTED);
             case FeedbackEntry.APPROVE -> t.setStatus(FeedbackThread.APPROVED);
             case FeedbackEntry.CLOSE -> t.setStatus(FeedbackThread.CLOSED);
             default -> {
-                // a comment on a closed/approved thread reopens the conversation
                 if (FeedbackThread.CLOSED.equals(t.getStatus())) t.setStatus(FeedbackThread.OPEN);
             }
         }

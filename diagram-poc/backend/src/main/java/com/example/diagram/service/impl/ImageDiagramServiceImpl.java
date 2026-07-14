@@ -65,9 +65,6 @@ public class ImageDiagramServiceImpl implements ImageDiagramService {
     public ImageDiagramServiceImpl(OllamaProperties props, ObjectMapper mapper) {
         this.props = props;
         this.mapper = mapper;
-        // Bounded connect/read timeouts so an enabled-but-unreachable (or hung)
-        // Ollama fails in seconds instead of leaving the request — and the UI's
-        // "Reading your diagram…" overlay — hanging forever.
         ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.DEFAULTS
                 .withConnectTimeout(Duration.ofSeconds(5))
                 .withReadTimeout(Duration.ofSeconds(90));

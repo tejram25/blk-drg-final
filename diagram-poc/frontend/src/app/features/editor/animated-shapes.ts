@@ -365,15 +365,15 @@ export function partsToSvgFrame(shape: string, phase: number): string {
   const def = ANIMATED_SYMBOLS[shape];
   if (!def) return '';
   const pivots = [...(SPIN_PIVOTS[shape] ?? [])];
-  const osc = Math.sin(2 * Math.PI * phase);          // -1..1 rocking motions
-  const blink = (shift = 0) =>                         // 2 pulses per loop, 0.3..1
+  const osc = Math.sin(2 * Math.PI * phase);
+  const blink = (shift = 0) =>
     0.3 + 0.7 * (0.5 + 0.5 * Math.sin(2 * Math.PI * (phase * 2 + shift)));
 
   const ser = (p: Part): string => {
     const attrs: Record<string, string> = { ...p.attrs };
     const cls = attrs['class'] ?? '';
     delete attrs['class'];
-    let wrap = '';                                     // extra <g transform> wrapper
+    let wrap = '';
 
     if (cls === 'anim-spin' || cls === 'anim-spin-slow' || cls === 'anim-spin-wind') {
       const pv = pivots.shift() ?? { x: def.width / 2, y: def.height / 2 };
@@ -387,13 +387,13 @@ export function partsToSvgFrame(shape: string, phase: number): string {
         .split(/[ ,]+/).map(Number).reduce((a, b) => a + (b || 0), 0) || 12;
       attrs['stroke-dashoffset'] = (-(phase * period * 2)).toFixed(2);
     } else if (/^anim-cycle-[123]$/.test(cls)) {
-      const i = Number(cls.slice(-1)) - 1;             // stack light: one lit at a time
+      const i = Number(cls.slice(-1)) - 1;
       attrs['opacity'] = Math.floor(phase * 3) % 3 === i ? '1' : '0.22';
     } else if (/^anim-charge-[123]$/.test(cls)) {
-      const i = Number(cls.slice(-1)) - 1;             // battery bars fill up, then reset
+      const i = Number(cls.slice(-1)) - 1;
       attrs['opacity'] = i < Math.floor((phase * 4) % 4) ? '1' : '0.15';
     } else if (cls === 'anim-level') {
-      const s = 0.6 + 0.35 * (0.5 + 0.5 * osc);        // tank level breathes (bottom-anchored)
+      const s = 0.6 + 0.35 * (0.5 + 0.5 * osc);
       const bottom = Number(attrs['y'] ?? 0) + Number(attrs['height'] ?? 0);
       wrap = `translate(0 ${(bottom * (1 - s)).toFixed(2)}) scale(1 ${s.toFixed(3)})`;
     } else if (cls === 'anim-piston') {

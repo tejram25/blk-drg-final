@@ -88,15 +88,12 @@ public class RecommendationServiceImpl implements RecommendationService {
     public RecommendationResult recommend(RecommendationRequest request) {
         RecommendationRequest req = normalize(request);
 
-        // Canvas parts + the reliable, catalogue-friendly dictionary first.
         LinkedHashSet<String> terms = new LinkedHashSet<>();
         for (String p : req.currentParts()) {
             if (present(p)) terms.add(p.trim());
         }
         terms.addAll(keywords.termsFor(req.goal()));
 
-        // Only spend the (slow) local model when the dictionary is thin, so the
-        // common case stays fast. The model just proposes more search terms.
         boolean usedAi = false;
         if (props.isConfigured() && terms.size() < 3) {
             List<String> ai = aiSearchTerms(req.goal());
@@ -107,14 +104,13 @@ public class RecommendationServiceImpl implements RecommendationService {
         List<String> termList = terms.stream().limit(MAX_TERMS).collect(Collectors.toList());
         log.info("Recommendation search terms for goal '{}': {}", req.goal(), termList);
 
-        // The catalogue + Design Win APIs are the source of truth for actual parts.
         List<RecommendationItem> partItems = catalogueItems(termList);
 
         List<RecommendationItem> items = new ArrayList<>();
         if (!partItems.isEmpty()) {
             items.addAll(partItems);
         } else {
-            items.addAll(fallbackParts(req.goal())); // generic suggestions when nothing matched
+            items.addAll(fallbackParts(req.goal()));
         }
         items.addAll(templateItems(req));
         items.add(bomNudge());
@@ -175,7 +171,6 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     /** Look each term up in the catalogue (in parallel); return de-duplicated grounded parts. */
     private List<RecommendationItem> catalogueItems(List<String> terms) {
-        // Run the per-term lookups concurrently — they're independent network calls.
         List<RecommendationItem> found = terms.parallelStream()
                 .map(this::lookupCatalogue)
                 .filter(i -> i != null)
@@ -195,7 +190,6 @@ public class RecommendationServiceImpl implements RecommendationService {
             JsonNode arr = mapper.readTree(json == null ? "" : json).at("/partserviceresult/parts");
             if (!arr.isArray() || arr.isEmpty()) return null;
 
-            // Prefer an Active, in-stock part over the (arbitrary) first result.
             JsonNode best = null;
             int bestScore = Integer.MIN_VALUE;
             for (JsonNode p : arr) {
@@ -215,7 +209,6 @@ public class RecommendationServiceImpl implements RecommendationService {
             String lead = best.at("/leadTime/arwLT").asText("");
             String desc = firstText(org.at("/desc"), best.at("/icc/name"), pn);
 
-            // Cross-check Design Win POS: a part with shipment history is field-proven.
             boolean proven = hasPosSales(pn, supplier);
 
             String detail = "Matched \"" + term + "\" — " + desc
@@ -227,7 +220,6 @@ public class RecommendationServiceImpl implements RecommendationService {
             String verify = stock > 0
                     ? "In stock now — confirm the lifecycle status and specs before committing."
                     : "Best match is out of stock — check lead time or pick an in-stock alternative.";
-            // query = the matched term, so "add" can re-search and offer suppliers/variants.
             return new RecommendationItem("part", pn, detail, source, verify, term);
         } catch (Exception ex) {
             log.debug("Catalogue lookup for '{}' failed: {}", term, ex.toString());
@@ -238,7 +230,6 @@ public class RecommendationServiceImpl implements RecommendationService {
     /** Rank a catalogue part: in-stock and an active lifecycle status score highest. */
     private int partScore(JsonNode part) {
         String status = part.at("/invOrgs/0/status").asText("").toLowerCase();
-        // "Nvr.Active" / "Never Active" are dead statuses despite containing "active".
         boolean dead = status.contains("nvr") || status.contains("never")
                 || status.contains("obsolete") || status.contains("eol");
         boolean active = !dead && (status.contains("active") || status.contains("new"));
@@ -255,12 +246,10 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     /** True when the Design Win POS API reports shipment history for the part. */
     private boolean hasPosSales(String partNumber, String mfr) {
-        if (!posCheck) return false; // POS disabled (e.g. no POS data in this environment)
+        if (!posCheck) return false;
         try {
             String json = designWin.sales(partNumber, present(mfr) ? mfr : null);
             JsonNode root = mapper.readTree(json == null ? "" : json);
-            // POS records may be wrapped under different keys across environments; a
-            // non-empty records array (or a positive posAmount) means shipment history.
             for (String key : new String[]{"sales", "details", "pos", "salesData", "posData"}) {
                 JsonNode arr = root.path(key);
                 if (arr.isArray() && !arr.isEmpty()) return true;
@@ -324,7 +313,6 @@ public class RecommendationServiceImpl implements RecommendationService {
     // ---- helpers ----
 
     private RecommendationItem part(String pn, String detail, String verify) {
-        // Generic fallback part: the part number itself is the search query.
         return new RecommendationItem("part", pn, detail, "Arrow catalogue", verify, pn);
     }
 
