@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../collab/data/collab_doc_engine.dart';
 import '../../collab/data/collab_service.dart';
 import '../../comments/presentation/comments_sheet.dart';
 import '../../designwin/presentation/designwin_sheet.dart';
@@ -27,6 +28,9 @@ class EditorScreen extends ConsumerStatefulWidget {
 class _EditorScreenState extends ConsumerState<EditorScreen> {
   late final EditorSession _session;
   CollabService? _collab;
+  CollabDocEngine? _docEngine;
+  bool _liveDoc = false;
+  bool _liveDocBusy = false;
   String? _selectedKey;
   bool _connectMode = false;
   String? _connectFrom;
@@ -55,9 +59,61 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   @override
   void dispose() {
+    _docEngine?.dispose();
     _collab?.dispose();
     _session.dispose();
     super.dispose();
+  }
+
+  /// Opt-in live document co-editing (beta): loads the CRDT engine, joins the
+  /// shared Y.Doc, applies remote edits to the canvas, and pushes the local
+  /// model. The flutter_js runtime runs only on a device.
+  Future<void> _toggleLiveDoc() async {
+    if (_liveDocBusy) return;
+    if (_liveDoc) {
+      _docEngine?.dispose();
+      setState(() {
+        _docEngine = null;
+        _liveDoc = false;
+      });
+      return;
+    }
+    setState(() => _liveDocBusy = true);
+    try {
+      final engine = CollabDocEngine(
+        wsBaseUrl: AppConfig.collabWsUrl,
+        diagramId: widget.diagramId,
+        onRemoteModel: (model) {
+          _session.applyRemoteModel(model);
+          if (mounted) setState(() {});
+        },
+      );
+      await engine.init();
+      engine.connect();
+      final model = _session.currentModel();
+      if (model != null) engine.pushModel(model);
+      if (mounted) {
+        setState(() {
+          _docEngine = engine;
+          _liveDoc = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Live co-edit unavailable: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _liveDocBusy = false);
+    }
+  }
+
+  /// Push the current model to the shared document after a local edit.
+  void _pushLive() {
+    if (_docEngine == null) return;
+    final model = _session.currentModel();
+    if (model != null) _docEngine!.pushModel(model);
   }
 
   @override
@@ -95,22 +151,33 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 ),
               PopupMenuButton<String>(
                 onSelected: _onMenu,
-                itemBuilder: (_) => const [
+                itemBuilder: (_) => [
                   PopupMenuItem(
+                    value: 'livedoc',
+                    child: ListTile(
+                      leading: Icon(_liveDoc
+                          ? Icons.sync
+                          : Icons.sync_disabled),
+                      title: Text(_liveDoc
+                          ? 'Live co-edit: on'
+                          : 'Live co-edit (beta)'),
+                    ),
+                  ),
+                  const PopupMenuItem(
                     value: 'comments',
                     child: ListTile(
                       leading: Icon(Icons.forum_outlined),
                       title: Text('Comments'),
                     ),
                   ),
-                  PopupMenuItem(
+                  const PopupMenuItem(
                     value: 'reviews',
                     child: ListTile(
                       leading: Icon(Icons.star_border_rounded),
                       title: Text('Reviews & ratings'),
                     ),
                   ),
-                  PopupMenuItem(
+                  const PopupMenuItem(
                     value: 'versions',
                     child: ListTile(
                       leading: Icon(Icons.history),
@@ -199,6 +266,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _connectFrom = null;
         _connectMode = false;
       });
+      _pushLive();
     }
   }
 
@@ -212,6 +280,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     _placeCounter++;
     final key = _session.addBlock(block, pos);
     setState(() => _selectedKey = key);
+    _pushLive();
   }
 
   void _deleteSelected() {
@@ -219,10 +288,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     if (key == null) return;
     _session.deleteNode(key);
     setState(() => _selectedKey = null);
+    _pushLive();
   }
 
   void _onMenu(String value) {
     switch (value) {
+      case 'livedoc':
+        _toggleLiveDoc();
       case 'comments':
         CommentsSheet.show(context, widget.diagramId);
       case 'reviews':
@@ -259,6 +331,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   void _notifyAttached(String key, String partNumber) {
+    _pushLive();
     final node = _session.state?.graph.nodesByKey[key];
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

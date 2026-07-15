@@ -43,6 +43,7 @@ dependencies:
   path_provider: ^2.1.6
   path_drawing: ^1.0.1
   web_socket_channel: ^3.0.3
+  flutter_js: ^0.8.7
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -68,7 +69,7 @@ flutter:
   # Bundled CRDT collaboration engine (yjs + y-websocket), loaded by an
   # embedded JS runtime for live document co-editing. See assets/collab/README.
   assets:
-    - assets/collab/ydoc_engine.bundle.js
+    - assets/collab/ydoc_core.bundle.js
 
   # To add assets to your application, add an assets section, like this:
   # assets:

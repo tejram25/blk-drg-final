@@ -228,6 +228,39 @@ class EditorSession extends ChangeNotifier {
     }
   }
 
+  /// The current diagram as a `{nodes, links}` model of plain maps — the shape
+  /// the collaboration engine's `cells` map uses.
+  Map<String, dynamic>? currentModel() {
+    final g = state?.graph;
+    if (g == null) return null;
+    return {
+      'nodes': g.nodes.map((n) => n.raw).toList(),
+      'links': g.links.map((l) => l.raw).toList(),
+    };
+  }
+
+  /// Replace the diagram from a remote `{nodes, links}` model (a collaboration
+  /// update). Does not mark dirty — it reflects the shared document.
+  void applyRemoteModel(Map<String, dynamic> model) {
+    final s = state;
+    if (s == null) return;
+    final nodes = (model['nodes'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
+    final links = (model['links'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
+    final content = jsonEncode({
+      'class': 'GraphLinksModel',
+      'nodeDataArray': nodes,
+      'linkDataArray': links,
+    });
+    state = s.copyWith(graph: DiagramGraph.parse(content));
+    notifyListeners();
+  }
+
   /// The current diagram serialized to a GoJS model JSON (for a version
   /// snapshot).
   String? currentContentJson() {
