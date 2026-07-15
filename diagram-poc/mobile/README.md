@@ -108,6 +108,9 @@ flutter test           # unit tests (diagram model parser)
   - **Part search + attach**: search the catalogue (`/api/parts/search`) and
     attach an MPN to a node; stored under `attachedParts` in the same shape the
     web editor uses (round-trips), shown as a count badge on the node.
+  - **Design-Win browser + attach**: drill down customers → projects → boards →
+    parts (`/api/designwin/*`) and attach a registered board part (with its
+    board quantity) to a node.
 
   - **Comments, reviews & ratings, version history** from the editor overflow
     menu (`/api/diagrams/{id}/comments`, `/reviews`, `/versions`) — including
@@ -124,7 +127,7 @@ flutter test           # unit tests (diagram model parser)
   itself needs the full Yjs CRDT (`getMap('cells')` / `getArray('chat')`). That
   requires a production-grade Dart Yjs port (the current `y_crdt` is a 0.0.1
   WASM binding), so it is intentionally deferred rather than shipped unverified.
-- Design-Win panel, BOM roll-up, templates.
+- BOM roll-up, templates gallery.
 - Pin-accurate wire endpoints; offline cache + optimistic sync; CI
   build/signing for the app stores.
 

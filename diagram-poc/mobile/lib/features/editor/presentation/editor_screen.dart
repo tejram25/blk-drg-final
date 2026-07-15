@@ -6,6 +6,7 @@ import '../../../core/config/app_config.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../collab/data/collab_service.dart';
 import '../../comments/presentation/comments_sheet.dart';
+import '../../designwin/presentation/designwin_sheet.dart';
 import '../../diagrams/data/diagram_repository.dart';
 import '../../parts/presentation/part_search_sheet.dart';
 import '../../reviews/presentation/reviews_sheet.dart';
@@ -245,11 +246,24 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final part = await PartSearchSheet.show(context);
     if (part == null || !mounted) return;
     _session.attachPart(key, part);
+    _notifyAttached(key, part.partNumber);
+  }
+
+  Future<void> _attachDesignWin() async {
+    final key = _selectedKey;
+    if (key == null) return;
+    final choice = await DesignWinSheet.show(context);
+    if (choice == null || !mounted) return;
+    _session.attachPart(key, choice.part, quantity: choice.quantity);
+    _notifyAttached(key, choice.part.partNumber);
+  }
+
+  void _notifyAttached(String key, String partNumber) {
     final node = _session.state?.graph.nodesByKey[key];
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Attached ${part.partNumber} to "${node?.text ?? 'component'}"',
+          'Attached $partNumber to "${node?.text ?? 'component'}"',
         ),
       ),
     );
@@ -278,6 +292,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             icon: const Icon(Icons.memory),
             tooltip: 'Attach part to selected',
             onPressed: hasSelection ? _attachPart : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.hub_outlined),
+            tooltip: 'Attach Design Win part',
+            onPressed: hasSelection ? _attachDesignWin : null,
           ),
           const Spacer(),
           IconButton(
