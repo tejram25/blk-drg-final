@@ -3,7 +3,6 @@ library;
 
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:blk_drg_mobile/app/theme.dart';
 import 'package:blk_drg_mobile/features/auth/data/auth_repository.dart';
