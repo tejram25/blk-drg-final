@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import '../../../core/util/color_util.dart';
+
 /// A node parsed from a GoJS node-data entry.
 ///
 /// GoJS serializes position as a `"x y"` string (`loc`) and size as `"w h"`
@@ -29,6 +31,12 @@ class DiagramNode {
 
   Rect get bounds => position & size;
 
+  /// Number of catalogue parts attached to this node (web `attachedParts`).
+  int get attachedPartsCount {
+    final v = raw['attachedParts'];
+    return v is List ? v.length : 0;
+  }
+
   static const Size _defaultSize = Size(120, 60);
 
   factory DiagramNode.fromJson(Map<String, dynamic> json) {
@@ -38,7 +46,7 @@ class DiagramNode {
       text: (json['text'] ?? '') as String,
       position: _parsePoint(json['loc']) ?? Offset.zero,
       size: _parseSize(json['size']) ?? _defaultSize,
-      color: _parseColor(json['color'] ?? json['fill']),
+      color: parseHexColor(json['color'] ?? json['fill']),
       shape: json['shape'] as String?,
       raw: json,
     );
@@ -159,17 +167,4 @@ class DiagramGraph {
     }
     return rect;
   }
-}
-
-Color? _parseColor(Object? v) {
-  if (v is! String || v.isEmpty) return null;
-  var hex = v.trim();
-  if (!hex.startsWith('#')) return null;
-  hex = hex.substring(1);
-  if (hex.length == 3) {
-    hex = hex.split('').map((c) => '$c$c').join();
-  }
-  if (hex.length == 6) hex = 'FF$hex';
-  final value = int.tryParse(hex, radix: 16);
-  return value == null ? null : Color(value);
 }

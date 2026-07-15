@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../domain/diagram_graph.dart';
+import 'symbol_painter.dart';
 
 /// Interactive canvas that renders a [DiagramGraph]: pan, pinch-zoom, tap to
 /// select, and one-finger drag to move a node. This is the mobile counterpart
@@ -227,6 +228,34 @@ class _DiagramPainter extends CustomPainter {
     ColorScheme scheme,
   ) {
     final rect = node.bounds;
+
+    // Electrical symbols render as schematic art, not a card.
+    final symbol = symbolFor(node.shape);
+    if (symbol != null) {
+      paintSymbol(canvas, rect, symbol, scheme.onSurface);
+      if (selected) {
+        canvas.drawRect(
+          rect.inflate(4),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.6
+            ..color = scheme.primary,
+        );
+      }
+      if (node.text.isNotEmpty) {
+        final tp = TextPainter(
+          text: TextSpan(
+            text: node.text,
+            style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 11),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, Offset(rect.left, rect.bottom + 2));
+      }
+      _paintPartBadge(canvas, node, rect, scheme);
+      return;
+    }
+
     final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(10));
 
     canvas.drawRRect(
@@ -264,6 +293,42 @@ class _DiagramPainter extends CustomPainter {
         ),
       );
     }
+    _paintPartBadge(canvas, node, rect, scheme);
+  }
+
+  /// A small amber "link + count" badge at the node's top-right when it has
+  /// attached catalogue parts.
+  void _paintPartBadge(
+    Canvas canvas,
+    DiagramNode node,
+    Rect rect,
+    ColorScheme scheme,
+  ) {
+    final count = node.attachedPartsCount;
+    if (count == 0) return;
+    const r = 9.0;
+    final center = Offset(rect.right, rect.top);
+    canvas.drawCircle(center, r, Paint()..color = const Color(0xFFF5A623));
+    canvas.drawCircle(
+      center,
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = scheme.surface,
+    );
+    final tp = TextPainter(
+      text: TextSpan(
+        text: '$count',
+        style: const TextStyle(
+          color: Color(0xFF1A1303),
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
 
   Color _readableOn(Color background) {

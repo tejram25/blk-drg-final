@@ -5,7 +5,10 @@ import 'package:flutter/foundation.dart';
 
 import '../../diagrams/data/diagram_repository.dart';
 import '../../diagrams/domain/diagram_detail.dart';
+import '../../parts/domain/part.dart';
+import '../domain/block_type.dart';
 import '../domain/diagram_graph.dart';
+import '../domain/electrical_symbols.g.dart';
 
 /// Immutable snapshot of an open diagram's editable state.
 class EditorState {
@@ -79,6 +82,128 @@ class EditorSession extends ChangeNotifier {
     node.raw['loc'] = '${newPosition.dx} ${newPosition.dy}';
     state = s.copyWith(dirty: true);
     notifyListeners();
+  }
+
+  /// Add a palette entry at [position] (diagram-space top-left). Returns the new
+  /// node's key so the caller can select it.
+  String? addBlock(BlockType block, Offset position) {
+    final s = state;
+    if (s == null) return null;
+    final key = _newKey(s.graph);
+    final loc = '${position.dx} ${position.dy}';
+
+    Map<String, dynamic> raw;
+    if (block.isSymbol) {
+      final def = kElectricalSymbols[block.shape];
+      final meta = kElectricalMeta[block.shape];
+      final ref = meta?.ref ?? '';
+      raw = {
+        'key': key,
+        'category': 'symbol',
+        'shape': block.shape,
+        'text': ref.isEmpty ? '' : _nextRefdes(s.graph, ref),
+        'size': def == null ? '100 40' : '${def.width} ${def.height}',
+        'loc': loc,
+      };
+    } else if (block.isShape) {
+      raw = {
+        'key': key,
+        'category': 'shape',
+        'shape': block.shape,
+        'text': block.label,
+        'color': '#ffffff',
+        'size': '140 90',
+        'loc': loc,
+      };
+    } else {
+      raw = {
+        'key': key,
+        'category': 'block',
+        'text': block.label,
+        'subtitle': block.category,
+        'color': block.colorHex,
+        'icon': block.icon ?? 'widgets',
+        'size': '150 64',
+        'loc': loc,
+      };
+    }
+
+    s.graph.nodes.add(DiagramNode.fromJson(raw));
+    state = s.copyWith(dirty: true);
+    notifyListeners();
+    return key;
+  }
+
+  /// Connect two nodes. A link between two electrical symbols is a schematic
+  /// wire; otherwise it is a block connector.
+  void addLink(String fromKey, String toKey) {
+    final s = state;
+    if (s == null || fromKey == toKey) return;
+    final from = s.graph.nodesByKey[fromKey];
+    final to = s.graph.nodesByKey[toKey];
+    if (from == null || to == null) return;
+    final wire = from.category == 'symbol' && to.category == 'symbol';
+    final raw = {
+      'category': 'link',
+      'from': fromKey,
+      'to': toKey,
+      'fromPort': '',
+      'toPort': '',
+      if (wire) 'wire': true,
+    };
+    s.graph.links.add(DiagramLink.fromJson(raw));
+    state = s.copyWith(dirty: true);
+    notifyListeners();
+  }
+
+  /// Attach a catalogue part to a node, stored under `attachedParts` in the
+  /// same `{ part, quantity }` shape the web editor uses (so it round-trips).
+  void attachPart(String key, Part part, {int quantity = 1}) {
+    final s = state;
+    if (s == null) return;
+    final node = s.graph.nodesByKey[key];
+    if (node == null) return;
+    final existing = node.raw['attachedParts'];
+    final list = (existing is List)
+        ? List<dynamic>.from(existing)
+        : <dynamic>[];
+    list.add({'part': part.toJson(), 'quantity': quantity});
+    node.raw['attachedParts'] = list;
+    state = s.copyWith(dirty: true);
+    notifyListeners();
+  }
+
+  /// Delete a node and every link touching it.
+  void deleteNode(String key) {
+    final s = state;
+    if (s == null) return;
+    s.graph.nodes.removeWhere((n) => n.key == key);
+    s.graph.links.removeWhere((l) => l.from == key || l.to == key);
+    state = s.copyWith(dirty: true);
+    notifyListeners();
+  }
+
+  String _newKey(DiagramGraph graph) {
+    var max = 0;
+    for (final n in graph.nodes) {
+      final k = int.tryParse(n.key);
+      if (k != null && k > max) max = k;
+    }
+    return '${max + 1}';
+  }
+
+  /// Next reference designator for a prefix (R1, R2, … / U1, U2, …).
+  String _nextRefdes(DiagramGraph graph, String prefix) {
+    var max = 0;
+    final re = RegExp('^$prefix(\\d+)\$');
+    for (final n in graph.nodes) {
+      final m = re.firstMatch(n.text);
+      if (m != null) {
+        final v = int.tryParse(m.group(1)!) ?? 0;
+        if (v > max) max = v;
+      }
+    }
+    return '$prefix${max + 1}';
   }
 
   Future<void> save() async {

@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../diagrams/data/diagram_repository.dart';
+import '../../parts/presentation/part_search_sheet.dart';
 import 'diagram_canvas.dart';
 import 'editor_controller.dart';
+import 'palette_sheet.dart';
 
 class EditorScreen extends ConsumerStatefulWidget {
   const EditorScreen({super.key, required this.diagramId});
@@ -18,6 +20,9 @@ class EditorScreen extends ConsumerStatefulWidget {
 class _EditorScreenState extends ConsumerState<EditorScreen> {
   late final EditorSession _session;
   String? _selectedKey;
+  bool _connectMode = false;
+  String? _connectFrom;
+  int _placeCounter = 0;
 
   @override
   void initState() {
@@ -69,6 +74,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             ],
           ),
           body: _buildBody(state),
+          bottomNavigationBar:
+              (!_session.loading && _session.error == null && state != null)
+                  ? _bottomBar()
+                  : null,
         );
       },
     );
@@ -98,19 +107,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ),
       );
     }
-    if (state == null || state.graph.isEmpty) {
+    if (state == null) {
       return const Center(
         child: Text('This diagram has no content to display yet.'),
       );
     }
     return Column(
       children: [
+        if (_connectMode) _ConnectHint(armed: _connectFrom != null),
         Expanded(
           child: DiagramCanvas(
             graph: state.graph,
-            selectedKey: _selectedKey,
-            onSelect: (k) => setState(() => _selectedKey = k),
-            onNodeMoved: _session.moveNode,
+            selectedKey: _connectMode ? _connectFrom : _selectedKey,
+            onSelect: _onCanvasSelect,
+            onNodeMoved: _connectMode ? _ignoreMove : _session.moveNode,
           ),
         ),
         _StatusBar(
@@ -125,6 +135,95 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     );
   }
 
+  void _ignoreMove(String key, Offset _) {}
+
+  void _onCanvasSelect(String? key) {
+    if (!_connectMode) {
+      setState(() => _selectedKey = key);
+      return;
+    }
+    if (key == null) return;
+    if (_connectFrom == null) {
+      setState(() => _connectFrom = key);
+    } else if (_connectFrom != key) {
+      _session.addLink(_connectFrom!, key);
+      setState(() {
+        _connectFrom = null;
+        _connectMode = false;
+      });
+    }
+  }
+
+  Future<void> _addFromPalette() async {
+    final block = await PaletteSheet.show(context);
+    if (block == null || !mounted) return;
+    // Cascade new nodes near the middle of existing content.
+    final bounds = _session.state?.graph.contentBounds();
+    final base = bounds?.center ?? const Offset(200, 200);
+    final pos = base + Offset(24.0 * (_placeCounter % 6), 24.0 * (_placeCounter % 6));
+    _placeCounter++;
+    final key = _session.addBlock(block, pos);
+    setState(() => _selectedKey = key);
+  }
+
+  void _deleteSelected() {
+    final key = _selectedKey;
+    if (key == null) return;
+    _session.deleteNode(key);
+    setState(() => _selectedKey = null);
+  }
+
+  Future<void> _attachPart() async {
+    final key = _selectedKey;
+    if (key == null) return;
+    final part = await PartSearchSheet.show(context);
+    if (part == null || !mounted) return;
+    _session.attachPart(key, part);
+    final node = _session.state?.graph.nodesByKey[key];
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Attached ${part.partNumber} to "${node?.text ?? 'component'}"',
+        ),
+      ),
+    );
+  }
+
+  Widget _bottomBar() {
+    final hasSelection = _selectedKey != null;
+    return BottomAppBar(
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.add_box_outlined),
+            tooltip: 'Add from palette',
+            onPressed: _addFromPalette,
+          ),
+          IconButton(
+            isSelected: _connectMode,
+            icon: const Icon(Icons.timeline),
+            tooltip: 'Connect two components',
+            onPressed: () => setState(() {
+              _connectMode = !_connectMode;
+              _connectFrom = null;
+            }),
+          ),
+          IconButton(
+            icon: const Icon(Icons.memory),
+            tooltip: 'Attach part to selected',
+            onPressed: hasSelection ? _attachPart : null,
+          ),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Delete selected',
+            onPressed: hasSelection ? _deleteSelected : null,
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _save() async {
     await _session.save();
     if (mounted && _session.error == null) {
@@ -132,6 +231,29 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         const SnackBar(content: Text('Saved')),
       );
     }
+  }
+}
+
+class _ConnectHint extends StatelessWidget {
+  const _ConnectHint({required this.armed});
+
+  final bool armed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      color: scheme.primaryContainer,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Text(
+        armed
+            ? 'Tap the second component to connect'
+            : 'Connect mode: tap the first component',
+        style: TextStyle(color: scheme.onPrimaryContainer),
+        textAlign: TextAlign.center,
+      ),
+    );
   }
 }
 

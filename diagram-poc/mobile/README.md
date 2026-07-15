@@ -95,16 +95,32 @@ flutter test           # unit tests (diagram model parser)
   with an auth guard.
 - Auth: login, register (with invite-code support), session restore, logout.
 - Diagrams: list, create, delete, pull-to-refresh.
-- Editor: load a diagram, render it on the interactive canvas, move nodes, save.
+- Editor:
+  - Load and render a diagram on the interactive canvas; pan / pinch-zoom /
+    tap-to-select / one-finger node drag; save.
+  - **Palette** (blocks + shapes + electrical symbols) with tap-to-place;
+    delete selected node and its links.
+  - **Tap-to-connect wiring**: tap two components to link them (schematic wire
+    between symbols, connector otherwise).
+  - **Electrical symbols** rendered as vector schematic art — the full ~75
+    symbol set, generated from the web app's definitions (`tool/gen_symbols.mjs`
+    → `electrical_symbols.g.dart`) so a symbol looks identical on both.
+  - **Part search + attach**: search the catalogue (`/api/parts/search`) and
+    attach an MPN to a node; stored under `attachedParts` in the same shape the
+    web editor uses (round-trips), shown as a count badge on the node.
 
 **Next phases (parity with the web app):**
-- Palette + node creation and deletion; wire drawing (tap-to-connect).
-- Electrical symbols rendered as vector paths (port the web symbol set).
-- Parts / BOM: attach MPNs, Design-Win and part-search panels.
 - Real-time collaboration (the web app uses Yjs/y-websocket; the mobile client
   would bridge the same room protocol or a WebSocket sync channel).
-- Comments, reviews, templates, versioning.
-- Offline cache + optimistic sync; CI build/signing for the app stores.
+- Design-Win panel, BOM roll-up, comments, reviews, templates, versioning.
+- Pin-accurate wire endpoints; offline cache + optimistic sync; CI
+  build/signing for the app stores.
+
+### Regenerating the electrical symbols
+
+```bash
+node tool/gen_symbols.mjs   # re-reads the web app's electrical-shapes.ts
+```
 
 > Building signed Android/iOS binaries requires the Android SDK / Xcode
 > toolchains on the build machine; this repo's code is verified with
