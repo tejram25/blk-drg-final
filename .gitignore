@@ -10,6 +10,9 @@ target/
 # H2 database files (generated at runtime; never commit DB state or its lock file)
 data/
 **/data/*.db
+# ...but the Flutter app's clean-architecture 'data/' layers are source code.
+!diagram-poc/mobile/lib/**/data/
+!diagram-poc/mobile/lib/**/data/**
 
 # Logs & OS cruft
 *.log

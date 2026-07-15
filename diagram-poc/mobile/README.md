@@ -109,12 +109,34 @@ flutter test           # unit tests (diagram model parser)
     attach an MPN to a node; stored under `attachedParts` in the same shape the
     web editor uses (round-trips), shown as a count badge on the node.
 
+  - **Comments, reviews & ratings, version history** from the editor overflow
+    menu (`/api/diagrams/{id}/comments`, `/reviews`, `/versions`) — including
+    snapshotting and restoring a past version into the canvas.
+  - **Live presence**: joins the same **y-websocket** room the web app uses
+    (`gojs-<diagramId>`) and shows an avatar stack of the other participants.
+    This is implemented by speaking the Yjs **awareness** sub-protocol directly
+    (see `features/collab/`), so mobile users appear in the web roster and
+    vice-versa. Interop is verified against a real y-websocket + Yjs peer
+    (`flutter test --tags live test/collab_live_test.dart`).
+
 **Next phases (parity with the web app):**
-- Real-time collaboration (the web app uses Yjs/y-websocket; the mobile client
-  would bridge the same room protocol or a WebSocket sync channel).
-- Design-Win panel, BOM roll-up, comments, reviews, templates, versioning.
+- **Live document co-editing** — presence is done; syncing the diagram *content*
+  itself needs the full Yjs CRDT (`getMap('cells')` / `getArray('chat')`). That
+  requires a production-grade Dart Yjs port (the current `y_crdt` is a 0.0.1
+  WASM binding), so it is intentionally deferred rather than shipped unverified.
+- Design-Win panel, BOM roll-up, templates.
 - Pin-accurate wire endpoints; offline cache + optimistic sync; CI
   build/signing for the app stores.
+
+### Collaboration config
+
+The presence relay URL defaults to `ws://10.0.2.2:1234` (Android emulator →
+host). Override with `--dart-define=COLLAB_WS_URL=ws://<host>:1234`. Start the
+relay from `diagram-poc/frontend`:
+
+```bash
+HOST=0.0.0.0 PORT=1234 node node_modules/y-websocket/bin/server.js
+```
 
 ### Regenerating the electrical symbols
 

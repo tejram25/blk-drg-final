@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/app_config.dart';
+import '../../auth/presentation/auth_controller.dart';
+import '../../collab/data/collab_service.dart';
 import '../../comments/presentation/comments_sheet.dart';
 import '../../diagrams/data/diagram_repository.dart';
 import '../../parts/presentation/part_search_sheet.dart';
@@ -22,6 +25,7 @@ class EditorScreen extends ConsumerStatefulWidget {
 
 class _EditorScreenState extends ConsumerState<EditorScreen> {
   late final EditorSession _session;
+  CollabService? _collab;
   String? _selectedKey;
   bool _connectMode = false;
   String? _connectFrom;
@@ -35,10 +39,22 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       widget.diagramId,
     );
     _session.load();
+
+    // Live presence: join the same y-websocket room the web app uses.
+    final user = ref.read(authControllerProvider).value;
+    if (user != null) {
+      _collab = CollabService(
+        wsBaseUrl: AppConfig.collabWsUrl,
+        diagramId: widget.diagramId,
+        displayName: user.name.isEmpty ? user.email : user.name,
+        uid: user.email,
+      )..connect();
+    }
   }
 
   @override
   void dispose() {
+    _collab?.dispose();
     _session.dispose();
     super.dispose();
   }
@@ -57,6 +73,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             ),
             title: Text(state?.detail.name ?? 'Editor'),
             actions: [
+              if (_collab != null)
+                _PresenceBar(collab: _collab!),
               if (state?.saving == true)
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
@@ -279,6 +297,84 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         const SnackBar(content: Text('Saved')),
       );
     }
+  }
+}
+
+/// A compact avatar stack of the other participants currently in the session,
+/// driven by [CollabService] presence.
+class _PresenceBar extends StatelessWidget {
+  const _PresenceBar({required this.collab});
+
+  final CollabService collab;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: collab,
+      builder: (context, _) {
+        final peers = collab.peers;
+        if (peers.isEmpty) return const SizedBox.shrink();
+        const maxShown = 3;
+        final shown = peers.take(maxShown).toList();
+        final extra = peers.length - shown.length;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < shown.length; i++)
+                  Align(
+                    widthFactor: 0.7,
+                    child: _Avatar(peer: shown[i]),
+                  ),
+                if (extra > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text('+$extra',
+                        style: Theme.of(context).textTheme.labelMedium),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.peer});
+
+  final CollabPeer peer;
+
+  Color get _color {
+    final hex = peer.color.replaceFirst('#', '');
+    final v = int.tryParse(hex.length == 6 ? 'FF$hex' : hex, radix: 16);
+    return v == null ? Colors.blueGrey : Color(v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = peer.name.trim().isEmpty
+        ? '?'
+        : peer.name
+            .trim()
+            .split(RegExp(r'\s+'))
+            .take(2)
+            .map((w) => w[0].toUpperCase())
+            .join();
+    return Tooltip(
+      message: peer.name,
+      child: CircleAvatar(
+        radius: 14,
+        backgroundColor: _color,
+        child: Text(
+          initials,
+          style: const TextStyle(fontSize: 11, color: Colors.white),
+        ),
+      ),
+    );
   }
 }
 

@@ -23,6 +23,14 @@ class AppConfig {
   /// Prefix every REST route carries in the backend controllers.
   static const String apiPrefix = '/api';
 
+  /// Base WebSocket URL of the y-websocket collaboration relay. The room is
+  /// appended as `/gojs-<diagramId>`. Defaults target a local relay on the
+  /// Android-emulator host; override on a device with --dart-define.
+  static const String collabWsUrl = String.fromEnvironment(
+    'COLLAB_WS_URL',
+    defaultValue: 'ws://10.0.2.2:1234',
+  );
+
   /// Network timeouts.
   static const Duration connectTimeout = Duration(seconds: 15);
   static const Duration receiveTimeout = Duration(seconds: 30);
