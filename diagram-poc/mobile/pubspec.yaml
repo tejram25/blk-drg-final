@@ -65,6 +65,11 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # Bundled CRDT collaboration engine (yjs + y-websocket), loaded by an
+  # embedded JS runtime for live document co-editing. See assets/collab/README.
+  assets:
+    - assets/collab/ydoc_engine.bundle.js
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

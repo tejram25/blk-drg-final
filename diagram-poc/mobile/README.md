@@ -122,11 +122,18 @@ flutter test           # unit tests (diagram model parser)
     vice-versa. Interop is verified against a real y-websocket + Yjs peer
     (`flutter test --tags live test/collab_live_test.dart`).
 
+**Live document co-editing (CRDT):**
+- The **document-sync engine is built and verified** — it wraps the real
+  `yjs` + `y-websocket` (bundled to `assets/collab/ydoc_engine.bundle.js`) and
+  co-edits the web editor's exact `Y.Doc`/`cells` map. Interop is proven
+  bidirectionally against a web-style peer
+  (`node tool/verify_collab_engine.mjs` → `RESULT PASS`).
+- Remaining: the **on-device host bridge** (embedded JS runtime + WebSocket /
+  timer / TextEncoder polyfills bridged to Dart). This needs a real device to
+  test, so it is documented (`assets/collab/README.md`) rather than wired in
+  unverified. Presence collaboration ships and works today.
+
 **Next phases (parity with the web app):**
-- **Live document co-editing** — presence is done; syncing the diagram *content*
-  itself needs the full Yjs CRDT (`getMap('cells')` / `getArray('chat')`). That
-  requires a production-grade Dart Yjs port (the current `y_crdt` is a 0.0.1
-  WASM binding), so it is intentionally deferred rather than shipped unverified.
 - BOM roll-up, templates gallery.
 - Pin-accurate wire endpoints; offline cache + optimistic sync; CI
   build/signing for the app stores.
