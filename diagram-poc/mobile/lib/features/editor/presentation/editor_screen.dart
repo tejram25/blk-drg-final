@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../comments/presentation/comments_sheet.dart';
 import '../../diagrams/data/diagram_repository.dart';
 import '../../parts/presentation/part_search_sheet.dart';
+import '../../reviews/presentation/reviews_sheet.dart';
+import '../../versions/presentation/versions_sheet.dart';
 import 'diagram_canvas.dart';
 import 'editor_controller.dart';
 import 'palette_sheet.dart';
@@ -71,6 +74,32 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   tooltip: 'Save',
                   onPressed: (state?.dirty ?? false) ? _save : null,
                 ),
+              PopupMenuButton<String>(
+                onSelected: _onMenu,
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                    value: 'comments',
+                    child: ListTile(
+                      leading: Icon(Icons.forum_outlined),
+                      title: Text('Comments'),
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'reviews',
+                    child: ListTile(
+                      leading: Icon(Icons.star_border_rounded),
+                      title: Text('Reviews & ratings'),
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'versions',
+                    child: ListTile(
+                      leading: Icon(Icons.history),
+                      title: Text('Version history'),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
           body: _buildBody(state),
@@ -171,6 +200,25 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     if (key == null) return;
     _session.deleteNode(key);
     setState(() => _selectedKey = null);
+  }
+
+  void _onMenu(String value) {
+    switch (value) {
+      case 'comments':
+        CommentsSheet.show(context, widget.diagramId);
+      case 'reviews':
+        ReviewsSheet.show(context, widget.diagramId);
+      case 'versions':
+        VersionsSheet.show(
+          context,
+          diagramId: widget.diagramId,
+          currentContent: _session.currentContentJson,
+          onRestore: (content) {
+            _session.loadContent(content);
+            setState(() => _selectedKey = null);
+          },
+        );
+    }
   }
 
   Future<void> _attachPart() async {

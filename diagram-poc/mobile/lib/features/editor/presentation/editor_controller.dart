@@ -228,6 +228,22 @@ class EditorSession extends ChangeNotifier {
     }
   }
 
+  /// The current diagram serialized to a GoJS model JSON (for a version
+  /// snapshot).
+  String? currentContentJson() {
+    final g = state?.graph;
+    return g == null ? null : _serialize(g);
+  }
+
+  /// Replace the diagram content (e.g. restoring a version). Marks dirty so the
+  /// user can save the restored content.
+  void loadContent(String contentJson) {
+    final s = state;
+    if (s == null) return;
+    state = s.copyWith(graph: DiagramGraph.parse(contentJson), dirty: true);
+    notifyListeners();
+  }
+
   /// Rebuild a GoJS GraphLinksModel JSON from the (possibly edited) graph.
   String _serialize(DiagramGraph graph) {
     return jsonEncode({
