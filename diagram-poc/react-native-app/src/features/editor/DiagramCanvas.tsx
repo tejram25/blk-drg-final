@@ -6,8 +6,9 @@ import {
   PanResponder,
   View,
 } from 'react-native';
-import Svg, { G, Path, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, G, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { colors } from '../../theme';
+import { attachedCount } from './editorOps';
 import {
   contentBounds,
   DiagramGraph,
@@ -224,6 +225,7 @@ function NodeShape({ node, selected }: { node: DiagramNode; selected: boolean })
             {node.text}
           </SvgText>
         ) : null}
+        <PartBadge node={node} />
       </>
     );
   }
@@ -254,6 +256,22 @@ function NodeShape({ node, selected }: { node: DiagramNode; selected: boolean })
           {node.text}
         </SvgText>
       ) : null}
+      <PartBadge node={node} />
+    </>
+  );
+}
+
+function PartBadge({ node }: { node: DiagramNode }) {
+  const count = attachedCount(node.raw);
+  if (count === 0) return null;
+  const cx = node.x + node.w;
+  const cy = node.y;
+  return (
+    <>
+      <Circle cx={cx} cy={cy} r={9} fill="#f5a623" stroke={colors.canvasSurface} strokeWidth={1.5} />
+      <SvgText x={cx} y={cy + 4} fill="#1a1303" fontSize={11} fontWeight="800" textAnchor="middle">
+        {`${count}`}
+      </SvgText>
     </>
   );
 }

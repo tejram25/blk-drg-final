@@ -13,9 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius } from '../../theme';
 import { ScreenProps } from '../../navigation';
 import { diagramsApi } from '../diagrams/diagramsApi';
+import { Part } from '../parts/partsApi';
+import PartSearchModal from '../parts/PartSearchModal';
+import DesignWinModal from '../designwin/DesignWinModal';
 import { BlockType } from './catalogApi';
 import DiagramCanvas from './DiagramCanvas';
-import { addLink, addNode, deleteNode } from './editorOps';
+import { addLink, addNode, attachPart, deleteNode } from './editorOps';
 import { contentBounds, DiagramGraph, parseModel } from './model';
 import PaletteSheet from './PaletteSheet';
 
@@ -30,6 +33,8 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   const [connectMode, setConnectMode] = useState(false);
   const [connectFrom, setConnectFrom] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [partOpen, setPartOpen] = useState(false);
+  const [dwOpen, setDwOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const placeCount = useRef(0);
 
@@ -80,6 +85,12 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     if (!selected) return;
     setGraph((g) => (g ? deleteNode(g, selected) : g));
     setSelected(null);
+    setDirty(true);
+  };
+
+  const onAttach = (part: Part, quantity = 1) => {
+    if (!selected) return;
+    setGraph((g) => (g ? attachPart(g, selected, part, quantity) : g));
     setDirty(true);
   };
 
@@ -163,11 +174,15 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             setConnectFrom(null);
           }}
         />
+        <ToolBtn label="🔩 Part" disabled={!selected} onPress={() => setPartOpen(true)} />
+        <ToolBtn label="🏷 DW" disabled={!selected} onPress={() => setDwOpen(true)} />
         <View style={{ flex: 1 }} />
         <ToolBtn label="🗑 Delete" disabled={!selected} onPress={removeSelected} />
       </View>
 
       <PaletteSheet visible={paletteOpen} onClose={() => setPaletteOpen(false)} onPick={onPick} />
+      <PartSearchModal visible={partOpen} onClose={() => setPartOpen(false)} onPick={(p) => onAttach(p)} />
+      <DesignWinModal visible={dwOpen} onClose={() => setDwOpen(false)} onPick={(p, qty) => onAttach(p, qty)} />
 
       <RenameModal
         visible={renaming}
