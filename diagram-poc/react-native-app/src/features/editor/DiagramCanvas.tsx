@@ -33,6 +33,8 @@ interface Props {
   onSelectEdge?: (id: string | null) => void;
   onNodeGrab?: (key: string) => void;
   onNodeMove: (key: string, x: number, y: number) => void;
+  // Web (GoJS) only: user drew a wire between two nodes. Ignored by the native SVG canvas.
+  onLinkCreate?: (fromKey: string, toKey: string) => void;
 }
 
 interface Transform {

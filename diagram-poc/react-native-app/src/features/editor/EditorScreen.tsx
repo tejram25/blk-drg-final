@@ -447,6 +447,14 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             }}
             onNodeGrab={connectMode ? undefined : onNodeGrab}
             onNodeMove={connectMode ? () => {} : moveNode}
+            onLinkCreate={(from, to) => {
+              const g = graphRef.current;
+              if (!g) return;
+              const ng = addLink(g, from, to);
+              commit(ng);
+              const l = ng.links[ng.links.length - 1];
+              if (l) sessionRef.current?.setLink(linkKey(l), l.raw);
+            }}
           />
         )}
       </View>
