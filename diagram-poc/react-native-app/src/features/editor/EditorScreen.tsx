@@ -41,6 +41,8 @@ import {
 import { RecommendationsModal, DesignReviewModal, LifecycleModal } from '../ai/AiPanels';
 import BoxSuggestModal from '../ai/BoxSuggestModal';
 import BomModal from '../bom/BomModal';
+import TemplatesModal from '../templates/TemplatesModal';
+import ImageImportModal from '../imageimport/ImageImportModal';
 import { AlternativePart } from '../ai/aiApi';
 import { contentBounds, DiagramGraph, linkFromRaw, linkId, nodeFromRaw, parseModel } from './model';
 import PaletteSheet from './PaletteSheet';
@@ -78,6 +80,8 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     | 'box'
     | 'bom'
     | 'feedback'
+    | 'templates'
+    | 'image'
   >(null);
   const [partSeed, setPartSeed] = useState('');
   const [live, setLive] = useState(false);
@@ -342,6 +346,31 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     setSelectedEdge(null);
   };
 
+  // Merge an imported graph into the canvas, re-keying to avoid key collisions.
+  const importGraph = (imported: DiagramGraph, title: string) => {
+    const cur = graphRef.current;
+    if (!cur || cur.nodes.length === 0) {
+      commit(imported);
+      if (!name || name === 'Editor' || name === 'Untitled diagram') setName(title);
+      syncLive(imported);
+      return;
+    }
+    let base = 0;
+    for (const n of cur.nodes) base = Math.max(base, parseInt(n.key, 10) || 0);
+    const remap: Record<string, string> = {};
+    const nodes = imported.nodes.map((n) => {
+      const key = `${(base += 1)}`;
+      remap[n.key] = key;
+      return nodeFromRaw({ ...n.raw, key });
+    });
+    const links = imported.links
+      .filter((l) => remap[l.from] && remap[l.to])
+      .map((l) => linkFromRaw({ ...l.raw, from: remap[l.from], to: remap[l.to] }));
+    const ng = { nodes: [...cur.nodes, ...nodes], links: [...cur.links, ...links] };
+    commit(ng);
+    syncLive(ng);
+  };
+
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.header}>
@@ -490,6 +519,8 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
               onPress={() => { setMenuOpen(false); setPanel('lifecycle'); }}
             />
             <MenuRow label="🧾  Bill of materials" onPress={() => { setMenuOpen(false); setPanel('bom'); }} />
+            <MenuRow label="📐  Templates" onPress={() => { setMenuOpen(false); setPanel('templates'); }} />
+            <MenuRow label="🖼  Image → diagram" onPress={() => { setMenuOpen(false); setPanel('image'); }} />
             <View style={styles.menuDivider} />
             <MenuRow label="💬  Comments" onPress={() => { setMenuOpen(false); setPanel('comments'); }} />
             <MenuRow label="🔁  Feedback loop" onPress={() => { setMenuOpen(false); setPanel('feedback'); }} />
@@ -534,6 +565,13 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         onUnlink={unlinkComp}
       />
       <BomModal visible={panel === 'bom'} onClose={() => setPanel(null)} graph={graph} name={name} />
+      <TemplatesModal
+        visible={panel === 'templates'}
+        onClose={() => setPanel(null)}
+        currentContent={serialize}
+        onUse={restoreContent}
+      />
+      <ImageImportModal visible={panel === 'image'} onClose={() => setPanel(null)} onImport={importGraph} />
 
       <CommentsModal visible={panel === 'comments'} onClose={() => setPanel(null)} diagramId={id} />
       <FeedbackModal visible={panel === 'feedback'} onClose={() => setPanel(null)} diagramId={id} />
