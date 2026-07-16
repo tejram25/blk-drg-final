@@ -16,6 +16,9 @@ import { diagramsApi } from '../diagrams/diagramsApi';
 import { Part } from '../parts/partsApi';
 import PartSearchModal from '../parts/PartSearchModal';
 import DesignWinModal from '../designwin/DesignWinModal';
+import CommentsModal from '../collab/CommentsModal';
+import ReviewsModal from '../collab/ReviewsModal';
+import VersionsModal from '../collab/VersionsModal';
 import { BlockType } from './catalogApi';
 import DiagramCanvas from './DiagramCanvas';
 import { addLink, addNode, attachPart, deleteNode } from './editorOps';
@@ -36,7 +39,18 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   const [partOpen, setPartOpen] = useState(false);
   const [dwOpen, setDwOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [panel, setPanel] = useState<null | 'comments' | 'reviews' | 'versions'>(null);
   const placeCount = useRef(0);
+
+  const serialize = () =>
+    JSON.stringify({
+      class: 'GraphLinksModel',
+      linkFromPortIdProperty: 'fromPort',
+      linkToPortIdProperty: 'toPort',
+      nodeDataArray: (graph?.nodes ?? []).map((n) => n.raw),
+      linkDataArray: (graph?.links ?? []).map((l) => l.raw),
+    });
 
   useEffect(() => {
     if (q.data) {
@@ -95,22 +109,20 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   };
 
   const save = useMutation({
-    mutationFn: () => {
-      const content = JSON.stringify({
-        class: 'GraphLinksModel',
-        linkFromPortIdProperty: 'fromPort',
-        linkToPortIdProperty: 'toPort',
-        nodeDataArray: (graph?.nodes ?? []).map((n) => n.raw),
-        linkDataArray: (graph?.links ?? []).map((l) => l.raw),
-      });
-      return diagramsApi.update(id, {
+    mutationFn: () =>
+      diagramsApi.update(id, {
         name,
-        contentJson: content,
+        contentJson: serialize(),
         classification: q.data?.classification ?? 'INTERNAL',
-      });
-    },
+      }),
     onSuccess: () => setDirty(false),
   });
+
+  const restoreContent = (contentJson: string) => {
+    setGraph(parseModel(contentJson));
+    setSelected(null);
+    setDirty(true);
+  };
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -127,6 +139,9 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
           <Text style={[styles.headerBtn, { opacity: dirty ? 1 : 0.4 }]}>
             {save.isPending ? '…' : 'Save'}
           </Text>
+        </Pressable>
+        <Pressable hitSlop={10} onPress={() => setMenuOpen(true)} style={{ marginLeft: 14 }}>
+          <Text style={styles.headerBtn}>⋯</Text>
         </Pressable>
       </View>
 
@@ -183,6 +198,37 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       <PaletteSheet visible={paletteOpen} onClose={() => setPaletteOpen(false)} onPick={onPick} />
       <PartSearchModal visible={partOpen} onClose={() => setPartOpen(false)} onPick={(p) => onAttach(p)} />
       <DesignWinModal visible={dwOpen} onClose={() => setDwOpen(false)} onPick={(p, qty) => onAttach(p, qty)} />
+
+      <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
+        <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
+          <View style={styles.menu}>
+            {(['comments', 'reviews', 'versions'] as const).map((p) => (
+              <Pressable
+                key={p}
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuOpen(false);
+                  setPanel(p);
+                }}
+              >
+                <Text style={styles.menuText}>
+                  {p === 'comments' ? '💬  Comments' : p === 'reviews' ? '★  Reviews & ratings' : '🕘  Version history'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      <CommentsModal visible={panel === 'comments'} onClose={() => setPanel(null)} diagramId={id} />
+      <ReviewsModal visible={panel === 'reviews'} onClose={() => setPanel(null)} diagramId={id} />
+      <VersionsModal
+        visible={panel === 'versions'}
+        onClose={() => setPanel(null)}
+        diagramId={id}
+        currentContent={serialize}
+        onRestore={restoreContent}
+      />
 
       <RenameModal
         visible={renaming}
@@ -292,4 +338,8 @@ const styles = StyleSheet.create({
   modalRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 20, marginTop: 16 },
   modalCancel: { color: colors.subtext, fontSize: 15, fontWeight: '600' },
   modalSave: { color: colors.primary, fontSize: 15, fontWeight: '700' },
+  menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', paddingTop: 56, alignItems: 'flex-end', paddingRight: 12 },
+  menu: { backgroundColor: colors.surface, borderRadius: radius.md, paddingVertical: 6, minWidth: 220, elevation: 6 },
+  menuItem: { paddingHorizontal: 16, paddingVertical: 12 },
+  menuText: { fontSize: 15, color: colors.text },
 });
