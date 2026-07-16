@@ -19,11 +19,16 @@ import DesignWinModal from '../designwin/DesignWinModal';
 import CommentsModal from '../collab/CommentsModal';
 import ReviewsModal from '../collab/ReviewsModal';
 import VersionsModal from '../collab/VersionsModal';
+import { useAuth } from '../auth/AuthContext';
+import { CollabSession, Peer } from '../collab/collab';
 import { BlockType } from './catalogApi';
 import DiagramCanvas from './DiagramCanvas';
 import { addLink, addNode, attachPart, deleteNode } from './editorOps';
-import { contentBounds, DiagramGraph, parseModel } from './model';
+import { contentBounds, DiagramGraph, linkFromRaw, nodeFromRaw, parseModel } from './model';
 import PaletteSheet from './PaletteSheet';
+
+const linkKey = (l: { from: string; to: string; raw: Record<string, unknown> }) =>
+  `${l.raw.key ?? `${l.from}->${l.to}`}`;
 
 export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'>) {
   const { id, name: initialName } = route.params;
@@ -41,7 +46,43 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   const [renaming, setRenaming] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [panel, setPanel] = useState<null | 'comments' | 'reviews' | 'versions'>(null);
+  const [live, setLive] = useState(false);
+  const [peers, setPeers] = useState<Peer[]>([]);
   const placeCount = useRef(0);
+  const { user } = useAuth();
+
+  // Collaboration session (opt-in). Native JS Yjs — no bridge.
+  const sessionRef = useRef<CollabSession | null>(null);
+  const graphRef = useRef<DiagramGraph | null>(null);
+  graphRef.current = graph;
+
+  useEffect(() => {
+    if (!live || !user) return;
+    const applyRemote = (m: { nodes: Record<string, unknown>[]; links: Record<string, unknown>[] }) =>
+      setGraph({ nodes: m.nodes.map(nodeFromRaw), links: m.links.map(linkFromRaw) });
+    const s = new CollabSession(
+      id,
+      { name: user.name || user.email, uid: user.email },
+      {
+        onRemoteModel: applyRemote,
+        onPeers: setPeers,
+        onSync: (roomHasContent) => {
+          if (roomHasContent) applyRemote(s.model());
+          else {
+            const g = graphRef.current;
+            if (g) s.seed(g.nodes.map((n) => n.raw), g.links.map((l) => l.raw));
+          }
+        },
+      },
+    );
+    sessionRef.current = s;
+    return () => {
+      s.destroy();
+      sessionRef.current = null;
+      setPeers([]);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, id, user]);
 
   const serialize = () =>
     JSON.stringify({
@@ -64,6 +105,8 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       !g ? g : { ...g, nodes: g.nodes.map((n) => (n.key === key ? { ...n, x, y, raw: { ...n.raw, loc: `${x} ${y}` } } : n)) },
     );
     setDirty(true);
+    const node = graphRef.current?.nodes.find((n) => n.key === key);
+    if (node) sessionRef.current?.setNode(key, { ...node.raw, loc: `${x} ${y}` });
   };
 
   const onSelect = (key: string | null) => {
@@ -75,37 +118,50 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     if (!connectFrom) {
       setConnectFrom(key);
     } else if (connectFrom !== key) {
-      setGraph((g) => (g ? addLink(g, connectFrom, key) : g));
-      setDirty(true);
+      const g = graphRef.current;
+      if (g) {
+        const ng = addLink(g, connectFrom, key);
+        setGraph(ng);
+        setDirty(true);
+        const l = ng.links[ng.links.length - 1];
+        if (l) sessionRef.current?.setLink(linkKey(l), l.raw);
+      }
       setConnectFrom(null);
       setConnectMode(false);
     }
   };
 
   const onPick = (block: BlockType) => {
-    setGraph((g) => {
-      if (!g) return g;
-      const b = contentBounds(g);
-      const off = 24 * (placeCount.current % 6);
-      placeCount.current += 1;
-      const { graph: ng, key } = addNode(g, block, b.x + b.w / 2 + off, b.y + b.h / 2 + off);
-      setSelected(key);
-      return ng;
-    });
+    const g = graphRef.current;
+    if (!g) return;
+    const b = contentBounds(g);
+    const off = 24 * (placeCount.current % 6);
+    placeCount.current += 1;
+    const { graph: ng, key } = addNode(g, block, b.x + b.w / 2 + off, b.y + b.h / 2 + off);
+    setGraph(ng);
+    setSelected(key);
     setDirty(true);
+    const node = ng.nodes.find((n) => n.key === key);
+    if (node) sessionRef.current?.setNode(key, node.raw);
   };
 
   const removeSelected = () => {
     if (!selected) return;
     setGraph((g) => (g ? deleteNode(g, selected) : g));
+    sessionRef.current?.deleteNode(selected);
     setSelected(null);
     setDirty(true);
   };
 
   const onAttach = (part: Part, quantity = 1) => {
     if (!selected) return;
-    setGraph((g) => (g ? attachPart(g, selected, part, quantity) : g));
+    const g = graphRef.current;
+    if (!g) return;
+    const ng = attachPart(g, selected, part, quantity);
+    setGraph(ng);
     setDirty(true);
+    const node = ng.nodes.find((n) => n.key === selected);
+    if (node) sessionRef.current?.setNode(selected, node.raw);
   };
 
   const save = useMutation({
@@ -135,6 +191,16 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             {name}
           </Text>
         </Pressable>
+        {live ? (
+          <View style={styles.presence}>
+            {peers.slice(0, 3).map((p, i) => (
+              <View key={i} style={[styles.avatar, { backgroundColor: p.color, marginLeft: i ? -8 : 0 }]}>
+                <Text style={styles.avatarText}>{(p.name[0] ?? '?').toUpperCase()}</Text>
+              </View>
+            ))}
+            {peers.length > 3 ? <Text style={styles.more}>+{peers.length - 3}</Text> : null}
+          </View>
+        ) : null}
         <Pressable hitSlop={10} disabled={!dirty || save.isPending} onPress={() => save.mutate()}>
           <Text style={[styles.headerBtn, { opacity: dirty ? 1 : 0.4 }]}>
             {save.isPending ? '…' : 'Save'}
@@ -202,6 +268,16 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
         <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
           <View style={styles.menu}>
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => {
+                setMenuOpen(false);
+                setLive((v) => !v);
+              }}
+            >
+              <Text style={styles.menuText}>{live ? '🟢  Live: on — tap to stop' : '👥  Go live (collaborate)'}</Text>
+            </Pressable>
+            <View style={styles.menuDivider} />
             {(['comments', 'reviews', 'versions'] as const).map((p) => (
               <Pressable
                 key={p}
@@ -342,4 +418,9 @@ const styles = StyleSheet.create({
   menu: { backgroundColor: colors.surface, borderRadius: radius.md, paddingVertical: 6, minWidth: 220, elevation: 6 },
   menuItem: { paddingHorizontal: 16, paddingVertical: 12 },
   menuText: { fontSize: 15, color: colors.text },
+  menuDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 4 },
+  presence: { flexDirection: 'row', alignItems: 'center', marginRight: 12 },
+  avatar: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.canvasSurface },
+  avatarText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  more: { color: colors.canvasSubtext, fontSize: 12, marginLeft: 4 },
 });
