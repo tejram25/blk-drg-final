@@ -19,6 +19,7 @@ export type TKey =
   | 'menu.lifecycle' | 'menu.bom' | 'menu.templates' | 'menu.image'
   | 'menu.comments' | 'menu.feedback' | 'menu.reviews' | 'menu.versions'
   | 'menu.language'
+  | 'hdr.ai' | 'hdr.sourcing' | 'hdr.collab' | 'hdr.document'
   | 'hint.connect1' | 'hint.connect2' | 'hint.wire' | 'class.tap'
   | 'status.nodes' | 'status.links' | 'rename.title' | 'lang.title'
   | 'list.title' | 'list.new' | 'list.empty' | 'list.logout';
@@ -33,6 +34,7 @@ const en: Dict = {
   'menu.lifecycle': 'Check part lifecycle', 'menu.bom': 'Bill of materials', 'menu.templates': 'Templates',
   'menu.image': 'Image → diagram', 'menu.comments': 'Comments', 'menu.feedback': 'Feedback loop',
   'menu.reviews': 'Reviews & ratings', 'menu.versions': 'Version history', 'menu.language': 'Language',
+  'hdr.ai': 'AI tools', 'hdr.sourcing': 'Sourcing', 'hdr.collab': 'Collaboration', 'hdr.document': 'Document',
   'hint.connect1': 'Connect: tap the first component', 'hint.connect2': 'Tap the second component to connect',
   'hint.wire': 'Wire selected — tap to style · 🗑 removes it', 'class.tap': 'tap to change',
   'status.nodes': 'nodes', 'status.links': 'links', 'rename.title': 'Rename diagram', 'lang.title': 'Language',
@@ -47,6 +49,7 @@ const es: Dict = {
   'menu.lifecycle': 'Ciclo de vida de la pieza', 'menu.bom': 'Lista de materiales', 'menu.templates': 'Plantillas',
   'menu.image': 'Imagen → diagrama', 'menu.comments': 'Comentarios', 'menu.feedback': 'Ciclo de comentarios',
   'menu.reviews': 'Reseñas y valoraciones', 'menu.versions': 'Historial de versiones', 'menu.language': 'Idioma',
+  'hdr.ai': 'Herramientas IA', 'hdr.sourcing': 'Abastecimiento', 'hdr.collab': 'Colaboración', 'hdr.document': 'Documento',
   'hint.connect1': 'Conectar: toca el primer componente', 'hint.connect2': 'Toca el segundo componente para conectar',
   'hint.wire': 'Cable seleccionado — toca para estilo · 🗑 lo elimina', 'class.tap': 'toca para cambiar',
   'status.nodes': 'nodos', 'status.links': 'enlaces', 'rename.title': 'Renombrar diagrama', 'lang.title': 'Idioma',
@@ -61,6 +64,7 @@ const fr: Dict = {
   'menu.lifecycle': 'Cycle de vie de la pièce', 'menu.bom': 'Nomenclature', 'menu.templates': 'Modèles',
   'menu.image': 'Image → schéma', 'menu.comments': 'Commentaires', 'menu.feedback': 'Boucle de retours',
   'menu.reviews': 'Avis et notes', 'menu.versions': 'Historique des versions', 'menu.language': 'Langue',
+  'hdr.ai': 'Outils IA', 'hdr.sourcing': 'Approvisionnement', 'hdr.collab': 'Collaboration', 'hdr.document': 'Document',
   'hint.connect1': 'Relier : touchez le premier composant', 'hint.connect2': 'Touchez le second composant pour relier',
   'hint.wire': 'Fil sélectionné — toucher pour le style · 🗑 le supprime', 'class.tap': 'toucher pour changer',
   'status.nodes': 'nœuds', 'status.links': 'liens', 'rename.title': 'Renommer le schéma', 'lang.title': 'Langue',
@@ -75,6 +79,7 @@ const de: Dict = {
   'menu.lifecycle': 'Lebenszyklus des Teils', 'menu.bom': 'Stückliste', 'menu.templates': 'Vorlagen',
   'menu.image': 'Bild → Diagramm', 'menu.comments': 'Kommentare', 'menu.feedback': 'Feedback-Schleife',
   'menu.reviews': 'Bewertungen', 'menu.versions': 'Versionsverlauf', 'menu.language': 'Sprache',
+  'hdr.ai': 'KI-Werkzeuge', 'hdr.sourcing': 'Beschaffung', 'hdr.collab': 'Zusammenarbeit', 'hdr.document': 'Dokument',
   'hint.connect1': 'Verbinden: erste Komponente antippen', 'hint.connect2': 'Zweite Komponente zum Verbinden antippen',
   'hint.wire': 'Leitung gewählt — tippen zum Stylen · 🗑 entfernt sie', 'class.tap': 'zum Ändern tippen',
   'status.nodes': 'Knoten', 'status.links': 'Verbindungen', 'rename.title': 'Diagramm umbenennen', 'lang.title': 'Sprache',
@@ -89,6 +94,7 @@ const zh: Dict = {
   'menu.lifecycle': '查看元件生命周期', 'menu.bom': '物料清单', 'menu.templates': '模板',
   'menu.image': '图片 → 图表', 'menu.comments': '评论', 'menu.feedback': '反馈循环',
   'menu.reviews': '评分与评价', 'menu.versions': '版本历史', 'menu.language': '语言',
+  'hdr.ai': 'AI 工具', 'hdr.sourcing': '采购', 'hdr.collab': '协作', 'hdr.document': '文档',
   'hint.connect1': '连接：点按第一个元件', 'hint.connect2': '点按第二个元件以连接',
   'hint.wire': '已选连线 — 点按设置样式 · 🗑 删除', 'class.tap': '点按更改',
   'status.nodes': '节点', 'status.links': '连线', 'rename.title': '重命名图表', 'lang.title': '语言',
@@ -103,6 +109,7 @@ const ja: Dict = {
   'menu.lifecycle': '部品ライフサイクル確認', 'menu.bom': '部品表', 'menu.templates': 'テンプレート',
   'menu.image': '画像 → 図', 'menu.comments': 'コメント', 'menu.feedback': 'フィードバックループ',
   'menu.reviews': 'レビューと評価', 'menu.versions': 'バージョン履歴', 'menu.language': '言語',
+  'hdr.ai': 'AI ツール', 'hdr.sourcing': '調達', 'hdr.collab': 'コラボレーション', 'hdr.document': 'ドキュメント',
   'hint.connect1': '接続：最初の部品をタップ', 'hint.connect2': '2つ目の部品をタップして接続',
   'hint.wire': '配線を選択 — タップでスタイル · 🗑 で削除', 'class.tap': 'タップで変更',
   'status.nodes': 'ノード', 'status.links': 'リンク', 'rename.title': '図の名前を変更', 'lang.title': '言語',

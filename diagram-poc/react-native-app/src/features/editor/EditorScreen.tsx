@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -496,40 +497,47 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
 
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
         <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
-          <View style={styles.menu}>
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => {
-                setMenuOpen(false);
-                setLive((v) => !v);
-              }}
-            >
-              <Text style={styles.menuText}>{live ? `🟢  ${t('menu.golive.on')}` : `👥  ${t('menu.golive')}`}</Text>
-            </Pressable>
-            <View style={styles.menuDivider} />
-            <MenuRow label={`✨  ${t('menu.recs')}`} onPress={() => { setMenuOpen(false); setPanel('recs'); }} />
-            <MenuRow label={`📋  ${t('menu.review')}`} onPress={() => { setMenuOpen(false); setPanel('review'); }} />
-            <MenuRow
-              label={`🧩  ${t('menu.box')}`}
-              disabled={!selected}
-              onPress={() => { setMenuOpen(false); setPanel('box'); }}
-            />
-            <MenuRow
-              label={`🔎  ${t('menu.lifecycle')}`}
-              disabled={!selectedPartNumber}
-              onPress={() => { setMenuOpen(false); setPanel('lifecycle'); }}
-            />
-            <MenuRow label={`🧾  ${t('menu.bom')}`} onPress={() => { setMenuOpen(false); setPanel('bom'); }} />
-            <MenuRow label={`📐  ${t('menu.templates')}`} onPress={() => { setMenuOpen(false); setPanel('templates'); }} />
-            <MenuRow label={`🖼  ${t('menu.image')}`} onPress={() => { setMenuOpen(false); setPanel('image'); }} />
-            <View style={styles.menuDivider} />
-            <MenuRow label={`💬  ${t('menu.comments')}`} onPress={() => { setMenuOpen(false); setPanel('comments'); }} />
-            <MenuRow label={`🔁  ${t('menu.feedback')}`} onPress={() => { setMenuOpen(false); setPanel('feedback'); }} />
-            <MenuRow label={`★  ${t('menu.reviews')}`} onPress={() => { setMenuOpen(false); setPanel('reviews'); }} />
-            <MenuRow label={`🕘  ${t('menu.versions')}`} onPress={() => { setMenuOpen(false); setPanel('versions'); }} />
-            <View style={styles.menuDivider} />
-            <MenuRow label={`🌐  ${t('menu.language')}`} onPress={() => { setMenuOpen(false); setPanel('lang'); }} />
-          </View>
+          <Pressable style={styles.menu} onPress={(e) => e.stopPropagation?.()}>
+            <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+              <Pressable
+                style={[styles.menuItem, live && styles.menuItemLive]}
+                onPress={() => {
+                  setMenuOpen(false);
+                  setLive((v) => !v);
+                }}
+              >
+                <Text style={styles.menuText}>{live ? `🟢  ${t('menu.golive.on')}` : `👥  ${t('menu.golive')}`}</Text>
+              </Pressable>
+
+              <MenuHeader>{t('hdr.ai')}</MenuHeader>
+              <MenuRow label={`✨  ${t('menu.recs')}`} onPress={() => { setMenuOpen(false); setPanel('recs'); }} />
+              <MenuRow label={`📋  ${t('menu.review')}`} onPress={() => { setMenuOpen(false); setPanel('review'); }} />
+              <MenuRow
+                label={`🧩  ${t('menu.box')}`}
+                disabled={!selected}
+                onPress={() => { setMenuOpen(false); setPanel('box'); }}
+              />
+              <MenuRow label={`🖼  ${t('menu.image')}`} onPress={() => { setMenuOpen(false); setPanel('image'); }} />
+
+              <MenuHeader>{t('hdr.sourcing')}</MenuHeader>
+              <MenuRow
+                label={`🔎  ${t('menu.lifecycle')}`}
+                disabled={!selectedPartNumber}
+                onPress={() => { setMenuOpen(false); setPanel('lifecycle'); }}
+              />
+              <MenuRow label={`🧾  ${t('menu.bom')}`} onPress={() => { setMenuOpen(false); setPanel('bom'); }} />
+
+              <MenuHeader>{t('hdr.collab')}</MenuHeader>
+              <MenuRow label={`💬  ${t('menu.comments')}`} onPress={() => { setMenuOpen(false); setPanel('comments'); }} />
+              <MenuRow label={`🔁  ${t('menu.feedback')}`} onPress={() => { setMenuOpen(false); setPanel('feedback'); }} />
+              <MenuRow label={`★  ${t('menu.reviews')}`} onPress={() => { setMenuOpen(false); setPanel('reviews'); }} />
+
+              <MenuHeader>{t('hdr.document')}</MenuHeader>
+              <MenuRow label={`📐  ${t('menu.templates')}`} onPress={() => { setMenuOpen(false); setPanel('templates'); }} />
+              <MenuRow label={`🕘  ${t('menu.versions')}`} onPress={() => { setMenuOpen(false); setPanel('versions'); }} />
+              <MenuRow label={`🌐  ${t('menu.language')}`} onPress={() => { setMenuOpen(false); setPanel('lang'); }} />
+            </ScrollView>
+          </Pressable>
         </Pressable>
       </Modal>
 
@@ -624,6 +632,10 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       />
     </SafeAreaView>
   );
+}
+
+function MenuHeader({ children }: { children: React.ReactNode }) {
+  return <Text style={styles.menuHeader}>{children}</Text>;
 }
 
 function MenuRow({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
@@ -730,9 +742,11 @@ const styles = StyleSheet.create({
   modalCancel: { color: colors.subtext, fontSize: 15, fontWeight: '600' },
   modalSave: { color: colors.primary, fontSize: 15, fontWeight: '700' },
   menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', paddingTop: 56, alignItems: 'flex-end', paddingRight: 12 },
-  menu: { backgroundColor: colors.surface, borderRadius: radius.md, paddingVertical: 6, minWidth: 220, elevation: 6 },
+  menu: { backgroundColor: colors.surface, borderRadius: radius.md, paddingVertical: 6, minWidth: 244, maxWidth: 300, maxHeight: '78%', elevation: 6 },
   menuItem: { paddingHorizontal: 16, paddingVertical: 12 },
+  menuItemLive: { backgroundColor: '#ecfdf5' },
   menuText: { fontSize: 15, color: colors.text },
+  menuHeader: { fontSize: 11, fontWeight: '800', color: colors.subtext, textTransform: 'uppercase', letterSpacing: 0.6, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
   menuDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 4 },
   presence: { flexDirection: 'row', alignItems: 'center', marginRight: 12 },
   avatar: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.canvasSurface },
