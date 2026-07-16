@@ -21,6 +21,7 @@ import ReviewsModal from '../collab/ReviewsModal';
 import VersionsModal from '../collab/VersionsModal';
 import FeedbackModal from '../collab/FeedbackModal';
 import { useAuth } from '../auth/AuthContext';
+import { useI18n } from '../../i18n/I18nContext';
 import { CollabSession, Peer } from '../collab/collab';
 import { BlockType } from './catalogApi';
 import DiagramCanvas from './DiagramCanvas';
@@ -82,6 +83,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     | 'feedback'
     | 'templates'
     | 'image'
+    | 'lang'
   >(null);
   const [partSeed, setPartSeed] = useState('');
   const [live, setLive] = useState(false);
@@ -91,6 +93,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   const [future, setFuture] = useState<DiagramGraph[]>([]);
   const placeCount = useRef(0);
   const { user } = useAuth();
+  const { t, lang, setLang, languages } = useI18n();
 
   // Collaboration session (opt-in). Native JS Yjs — no bridge.
   const sessionRef = useRef<CollabSession | null>(null);
@@ -375,7 +378,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.header}>
         <Pressable hitSlop={10} onPress={() => navigation.goBack()}>
-          <Text style={styles.headerBtn}>‹ Back</Text>
+          <Text style={styles.headerBtn}>‹ {t('btn.back')}</Text>
         </Pressable>
         <Pressable style={{ flex: 1 }} onPress={() => setRenaming(true)}>
           <Text style={styles.headerTitle} numberOfLines={1}>
@@ -394,7 +397,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         ) : null}
         <Pressable hitSlop={10} disabled={!dirty || save.isPending} onPress={() => save.mutate()}>
           <Text style={[styles.headerBtn, { opacity: dirty ? 1 : 0.4 }]}>
-            {save.isPending ? '…' : 'Save'}
+            {save.isPending ? '…' : t('btn.save')}
           </Text>
         </Pressable>
         <Pressable hitSlop={10} onPress={() => setMenuOpen(true)} style={{ marginLeft: 14 }}>
@@ -407,18 +410,16 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         onPress={cycleClassification}
       >
         <Text style={styles.classText}>🔒 {classification}</Text>
-        <Text style={styles.classHint}>tap to change</Text>
+        <Text style={styles.classHint}>{t('class.tap')}</Text>
       </Pressable>
 
       {connectMode ? (
         <View style={styles.hint}>
-          <Text style={styles.hintText}>
-            {connectFrom ? 'Tap the second component to connect' : 'Connect: tap the first component'}
-          </Text>
+          <Text style={styles.hintText}>{connectFrom ? t('hint.connect2') : t('hint.connect1')}</Text>
         </View>
       ) : selectedEdge ? (
         <Pressable style={[styles.hint, { backgroundColor: colors.accent }]} onPress={() => setEdgeSheet(true)}>
-          <Text style={[styles.hintText, { color: '#1a1303' }]}>Wire selected — tap to style · 🗑 removes it</Text>
+          <Text style={[styles.hintText, { color: '#1a1303' }]}>{t('hint.wire')}</Text>
         </Pressable>
       ) : null}
 
@@ -449,24 +450,24 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
 
       <View style={styles.status}>
         <Text style={styles.statusText}>
-          {graph ? `${graph.nodes.length} nodes · ${graph.links.length} links` : ''}
+          {graph ? `${graph.nodes.length} ${t('status.nodes')} · ${graph.links.length} ${t('status.links')}` : ''}
         </Text>
         {dirty ? <View style={styles.dot} /> : null}
       </View>
 
       <View style={styles.toolbar}>
-        <ToolBtn label="＋ Add" onPress={() => setPaletteOpen(true)} />
+        <ToolBtn label={`＋ ${t('tool.add')}`} onPress={() => setPaletteOpen(true)} />
         <ToolBtn
-          label="🔗 Connect"
+          label={`🔗 ${t('tool.connect')}`}
           active={connectMode}
           onPress={() => {
             setConnectMode((v) => !v);
             setConnectFrom(null);
           }}
         />
-        <ToolBtn label="🔩 Part" disabled={!selected} onPress={() => setPartOpen(true)} />
-        <ToolBtn label="🏷 DW" disabled={!selected} onPress={() => setDwOpen(true)} />
-        {selectedEdge ? <ToolBtn label="🎨 Wire" onPress={() => setEdgeSheet(true)} /> : null}
+        <ToolBtn label={`🔩 ${t('tool.part')}`} disabled={!selected} onPress={() => setPartOpen(true)} />
+        <ToolBtn label={`🏷 ${t('tool.dw')}`} disabled={!selected} onPress={() => setDwOpen(true)} />
+        {selectedEdge ? <ToolBtn label={`🎨 ${t('tool.wire')}`} onPress={() => setEdgeSheet(true)} /> : null}
         <View style={{ flex: 1 }} />
         <ToolBtn label="↶" disabled={history.length === 0} onPress={undo} />
         <ToolBtn label="↷" disabled={future.length === 0} onPress={redo} />
@@ -503,29 +504,31 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
                 setLive((v) => !v);
               }}
             >
-              <Text style={styles.menuText}>{live ? '🟢  Live: on — tap to stop' : '👥  Go live (collaborate)'}</Text>
+              <Text style={styles.menuText}>{live ? `🟢  ${t('menu.golive.on')}` : `👥  ${t('menu.golive')}`}</Text>
             </Pressable>
             <View style={styles.menuDivider} />
-            <MenuRow label="✨  Recommendations (AI)" onPress={() => { setMenuOpen(false); setPanel('recs'); }} />
-            <MenuRow label="📋  Design review (AI)" onPress={() => { setMenuOpen(false); setPanel('review'); }} />
+            <MenuRow label={`✨  ${t('menu.recs')}`} onPress={() => { setMenuOpen(false); setPanel('recs'); }} />
+            <MenuRow label={`📋  ${t('menu.review')}`} onPress={() => { setMenuOpen(false); setPanel('review'); }} />
             <MenuRow
-              label="🧩  Suggest components"
+              label={`🧩  ${t('menu.box')}`}
               disabled={!selected}
               onPress={() => { setMenuOpen(false); setPanel('box'); }}
             />
             <MenuRow
-              label="🔎  Check part lifecycle"
+              label={`🔎  ${t('menu.lifecycle')}`}
               disabled={!selectedPartNumber}
               onPress={() => { setMenuOpen(false); setPanel('lifecycle'); }}
             />
-            <MenuRow label="🧾  Bill of materials" onPress={() => { setMenuOpen(false); setPanel('bom'); }} />
-            <MenuRow label="📐  Templates" onPress={() => { setMenuOpen(false); setPanel('templates'); }} />
-            <MenuRow label="🖼  Image → diagram" onPress={() => { setMenuOpen(false); setPanel('image'); }} />
+            <MenuRow label={`🧾  ${t('menu.bom')}`} onPress={() => { setMenuOpen(false); setPanel('bom'); }} />
+            <MenuRow label={`📐  ${t('menu.templates')}`} onPress={() => { setMenuOpen(false); setPanel('templates'); }} />
+            <MenuRow label={`🖼  ${t('menu.image')}`} onPress={() => { setMenuOpen(false); setPanel('image'); }} />
             <View style={styles.menuDivider} />
-            <MenuRow label="💬  Comments" onPress={() => { setMenuOpen(false); setPanel('comments'); }} />
-            <MenuRow label="🔁  Feedback loop" onPress={() => { setMenuOpen(false); setPanel('feedback'); }} />
-            <MenuRow label="★  Reviews & ratings" onPress={() => { setMenuOpen(false); setPanel('reviews'); }} />
-            <MenuRow label="🕘  Version history" onPress={() => { setMenuOpen(false); setPanel('versions'); }} />
+            <MenuRow label={`💬  ${t('menu.comments')}`} onPress={() => { setMenuOpen(false); setPanel('comments'); }} />
+            <MenuRow label={`🔁  ${t('menu.feedback')}`} onPress={() => { setMenuOpen(false); setPanel('feedback'); }} />
+            <MenuRow label={`★  ${t('menu.reviews')}`} onPress={() => { setMenuOpen(false); setPanel('reviews'); }} />
+            <MenuRow label={`🕘  ${t('menu.versions')}`} onPress={() => { setMenuOpen(false); setPanel('versions'); }} />
+            <View style={styles.menuDivider} />
+            <MenuRow label={`🌐  ${t('menu.language')}`} onPress={() => { setMenuOpen(false); setPanel('lang'); }} />
           </View>
         </Pressable>
       </Modal>
@@ -572,6 +575,29 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         onUse={restoreContent}
       />
       <ImageImportModal visible={panel === 'image'} onClose={() => setPanel(null)} onImport={importGraph} />
+
+      <Modal visible={panel === 'lang'} transparent animationType="fade" onRequestClose={() => setPanel(null)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setPanel(null)}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{t('lang.title')}</Text>
+            {languages.map((l) => (
+              <Pressable
+                key={l.code}
+                style={styles.langRow}
+                onPress={() => {
+                  setLang(l.code);
+                  setPanel(null);
+                }}
+              >
+                <Text style={[styles.langLabel, l.code === lang && { color: colors.primary, fontWeight: '800' }]}>
+                  {l.label}
+                </Text>
+                {l.code === lang ? <Text style={styles.langCheck}>✓</Text> : null}
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
 
       <CommentsModal visible={panel === 'comments'} onClose={() => setPanel(null)} diagramId={id} />
       <FeedbackModal visible={panel === 'feedback'} onClose={() => setPanel(null)} diagramId={id} />
@@ -712,4 +738,7 @@ const styles = StyleSheet.create({
   avatar: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.canvasSurface },
   avatarText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   more: { color: colors.canvasSubtext, fontSize: 12, marginLeft: 4 },
+  langRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12 },
+  langLabel: { fontSize: 16, color: colors.text },
+  langCheck: { color: colors.primary, fontSize: 16, fontWeight: '800' },
 });

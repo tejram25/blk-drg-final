@@ -8,6 +8,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/features/auth/AuthContext';
+import { I18nProvider } from './src/i18n/I18nContext';
 import LoginScreen from './src/features/auth/LoginScreen';
 import RegisterScreen from './src/features/auth/RegisterScreen';
 import DiagramListScreen from './src/features/diagrams/DiagramListScreen';
@@ -65,10 +66,12 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <StatusBar style="auto" />
-            <Root />
-          </AuthProvider>
+          <I18nProvider>
+            <AuthProvider>
+              <StatusBar style="auto" />
+              <Root />
+            </AuthProvider>
+          </I18nProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

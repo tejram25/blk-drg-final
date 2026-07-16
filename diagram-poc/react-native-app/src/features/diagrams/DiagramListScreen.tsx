@@ -14,11 +14,13 @@ import { colors, radius } from '../../theme';
 import { ScreenProps } from '../../navigation';
 import { useAuth } from '../auth/AuthContext';
 import { initials } from '../auth/authApi';
+import { useI18n } from '../../i18n/I18nContext';
 import { diagramsApi, DiagramSummary } from './diagramsApi';
 
 export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'>) {
   const qc = useQueryClient();
   const { user, logout } = useAuth();
+  const { t } = useI18n();
   const diagrams = useQuery({ queryKey: ['diagrams'], queryFn: diagramsApi.list });
 
   const create = useMutation({
@@ -43,12 +45,12 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Diagrams</Text>
+        <Text style={styles.headerTitle}>{t('list.title')}</Text>
         <Pressable
           onPress={() =>
             Alert.alert(user?.name ?? 'Account', user?.email ?? '', [
               { text: 'Close', style: 'cancel' },
-              { text: 'Sign out', onPress: () => void logout() },
+              { text: t('list.logout'), onPress: () => void logout() },
             ])
           }
           style={styles.avatar}
@@ -80,7 +82,7 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
           onRefresh={() => diagrams.refetch()}
           refreshing={diagrams.isFetching}
           ListEmptyComponent={
-            <Text style={styles.empty}>No diagrams yet. Tap “New”.</Text>
+            <Text style={styles.empty}>{t('list.empty')}</Text>
           }
           renderItem={({ item }) => (
             <Pressable
@@ -104,7 +106,7 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
       )}
 
       <Pressable style={styles.fab} onPress={() => create.mutate()}>
-        <Text style={styles.fabText}>{create.isPending ? '…' : '＋ New'}</Text>
+        <Text style={styles.fabText}>{create.isPending ? '…' : `＋ ${t('list.new')}`}</Text>
       </Pressable>
     </SafeAreaView>
   );
