@@ -19,6 +19,7 @@ import DesignWinModal from '../designwin/DesignWinModal';
 import CommentsModal from '../collab/CommentsModal';
 import ReviewsModal from '../collab/ReviewsModal';
 import VersionsModal from '../collab/VersionsModal';
+import FeedbackModal from '../collab/FeedbackModal';
 import { useAuth } from '../auth/AuthContext';
 import { CollabSession, Peer } from '../collab/collab';
 import { BlockType } from './catalogApi';
@@ -67,7 +68,16 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   const [renaming, setRenaming] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [panel, setPanel] = useState<
-    null | 'comments' | 'reviews' | 'versions' | 'recs' | 'review' | 'lifecycle' | 'box' | 'bom'
+    | null
+    | 'comments'
+    | 'reviews'
+    | 'versions'
+    | 'recs'
+    | 'review'
+    | 'lifecycle'
+    | 'box'
+    | 'bom'
+    | 'feedback'
   >(null);
   const [partSeed, setPartSeed] = useState('');
   const [live, setLive] = useState(false);
@@ -481,20 +491,10 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             />
             <MenuRow label="🧾  Bill of materials" onPress={() => { setMenuOpen(false); setPanel('bom'); }} />
             <View style={styles.menuDivider} />
-            {(['comments', 'reviews', 'versions'] as const).map((p) => (
-              <Pressable
-                key={p}
-                style={styles.menuItem}
-                onPress={() => {
-                  setMenuOpen(false);
-                  setPanel(p);
-                }}
-              >
-                <Text style={styles.menuText}>
-                  {p === 'comments' ? '💬  Comments' : p === 'reviews' ? '★  Reviews & ratings' : '🕘  Version history'}
-                </Text>
-              </Pressable>
-            ))}
+            <MenuRow label="💬  Comments" onPress={() => { setMenuOpen(false); setPanel('comments'); }} />
+            <MenuRow label="🔁  Feedback loop" onPress={() => { setMenuOpen(false); setPanel('feedback'); }} />
+            <MenuRow label="★  Reviews & ratings" onPress={() => { setMenuOpen(false); setPanel('reviews'); }} />
+            <MenuRow label="🕘  Version history" onPress={() => { setMenuOpen(false); setPanel('versions'); }} />
           </View>
         </Pressable>
       </Modal>
@@ -536,6 +536,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       <BomModal visible={panel === 'bom'} onClose={() => setPanel(null)} graph={graph} name={name} />
 
       <CommentsModal visible={panel === 'comments'} onClose={() => setPanel(null)} diagramId={id} />
+      <FeedbackModal visible={panel === 'feedback'} onClose={() => setPanel(null)} diagramId={id} />
       <ReviewsModal visible={panel === 'reviews'} onClose={() => setPanel(null)} diagramId={id} />
       <VersionsModal
         visible={panel === 'versions'}
