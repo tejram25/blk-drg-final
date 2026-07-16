@@ -59,14 +59,27 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     cursor: 'pointer',
   } as const;
 
+  // Rounded highlight shared by every node's selection.
+  const selAdorn = $(
+    go.Adornment,
+    'Auto',
+    $(go.Shape, 'RoundedRectangle', { fill: null, stroke: '#4f46e5', strokeWidth: 2, parameter1: 10 }),
+    $(go.Placeholder, { padding: 5 }),
+  );
+
   const nodeBase = {
     locationSpot: go.Spot.TopLeft,
     selectionAdorned: true,
+    selectionAdornmentTemplate: selAdorn,
     resizable: false,
+    isShadowed: true,
+    shadowColor: 'rgba(15, 23, 42, 0.18)',
+    shadowBlur: 9,
+    shadowOffset: new go.Point(0, 3),
   };
   const loc = new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify);
 
-  // Electrical symbol → go.Picture from an inline-SVG data URI.
+  // Electrical symbol → white card holding a go.Picture (inline-SVG data URI).
   dia.nodeTemplateMap.add(
     'symbol',
     $(
@@ -75,12 +88,17 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       nodeBase,
       loc,
       $(
-        go.Picture,
-        { ...port, imageStretch: go.GraphObject.Fill },
-        new go.Binding('source', 'shape', (s: string) => electricalSvgUri(s)?.uri ?? ''),
-        new go.Binding('desiredSize', 'size', go.Size.parse),
+        go.Panel,
+        'Auto',
+        $(go.Shape, 'RoundedRectangle', { ...port, fill: '#ffffff', stroke: '#e2e8f0', strokeWidth: 1, parameter1: 8 }),
+        $(
+          go.Picture,
+          { imageStretch: go.GraphObject.Fill, margin: 9 },
+          new go.Binding('source', 'shape', (s: string) => electricalSvgUri(s)?.uri ?? ''),
+          new go.Binding('desiredSize', 'size', go.Size.parse),
+        ),
       ),
-      $(go.TextBlock, { font: '600 11px sans-serif', stroke: '#475569', margin: new go.Margin(2, 0, 0, 0) }, new go.Binding('text')),
+      $(go.TextBlock, { font: '600 11px Inter, sans-serif', stroke: '#475569', margin: new go.Margin(4, 0, 0, 0) }, new go.Binding('text')),
     ),
   );
 
@@ -94,16 +112,16 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       loc,
       $(
         go.Shape,
-        { ...port, strokeWidth: 1.6, stroke: '#475569' },
+        { ...port, strokeWidth: 1.8, stroke: '#475569' },
         new go.Binding('figure', 'shape', (s: string) => SHAPE_FIGURE[s] ?? 'RoundedRectangle'),
         new go.Binding('fill', 'color', (c: string) => c || '#e2e8f0'),
         new go.Binding('desiredSize', 'size', go.Size.parse),
       ),
-      $(go.TextBlock, { font: '600 13px sans-serif', stroke: '#0f172a' }, new go.Binding('text')),
+      $(go.TextBlock, { font: '600 13px Inter, sans-serif', stroke: '#0f172a' }, new go.Binding('text')),
     ),
   );
 
-  // Functional block → rounded rectangle + label.
+  // Functional block → gradient rounded rectangle + label.
   dia.nodeTemplateMap.add(
     'block',
     $(
@@ -114,15 +132,15 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       $(
         go.Shape,
         'RoundedRectangle',
-        { ...port, parameter1: 10, strokeWidth: 0 },
-        new go.Binding('fill', 'color', (c: string) => c || '#1d4ed8'),
+        { ...port, parameter1: 12, strokeWidth: 0 },
+        new go.Binding('fill', 'color', (c: string) => gradient(c || '#4f46e5')),
         new go.Binding('desiredSize', 'size', go.Size.parse),
       ),
-      $(go.TextBlock, { margin: 10, stroke: '#ffffff', font: '600 13px sans-serif', textAlign: 'center' }, new go.Binding('text')),
+      $(go.TextBlock, { margin: 12, stroke: '#ffffff', font: '700 13px Inter, sans-serif', textAlign: 'center' }, new go.Binding('text')),
     ),
   );
 
-  // Animated component → compact static glyph (animation is a mobile-canvas nicety).
+  // Animated component → white card with a coloured glyph.
   dia.nodeTemplateMap.add(
     'anim',
     $(
@@ -131,41 +149,75 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       nodeBase,
       loc,
       $(
-        go.Shape,
-        { ...port, strokeWidth: 2, desiredSize: new go.Size(52, 52) },
-        new go.Binding('figure', 'shape', (s: string) => ANIM_GLYPH[s]?.figure ?? 'Circle'),
-        new go.Binding('fill', 'shape', (s: string) => (ANIM_GLYPH[s]?.color ?? '#f59e0b') + '33'),
-        new go.Binding('stroke', 'shape', (s: string) => ANIM_GLYPH[s]?.color ?? '#f59e0b'),
+        go.Panel,
+        'Auto',
+        $(go.Shape, 'RoundedRectangle', { ...port, fill: '#ffffff', stroke: '#e2e8f0', strokeWidth: 1, parameter1: 12 }),
+        $(
+          go.Shape,
+          { strokeWidth: 2, desiredSize: new go.Size(46, 46), margin: 10 },
+          new go.Binding('figure', 'shape', (s: string) => ANIM_GLYPH[s]?.figure ?? 'Circle'),
+          new go.Binding('fill', 'shape', (s: string) => (ANIM_GLYPH[s]?.color ?? '#f59e0b') + '22'),
+          new go.Binding('stroke', 'shape', (s: string) => ANIM_GLYPH[s]?.color ?? '#f59e0b'),
+        ),
       ),
-      $(go.TextBlock, { font: '600 11px sans-serif', stroke: '#475569', margin: new go.Margin(2, 0, 0, 0) }, new go.Binding('text')),
+      $(go.TextBlock, { font: '600 11px Inter, sans-serif', stroke: '#475569', margin: new go.Margin(4, 0, 0, 0) }, new go.Binding('text')),
     ),
   );
 
-  // Fallback: a simple labelled rectangle.
+  // Fallback: a simple labelled rounded rectangle.
   dia.nodeTemplate = $(
     go.Node,
     'Auto',
     nodeBase,
     loc,
-    $(go.Shape, 'RoundedRectangle', { ...port, fill: '#e2e8f0', strokeWidth: 1 }, new go.Binding('desiredSize', 'size', go.Size.parse)),
-    $(go.TextBlock, { margin: 8, font: '600 13px sans-serif' }, new go.Binding('text')),
+    $(go.Shape, 'RoundedRectangle', { ...port, fill: '#e2e8f0', strokeWidth: 1, parameter1: 10 }, new go.Binding('desiredSize', 'size', go.Size.parse)),
+    $(go.TextBlock, { margin: 10, font: '600 13px Inter, sans-serif' }, new go.Binding('text')),
   );
 
+  // Node-avoiding orthogonal routing so wires never cut through components.
   dia.linkTemplate = $(
     go.Link,
-    { routing: go.Link.Orthogonal, corner: 10, relinkableFrom: true, relinkableTo: true, reshapable: true, selectable: true },
-    new go.Binding('routing', 'routing', (r: string) => (r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.Orthogonal)),
-    new go.Binding('curve', 'routing', (r: string) => (r === 'smooth' ? go.Link.Bezier : go.Link.None)),
+    {
+      routing: go.Link.AvoidsNodes,
+      corner: 8,
+      curve: go.Link.JumpOver,
+      relinkableFrom: true,
+      relinkableTo: true,
+      reshapable: true,
+      selectable: true,
+    },
+    new go.Binding('routing', 'routing', (r: string) => (r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.AvoidsNodes)),
+    new go.Binding('curve', 'routing', (r: string) => (r === 'smooth' ? go.Link.Bezier : go.Link.JumpOver)),
     $(
       go.Shape,
-      { strokeWidth: 2, stroke: '#38bdf8', strokeCap: 'round' },
-      new go.Binding('stroke', 'color', (c: string) => c || '#38bdf8'),
-      new go.Binding('strokeWidth', 'width', (w: number) => w || 2),
+      { strokeWidth: 2.4, stroke: '#0ea5e9', strokeCap: 'round', shadowVisible: false },
+      new go.Binding('stroke', 'color', (c: string) => c || '#0ea5e9'),
+      new go.Binding('strokeWidth', 'width', (w: number) => (w || 2) + 0.4),
       new go.Binding('strokeDashArray', 'dash'),
     ),
   );
 
   return dia;
+}
+
+/** Darken a #rrggbb colour by `amt` (0..1). */
+function shade(hex: string, amt: number): string {
+  const h = hex.replace('#', '');
+  if (h.length < 6) return hex;
+  const r = Math.round(parseInt(h.slice(0, 2), 16) * (1 - amt));
+  const g = Math.round(parseInt(h.slice(2, 4), 16) * (1 - amt));
+  const b = Math.round(parseInt(h.slice(4, 6), 16) * (1 - amt));
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** A subtle top→bottom gradient brush from a base colour. */
+function gradient(base: string): go.Brush {
+  const b = new go.Brush('Linear');
+  b.start = go.Spot.Top;
+  b.end = go.Spot.Bottom;
+  b.addColorStop(0, base);
+  b.addColorStop(1, shade(base, 0.2));
+  return b;
 }
 
 export default function DiagramCanvasWeb(props: Props) {
