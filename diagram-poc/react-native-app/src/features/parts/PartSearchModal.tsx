@@ -16,10 +16,12 @@ export default function PartSearchModal({
   visible,
   onClose,
   onPick,
+  seed,
 }: {
   visible: boolean;
   onClose: () => void;
   onPick: (p: Part) => void;
+  seed?: string;
 }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Part[]>([]);
@@ -32,8 +34,12 @@ export default function PartSearchModal({
       setQuery('');
       setResults([]);
       setError(null);
+    } else if (seed && seed.trim()) {
+      setQuery(seed);
+      run(seed);
     }
-  }, [visible]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, seed]);
 
   const onChange = (v: string) => {
     setQuery(v);

@@ -152,3 +152,29 @@ export function attachPart(
 export function attachedCount(raw: Record<string, unknown>): number {
   return Array.isArray(raw.attachedParts) ? (raw.attachedParts as unknown[]).length : 0;
 }
+
+/** Part records attached to a node ({partNumber, manufacturer, supplier, partDesc}). */
+export function attachedParts(raw: Record<string, unknown>): Record<string, unknown>[] {
+  const list = Array.isArray(raw.attachedParts) ? (raw.attachedParts as any[]) : [];
+  return list.map((a) => (a?.part ?? a) as Record<string, unknown>).filter(Boolean);
+}
+
+/** All distinct part numbers referenced anywhere on the canvas (attached + linked). */
+export function graphPartNumbers(g: DiagramGraph): string[] {
+  const out = new Set<string>();
+  for (const n of g.nodes) {
+    for (const p of attachedParts(n.raw)) {
+      const pn = (p as any).partNumber;
+      if (typeof pn === 'string' && pn) out.add(pn);
+    }
+    const linked = Array.isArray(n.raw.linkedComponents) ? (n.raw.linkedComponents as any[]) : [];
+    for (const l of linked) if (l?.partNumber) out.add(l.partNumber);
+  }
+  return [...out];
+}
+
+/** The first part number attached to a node, if any (for lifecycle/POS lookups). */
+export function primaryPartNumber(raw: Record<string, unknown>): string | null {
+  const p = attachedParts(raw)[0] as any;
+  return p?.partNumber ?? null;
+}

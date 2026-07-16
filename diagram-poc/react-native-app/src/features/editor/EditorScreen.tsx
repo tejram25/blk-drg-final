@@ -24,7 +24,19 @@ import { CollabSession, Peer } from '../collab/collab';
 import { BlockType } from './catalogApi';
 import DiagramCanvas from './DiagramCanvas';
 import EdgeStyleSheet from './EdgeStyleSheet';
-import { addLink, addNode, attachPart, deleteLink, deleteNode, styleLink, WireStyle } from './editorOps';
+import {
+  addLink,
+  addNode,
+  attachPart,
+  deleteLink,
+  deleteNode,
+  graphPartNumbers,
+  primaryPartNumber,
+  styleLink,
+  WireStyle,
+} from './editorOps';
+import { RecommendationsModal, DesignReviewModal, LifecycleModal } from '../ai/AiPanels';
+import { AlternativePart } from '../ai/aiApi';
 import { contentBounds, DiagramGraph, linkFromRaw, linkId, nodeFromRaw, parseModel } from './model';
 import PaletteSheet from './PaletteSheet';
 
@@ -50,7 +62,10 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   const [edgeSheet, setEdgeSheet] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [panel, setPanel] = useState<null | 'comments' | 'reviews' | 'versions'>(null);
+  const [panel, setPanel] = useState<
+    null | 'comments' | 'reviews' | 'versions' | 'recs' | 'review' | 'lifecycle'
+  >(null);
+  const [partSeed, setPartSeed] = useState('');
   const [live, setLive] = useState(false);
   const [peers, setPeers] = useState<Peer[]>([]);
   const [classification, setClassification] = useState('INTERNAL');
@@ -69,6 +84,30 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   futureRef.current = future;
 
   const selectedLink = graph?.links.find((l) => linkId(l) === selectedEdge) ?? null;
+  const selectedNode = graph?.nodes.find((n) => n.key === selected) ?? null;
+
+  // AI-panel inputs, built the same way the web editor does.
+  const aiGoal = name && name !== 'Untitled diagram' ? name : '';
+  const currentParts = graph ? graphPartNumbers(graph) : [];
+  const nameByKey: Record<string, string> = {};
+  (graph?.nodes ?? []).forEach((n) => (nameByKey[n.key] = n.text.trim()));
+  const reviewBlocks = (graph?.nodes ?? [])
+    .filter((n) => n.category !== 'image' && n.text.trim())
+    .map((n) => ({ name: n.text.trim(), type: n.shape || n.category }));
+  const reviewLinks = (graph?.links ?? [])
+    .map((l) => ({ from: nameByKey[l.from] || '', to: nameByKey[l.to] || '' }))
+    .filter((l) => l.from && l.to);
+  const selectedPartNumber = selectedNode ? primaryPartNumber(selectedNode.raw) : null;
+
+  const addAlternative = (alt: AlternativePart) => {
+    if (!selected) return;
+    onAttach({
+      partNumber: alt.partNumber,
+      manufacturer: alt.manufacturer,
+      supplier: alt.manufacturer,
+      description: alt.dropIn ? `Drop-in alternative — ${alt.note}` : alt.note,
+    });
+  };
 
   const syncLive = (g: DiagramGraph) =>
     sessionRef.current?.replaceAll(g.nodes.map((n) => n.raw), g.links.map((l) => l.raw));
@@ -382,7 +421,15 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       />
 
       <PaletteSheet visible={paletteOpen} onClose={() => setPaletteOpen(false)} onPick={onPick} />
-      <PartSearchModal visible={partOpen} onClose={() => setPartOpen(false)} onPick={(p) => onAttach(p)} />
+      <PartSearchModal
+        visible={partOpen}
+        seed={partSeed}
+        onClose={() => {
+          setPartOpen(false);
+          setPartSeed('');
+        }}
+        onPick={(p) => onAttach(p)}
+      />
       <DesignWinModal visible={dwOpen} onClose={() => setDwOpen(false)} onPick={(p, qty) => onAttach(p, qty)} />
 
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
@@ -397,6 +444,14 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             >
               <Text style={styles.menuText}>{live ? '🟢  Live: on — tap to stop' : '👥  Go live (collaborate)'}</Text>
             </Pressable>
+            <View style={styles.menuDivider} />
+            <MenuRow label="✨  Recommendations (AI)" onPress={() => { setMenuOpen(false); setPanel('recs'); }} />
+            <MenuRow label="📋  Design review (AI)" onPress={() => { setMenuOpen(false); setPanel('review'); }} />
+            <MenuRow
+              label="🔎  Check part lifecycle"
+              disabled={!selectedPartNumber}
+              onPress={() => { setMenuOpen(false); setPanel('lifecycle'); }}
+            />
             <View style={styles.menuDivider} />
             {(['comments', 'reviews', 'versions'] as const).map((p) => (
               <Pressable
@@ -415,6 +470,34 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
           </View>
         </Pressable>
       </Modal>
+
+      <RecommendationsModal
+        visible={panel === 'recs'}
+        onClose={() => setPanel(null)}
+        goal={aiGoal}
+        currentParts={currentParts}
+        onAddPart={(query) => {
+          setPanel(null);
+          setPartSeed(query);
+          setPartOpen(true);
+        }}
+      />
+      <DesignReviewModal
+        visible={panel === 'review'}
+        onClose={() => setPanel(null)}
+        goal={aiGoal}
+        blocks={reviewBlocks}
+        links={reviewLinks}
+      />
+      <LifecycleModal
+        visible={panel === 'lifecycle'}
+        onClose={() => setPanel(null)}
+        partNumber={selectedPartNumber}
+        onAddAlternative={(alt) => {
+          addAlternative(alt);
+          setPanel(null);
+        }}
+      />
 
       <CommentsModal visible={panel === 'comments'} onClose={() => setPanel(null)} diagramId={id} />
       <ReviewsModal visible={panel === 'reviews'} onClose={() => setPanel(null)} diagramId={id} />
@@ -439,6 +522,14 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         }}
       />
     </SafeAreaView>
+  );
+}
+
+function MenuRow({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
+  return (
+    <Pressable style={styles.menuItem} onPress={disabled ? undefined : onPress}>
+      <Text style={[styles.menuText, disabled && { opacity: 0.4 }]}>{label}</Text>
+    </Pressable>
   );
 }
 
