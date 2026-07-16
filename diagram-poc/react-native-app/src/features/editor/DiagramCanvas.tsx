@@ -1,12 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   Dimensions,
+  Easing,
   GestureResponderEvent,
   LayoutChangeEvent,
   PanResponder,
   View,
 } from 'react-native';
 import Svg, { Circle, G, Path, Rect, Text as SvgText } from 'react-native-svg';
+import { AnimatedNode, isAnimShape } from './animated';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 import { colors } from '../../theme';
 import { attachedCount, linkedComponents } from './editorOps';
 import {
@@ -18,6 +23,7 @@ import {
   nodeCenter,
 } from './model';
 import { ELECTRICAL_SYMBOLS } from './symbols';
+import { isBasicShape, ShapeGeometry } from './shapes';
 
 interface Props {
   graph: DiagramGraph;
@@ -51,6 +57,17 @@ export default function DiagramCanvas({
   const win = Dimensions.get('window');
   const [size, setSize] = useState({ w: win.width, h: Math.max(300, win.height - 160) });
   const [t, setT] = useState<Transform>({ scale: 1, tx: 0, ty: 0 });
+
+  // A single 0→1 looping value drives every animation (flow wires + anim nodes).
+  const phase = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(phase, { toValue: 1, duration: 1600, easing: Easing.linear, useNativeDriver: false }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [phase]);
+  const dashOffset = phase.interpolate({ inputRange: [0, 1], outputRange: [0, -16] });
   const fitted = useRef(false);
 
   // Fit-to-content once we know the viewport and have nodes.
@@ -212,9 +229,24 @@ export default function DiagramCanvas({
             if (pts.length < 2) return null;
             const d = `M ${pts.map((p) => `${p.x} ${p.y}`).join(' L ')}`;
             const sel = selectedEdge != null && linkId(l) === selectedEdge;
-            const base = l.isWire ? colors.primary : colors.canvasSubtext;
+            const base = l.isWire ? colors.wire : colors.canvasSubtext;
             const stroke = sel ? '#f5a623' : l.color ?? base;
-            const width = (l.width ?? (l.isWire ? 1.6 : 2)) + (sel ? 1 : 0);
+            const width = (l.width ?? (l.isWire ? 1.8 : 2)) + (sel ? 1 : 0);
+            // "flow" wires animate current with moving dashes.
+            if (l.raw.flow === true) {
+              return (
+                <AnimatedPath
+                  key={`l${i}`}
+                  d={d}
+                  fill="none"
+                  stroke={stroke}
+                  strokeWidth={width}
+                  strokeDasharray="8,6"
+                  strokeDashoffset={dashOffset}
+                  strokeLinecap="round"
+                />
+              );
+            }
             return (
               <Path
                 key={`l${i}`}
@@ -223,12 +255,17 @@ export default function DiagramCanvas({
                 stroke={stroke}
                 strokeWidth={width}
                 strokeDasharray={l.dashed ? '6,3' : undefined}
+                strokeLinecap="round"
               />
             );
           })}
-          {graph.nodes.map((n) => (
-            <NodeShape key={n.key} node={n} selected={n.key === selectedKey} />
-          ))}
+          {graph.nodes.map((n) =>
+            isAnimShape(n.shape) ? (
+              <AnimatedNode key={n.key} node={n} phase={phase} selected={n.key === selectedKey} />
+            ) : (
+              <NodeShape key={n.key} node={n} selected={n.key === selectedKey} />
+            ),
+          )}
         </G>
       </Svg>
     </View>
@@ -236,6 +273,39 @@ export default function DiagramCanvas({
 }
 
 function NodeShape({ node, selected }: { node: DiagramNode; selected: boolean }) {
+  // Basic geometric shapes (rectangle, diamond, cylinder, …).
+  if (isBasicShape(node.shape)) {
+    const fill = node.color ?? '#ffffff';
+    const readable = isLight(fill) ? '#111827' : '#ffffff';
+    return (
+      <>
+        <G transform={`translate(${node.x},${node.y})`}>
+          <ShapeGeometry
+            shape={node.shape as string}
+            w={node.w}
+            h={node.h}
+            fill={fill}
+            stroke={selected ? colors.primary : '#334155'}
+            sw={selected ? 2.5 : 1.6}
+          />
+        </G>
+        {node.text ? (
+          <SvgText
+            x={node.x + node.w / 2}
+            y={node.y + node.h / 2 + 4}
+            fill={readable}
+            fontSize={13}
+            fontWeight="600"
+            textAnchor="middle"
+          >
+            {node.text}
+          </SvgText>
+        ) : null}
+        <PartBadge node={node} />
+      </>
+    );
+  }
+
   const sym = node.shape ? ELECTRICAL_SYMBOLS[node.shape] : undefined;
   if (sym) {
     const sx = node.w / sym.width;

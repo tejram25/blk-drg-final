@@ -1,4 +1,4 @@
-import { BlockType, isShape, isSymbol } from './catalogApi';
+import { BlockType, isAnim, isShape, isSymbol } from './catalogApi';
 import { DiagramGraph, linkFromRaw, linkId, nodeFromRaw } from './model';
 import { ELECTRICAL_META, ELECTRICAL_SYMBOLS } from './symbols';
 
@@ -45,8 +45,10 @@ export function addNode(
       size: def ? `${def.width} ${def.height}` : '100 40',
       loc,
     };
+  } else if (isAnim(block)) {
+    raw = { key, category: 'anim', shape: block.shape, text: block.label, size: '80 80', loc };
   } else if (isShape(block)) {
-    raw = { key, category: 'shape', shape: block.shape, text: block.label, color: '#ffffff', size: '140 90', loc };
+    raw = { key, category: 'shape', shape: block.shape, text: '', color: block.color ?? '#e2e8f0', size: '130 90', loc };
   } else {
     raw = {
       key,
