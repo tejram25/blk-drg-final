@@ -68,6 +68,10 @@ function parseLink(raw: Record<string, unknown>): DiagramLink {
   };
 }
 
+/** Build a DiagramNode / DiagramLink from a raw GoJS data object. */
+export const nodeFromRaw = (raw: Record<string, unknown>) => parseNode(raw);
+export const linkFromRaw = (raw: Record<string, unknown>) => parseLink(raw);
+
 /** Parse a GoJS GraphLinksModel JSON string; returns an empty graph on error. */
 export function parseModel(contentJson: string): DiagramGraph {
   if (!contentJson || !contentJson.trim()) return { nodes: [], links: [] };
