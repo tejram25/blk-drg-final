@@ -101,6 +101,20 @@ export class CollabSession {
     });
   }
 
+  /** Reconcile the room to exactly this model (used after undo/redo/bulk edits). */
+  replaceAll(nodes: Record<string, unknown>[], links: Record<string, unknown>[]) {
+    const want = new Set<string>();
+    nodes.forEach((n) => want.add('n:' + n.key));
+    links.forEach((l) => want.add('l:' + (l.key ?? `${l.from}->${l.to}`)));
+    this.doc.transact(() => {
+      this.cells.forEach((_v, k) => {
+        if ((k.startsWith('n:') || k.startsWith('l:')) && !want.has(k)) this.cells.delete(k);
+      });
+      for (const n of nodes) this.cells.set('n:' + n.key, n);
+      for (const l of links) this.cells.set('l:' + (l.key ?? `${l.from}->${l.to}`), l);
+    });
+  }
+
   destroy() {
     this.provider.awareness.setLocalState(null);
     this.provider.destroy();

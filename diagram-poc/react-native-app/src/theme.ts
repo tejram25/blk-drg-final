@@ -16,6 +16,7 @@ export const colors = {
   canvasSubtext: '#9aa0a8',
   danger: '#dc2626',
   success: '#15803d',
+  chip: '#eef1f5',
 };
 
 export const radius = { sm: 8, md: 12, lg: 14, pill: 999 };

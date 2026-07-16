@@ -23,12 +23,15 @@ import { useAuth } from '../auth/AuthContext';
 import { CollabSession, Peer } from '../collab/collab';
 import { BlockType } from './catalogApi';
 import DiagramCanvas from './DiagramCanvas';
-import { addLink, addNode, attachPart, deleteNode } from './editorOps';
-import { contentBounds, DiagramGraph, linkFromRaw, nodeFromRaw, parseModel } from './model';
+import EdgeStyleSheet from './EdgeStyleSheet';
+import { addLink, addNode, attachPart, deleteLink, deleteNode, styleLink, WireStyle } from './editorOps';
+import { contentBounds, DiagramGraph, linkFromRaw, linkId, nodeFromRaw, parseModel } from './model';
 import PaletteSheet from './PaletteSheet';
 
-const linkKey = (l: { from: string; to: string; raw: Record<string, unknown> }) =>
-  `${l.raw.key ?? `${l.from}->${l.to}`}`;
+const CLASSIFICATIONS = ['PUBLIC', 'INTERNAL', 'RESTRICTED'] as const;
+const CLASS_COLORS: Record<string, string> = { PUBLIC: '#15803d', INTERNAL: '#1d4ed8', RESTRICTED: '#b91c1c' };
+
+const linkKey = linkId;
 
 export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'>) {
   const { id, name: initialName } = route.params;
@@ -37,17 +40,22 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   const [graph, setGraph] = useState<DiagramGraph | null>(null);
   const [name, setName] = useState(initialName ?? 'Editor');
   const [selected, setSelected] = useState<string | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [connectMode, setConnectMode] = useState(false);
   const [connectFrom, setConnectFrom] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [partOpen, setPartOpen] = useState(false);
   const [dwOpen, setDwOpen] = useState(false);
+  const [edgeSheet, setEdgeSheet] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [panel, setPanel] = useState<null | 'comments' | 'reviews' | 'versions'>(null);
   const [live, setLive] = useState(false);
   const [peers, setPeers] = useState<Peer[]>([]);
+  const [classification, setClassification] = useState('INTERNAL');
+  const [history, setHistory] = useState<DiagramGraph[]>([]);
+  const [future, setFuture] = useState<DiagramGraph[]>([]);
   const placeCount = useRef(0);
   const { user } = useAuth();
 
@@ -55,6 +63,50 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   const sessionRef = useRef<CollabSession | null>(null);
   const graphRef = useRef<DiagramGraph | null>(null);
   graphRef.current = graph;
+  const historyRef = useRef<DiagramGraph[]>([]);
+  const futureRef = useRef<DiagramGraph[]>([]);
+  historyRef.current = history;
+  futureRef.current = future;
+
+  const selectedLink = graph?.links.find((l) => linkId(l) === selectedEdge) ?? null;
+
+  const syncLive = (g: DiagramGraph) =>
+    sessionRef.current?.replaceAll(g.nodes.map((n) => n.raw), g.links.map((l) => l.raw));
+
+  // Route discrete edits through here so undo/redo has a snapshot to restore.
+  const commit = (next: DiagramGraph) => {
+    const prev = graphRef.current;
+    if (prev) setHistory((h) => [...h.slice(-49), prev]);
+    setFuture([]);
+    setGraph(next);
+    setDirty(true);
+  };
+
+  const restore = (g: DiagramGraph) => {
+    setGraph(g);
+    setSelected(null);
+    setSelectedEdge(null);
+    setDirty(true);
+    syncLive(g);
+  };
+
+  const undo = () => {
+    const h = historyRef.current;
+    const cur = graphRef.current;
+    if (!h.length || !cur) return;
+    setHistory(h.slice(0, -1));
+    setFuture([...futureRef.current, cur]);
+    restore(h[h.length - 1]);
+  };
+
+  const redo = () => {
+    const f = futureRef.current;
+    const cur = graphRef.current;
+    if (!f.length || !cur) return;
+    setFuture(f.slice(0, -1));
+    setHistory([...historyRef.current, cur]);
+    restore(f[f.length - 1]);
+  };
 
   useEffect(() => {
     if (!live || !user) return;
@@ -97,8 +149,18 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     if (q.data) {
       setGraph(parseModel(q.data.contentJson));
       setName(q.data.name);
+      setClassification(q.data.classification ?? 'INTERNAL');
+      setHistory([]);
+      setFuture([]);
     }
   }, [q.data]);
+
+  // Snapshot once at the start of a drag so the whole drag is a single undo step.
+  const onNodeGrab = () => {
+    const prev = graphRef.current;
+    if (prev) setHistory((h) => [...h.slice(-49), prev]);
+    setFuture([]);
+  };
 
   const moveNode = (key: string, x: number, y: number) => {
     setGraph((g) =>
@@ -109,9 +171,35 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     if (node) sessionRef.current?.setNode(key, { ...node.raw, loc: `${x} ${y}` });
   };
 
+  const styleSelectedEdge = (patch: WireStyle) => {
+    const g = graphRef.current;
+    if (!g || !selectedEdge) return;
+    const ng = styleLink(g, selectedEdge, patch);
+    commit(ng);
+    syncLive(ng);
+  };
+
+  const deleteSelectedEdge = () => {
+    const g = graphRef.current;
+    if (!g || !selectedEdge) return;
+    const ng = deleteLink(g, selectedEdge);
+    commit(ng);
+    syncLive(ng);
+    setSelectedEdge(null);
+    setEdgeSheet(false);
+  };
+
+  const cycleClassification = () =>
+    setClassification((c) => {
+      const i = CLASSIFICATIONS.indexOf(c as (typeof CLASSIFICATIONS)[number]);
+      setDirty(true);
+      return CLASSIFICATIONS[(i + 1) % CLASSIFICATIONS.length];
+    });
+
   const onSelect = (key: string | null) => {
     if (!connectMode) {
       setSelected(key);
+      if (key) setSelectedEdge(null);
       return;
     }
     if (!key) return;
@@ -121,8 +209,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       const g = graphRef.current;
       if (g) {
         const ng = addLink(g, connectFrom, key);
-        setGraph(ng);
-        setDirty(true);
+        commit(ng);
         const l = ng.links[ng.links.length - 1];
         if (l) sessionRef.current?.setLink(linkKey(l), l.raw);
       }
@@ -138,19 +225,23 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     const off = 24 * (placeCount.current % 6);
     placeCount.current += 1;
     const { graph: ng, key } = addNode(g, block, b.x + b.w / 2 + off, b.y + b.h / 2 + off);
-    setGraph(ng);
+    commit(ng);
     setSelected(key);
-    setDirty(true);
+    setSelectedEdge(null);
     const node = ng.nodes.find((n) => n.key === key);
     if (node) sessionRef.current?.setNode(key, node.raw);
   };
 
   const removeSelected = () => {
+    if (selectedEdge) {
+      deleteSelectedEdge();
+      return;
+    }
     if (!selected) return;
-    setGraph((g) => (g ? deleteNode(g, selected) : g));
+    const g = graphRef.current;
+    if (g) commit(deleteNode(g, selected));
     sessionRef.current?.deleteNode(selected);
     setSelected(null);
-    setDirty(true);
   };
 
   const onAttach = (part: Part, quantity = 1) => {
@@ -158,8 +249,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     const g = graphRef.current;
     if (!g) return;
     const ng = attachPart(g, selected, part, quantity);
-    setGraph(ng);
-    setDirty(true);
+    commit(ng);
     const node = ng.nodes.find((n) => n.key === selected);
     if (node) sessionRef.current?.setNode(selected, node.raw);
   };
@@ -169,15 +259,16 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       diagramsApi.update(id, {
         name,
         contentJson: serialize(),
-        classification: q.data?.classification ?? 'INTERNAL',
+        classification,
       }),
     onSuccess: () => setDirty(false),
   });
 
   const restoreContent = (contentJson: string) => {
-    setGraph(parseModel(contentJson));
+    const g = parseModel(contentJson);
+    commit(g);
     setSelected(null);
-    setDirty(true);
+    setSelectedEdge(null);
   };
 
   return (
@@ -211,12 +302,24 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         </Pressable>
       </View>
 
+      <Pressable
+        style={[styles.classBanner, { backgroundColor: CLASS_COLORS[classification] ?? colors.primary }]}
+        onPress={cycleClassification}
+      >
+        <Text style={styles.classText}>🔒 {classification}</Text>
+        <Text style={styles.classHint}>tap to change</Text>
+      </Pressable>
+
       {connectMode ? (
         <View style={styles.hint}>
           <Text style={styles.hintText}>
             {connectFrom ? 'Tap the second component to connect' : 'Connect: tap the first component'}
           </Text>
         </View>
+      ) : selectedEdge ? (
+        <Pressable style={[styles.hint, { backgroundColor: colors.accent }]} onPress={() => setEdgeSheet(true)}>
+          <Text style={[styles.hintText, { color: '#1a1303' }]}>Wire selected — tap to style · 🗑 removes it</Text>
+        </Pressable>
       ) : null}
 
       <View style={styles.canvasWrap}>
@@ -232,7 +335,13 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
           <DiagramCanvas
             graph={graph}
             selectedKey={connectMode ? connectFrom : selected}
+            selectedEdge={connectMode ? null : selectedEdge}
             onSelect={onSelect}
+            onSelectEdge={(eid) => {
+              setSelectedEdge(eid);
+              if (eid) setSelected(null);
+            }}
+            onNodeGrab={connectMode ? undefined : onNodeGrab}
             onNodeMove={connectMode ? () => {} : moveNode}
           />
         )}
@@ -257,9 +366,20 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         />
         <ToolBtn label="🔩 Part" disabled={!selected} onPress={() => setPartOpen(true)} />
         <ToolBtn label="🏷 DW" disabled={!selected} onPress={() => setDwOpen(true)} />
+        {selectedEdge ? <ToolBtn label="🎨 Wire" onPress={() => setEdgeSheet(true)} /> : null}
         <View style={{ flex: 1 }} />
-        <ToolBtn label="🗑 Delete" disabled={!selected} onPress={removeSelected} />
+        <ToolBtn label="↶" disabled={history.length === 0} onPress={undo} />
+        <ToolBtn label="↷" disabled={future.length === 0} onPress={redo} />
+        <ToolBtn label="🗑" disabled={!selected && !selectedEdge} onPress={removeSelected} />
       </View>
+
+      <EdgeStyleSheet
+        visible={edgeSheet}
+        link={selectedLink}
+        onClose={() => setEdgeSheet(false)}
+        onChange={styleSelectedEdge}
+        onDelete={deleteSelectedEdge}
+      />
 
       <PaletteSheet visible={paletteOpen} onClose={() => setPaletteOpen(false)} onPick={onPick} />
       <PartSearchModal visible={partOpen} onClose={() => setPartOpen(false)} onPick={(p) => onAttach(p)} />
@@ -389,6 +509,9 @@ const styles = StyleSheet.create({
   headerTitle: { textAlign: 'center', color: colors.canvasText, fontSize: 17, fontWeight: '700', marginHorizontal: 8 },
   hint: { backgroundColor: colors.primary, paddingVertical: 8, paddingHorizontal: 16 },
   hintText: { color: '#fff', textAlign: 'center', fontWeight: '600' },
+  classBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 4 },
+  classText: { color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+  classHint: { color: 'rgba(255,255,255,0.75)', fontSize: 10 },
   canvasWrap: { flex: 1, backgroundColor: colors.canvasBg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   status: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 6, backgroundColor: colors.canvasSurface },

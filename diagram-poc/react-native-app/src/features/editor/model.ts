@@ -17,8 +17,16 @@ export interface DiagramLink {
   to: string;
   isWire: boolean;
   points: { x: number; y: number }[];
+  color?: string;
+  width?: number;
+  dashed?: boolean;
+  routing?: string;
   raw: Record<string, unknown>;
 }
+
+/** Stable identity for a link (its GoJS key, else the endpoint pair). */
+export const linkId = (l: { from: string; to: string; raw: Record<string, unknown> }) =>
+  `${l.raw.key ?? `${l.from}->${l.to}`}`;
 
 export interface DiagramGraph {
   nodes: DiagramNode[];
@@ -59,11 +67,16 @@ function parseLink(raw: Record<string, unknown>): DiagramLink {
       pts.push({ x: Number(raw.points[i]), y: Number(raw.points[i + 1]) });
     }
   }
+  const dash = raw.dash;
   return {
     from: `${raw.from}`,
     to: `${raw.to}`,
     isWire: raw.wire === true || raw.category === 'wire',
     points: pts,
+    color: typeof raw.color === 'string' ? (raw.color as string) : undefined,
+    width: typeof raw.width === 'number' ? (raw.width as number) : undefined,
+    dashed: Array.isArray(dash) && dash.length > 0,
+    routing: typeof raw.routing === 'string' ? (raw.routing as string) : undefined,
     raw,
   };
 }

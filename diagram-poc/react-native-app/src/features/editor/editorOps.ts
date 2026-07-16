@@ -1,5 +1,5 @@
 import { BlockType, isShape, isSymbol } from './catalogApi';
-import { DiagramGraph, linkFromRaw, nodeFromRaw } from './model';
+import { DiagramGraph, linkFromRaw, linkId, nodeFromRaw } from './model';
 import { ELECTRICAL_META, ELECTRICAL_SYMBOLS } from './symbols';
 
 /** Next unused integer node key. */
@@ -82,6 +82,36 @@ export function addLink(g: DiagramGraph, fromKey: string, toKey: string): Diagra
     ...(wire ? { wire: true } : {}),
   };
   return { ...g, links: [...g.links, linkFromRaw(raw)] };
+}
+
+/** One wire-style change (color / width / solid-vs-dashed-vs-flow / router). */
+export interface WireStyle {
+  color?: string;
+  width?: number;
+  style?: 'solid' | 'dashed' | 'flow';
+  routing?: 'manhattan' | 'normal' | 'smooth';
+}
+
+/** Apply a style patch to the link identified by `id`; round-trips GoJS props. */
+export function styleLink(g: DiagramGraph, id: string, patch: WireStyle): DiagramGraph {
+  const links = g.links.map((l) => {
+    if (linkId(l) !== id) return l;
+    const raw = { ...l.raw };
+    if (patch.color !== undefined) raw.color = patch.color;
+    if (patch.width !== undefined) raw.width = patch.width;
+    if (patch.routing !== undefined) raw.routing = patch.routing;
+    if (patch.style !== undefined) {
+      raw.dash = patch.style === 'solid' ? null : [6, 3];
+      raw.flow = patch.style === 'flow';
+    }
+    return linkFromRaw(raw);
+  });
+  return { ...g, links };
+}
+
+/** Delete the link identified by `id`. */
+export function deleteLink(g: DiagramGraph, id: string): DiagramGraph {
+  return { ...g, links: g.links.filter((l) => linkId(l) !== id) };
 }
 
 /** Delete a node and every link touching it. */

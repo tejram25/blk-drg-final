@@ -12,7 +12,9 @@ import { attachedCount } from './editorOps';
 import {
   contentBounds,
   DiagramGraph,
+  DiagramLink,
   DiagramNode,
+  linkId,
   nodeCenter,
 } from './model';
 import { ELECTRICAL_SYMBOLS } from './symbols';
@@ -20,7 +22,10 @@ import { ELECTRICAL_SYMBOLS } from './symbols';
 interface Props {
   graph: DiagramGraph;
   selectedKey: string | null;
+  selectedEdge?: string | null;
   onSelect: (key: string | null) => void;
+  onSelectEdge?: (id: string | null) => void;
+  onNodeGrab?: (key: string) => void;
   onNodeMove: (key: string, x: number, y: number) => void;
 }
 
@@ -33,7 +38,15 @@ interface Transform {
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 5;
 
-export default function DiagramCanvas({ graph, selectedKey, onSelect, onNodeMove }: Props) {
+export default function DiagramCanvas({
+  graph,
+  selectedKey,
+  selectedEdge,
+  onSelect,
+  onSelectEdge,
+  onNodeGrab,
+  onNodeMove,
+}: Props) {
   // Seed from window dimensions so the SVG has a size even before onLayout.
   const win = Dimensions.get('window');
   const [size, setSize] = useState({ w: win.width, h: Math.max(300, win.height - 160) });
@@ -84,63 +97,109 @@ export default function DiagramCanvas({ graph, selectedKey, onSelect, onNodeMove
     return null;
   };
 
+  // Polyline for a link (explicit points, else an orthogonal center-to-center route).
+  const linkPoints = (l: DiagramLink): { x: number; y: number }[] => {
+    const a = nodesByKey[l.from];
+    const b = nodesByKey[l.to];
+    if (!a || !b) return [];
+    if (l.points.length >= 2) return l.points;
+    const p1 = nodeCenter(a);
+    const p2 = nodeCenter(b);
+    const midX = (p1.x + p2.x) / 2;
+    return [p1, { x: midX, y: p1.y }, { x: midX, y: p2.y }, p2];
+  };
+
+  // Nearest link within `tol` diagram units of (dx,dy), else null.
+  const hitEdge = (dx: number, dy: number): string | null => {
+    const tol = 10 / t.scale;
+    let best: { id: string; d: number } | null = null;
+    for (const l of graph.links) {
+      const pts = linkPoints(l);
+      for (let i = 0; i + 1 < pts.length; i++) {
+        const d = distToSeg(dx, dy, pts[i], pts[i + 1]);
+        if (d <= tol && (!best || d < best.d)) best = { id: linkId(l), d };
+      }
+    }
+    return best?.id ?? null;
+  };
+
+  const pickAt = (sx: number, sy: number) => {
+    const d = toDiagram(sx, sy, start.current.t);
+    const node = hitTest(d.x, d.y);
+    if (node) {
+      onSelect(node);
+      return;
+    }
+    const edge = hitEdge(d.x, d.y);
+    if (edge && onSelectEdge) {
+      onSelectEdge(edge);
+      return;
+    }
+    onSelect(null);
+    onSelectEdge?.(null);
+  };
+
   const dist = (t0: any, t1: any) =>
     Math.hypot(t0.pageX - t1.pageX, t0.pageY - t1.pageY);
+
+  // The responder is created once, so it must read the latest closures (graph,
+  // transform, callbacks) through this ref rather than capturing first render.
+  const grant = (e: GestureResponderEvent) => {
+    const touches = e.nativeEvent.touches;
+    start.current.t = t;
+    start.current.moved = false;
+    if (touches.length >= 2) {
+      start.current.dist = dist(touches[0], touches[1]);
+      start.current.dragKey = null;
+    } else {
+      const { locationX, locationY } = e.nativeEvent;
+      const d = toDiagram(locationX, locationY, t);
+      const key = hitTest(d.x, d.y);
+      start.current.dragKey = key;
+      if (key) {
+        const n = nodesByKey[key];
+        start.current.grab = { x: d.x - n.x, y: d.y - n.y };
+        onSelect(key);
+        onSelectEdge?.(null);
+        onNodeGrab?.(key);
+      }
+    }
+  };
+  const move = (e: GestureResponderEvent, gesture: { dx: number; dy: number }) => {
+    start.current.moved = start.current.moved || Math.hypot(gesture.dx, gesture.dy) > 4;
+    const touches = e.nativeEvent.touches;
+    const s0 = start.current.t;
+    if (touches.length >= 2) {
+      const d = dist(touches[0], touches[1]);
+      const ratio = start.current.dist ? d / start.current.dist : 1;
+      const scale = Math.max(MIN_SCALE, Math.min(s0.scale * ratio, MAX_SCALE));
+      const midX = (touches[0].locationX + touches[1].locationX) / 2;
+      const midY = (touches[0].locationY + touches[1].locationY) / 2;
+      const focal = toDiagram(midX, midY, s0);
+      setT({ scale, tx: midX - focal.x * scale, ty: midY - focal.y * scale });
+    } else if (start.current.dragKey) {
+      const d = toDiagram(e.nativeEvent.locationX, e.nativeEvent.locationY, s0);
+      onNodeMove(start.current.dragKey, d.x - start.current.grab.x, d.y - start.current.grab.y);
+    } else {
+      setT({ scale: s0.scale, tx: s0.tx + gesture.dx, ty: s0.ty + gesture.dy });
+    }
+  };
+  const release = (e: GestureResponderEvent) => {
+    if (!start.current.moved && !start.current.dragKey) {
+      pickAt(e.nativeEvent.locationX, e.nativeEvent.locationY);
+    }
+  };
+
+  const handlersRef = useRef({ grant, move, release });
+  handlersRef.current = { grant, move, release };
 
   const responder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (e: GestureResponderEvent) => {
-        const touches = e.nativeEvent.touches;
-        start.current.t = t;
-        start.current.moved = false;
-        if (touches.length >= 2) {
-          start.current.dist = dist(touches[0], touches[1]);
-          start.current.dragKey = null;
-        } else {
-          const { locationX, locationY } = e.nativeEvent;
-          const d = toDiagram(locationX, locationY, t);
-          const key = hitTest(d.x, d.y);
-          start.current.dragKey = key;
-          if (key) {
-            const n = nodesByKey[key];
-            start.current.grab = { x: d.x - n.x, y: d.y - n.y };
-            onSelect(key);
-          }
-        }
-      },
-      onPanResponderMove: (e: GestureResponderEvent, gesture) => {
-        start.current.moved =
-          start.current.moved || Math.hypot(gesture.dx, gesture.dy) > 4;
-        const touches = e.nativeEvent.touches;
-        const s0 = start.current.t;
-        if (touches.length >= 2) {
-          const d = dist(touches[0], touches[1]);
-          const ratio = start.current.dist ? d / start.current.dist : 1;
-          const scale = Math.max(MIN_SCALE, Math.min(s0.scale * ratio, MAX_SCALE));
-          // Zoom about the gesture's mid-point.
-          const midX = (touches[0].locationX + touches[1].locationX) / 2;
-          const midY = (touches[0].locationY + touches[1].locationY) / 2;
-          const focal = toDiagram(midX, midY, s0);
-          setT({ scale, tx: midX - focal.x * scale, ty: midY - focal.y * scale });
-        } else if (start.current.dragKey) {
-          const d = toDiagram(e.nativeEvent.locationX, e.nativeEvent.locationY, s0);
-          onNodeMove(
-            start.current.dragKey,
-            d.x - start.current.grab.x,
-            d.y - start.current.grab.y,
-          );
-        } else {
-          setT({ scale: s0.scale, tx: s0.tx + gesture.dx, ty: s0.ty + gesture.dy });
-        }
-      },
-      onPanResponderRelease: (e: GestureResponderEvent) => {
-        if (!start.current.moved && !start.current.dragKey) {
-          const d = toDiagram(e.nativeEvent.locationX, e.nativeEvent.locationY, start.current.t);
-          onSelect(hitTest(d.x, d.y));
-        }
-      },
+      onPanResponderGrant: (e) => handlersRef.current.grant(e),
+      onPanResponderMove: (e, g) => handlersRef.current.move(e, g),
+      onPanResponderRelease: (e) => handlersRef.current.release(e),
     }),
   ).current;
 
@@ -149,23 +208,21 @@ export default function DiagramCanvas({ graph, selectedKey, onSelect, onNodeMove
       <Svg width={size.w} height={size.h}>
         <G transform={`translate(${t.tx},${t.ty}) scale(${t.scale})`}>
           {graph.links.map((l, i) => {
-            const a = nodesByKey[l.from];
-            const b = nodesByKey[l.to];
-            if (!a || !b) return null;
-            const p1 = nodeCenter(a);
-            const p2 = nodeCenter(b);
-            const midX = (p1.x + p2.x) / 2;
-            const d =
-              l.points.length >= 2
-                ? `M ${l.points.map((p) => `${p.x} ${p.y}`).join(' L ')}`
-                : `M ${p1.x} ${p1.y} L ${midX} ${p1.y} L ${midX} ${p2.y} L ${p2.x} ${p2.y}`;
+            const pts = linkPoints(l);
+            if (pts.length < 2) return null;
+            const d = `M ${pts.map((p) => `${p.x} ${p.y}`).join(' L ')}`;
+            const sel = selectedEdge != null && linkId(l) === selectedEdge;
+            const base = l.isWire ? colors.primary : colors.canvasSubtext;
+            const stroke = sel ? '#f5a623' : l.color ?? base;
+            const width = (l.width ?? (l.isWire ? 1.6 : 2)) + (sel ? 1 : 0);
             return (
               <Path
                 key={`l${i}`}
                 d={d}
                 fill="none"
-                stroke={l.isWire ? colors.primary : colors.canvasSubtext}
-                strokeWidth={l.isWire ? 1.6 : 2}
+                stroke={stroke}
+                strokeWidth={width}
+                strokeDasharray={l.dashed ? '6,3' : undefined}
               />
             );
           })}
@@ -274,6 +331,17 @@ function PartBadge({ node }: { node: DiagramNode }) {
       </SvgText>
     </>
   );
+}
+
+/** Distance from point (px,py) to segment a–b, in diagram units. */
+function distToSeg(px: number, py: number, a: { x: number; y: number }, b: { x: number; y: number }): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  if (len2 === 0) return Math.hypot(px - a.x, py - a.y);
+  let t = ((px - a.x) * dx + (py - a.y) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (a.x + t * dx), py - (a.y + t * dy));
 }
 
 function isLight(hex: string): boolean {
