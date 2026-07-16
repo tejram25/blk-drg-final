@@ -11,7 +11,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius } from '../../theme';
+import { colors, font, radius, shadow } from '../../theme';
+import { Icon, IconButton } from '../../ui/kit';
 import { ScreenProps } from '../../navigation';
 import { diagramsApi } from '../diagrams/diagramsApi';
 import { Part } from '../parts/partsApi';
@@ -378,13 +379,12 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.header}>
-        <Pressable hitSlop={10} onPress={() => navigation.goBack()}>
-          <Text style={styles.headerBtn}>‹ {t('btn.back')}</Text>
-        </Pressable>
-        <Pressable style={{ flex: 1 }} onPress={() => setRenaming(true)}>
+        <IconButton name="chevron-back" color={colors.canvasText} onPress={() => navigation.goBack()} />
+        <Pressable style={styles.titleWrap} onPress={() => setRenaming(true)}>
           <Text style={styles.headerTitle} numberOfLines={1}>
             {name}
           </Text>
+          <Icon name="create-outline" size={13} color={colors.canvasSubtext} />
         </Pressable>
         {live ? (
           <View style={styles.presence}>
@@ -396,30 +396,32 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             {peers.length > 3 ? <Text style={styles.more}>+{peers.length - 3}</Text> : null}
           </View>
         ) : null}
-        <Pressable hitSlop={10} disabled={!dirty || save.isPending} onPress={() => save.mutate()}>
-          <Text style={[styles.headerBtn, { opacity: dirty ? 1 : 0.4 }]}>
-            {save.isPending ? '…' : t('btn.save')}
-          </Text>
-        </Pressable>
-        <Pressable hitSlop={10} onPress={() => setMenuOpen(true)} style={{ marginLeft: 14 }}>
-          <Text style={styles.headerBtn}>⋯</Text>
-        </Pressable>
+        <IconButton
+          name={dirty ? 'save' : 'checkmark-done'}
+          color={dirty ? colors.wire : colors.canvasSubtext}
+          disabled={!dirty || save.isPending}
+          onPress={() => save.mutate()}
+        />
+        <IconButton name="ellipsis-horizontal" color={colors.canvasText} onPress={() => setMenuOpen(true)} />
       </View>
 
       <Pressable
         style={[styles.classBanner, { backgroundColor: CLASS_COLORS[classification] ?? colors.primary }]}
         onPress={cycleClassification}
       >
-        <Text style={styles.classText}>🔒 {classification}</Text>
-        <Text style={styles.classHint}>{t('class.tap')}</Text>
+        <Icon name="lock-closed" size={11} color="#fff" />
+        <Text style={styles.classText}>{classification}</Text>
+        <Text style={styles.classHint}>· {t('class.tap')}</Text>
       </Pressable>
 
       {connectMode ? (
         <View style={styles.hint}>
+          <Icon name="git-network" size={15} color="#fff" />
           <Text style={styles.hintText}>{connectFrom ? t('hint.connect2') : t('hint.connect1')}</Text>
         </View>
       ) : selectedEdge ? (
         <Pressable style={[styles.hint, { backgroundColor: colors.accent }]} onPress={() => setEdgeSheet(true)}>
+          <Icon name="color-wand" size={15} color="#1a1303" />
           <Text style={[styles.hintText, { color: '#1a1303' }]}>{t('hint.wire')}</Text>
         </Pressable>
       ) : null}
@@ -454,25 +456,31 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
           {graph ? `${graph.nodes.length} ${t('status.nodes')} · ${graph.links.length} ${t('status.links')}` : ''}
         </Text>
         {dirty ? <View style={styles.dot} /> : null}
+        <View style={{ flex: 1 }} />
+        <ToolIcon name="arrow-undo" disabled={history.length === 0} onPress={undo} />
+        <ToolIcon name="arrow-redo" disabled={future.length === 0} onPress={redo} />
+        <ToolIcon
+          name="trash"
+          color={colors.danger}
+          disabled={!selected && !selectedEdge}
+          onPress={removeSelected}
+        />
       </View>
 
       <View style={styles.toolbar}>
-        <ToolBtn label={`＋ ${t('tool.add')}`} onPress={() => setPaletteOpen(true)} />
+        <ToolBtn icon="add-circle" label={t('tool.add')} onPress={() => setPaletteOpen(true)} />
         <ToolBtn
-          label={`🔗 ${t('tool.connect')}`}
+          icon="git-network"
+          label={t('tool.connect')}
           active={connectMode}
           onPress={() => {
             setConnectMode((v) => !v);
             setConnectFrom(null);
           }}
         />
-        <ToolBtn label={`🔩 ${t('tool.part')}`} disabled={!selected} onPress={() => setPartOpen(true)} />
-        <ToolBtn label={`🏷 ${t('tool.dw')}`} disabled={!selected} onPress={() => setDwOpen(true)} />
-        {selectedEdge ? <ToolBtn label={`🎨 ${t('tool.wire')}`} onPress={() => setEdgeSheet(true)} /> : null}
-        <View style={{ flex: 1 }} />
-        <ToolBtn label="↶" disabled={history.length === 0} onPress={undo} />
-        <ToolBtn label="↷" disabled={future.length === 0} onPress={redo} />
-        <ToolBtn label="🗑" disabled={!selected && !selectedEdge} onPress={removeSelected} />
+        <ToolBtn icon="hardware-chip" label={t('tool.part')} disabled={!selected} onPress={() => setPartOpen(true)} />
+        <ToolBtn icon="pricetag" label={t('tool.dw')} disabled={!selected} onPress={() => setDwOpen(true)} />
+        {selectedEdge ? <ToolBtn icon="color-wand" label={t('tool.wire')} onPress={() => setEdgeSheet(true)} /> : null}
       </View>
 
       <EdgeStyleSheet
@@ -500,42 +508,48 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
           <Pressable style={styles.menu} onPress={(e) => e.stopPropagation?.()}>
             <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
               <Pressable
-                style={[styles.menuItem, live && styles.menuItemLive]}
+                style={({ pressed }) => [styles.menuItem, live && styles.menuItemLive, pressed && styles.menuItemPressed]}
                 onPress={() => {
                   setMenuOpen(false);
                   setLive((v) => !v);
                 }}
               >
-                <Text style={styles.menuText}>{live ? `🟢  ${t('menu.golive.on')}` : `👥  ${t('menu.golive')}`}</Text>
+                <View style={styles.menuIcon}>
+                  <Icon name="people" size={18} color={live ? colors.success : colors.primary} />
+                </View>
+                <Text style={styles.menuText}>{live ? t('menu.golive.on') : t('menu.golive')}</Text>
+                {live ? <View style={styles.liveDot} /> : null}
               </Pressable>
 
               <MenuHeader>{t('hdr.ai')}</MenuHeader>
-              <MenuRow label={`✨  ${t('menu.recs')}`} onPress={() => { setMenuOpen(false); setPanel('recs'); }} />
-              <MenuRow label={`📋  ${t('menu.review')}`} onPress={() => { setMenuOpen(false); setPanel('review'); }} />
+              <MenuRow icon="sparkles" label={t('menu.recs')} onPress={() => { setMenuOpen(false); setPanel('recs'); }} />
+              <MenuRow icon="clipboard" label={t('menu.review')} onPress={() => { setMenuOpen(false); setPanel('review'); }} />
               <MenuRow
-                label={`🧩  ${t('menu.box')}`}
+                icon="extension-puzzle"
+                label={t('menu.box')}
                 disabled={!selected}
                 onPress={() => { setMenuOpen(false); setPanel('box'); }}
               />
-              <MenuRow label={`🖼  ${t('menu.image')}`} onPress={() => { setMenuOpen(false); setPanel('image'); }} />
+              <MenuRow icon="image" label={t('menu.image')} onPress={() => { setMenuOpen(false); setPanel('image'); }} />
 
               <MenuHeader>{t('hdr.sourcing')}</MenuHeader>
               <MenuRow
-                label={`🔎  ${t('menu.lifecycle')}`}
+                icon="pulse"
+                label={t('menu.lifecycle')}
                 disabled={!selectedPartNumber}
                 onPress={() => { setMenuOpen(false); setPanel('lifecycle'); }}
               />
-              <MenuRow label={`🧾  ${t('menu.bom')}`} onPress={() => { setMenuOpen(false); setPanel('bom'); }} />
+              <MenuRow icon="receipt" label={t('menu.bom')} onPress={() => { setMenuOpen(false); setPanel('bom'); }} />
 
               <MenuHeader>{t('hdr.collab')}</MenuHeader>
-              <MenuRow label={`💬  ${t('menu.comments')}`} onPress={() => { setMenuOpen(false); setPanel('comments'); }} />
-              <MenuRow label={`🔁  ${t('menu.feedback')}`} onPress={() => { setMenuOpen(false); setPanel('feedback'); }} />
-              <MenuRow label={`★  ${t('menu.reviews')}`} onPress={() => { setMenuOpen(false); setPanel('reviews'); }} />
+              <MenuRow icon="chatbubbles" label={t('menu.comments')} onPress={() => { setMenuOpen(false); setPanel('comments'); }} />
+              <MenuRow icon="git-pull-request" label={t('menu.feedback')} onPress={() => { setMenuOpen(false); setPanel('feedback'); }} />
+              <MenuRow icon="star" label={t('menu.reviews')} onPress={() => { setMenuOpen(false); setPanel('reviews'); }} />
 
               <MenuHeader>{t('hdr.document')}</MenuHeader>
-              <MenuRow label={`📐  ${t('menu.templates')}`} onPress={() => { setMenuOpen(false); setPanel('templates'); }} />
-              <MenuRow label={`🕘  ${t('menu.versions')}`} onPress={() => { setMenuOpen(false); setPanel('versions'); }} />
-              <MenuRow label={`🌐  ${t('menu.language')}`} onPress={() => { setMenuOpen(false); setPanel('lang'); }} />
+              <MenuRow icon="grid" label={t('menu.templates')} onPress={() => { setMenuOpen(false); setPanel('templates'); }} />
+              <MenuRow icon="time" label={t('menu.versions')} onPress={() => { setMenuOpen(false); setPanel('versions'); }} />
+              <MenuRow icon="language" label={t('menu.language')} onPress={() => { setMenuOpen(false); setPanel('lang'); }} />
             </ScrollView>
           </Pressable>
         </Pressable>
@@ -638,20 +652,37 @@ function MenuHeader({ children }: { children: React.ReactNode }) {
   return <Text style={styles.menuHeader}>{children}</Text>;
 }
 
-function MenuRow({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
+function MenuRow({
+  icon,
+  label,
+  onPress,
+  disabled,
+  tint,
+}: {
+  icon: React.ComponentProps<typeof Icon>['name'];
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  tint?: string;
+}) {
   return (
-    <Pressable style={styles.menuItem} onPress={disabled ? undefined : onPress}>
+    <Pressable style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]} onPress={disabled ? undefined : onPress}>
+      <View style={[styles.menuIcon, disabled && { opacity: 0.4 }]}>
+        <Icon name={icon} size={18} color={tint ?? colors.primary} />
+      </View>
       <Text style={[styles.menuText, disabled && { opacity: 0.4 }]}>{label}</Text>
     </Pressable>
   );
 }
 
 function ToolBtn({
+  icon,
   label,
   onPress,
   active,
   disabled,
 }: {
+  icon: React.ComponentProps<typeof Icon>['name'];
   label: string;
   onPress: () => void;
   active?: boolean;
@@ -660,9 +691,32 @@ function ToolBtn({
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
-      style={[styles.toolBtn, active && styles.toolBtnActive, { opacity: disabled ? 0.4 : 1 }]}
+      style={({ pressed }) => [
+        styles.toolBtn,
+        active && styles.toolBtnActive,
+        { opacity: disabled ? 0.35 : pressed ? 0.8 : 1 },
+      ]}
     >
-      <Text style={[styles.toolBtnText, active && { color: '#fff' }]}>{label}</Text>
+      <Icon name={icon} size={20} color={active ? colors.onPrimary : colors.canvasText} />
+      <Text style={[styles.toolBtnText, active && { color: colors.onPrimary }]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function ToolIcon({
+  name,
+  onPress,
+  disabled,
+  color = colors.canvasText,
+}: {
+  name: React.ComponentProps<typeof Icon>['name'];
+  onPress: () => void;
+  disabled?: boolean;
+  color?: string;
+}) {
+  return (
+    <Pressable hitSlop={6} onPress={disabled ? undefined : onPress} style={{ opacity: disabled ? 0.3 : 1, paddingHorizontal: 8 }}>
+      <Icon name={name} size={20} color={color} />
     </Pressable>
   );
 }
@@ -705,54 +759,58 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 6,
     backgroundColor: colors.canvasSurface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.canvasBorder,
   },
-  headerBtn: { color: colors.canvasText, fontSize: 15, fontWeight: '600' },
-  headerTitle: { textAlign: 'center', color: colors.canvasText, fontSize: 17, fontWeight: '700', marginHorizontal: 8 },
-  hint: { backgroundColor: colors.primary, paddingVertical: 8, paddingHorizontal: 16 },
+  titleWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 4 },
+  headerTitle: { color: colors.canvasText, fontSize: 16, fontWeight: '700', maxWidth: '80%' },
+  hint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, paddingVertical: 9, paddingHorizontal: 16 },
   hintText: { color: '#fff', textAlign: 'center', fontWeight: '600' },
-  classBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 4 },
-  classText: { color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
-  classHint: { color: 'rgba(255,255,255,0.75)', fontSize: 10 },
+  classBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 4 },
+  classText: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.6 },
+  classHint: { color: 'rgba(255,255,255,0.72)', fontSize: 10 },
   canvasWrap: { flex: 1, backgroundColor: colors.canvasBg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  status: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 6, backgroundColor: colors.canvasSurface },
+  status: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 6, backgroundColor: colors.canvasSurface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.canvasBorder },
   statusText: { color: colors.canvasSubtext, fontSize: 12 },
-  dot: { marginLeft: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
+  dot: { marginLeft: 8, width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent },
   toolbar: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    alignItems: 'stretch',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 12,
     backgroundColor: colors.canvasSurface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#2c2f36',
   },
-  toolBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.sm, backgroundColor: '#22252b' },
+  toolBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 8, borderRadius: radius.md, backgroundColor: colors.canvasSurface2 },
   toolBtnActive: { backgroundColor: colors.primary },
-  toolBtnText: { color: colors.canvasText, fontSize: 13, fontWeight: '600' },
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 32 },
-  modalCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 20 },
-  modalTitle: { fontSize: 17, fontWeight: '700', color: colors.text, marginBottom: 12 },
-  modalInput: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: 12, height: 46, fontSize: 16, color: colors.text },
-  modalRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 20, marginTop: 16 },
+  toolBtnText: { color: colors.canvasSubtext, fontSize: 11, fontWeight: '600' },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(2,6,23,0.55)', justifyContent: 'center', padding: 28 },
+  modalCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 20, ...shadow(3) },
+  modalTitle: { ...font.h3, color: colors.text, marginBottom: 14 },
+  modalInput: { borderWidth: 1.5, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: 14, height: 50, fontSize: 16, color: colors.text, backgroundColor: colors.surfaceAlt },
+  modalRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 22, marginTop: 18 },
   modalCancel: { color: colors.subtext, fontSize: 15, fontWeight: '600' },
-  modalSave: { color: colors.primary, fontSize: 15, fontWeight: '700' },
-  menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', paddingTop: 56, alignItems: 'flex-end', paddingRight: 12 },
-  menu: { backgroundColor: colors.surface, borderRadius: radius.md, paddingVertical: 6, minWidth: 244, maxWidth: 300, maxHeight: '78%', elevation: 6 },
-  menuItem: { paddingHorizontal: 16, paddingVertical: 12 },
-  menuItemLive: { backgroundColor: '#ecfdf5' },
-  menuText: { fontSize: 15, color: colors.text },
-  menuHeader: { fontSize: 11, fontWeight: '800', color: colors.subtext, textTransform: 'uppercase', letterSpacing: 0.6, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
+  modalSave: { color: colors.primary, fontSize: 15, fontWeight: '800' },
+  menuBackdrop: { flex: 1, backgroundColor: 'rgba(2,6,23,0.35)', paddingTop: 54, alignItems: 'flex-end', paddingRight: 10 },
+  menu: { backgroundColor: colors.surface, borderRadius: radius.lg, paddingVertical: 8, minWidth: 260, maxWidth: 320, maxHeight: '80%', ...shadow(3) },
+  menuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 11 },
+  menuItemPressed: { backgroundColor: colors.surfaceAlt },
+  menuItemLive: { backgroundColor: colors.successSoft },
+  menuIcon: { width: 26, alignItems: 'center' },
+  menuText: { fontSize: 15, color: colors.text, fontWeight: '500', flex: 1 },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success },
+  menuHeader: { ...font.overline, color: colors.faint, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4 },
   menuDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 4 },
-  presence: { flexDirection: 'row', alignItems: 'center', marginRight: 12 },
-  avatar: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.canvasSurface },
+  presence: { flexDirection: 'row', alignItems: 'center', marginRight: 6 },
+  avatar: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.canvasSurface },
   avatarText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   more: { color: colors.canvasSubtext, fontSize: 12, marginLeft: 4 },
-  langRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12 },
+  langRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13 },
   langLabel: { fontSize: 16, color: colors.text },
   langCheck: { color: colors.primary, fontSize: 16, fontWeight: '800' },
 });

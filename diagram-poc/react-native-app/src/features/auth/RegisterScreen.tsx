@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ApiError } from '../../api/client';
-import { colors } from '../../theme';
+import { colors, font, radius, shadow } from '../../theme';
 import { ErrorText, Field, PrimaryButton } from '../../ui/components';
 import { ScreenProps } from '../../navigation';
 import { authApi } from './authApi';
@@ -78,8 +78,8 @@ export default function RegisterScreen({ navigation }: ScreenProps<'Register'>) 
 }
 
 const styles = StyleSheet.create({
-  root: { flexGrow: 1, backgroundColor: colors.bg, justifyContent: 'center', padding: 24 },
-  card: { maxWidth: 420, width: '100%', alignSelf: 'center' },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text, textAlign: 'center' },
-  link: { color: colors.primary, textAlign: 'center', marginTop: 16, fontWeight: '600' },
+  root: { flexGrow: 1, backgroundColor: colors.bg, justifyContent: 'center', padding: 22 },
+  card: { maxWidth: 420, width: '100%', alignSelf: 'center', backgroundColor: colors.surface, borderRadius: radius.xl, padding: 26, ...shadow(2) },
+  title: { ...font.h2, color: colors.text, textAlign: 'center' },
+  link: { color: colors.primary, textAlign: 'center', marginTop: 18, fontWeight: '700' },
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -8,7 +8,7 @@ import {
   TextInputProps,
   View,
 } from 'react-native';
-import { colors, radius } from '../theme';
+import { colors, font, radius } from '../theme';
 
 export function PrimaryButton({
   title,
@@ -43,13 +43,16 @@ export function Field({
   label,
   ...props
 }: TextInputProps & { label?: string }) {
+  const [focused, setFocused] = useState(false);
   return (
-    <View style={{ marginBottom: 12 }}>
+    <View style={{ marginBottom: 14 }}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
-        placeholderTextColor={colors.subtext}
-        style={styles.input}
+        placeholderTextColor={colors.faint}
+        style={[styles.input, focused && styles.inputFocused]}
         autoCapitalize="none"
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         {...props}
       />
     </View>
@@ -64,22 +67,23 @@ export function ErrorText({ children }: { children?: React.ReactNode }) {
 const styles = StyleSheet.create({
   btn: {
     backgroundColor: colors.primary,
-    borderRadius: radius.pill,
-    height: 50,
+    borderRadius: radius.md,
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  label: { color: colors.subtext, fontSize: 13, marginBottom: 4 },
+  btnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  label: { ...font.label, color: colors.subtext, marginBottom: 6 },
   input: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: 12,
-    height: 48,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    height: 52,
     fontSize: 16,
     color: colors.text,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceAlt,
   },
-  error: { color: colors.danger, marginBottom: 8 },
+  inputFocused: { borderColor: colors.primary, backgroundColor: colors.surface },
+  error: { color: colors.danger, marginBottom: 8, fontWeight: '600' },
 });

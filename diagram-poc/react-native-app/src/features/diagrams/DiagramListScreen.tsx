@@ -10,12 +10,19 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius } from '../../theme';
+import { colors, font, radius, shadow } from '../../theme';
 import { ScreenProps } from '../../navigation';
 import { useAuth } from '../auth/AuthContext';
 import { initials } from '../auth/authApi';
 import { useI18n } from '../../i18n/I18nContext';
+import { Icon } from '../../ui/kit';
 import { diagramsApi, DiagramSummary } from './diagramsApi';
+
+const CLASS_TINT: Record<string, string> = {
+  PUBLIC: colors.success,
+  INTERNAL: colors.primary,
+  RESTRICTED: colors.danger,
+};
 
 export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'>) {
   const qc = useQueryClient();
@@ -45,7 +52,12 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{t('list.title')}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitle}>{t('list.title')}</Text>
+          <Text style={styles.headerSub}>
+            {diagrams.data ? `${diagrams.data.length} ${t('list.title').toLowerCase()}` : ' '}
+          </Text>
+        </View>
         <Pressable
           onPress={() =>
             Alert.alert(user?.name ?? 'Account', user?.email ?? '', [
@@ -55,9 +67,7 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
           }
           style={styles.avatar}
         >
-          <Text style={styles.avatarText}>
-            {user ? initials(user.name, user.email) : '?'}
-          </Text>
+          <Text style={styles.avatarText}>{user ? initials(user.name, user.email) : '?'}</Text>
         </Pressable>
       </View>
 
@@ -67,46 +77,65 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
         </View>
       ) : diagrams.isError ? (
         <View style={styles.center}>
-          <Text style={{ color: colors.danger, textAlign: 'center' }}>
+          <Icon name="cloud-offline-outline" size={40} color={colors.faint} />
+          <Text style={{ color: colors.subtext, textAlign: 'center', marginTop: 12 }}>
             {(diagrams.error as Error).message}
           </Text>
           <Pressable onPress={() => diagrams.refetch()} style={styles.retry}>
-            <Text style={{ color: '#fff' }}>Retry</Text>
+            <Text style={{ color: '#fff', fontWeight: '700' }}>Retry</Text>
           </Pressable>
         </View>
       ) : (
         <FlatList
-          contentContainerStyle={{ padding: 12 }}
+          contentContainerStyle={{ padding: 14, paddingBottom: 100 }}
           data={diagrams.data}
           keyExtractor={(d) => `${d.id}`}
           onRefresh={() => diagrams.refetch()}
           refreshing={diagrams.isFetching}
           ListEmptyComponent={
-            <Text style={styles.empty}>{t('list.empty')}</Text>
+            <View style={styles.emptyWrap}>
+              <Icon name="documents-outline" size={48} color={colors.faint} />
+              <Text style={styles.empty}>{t('list.empty')}</Text>
+            </View>
           }
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.cardRow}
-              onPress={() => navigation.navigate('Editor', { id: item.id, name: item.name })}
-            >
-              <Text style={styles.cardIcon}>▤</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>{item.name}</Text>
-                <Text style={styles.cardSub}>
-                  {item.classification}
-                  {item.ownerEmail ? ` · ${item.ownerEmail}` : ''}
-                </Text>
-              </View>
-              <Pressable hitSlop={10} onPress={() => confirmDelete(item)}>
-                <Text style={styles.delete}>🗑</Text>
+          renderItem={({ item }) => {
+            const tint = CLASS_TINT[item.classification] ?? colors.primary;
+            return (
+              <Pressable
+                style={({ pressed }) => [styles.cardRow, shadow(1), pressed && { opacity: 0.96 }]}
+                onPress={() => navigation.navigate('Editor', { id: item.id, name: item.name })}
+              >
+                <View style={[styles.cardIcon, { backgroundColor: tint + '18' }]}>
+                  <Icon name="git-network" size={20} color={tint} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
+                  <View style={styles.cardMeta}>
+                    <View style={[styles.classDot, { backgroundColor: tint }]} />
+                    <Text style={styles.cardSub} numberOfLines={1}>
+                      {item.classification}
+                      {item.ownerEmail ? ` · ${item.ownerEmail}` : ''}
+                    </Text>
+                  </View>
+                </View>
+                <Pressable hitSlop={10} onPress={() => confirmDelete(item)} style={styles.delete}>
+                  <Icon name="trash-outline" size={18} color={colors.faint} />
+                </Pressable>
               </Pressable>
-            </Pressable>
-          )}
+            );
+          }}
         />
       )}
 
-      <Pressable style={styles.fab} onPress={() => create.mutate()}>
-        <Text style={styles.fabText}>{create.isPending ? '…' : `＋ ${t('list.new')}`}</Text>
+      <Pressable style={({ pressed }) => [styles.fab, shadow(2), pressed && { opacity: 0.9 }]} onPress={() => create.mutate()}>
+        {create.isPending ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <>
+            <Icon name="add" size={22} color="#fff" />
+            <Text style={styles.fabText}>{t('list.new')}</Text>
+          </>
+        )}
       </Pressable>
     </SafeAreaView>
   );
@@ -117,57 +146,57 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    paddingBottom: 14,
+    backgroundColor: colors.bg,
   },
-  headerTitle: { flex: 1, fontSize: 22, fontWeight: '700', color: colors.text },
+  headerTitle: { ...font.h1, color: colors.text },
+  headerSub: { ...font.caption, color: colors.subtext, marginTop: 2, textTransform: 'capitalize' },
   avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#dbe4ff',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.primary + '33',
   },
-  avatarText: { color: colors.primary, fontWeight: '700', fontSize: 12 },
+  avatarText: { color: colors.primary, fontWeight: '800', fontSize: 13 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  retry: {
-    marginTop: 12,
-    backgroundColor: colors.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: radius.sm,
-  },
-  empty: { textAlign: 'center', color: colors.subtext, marginTop: 40 },
+  retry: { marginTop: 16, backgroundColor: colors.primary, paddingHorizontal: 22, paddingVertical: 11, borderRadius: radius.md },
+  emptyWrap: { alignItems: 'center', marginTop: 80, gap: 12 },
+  empty: { textAlign: 'center', color: colors.subtext, fontSize: 15 },
   cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.surface,
+    gap: 14,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.lg,
     padding: 14,
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  cardIcon: { fontSize: 20 },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: colors.text },
-  cardSub: { fontSize: 12, color: colors.subtext, marginTop: 2 },
-  delete: { fontSize: 18 },
+  cardIcon: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  cardTitle: { ...font.title, color: colors.text },
+  cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  classDot: { width: 7, height: 7, borderRadius: 4 },
+  cardSub: { fontSize: 12, color: colors.subtext, flex: 1 },
+  delete: { padding: 6 },
   fab: {
     position: 'absolute',
-    right: 20,
-    bottom: 28,
+    right: 18,
+    bottom: 26,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: colors.primary,
     paddingHorizontal: 22,
-    height: 52,
+    height: 54,
     borderRadius: radius.pill,
-    alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
   },
-  fabText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  fabText: { color: '#fff', fontWeight: '800', fontSize: 16 },
 });
