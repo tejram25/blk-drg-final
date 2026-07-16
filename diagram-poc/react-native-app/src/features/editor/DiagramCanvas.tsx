@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, G, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { colors } from '../../theme';
-import { attachedCount } from './editorOps';
+import { attachedCount, linkedComponents } from './editorOps';
 import {
   contentBounds,
   DiagramGraph,
@@ -319,7 +319,7 @@ function NodeShape({ node, selected }: { node: DiagramNode; selected: boolean })
 }
 
 function PartBadge({ node }: { node: DiagramNode }) {
-  const count = attachedCount(node.raw);
+  const count = attachedCount(node.raw) + linkedComponents(node.raw).length;
   if (count === 0) return null;
   const cx = node.x + node.w;
   const cy = node.y;

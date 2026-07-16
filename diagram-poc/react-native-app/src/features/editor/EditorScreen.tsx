@@ -31,11 +31,15 @@ import {
   deleteLink,
   deleteNode,
   graphPartNumbers,
+  linkComponent,
   primaryPartNumber,
   styleLink,
+  unlinkComponent,
   WireStyle,
 } from './editorOps';
 import { RecommendationsModal, DesignReviewModal, LifecycleModal } from '../ai/AiPanels';
+import BoxSuggestModal from '../ai/BoxSuggestModal';
+import BomModal from '../bom/BomModal';
 import { AlternativePart } from '../ai/aiApi';
 import { contentBounds, DiagramGraph, linkFromRaw, linkId, nodeFromRaw, parseModel } from './model';
 import PaletteSheet from './PaletteSheet';
@@ -63,7 +67,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   const [renaming, setRenaming] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [panel, setPanel] = useState<
-    null | 'comments' | 'reviews' | 'versions' | 'recs' | 'review' | 'lifecycle'
+    null | 'comments' | 'reviews' | 'versions' | 'recs' | 'review' | 'lifecycle' | 'box' | 'bom'
   >(null);
   const [partSeed, setPartSeed] = useState('');
   const [live, setLive] = useState(false);
@@ -107,6 +111,24 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       supplier: alt.manufacturer,
       description: alt.dropIn ? `Drop-in alternative — ${alt.note}` : alt.note,
     });
+  };
+
+  const linkComp = (comp: Record<string, unknown>) => {
+    const g = graphRef.current;
+    if (!g || !selected) return;
+    const ng = linkComponent(g, selected, comp);
+    commit(ng);
+    const node = ng.nodes.find((n) => n.key === selected);
+    if (node) sessionRef.current?.setNode(selected, node.raw);
+  };
+
+  const unlinkComp = (partNumber: string) => {
+    const g = graphRef.current;
+    if (!g || !selected) return;
+    const ng = unlinkComponent(g, selected, partNumber);
+    commit(ng);
+    const node = ng.nodes.find((n) => n.key === selected);
+    if (node) sessionRef.current?.setNode(selected, node.raw);
   };
 
   const syncLive = (g: DiagramGraph) =>
@@ -448,10 +470,16 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             <MenuRow label="✨  Recommendations (AI)" onPress={() => { setMenuOpen(false); setPanel('recs'); }} />
             <MenuRow label="📋  Design review (AI)" onPress={() => { setMenuOpen(false); setPanel('review'); }} />
             <MenuRow
+              label="🧩  Suggest components"
+              disabled={!selected}
+              onPress={() => { setMenuOpen(false); setPanel('box'); }}
+            />
+            <MenuRow
               label="🔎  Check part lifecycle"
               disabled={!selectedPartNumber}
               onPress={() => { setMenuOpen(false); setPanel('lifecycle'); }}
             />
+            <MenuRow label="🧾  Bill of materials" onPress={() => { setMenuOpen(false); setPanel('bom'); }} />
             <View style={styles.menuDivider} />
             {(['comments', 'reviews', 'versions'] as const).map((p) => (
               <Pressable
@@ -498,6 +526,14 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
           setPanel(null);
         }}
       />
+      <BoxSuggestModal
+        visible={panel === 'box'}
+        onClose={() => setPanel(null)}
+        node={selectedNode}
+        onLink={linkComp}
+        onUnlink={unlinkComp}
+      />
+      <BomModal visible={panel === 'bom'} onClose={() => setPanel(null)} graph={graph} name={name} />
 
       <CommentsModal visible={panel === 'comments'} onClose={() => setPanel(null)} diagramId={id} />
       <ReviewsModal visible={panel === 'reviews'} onClose={() => setPanel(null)} diagramId={id} />

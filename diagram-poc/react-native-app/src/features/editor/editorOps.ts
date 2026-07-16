@@ -167,7 +167,7 @@ export function graphPartNumbers(g: DiagramGraph): string[] {
       const pn = (p as any).partNumber;
       if (typeof pn === 'string' && pn) out.add(pn);
     }
-    const linked = Array.isArray(n.raw.linkedComponents) ? (n.raw.linkedComponents as any[]) : [];
+    const linked = Array.isArray(n.raw.components) ? (n.raw.components as any[]) : [];
     for (const l of linked) if (l?.partNumber) out.add(l.partNumber);
   }
   return [...out];
@@ -177,4 +177,30 @@ export function graphPartNumbers(g: DiagramGraph): string[] {
 export function primaryPartNumber(raw: Record<string, unknown>): string | null {
   const p = attachedParts(raw)[0] as any;
   return p?.partNumber ?? null;
+}
+
+/** Components linked onto a node/box (web `components` array). */
+export function linkedComponents(raw: Record<string, unknown>): Record<string, unknown>[] {
+  return Array.isArray(raw.components) ? (raw.components as Record<string, unknown>[]) : [];
+}
+
+/** Link a suggested component to a node (deduped by part number). */
+export function linkComponent(g: DiagramGraph, key: string, comp: Record<string, unknown>): DiagramGraph {
+  const nodes = g.nodes.map((n) => {
+    if (n.key !== key) return n;
+    const list = linkedComponents(n.raw);
+    if (list.some((c) => c.partNumber === comp.partNumber)) return n;
+    return nodeFromRaw({ ...n.raw, components: [...list, comp] });
+  });
+  return { ...g, nodes };
+}
+
+/** Remove one linked component (by part number) from a node. */
+export function unlinkComponent(g: DiagramGraph, key: string, partNumber: string): DiagramGraph {
+  const nodes = g.nodes.map((n) => {
+    if (n.key !== key) return n;
+    const list = linkedComponents(n.raw).filter((c) => c.partNumber !== partNumber);
+    return nodeFromRaw({ ...n.raw, components: list });
+  });
+  return { ...g, nodes };
 }
