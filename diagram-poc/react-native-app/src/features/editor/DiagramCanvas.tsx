@@ -145,8 +145,16 @@ export default function DiagramCanvas({
     return { x: cx + dx * scale, y: cy + dy * scale };
   };
 
+  // The exact position of a named port on a node, if defined in the model.
+  const portPoint = (n: DiagramNode, portId?: string): { x: number; y: number } | null => {
+    if (!portId || !n.ports) return null;
+    const p = n.ports.find((pt) => pt.portId === portId);
+    return p ? { x: n.x + p.fx * n.w, y: n.y + p.fy * n.h } : null;
+  };
+
   // Polyline for a link: explicit points, else an orthogonal route between the
-  // two nodes' proper connection points (pin/edge, not centre).
+  // two ends' connection points — the exact model port when the link names one
+  // (matching the desktop/Angular render), otherwise the nearest pin / box edge.
   const linkPoints = (l: DiagramLink): { x: number; y: number }[] => {
     const a = nodesByKey[l.from];
     const b = nodesByKey[l.to];
@@ -154,8 +162,8 @@ export default function DiagramCanvas({
     if (l.points.length >= 2) return l.points;
     const ac = nodeCenter(a);
     const bc = nodeCenter(b);
-    const p1 = connectionPoint(a, bc.x, bc.y);
-    const p2 = connectionPoint(b, ac.x, ac.y);
+    const p1 = portPoint(a, l.fromPort) ?? connectionPoint(a, bc.x, bc.y);
+    const p2 = portPoint(b, l.toPort) ?? connectionPoint(b, ac.x, ac.y);
     if (Math.abs(p2.x - p1.x) >= Math.abs(p2.y - p1.y)) {
       const mx = (p1.x + p2.x) / 2;
       return [p1, { x: mx, y: p1.y }, { x: mx, y: p2.y }, p2];

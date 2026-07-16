@@ -4,6 +4,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import DiagramCanvas from './features/editor/DiagramCanvas';
 import { parseModel } from './features/editor/model';
 import { colors } from './theme';
+// The real shared 555 sample from the backend (sample-555.json), so the mobile
+// render can be compared 1:1 with the Angular desktop render of the same data.
+import sample555 from './sample555.json';
 
 // A no-network preview of the editor canvas, used to screenshot the SVG
 // rendering (symbols + wires + blocks). Enabled with EXPO_PUBLIC_PREVIEW=1.
@@ -31,8 +34,8 @@ const SAMPLE = JSON.stringify({
 });
 
 export default function Preview() {
-  const [graph] = useState(() => parseModel(SAMPLE));
-  const [selected, setSelected] = useState<string | null>('U1');
+  const [graph] = useState(() => parseModel(JSON.stringify(sample555)));
+  const [selected, setSelected] = useState<string | null>(null);
   return (
     <SafeAreaProvider>
       <View style={styles.root}>

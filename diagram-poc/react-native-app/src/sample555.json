@@ -1,0 +1,517 @@
+{
+ "class": "GraphLinksModel",
+ "linkKeyProperty": "key",
+ "linkFromPortIdProperty": "fromPort",
+ "linkToPortIdProperty": "toPort",
+ "copiesArrays": true,
+ "copiesArrayObjects": true,
+ "modelData": {},
+ "nodeDataArray": [
+  {
+   "key": "f1",
+   "category": "symbol",
+   "shape": "elec-vcc",
+   "text": "VCC",
+   "size": "46 42",
+   "loc": "480 300",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.5 0.9286"
+    }
+   ]
+  },
+  {
+   "key": "v1",
+   "category": "symbol",
+   "shape": "elec-vdc",
+   "text": "V1",
+   "value": "9 V",
+   "size": "66 66",
+   "loc": "480 400",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.5 0.0455"
+    },
+    {
+     "portId": "p1",
+     "spot": "0.5 0.9545"
+    }
+   ]
+  },
+  {
+   "key": "g0",
+   "category": "symbol",
+   "shape": "elec-ground",
+   "text": "GND",
+   "size": "46 38",
+   "loc": "480 520",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.5 0.0789"
+    }
+   ]
+  },
+  {
+   "key": "f2",
+   "category": "symbol",
+   "shape": "elec-vcc",
+   "text": "VCC",
+   "size": "46 42",
+   "loc": "637 290",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.5 0.9286"
+    }
+   ]
+  },
+  {
+   "key": "r1",
+   "category": "symbol",
+   "shape": "elec-resistor",
+   "text": "R1",
+   "value": "10 kΩ",
+   "size": "106 46",
+   "loc": "690 340",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.0283 0.5"
+    },
+    {
+     "portId": "p1",
+     "spot": "0.9717 0.5"
+    }
+   ]
+  },
+  {
+   "key": "r2",
+   "category": "symbol",
+   "shape": "elec-resistor",
+   "text": "R2",
+   "value": "47 kΩ",
+   "size": "106 46",
+   "loc": "690 420",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.0283 0.5"
+    },
+    {
+     "portId": "p1",
+     "spot": "0.9717 0.5"
+    }
+   ]
+  },
+  {
+   "key": "u1",
+   "category": "symbol",
+   "shape": "elec-ic555",
+   "text": "U1",
+   "value": "NE555",
+   "size": "126 146",
+   "loc": "900 430",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.5 0.0205"
+    },
+    {
+     "portId": "p1",
+     "spot": "0.5 0.9795"
+    },
+    {
+     "portId": "p2",
+     "spot": "0.0238 0.2603"
+    },
+    {
+     "portId": "p3",
+     "spot": "0.0238 0.4315"
+    },
+    {
+     "portId": "p4",
+     "spot": "0.0238 0.6027"
+    },
+    {
+     "portId": "p5",
+     "spot": "0.0238 0.774"
+    },
+    {
+     "portId": "p6",
+     "spot": "0.9762 0.2603"
+    },
+    {
+     "portId": "p7",
+     "spot": "0.9762 0.5342"
+    }
+   ]
+  },
+  {
+   "key": "f3",
+   "category": "symbol",
+   "shape": "elec-vcc",
+   "text": "VCC",
+   "size": "46 42",
+   "loc": "900 310",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.5 0.9286"
+    }
+   ]
+  },
+  {
+   "key": "g3",
+   "category": "symbol",
+   "shape": "elec-ground",
+   "text": "GND",
+   "size": "46 38",
+   "loc": "900 570",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.5 0.0789"
+    }
+   ]
+  },
+  {
+   "key": "f4",
+   "category": "symbol",
+   "shape": "elec-vcc",
+   "text": "VCC",
+   "size": "46 42",
+   "loc": "1010 330",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.5 0.9286"
+    }
+   ]
+  },
+  {
+   "key": "c1",
+   "category": "symbol",
+   "shape": "elec-cap-pol",
+   "text": "C1",
+   "value": "10 µF",
+   "size": "106 46",
+   "loc": "690 530",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.0283 0.5"
+    },
+    {
+     "portId": "p1",
+     "spot": "0.9717 0.5"
+    }
+   ]
+  },
+  {
+   "key": "g4",
+   "category": "symbol",
+   "shape": "elec-ground",
+   "text": "GND",
+   "size": "46 38",
+   "loc": "743 610",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.5 0.0789"
+    }
+   ]
+  },
+  {
+   "key": "c2",
+   "category": "symbol",
+   "shape": "elec-capacitor",
+   "text": "C2",
+   "value": "10 nF",
+   "size": "106 46",
+   "loc": "640 660",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.0283 0.5"
+    },
+    {
+     "portId": "p1",
+     "spot": "0.9717 0.5"
+    }
+   ]
+  },
+  {
+   "key": "g5",
+   "category": "symbol",
+   "shape": "elec-ground",
+   "text": "GND",
+   "size": "46 38",
+   "loc": "587 730",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.5 0.0789"
+    }
+   ]
+  },
+  {
+   "key": "r3",
+   "category": "symbol",
+   "shape": "elec-resistor",
+   "text": "R3",
+   "value": "470 Ω",
+   "size": "106 46",
+   "loc": "1120 435",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.0283 0.5"
+    },
+    {
+     "portId": "p1",
+     "spot": "0.9717 0.5"
+    }
+   ]
+  },
+  {
+   "key": "led",
+   "category": "symbol",
+   "shape": "elec-led",
+   "text": "D1",
+   "value": "Red LED",
+   "size": "106 58",
+   "loc": "1310 429",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.0283 0.6034"
+    },
+    {
+     "portId": "p1",
+     "spot": "0.9717 0.6034"
+    }
+   ]
+  },
+  {
+   "key": "g6",
+   "category": "symbol",
+   "shape": "elec-ground",
+   "text": "GND",
+   "size": "46 38",
+   "loc": "1363 510",
+   "ports": [
+    {
+     "portId": "p0",
+     "spot": "0.5 0.0789"
+    }
+   ]
+  }
+ ],
+ "linkDataArray": [
+  {
+   "key": -1,
+   "category": "link",
+   "from": "f1",
+   "to": "v1",
+   "fromPort": "p0",
+   "toPort": "p0",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -2,
+   "category": "link",
+   "from": "v1",
+   "to": "g0",
+   "fromPort": "p1",
+   "toPort": "p0",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -3,
+   "category": "link",
+   "from": "f2",
+   "to": "r1",
+   "fromPort": "p0",
+   "toPort": "p0",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -4,
+   "category": "link",
+   "from": "r1",
+   "to": "u1",
+   "fromPort": "p1",
+   "toPort": "p2",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -5,
+   "category": "link",
+   "from": "r2",
+   "to": "u1",
+   "fromPort": "p1",
+   "toPort": "p3",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -6,
+   "category": "link",
+   "from": "r2",
+   "to": "u1",
+   "fromPort": "p0",
+   "toPort": "p2",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -7,
+   "category": "link",
+   "from": "u1",
+   "to": "u1",
+   "fromPort": "p3",
+   "toPort": "p4",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -8,
+   "category": "link",
+   "from": "f3",
+   "to": "u1",
+   "fromPort": "p0",
+   "toPort": "p0",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -9,
+   "category": "link",
+   "from": "u1",
+   "to": "g3",
+   "fromPort": "p1",
+   "toPort": "p0",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -10,
+   "category": "link",
+   "from": "f4",
+   "to": "u1",
+   "fromPort": "p0",
+   "toPort": "p6",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -11,
+   "category": "link",
+   "from": "c1",
+   "to": "u1",
+   "fromPort": "p0",
+   "toPort": "p4",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -12,
+   "category": "link",
+   "from": "c1",
+   "to": "g4",
+   "fromPort": "p1",
+   "toPort": "p0",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -13,
+   "category": "link",
+   "from": "c2",
+   "to": "u1",
+   "fromPort": "p1",
+   "toPort": "p5",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -14,
+   "category": "link",
+   "from": "c2",
+   "to": "g5",
+   "fromPort": "p0",
+   "toPort": "p0",
+   "wire": true,
+   "color": "#475569",
+   "width": 2
+  },
+  {
+   "key": -15,
+   "category": "link",
+   "from": "u1",
+   "to": "r3",
+   "fromPort": "p7",
+   "toPort": "p0",
+   "wire": true,
+   "color": "#f5a623",
+   "width": 2,
+   "dash": [
+    6,
+    3
+   ],
+   "flow": true
+  },
+  {
+   "key": -16,
+   "category": "link",
+   "from": "r3",
+   "to": "led",
+   "fromPort": "p1",
+   "toPort": "p0",
+   "wire": true,
+   "color": "#f5a623",
+   "width": 2,
+   "dash": [
+    6,
+    3
+   ],
+   "flow": true
+  },
+  {
+   "key": -17,
+   "category": "link",
+   "from": "led",
+   "to": "g6",
+   "fromPort": "p1",
+   "toPort": "p0",
+   "wire": true,
+   "color": "#f5a623",
+   "width": 2,
+   "dash": [
+    6,
+    3
+   ],
+   "flow": true
+  }
+ ]
+}

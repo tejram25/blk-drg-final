@@ -1,3 +1,10 @@
+/** A connection port on a node: an id plus its position as a fraction of w/h. */
+export interface NodePort {
+  portId: string;
+  fx: number;
+  fy: number;
+}
+
 /** A node parsed from a GoJS node-data entry (`loc: "x y"`, `size: "w h"`). */
 export interface DiagramNode {
   key: string;
@@ -9,12 +16,15 @@ export interface DiagramNode {
   h: number;
   color?: string;
   shape?: string;
+  ports?: NodePort[];
   raw: Record<string, unknown>;
 }
 
 export interface DiagramLink {
   from: string;
   to: string;
+  fromPort?: string;
+  toPort?: string;
   isWire: boolean;
   points: { x: number; y: number }[];
   color?: string;
@@ -42,6 +52,16 @@ function parsePair(v: unknown): [number, number] | null {
   return Number.isFinite(a) && Number.isFinite(b) ? [a, b] : null;
 }
 
+function parsePorts(raw: Record<string, unknown>): NodePort[] | undefined {
+  if (!Array.isArray(raw.ports)) return undefined;
+  const out: NodePort[] = [];
+  for (const p of raw.ports as any[]) {
+    const spot = parsePair(p?.spot);
+    if (p?.portId != null && spot) out.push({ portId: `${p.portId}`, fx: spot[0], fy: spot[1] });
+  }
+  return out.length ? out : undefined;
+}
+
 function parseNode(raw: Record<string, unknown>): DiagramNode {
   const loc = parsePair(raw.loc) ?? [0, 0];
   const size = parsePair(raw.size) ?? [120, 60];
@@ -56,6 +76,7 @@ function parseNode(raw: Record<string, unknown>): DiagramNode {
     h: size[1],
     color: typeof color === 'string' && color.startsWith('#') ? color : undefined,
     shape: raw.shape as string | undefined,
+    ports: parsePorts(raw),
     raw,
   };
 }
@@ -71,6 +92,8 @@ function parseLink(raw: Record<string, unknown>): DiagramLink {
   return {
     from: `${raw.from}`,
     to: `${raw.to}`,
+    fromPort: raw.fromPort != null ? `${raw.fromPort}` : undefined,
+    toPort: raw.toPort != null ? `${raw.toPort}` : undefined,
     isWire: raw.wire === true || raw.category === 'wire',
     points: pts,
     color: typeof raw.color === 'string' ? (raw.color as string) : undefined,
