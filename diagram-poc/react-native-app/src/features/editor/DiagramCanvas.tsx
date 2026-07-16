@@ -114,16 +114,52 @@ export default function DiagramCanvas({
     return null;
   };
 
-  // Polyline for a link (explicit points, else an orthogonal center-to-center route).
+  // Where a wire meets a node: the nearest pin for electrical symbols, else the
+  // point where the line toward (tx,ty) crosses the node's boundary box.
+  const connectionPoint = (n: DiagramNode, tx: number, ty: number): { x: number; y: number } => {
+    const sym = n.shape ? ELECTRICAL_SYMBOLS[n.shape] : undefined;
+    if (sym && sym.pins && sym.pins.length) {
+      const sx = n.w / sym.width;
+      const sy = n.h / sym.height;
+      let best = { x: n.x, y: n.y };
+      let bd = Infinity;
+      for (const p of sym.pins) {
+        const ax = n.x + p.x * sx;
+        const ay = n.y + p.y * sy;
+        const d = (ax - tx) ** 2 + (ay - ty) ** 2;
+        if (d < bd) {
+          bd = d;
+          best = { x: ax, y: ay };
+        }
+      }
+      return best;
+    }
+    const cx = n.x + n.w / 2;
+    const cy = n.y + n.h / 2;
+    const dx = tx - cx;
+    const dy = ty - cy;
+    if (dx === 0 && dy === 0) return { x: cx, y: cy };
+    const scale = 1 / Math.max(Math.abs(dx) / (n.w / 2), Math.abs(dy) / (n.h / 2));
+    return { x: cx + dx * scale, y: cy + dy * scale };
+  };
+
+  // Polyline for a link: explicit points, else an orthogonal route between the
+  // two nodes' proper connection points (pin/edge, not centre).
   const linkPoints = (l: DiagramLink): { x: number; y: number }[] => {
     const a = nodesByKey[l.from];
     const b = nodesByKey[l.to];
     if (!a || !b) return [];
     if (l.points.length >= 2) return l.points;
-    const p1 = nodeCenter(a);
-    const p2 = nodeCenter(b);
-    const midX = (p1.x + p2.x) / 2;
-    return [p1, { x: midX, y: p1.y }, { x: midX, y: p2.y }, p2];
+    const ac = nodeCenter(a);
+    const bc = nodeCenter(b);
+    const p1 = connectionPoint(a, bc.x, bc.y);
+    const p2 = connectionPoint(b, ac.x, ac.y);
+    if (Math.abs(p2.x - p1.x) >= Math.abs(p2.y - p1.y)) {
+      const mx = (p1.x + p2.x) / 2;
+      return [p1, { x: mx, y: p1.y }, { x: mx, y: p2.y }, p2];
+    }
+    const my = (p1.y + p2.y) / 2;
+    return [p1, { x: p1.x, y: my }, { x: p2.x, y: my }, p2];
   };
 
   // Nearest link within `tol` diagram units of (dx,dy), else null.
