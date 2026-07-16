@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,7 +49,7 @@ import TemplatesModal from '../templates/TemplatesModal';
 import ImageImportModal from '../imageimport/ImageImportModal';
 import { AlternativePart } from '../ai/aiApi';
 import { contentBounds, DiagramGraph, linkFromRaw, linkId, nodeFromRaw, parseModel } from './model';
-import PaletteSheet from './PaletteSheet';
+import PaletteSheet, { PaletteGrid } from './PaletteSheet';
 
 const CLASSIFICATIONS = ['PUBLIC', 'INTERNAL', 'RESTRICTED'] as const;
 const CLASS_COLORS: Record<string, string> = { PUBLIC: '#15803d', INTERNAL: '#1d4ed8', RESTRICTED: '#b91c1c' };
@@ -96,6 +97,8 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   const placeCount = useRef(0);
   const { user } = useAuth();
   const { t, lang, setLang, languages } = useI18n();
+  const { width } = useWindowDimensions();
+  const wide = width >= 900;
 
   // Collaboration session (opt-in). Native JS Yjs — no bridge.
   const sessionRef = useRef<CollabSession | null>(null);
@@ -426,7 +429,14 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         </Pressable>
       ) : null}
 
-      <View style={styles.canvasWrap}>
+      <View style={styles.bodyRow}>
+        {wide ? (
+          <View style={styles.rail}>
+            <Text style={styles.railTitle}>Components</Text>
+            <PaletteGrid columns={1} onPick={onPick} />
+          </View>
+        ) : null}
+        <View style={styles.canvasWrap}>
         {q.isLoading || !graph ? (
           <View style={styles.center}>
             <ActivityIndicator color={colors.primary} />
@@ -457,6 +467,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             }}
           />
         )}
+        </View>
       </View>
 
       <View style={styles.status}>
@@ -476,7 +487,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       </View>
 
       <View style={styles.toolbar}>
-        <ToolBtn icon="add-circle" label={t('tool.add')} onPress={() => setPaletteOpen(true)} />
+        {wide ? null : <ToolBtn icon="add-circle" label={t('tool.add')} onPress={() => setPaletteOpen(true)} />}
         <ToolBtn
           icon="git-network"
           label={t('tool.connect')}
@@ -780,6 +791,9 @@ const styles = StyleSheet.create({
   classBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 4 },
   classText: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.6 },
   classHint: { color: 'rgba(255,255,255,0.72)', fontSize: 10 },
+  bodyRow: { flex: 1, flexDirection: 'row' },
+  rail: { width: 268, backgroundColor: colors.surface, borderRightWidth: 1, borderRightColor: colors.border, paddingHorizontal: 12, paddingTop: 12 },
+  railTitle: { ...font.overline, color: colors.faint, marginBottom: 10, paddingHorizontal: 2 },
   canvasWrap: { flex: 1, backgroundColor: colors.canvasBg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   status: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 6, backgroundColor: colors.canvasSurface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.canvasBorder },

@@ -62,17 +62,9 @@ const CAT_ICON: Record<string, React.ComponentProps<typeof Icon>['name']> = {
   Animated: 'sparkles',
 };
 
-export default function PaletteSheet({
-  visible,
-  onClose,
-  onPick,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onPick: (b: BlockType) => void;
-}) {
-  const q = useQuery({ queryKey: ['palette'], queryFn: fetchPalette, enabled: visible });
-
+/** The grouped, preview-rich palette grid — shared by the mobile sheet and the desktop rail. */
+export function PaletteGrid({ onPick, columns }: { onPick: (b: BlockType) => void; columns?: 1 | 2 }) {
+  const q = useQuery({ queryKey: ['palette'], queryFn: fetchPalette });
   const grouped = useMemo(() => {
     const cats: string[] = [];
     const by: Record<string, BlockType[]> = {};
@@ -86,6 +78,55 @@ export default function PaletteSheet({
     return { cats, by };
   }, [q.data]);
 
+  if (q.isLoading) {
+    return (
+      <View style={{ padding: 48 }}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+  const chipStyle = columns === 1 ? styles.chip1 : styles.chip;
+  return (
+    <ScrollView showsVerticalScrollIndicator={false}>
+      {grouped.cats.map((cat) => (
+        <View key={cat} style={{ marginBottom: 10 }}>
+          <View style={styles.catRow}>
+            <Icon name={CAT_ICON[cat] ?? 'ellipse'} size={13} color={colors.primary} />
+            <Text style={styles.cat}>{cat}</Text>
+            <Text style={styles.catCount}>{grouped.by[cat].length}</Text>
+          </View>
+          <View style={styles.grid}>
+            {grouped.by[cat].map((b) => (
+              <Pressable
+                key={b.key}
+                style={({ pressed }) => [chipStyle, pressed && styles.chipPressed]}
+                onPress={() => onPick(b)}
+              >
+                <View style={styles.previewBox}>
+                  <Preview block={b} />
+                </View>
+                <Text style={styles.chipText} numberOfLines={2}>
+                  {b.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ))}
+      <View style={{ height: 24 }} />
+    </ScrollView>
+  );
+}
+
+export default function PaletteSheet({
+  visible,
+  onClose,
+  onPick,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onPick: (b: BlockType) => void;
+}) {
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
@@ -97,43 +138,12 @@ export default function PaletteSheet({
               <Icon name="close" size={18} color={colors.subtext} />
             </Pressable>
           </View>
-          {q.isLoading ? (
-            <View style={{ padding: 48 }}>
-              <ActivityIndicator color={colors.primary} />
-            </View>
-          ) : (
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {grouped.cats.map((cat) => (
-                <View key={cat} style={{ marginBottom: 10 }}>
-                  <View style={styles.catRow}>
-                    <Icon name={CAT_ICON[cat] ?? 'ellipse'} size={13} color={colors.primary} />
-                    <Text style={styles.cat}>{cat}</Text>
-                    <Text style={styles.catCount}>{grouped.by[cat].length}</Text>
-                  </View>
-                  <View style={styles.grid}>
-                    {grouped.by[cat].map((b) => (
-                      <Pressable
-                        key={b.key}
-                        style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
-                        onPress={() => {
-                          onPick(b);
-                          onClose();
-                        }}
-                      >
-                        <View style={styles.previewBox}>
-                          <Preview block={b} />
-                        </View>
-                        <Text style={styles.chipText} numberOfLines={2}>
-                          {b.label}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-              ))}
-              <View style={{ height: 24 }} />
-            </ScrollView>
-          )}
+          <PaletteGrid
+            onPick={(b) => {
+              onPick(b);
+              onClose();
+            }}
+          />
         </View>
       </View>
     </Modal>
@@ -154,6 +164,19 @@ const styles = StyleSheet.create({
   chip: {
     width: '48%',
     marginHorizontal: '1%',
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+  },
+  chip1: {
+    width: '100%',
     marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
