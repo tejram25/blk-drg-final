@@ -79,26 +79,23 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
   };
   const loc = new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify);
 
-  // Electrical symbol → white card holding a go.Picture (inline-SVG data URI).
+  // Electrical symbol → bare go.Picture (inline-SVG data URI), no box. A boxed
+  // shadow would look wrong on a schematic, so symbols aren't shadowed.
   dia.nodeTemplateMap.add(
     'symbol',
     $(
       go.Node,
       'Vertical',
       nodeBase,
+      { isShadowed: false },
       loc,
       $(
-        go.Panel,
-        'Auto',
-        $(go.Shape, 'RoundedRectangle', { ...port, fill: '#ffffff', stroke: '#e2e8f0', strokeWidth: 1, parameter1: 8 }),
-        $(
-          go.Picture,
-          { imageStretch: go.GraphObject.Fill, margin: 9 },
-          new go.Binding('source', 'shape', (s: string) => electricalSvgUri(s)?.uri ?? ''),
-          new go.Binding('desiredSize', 'size', go.Size.parse),
-        ),
+        go.Picture,
+        { ...port, imageStretch: go.GraphObject.Fill },
+        new go.Binding('source', 'shape', (s: string) => electricalSvgUri(s)?.uri ?? ''),
+        new go.Binding('desiredSize', 'size', go.Size.parse),
       ),
-      $(go.TextBlock, { font: '600 11px Inter, sans-serif', stroke: '#475569', margin: new go.Margin(4, 0, 0, 0) }, new go.Binding('text')),
+      $(go.TextBlock, { font: '600 11px Inter, sans-serif', stroke: '#475569', margin: new go.Margin(3, 0, 0, 0) }, new go.Binding('text')),
     ),
   );
 
@@ -140,7 +137,7 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     ),
   );
 
-  // Animated component → white card with a coloured glyph.
+  // Animated component → bare coloured glyph (no box).
   dia.nodeTemplateMap.add(
     'anim',
     $(
@@ -149,18 +146,13 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       nodeBase,
       loc,
       $(
-        go.Panel,
-        'Auto',
-        $(go.Shape, 'RoundedRectangle', { ...port, fill: '#ffffff', stroke: '#e2e8f0', strokeWidth: 1, parameter1: 12 }),
-        $(
-          go.Shape,
-          { strokeWidth: 2, desiredSize: new go.Size(46, 46), margin: 10 },
-          new go.Binding('figure', 'shape', (s: string) => ANIM_GLYPH[s]?.figure ?? 'Circle'),
-          new go.Binding('fill', 'shape', (s: string) => (ANIM_GLYPH[s]?.color ?? '#f59e0b') + '22'),
-          new go.Binding('stroke', 'shape', (s: string) => ANIM_GLYPH[s]?.color ?? '#f59e0b'),
-        ),
+        go.Shape,
+        { ...port, strokeWidth: 2, desiredSize: new go.Size(52, 52) },
+        new go.Binding('figure', 'shape', (s: string) => ANIM_GLYPH[s]?.figure ?? 'Circle'),
+        new go.Binding('fill', 'shape', (s: string) => (ANIM_GLYPH[s]?.color ?? '#f59e0b') + '22'),
+        new go.Binding('stroke', 'shape', (s: string) => ANIM_GLYPH[s]?.color ?? '#f59e0b'),
       ),
-      $(go.TextBlock, { font: '600 11px Inter, sans-serif', stroke: '#475569', margin: new go.Margin(4, 0, 0, 0) }, new go.Binding('text')),
+      $(go.TextBlock, { font: '600 11px Inter, sans-serif', stroke: '#475569', margin: new go.Margin(3, 0, 0, 0) }, new go.Binding('text')),
     ),
   );
 
