@@ -47,7 +47,7 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       $(go.Shape, 'LineV', { stroke: '#eef1f6', strokeWidth: 1 }),
       $(go.Shape, 'LineV', { stroke: '#e2e8f0', strokeWidth: 1, interval: 5 }),
     ),
-    model: new go.GraphLinksModel({ linkKeyProperty: 'key' }),
+    model: new go.GraphLinksModel({ linkKeyProperty: 'key', linkFromPortIdProperty: 'fromPort', linkToPortIdProperty: 'toPort' }),
   });
 
   const port = {
@@ -58,6 +58,22 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     toSpot: go.Spot.AllSides,
     cursor: 'pointer',
   } as const;
+
+  // One named connection port (from the node's `ports` array) at its spot, so
+  // wires that name a fromPort/toPort attach exactly where the model says.
+  const portItem = $(
+    go.Panel,
+    new go.Binding('alignment', 'spot', go.Spot.parse),
+    $(
+      go.Shape,
+      'Circle',
+      { desiredSize: new go.Size(8, 8), fill: 'rgba(0,0,0,0)', strokeWidth: 0, fromLinkable: true, toLinkable: true, cursor: 'crosshair' },
+      new go.Binding('portId', 'portId'),
+      new go.Binding('fromSpot', 'spot', (s: string) => nearestSide(s)),
+      new go.Binding('toSpot', 'spot', (s: string) => nearestSide(s)),
+    ),
+  );
+  const portsBind = new go.Binding('itemArray', 'ports');
 
   // Rounded highlight shared by every node's selection.
   const selAdorn = $(
@@ -80,7 +96,8 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
   const loc = new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify);
 
   // Electrical symbol → bare go.Picture (inline-SVG data URI), no box. A boxed
-  // shadow would look wrong on a schematic, so symbols aren't shadowed.
+  // shadow would look wrong on a schematic, so symbols aren't shadowed. The
+  // graphic is wrapped in a Spot panel that carries the named ports.
   dia.nodeTemplateMap.add(
     'symbol',
     $(
@@ -90,16 +107,22 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       { isShadowed: false },
       loc,
       $(
-        go.Picture,
-        { ...port, imageStretch: go.GraphObject.Fill },
-        new go.Binding('source', 'shape', (s: string) => electricalSvgUri(s)?.uri ?? ''),
-        new go.Binding('desiredSize', 'size', go.Size.parse),
+        go.Panel,
+        'Spot',
+        portsBind,
+        { itemTemplate: portItem },
+        $(
+          go.Picture,
+          { ...port, imageStretch: go.GraphObject.Fill },
+          new go.Binding('source', 'shape', (s: string) => electricalSvgUri(s)?.uri ?? ''),
+          new go.Binding('desiredSize', 'size', go.Size.parse),
+        ),
       ),
       $(go.TextBlock, { font: '600 11px Inter, sans-serif', stroke: '#475569', margin: new go.Margin(3, 0, 0, 0) }, new go.Binding('text')),
     ),
   );
 
-  // Basic shape → native GoJS figure + centred label.
+  // Basic shape → native GoJS figure + centred label + named ports.
   dia.nodeTemplateMap.add(
     'shape',
     $(
@@ -107,6 +130,8 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       'Spot',
       nodeBase,
       loc,
+      portsBind,
+      { itemTemplate: portItem },
       $(
         go.Shape,
         { ...port, strokeWidth: 1.8, stroke: '#475569' },
@@ -118,14 +143,16 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     ),
   );
 
-  // Functional block → gradient rounded rectangle + label.
+  // Functional block → gradient rounded rectangle + label + named ports.
   dia.nodeTemplateMap.add(
     'block',
     $(
       go.Node,
-      'Auto',
+      'Spot',
       nodeBase,
       loc,
+      portsBind,
+      { itemTemplate: portItem },
       $(
         go.Shape,
         'RoundedRectangle',
@@ -137,7 +164,7 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     ),
   );
 
-  // Animated component → bare coloured glyph (no box).
+  // Animated component → bare coloured glyph (no box) + named ports.
   dia.nodeTemplateMap.add(
     'anim',
     $(
@@ -146,22 +173,30 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       nodeBase,
       loc,
       $(
-        go.Shape,
-        { ...port, strokeWidth: 2, desiredSize: new go.Size(52, 52) },
-        new go.Binding('figure', 'shape', (s: string) => ANIM_GLYPH[s]?.figure ?? 'Circle'),
-        new go.Binding('fill', 'shape', (s: string) => (ANIM_GLYPH[s]?.color ?? '#f59e0b') + '22'),
-        new go.Binding('stroke', 'shape', (s: string) => ANIM_GLYPH[s]?.color ?? '#f59e0b'),
+        go.Panel,
+        'Spot',
+        portsBind,
+        { itemTemplate: portItem },
+        $(
+          go.Shape,
+          { ...port, strokeWidth: 2, desiredSize: new go.Size(52, 52) },
+          new go.Binding('figure', 'shape', (s: string) => ANIM_GLYPH[s]?.figure ?? 'Circle'),
+          new go.Binding('fill', 'shape', (s: string) => (ANIM_GLYPH[s]?.color ?? '#f59e0b') + '22'),
+          new go.Binding('stroke', 'shape', (s: string) => ANIM_GLYPH[s]?.color ?? '#f59e0b'),
+        ),
       ),
       $(go.TextBlock, { font: '600 11px Inter, sans-serif', stroke: '#475569', margin: new go.Margin(3, 0, 0, 0) }, new go.Binding('text')),
     ),
   );
 
-  // Fallback: a simple labelled rounded rectangle.
+  // Fallback: a simple labelled rounded rectangle + named ports.
   dia.nodeTemplate = $(
     go.Node,
-    'Auto',
+    'Spot',
     nodeBase,
     loc,
+    portsBind,
+    { itemTemplate: portItem },
     $(go.Shape, 'RoundedRectangle', { ...port, fill: '#e2e8f0', strokeWidth: 1, parameter1: 10 }, new go.Binding('desiredSize', 'size', go.Size.parse)),
     $(go.TextBlock, { margin: 10, font: '600 13px Inter, sans-serif' }, new go.Binding('text')),
   );
@@ -190,6 +225,18 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
   );
 
   return dia;
+}
+
+/** Which side a fractional spot ("fx fy") is nearest to, so wires leave the port outward. */
+function nearestSide(spot: string): go.Spot {
+  const sp = go.Spot.parse(spot);
+  if (!sp.isSpot()) return go.Spot.AllSides;
+  const dl = sp.x;
+  const dr = 1 - sp.x;
+  const dt = sp.y;
+  const db = 1 - sp.y;
+  const m = Math.min(dl, dr, dt, db);
+  return m === dl ? go.Spot.Left : m === dr ? go.Spot.Right : m === dt ? go.Spot.Top : go.Spot.Bottom;
 }
 
 /** Darken a #rrggbb colour by `amt` (0..1). */
