@@ -2,6 +2,7 @@ import * as go from 'gojs';
 import React, { useEffect, useRef } from 'react';
 import { DiagramGraph, linkId } from './model';
 import { ANIM_GLYPH, electricalSvgUri, registerFigures, SHAPE_FIGURE } from './gojsAssets';
+import { animFrameUri, isDetailedAnim } from './animShapes';
 
 /**
  * Web diagram surface backed by GoJS — the same engine the Angular app uses, so
@@ -185,7 +186,10 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     ),
   );
 
-  // Animated component → bare coloured glyph (no box) + named ports.
+  // Animated component → detailed animated glyph for the 20+ ported shapes
+  // (solar, turbine, robot arm, …), else a compact coloured glyph fallback.
+  // The Picture's source is a baked SVG frame refreshed by an animation timer
+  // (see the init effect), so it moves just like the Angular desktop editor.
   dia.nodeTemplateMap.add(
     'anim',
     $(
@@ -199,8 +203,18 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
         portsBind,
         { itemTemplate: portItem },
         $(
+          go.Picture,
+          { ...port, imageStretch: go.GraphObject.Fill },
+          new go.Binding('visible', 'shape', (s: string) => isDetailedAnim(s)),
+          new go.Binding('desiredSize', 'size', go.Size.parse),
+          new go.Binding('source', '', (d: any) =>
+            isDetailedAnim(d.shape) ? animFrameUri(d.shape, d.__frame ?? 0) : '',
+          ),
+        ),
+        $(
           go.Shape,
           { ...port, strokeWidth: 2, desiredSize: new go.Size(52, 52) },
+          new go.Binding('visible', 'shape', (s: string) => !isDetailedAnim(s)),
           new go.Binding('figure', 'shape', (s: string) => ANIM_GLYPH[s]?.figure ?? 'Circle'),
           new go.Binding('fill', 'shape', (s: string) => (ANIM_GLYPH[s]?.color ?? '#f59e0b') + '22'),
           new go.Binding('stroke', 'shape', (s: string) => ANIM_GLYPH[s]?.color ?? '#f59e0b'),
@@ -380,7 +394,25 @@ export default function DiagramCanvasWeb(props: Props) {
       }
     });
 
+    // Drive the animated components: refresh each anim node's baked SVG frame
+    // ~18 fps. Cheap when the diagram has none (the loop just no-ops).
+    const animTimer = setInterval(() => {
+      const d = diaRef.current;
+      if (!d) return;
+      const m = d.model;
+      const phase = (Date.now() % 2000) / 2000;
+      let any = false;
+      for (const data of m.nodeDataArray as any[]) {
+        if (isDetailedAnim(data.shape)) {
+          m.setDataProperty(data, '__frame', phase);
+          any = true;
+        }
+      }
+      void any;
+    }, 55);
+
     return () => {
+      clearInterval(animTimer);
       dia.div = null;
       diaRef.current = null;
     };

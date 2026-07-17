@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, G, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { AnimatedNode, isAnimShape } from './animated';
+import { ANIMATED_SYMBOLS, bakeParts, isDetailedAnim, Part } from './animShapes';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 import { colors } from '../../theme';
@@ -80,6 +81,19 @@ export default function DiagramCanvas({
   }, [phase]);
   const dashOffset = phase.interpolate({ inputRange: [0, 1], outputRange: [0, -16] });
   const fitted = useRef(false);
+
+  // Detailed animated components (solar, turbine, robot arm, …) are frame-driven:
+  // we bake the motion into fresh SVG parts each tick. Only run the ticker when
+  // such components are present, and keep them in their own layer so the big
+  // static scene (blocks/wires/symbols) is never rebuilt by the animation.
+  const hasDetailedAnim = useMemo(() => graph.nodes.some((n) => isDetailedAnim(n.shape)), [graph]);
+  const [anim01, setAnim01] = useState(0);
+  useEffect(() => {
+    if (!hasDetailedAnim) return;
+    const t0 = Date.now();
+    const id = setInterval(() => setAnim01(((Date.now() - t0) % 2000) / 2000), 55);
+    return () => clearInterval(id);
+  }, [hasDetailedAnim]);
 
   // Scale/translate the view so all content fits the viewport.
   const fitContent = () => {
@@ -373,7 +387,10 @@ export default function DiagramCanvas({
     const links = graph.links.map((l, i) =>
       dragKey && (l.from === dragKey || l.to === dragKey) ? null : linkElement(l, `l${i}`, linkPoints(l)),
     );
-    const nodes = graph.nodes.map((n) => (n.key === dragKey ? null : nodeElement(n)));
+    // Detailed animated components are drawn separately in the frame-driven layer.
+    const nodes = graph.nodes.map((n) =>
+      n.key === dragKey || isDetailedAnim(n.shape) ? null : nodeElement(n),
+    );
     return (
       <>
         {links}
@@ -382,6 +399,13 @@ export default function DiagramCanvas({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph, selectedKey, selectedEdge, dragKey]);
+
+  // Frame-driven layer: detailed animated components, re-rendered each tick.
+  const animLayer = graph.nodes.map((n) =>
+    !isDetailedAnim(n.shape) || n.key === dragKey ? null : (
+      <AnimComponentNode key={n.key} node={n} phase={anim01} selected={n.key === selectedKey} />
+    ),
+  );
 
   // Live overlay: the dragged node at its current position + its incident wires.
   // Re-renders each drag frame, but it's only one node and a few links.
@@ -396,7 +420,11 @@ export default function DiagramCanvas({
     return (
       <>
         {wires}
-        {nodeElement(moved)}
+        {isDetailedAnim(moved.shape) ? (
+          <AnimComponentNode node={moved} phase={anim01} selected />
+        ) : (
+          nodeElement(moved)
+        )}
       </>
     );
   })();
@@ -407,6 +435,7 @@ export default function DiagramCanvas({
         <Svg width={size.w} height={size.h}>
           <G transform={`translate(${t.tx},${t.ty}) scale(${t.scale})`}>
             {scene}
+            {animLayer}
             {overlay}
           </G>
         </Svg>
@@ -540,6 +569,9 @@ const NodeShape = React.memo(function NodeShape({ node, selected }: { node: Diag
 
   const fill = node.color ?? colors.canvasSurface;
   const readable = isLight(fill) ? '#111827' : '#ffffff';
+  const muted = isLight(fill) ? '#475569' : 'rgba(255,255,255,0.82)';
+  const subtitle = blockSubtitle(node);
+  const twoLine = !!subtitle && node.h >= 42;
   return (
     <>
       <Rect
@@ -555,12 +587,98 @@ const NodeShape = React.memo(function NodeShape({ node, selected }: { node: Diag
       {node.text ? (
         <SvgText
           x={node.x + node.w / 2}
-          y={node.y + node.h / 2 + 4}
+          y={node.y + node.h / 2 + (twoLine ? -3 : 4)}
           fill={readable}
           fontSize={13}
-          fontWeight="600"
+          fontWeight="700"
           textAnchor="middle"
         >
+          {node.text}
+        </SvgText>
+      ) : null}
+      {twoLine ? (
+        <SvgText
+          x={node.x + node.w / 2}
+          y={node.y + node.h / 2 + 13}
+          fill={muted}
+          fontSize={9}
+          fontWeight="500"
+          textAnchor="middle"
+        >
+          {subtitle!.length > 22 ? subtitle!.slice(0, 21) + '…' : subtitle}
+        </SvgText>
+      ) : null}
+      <PartBadge node={node} />
+    </>
+  );
+});
+
+/** Second-line label for a block card: its subtitle, or an attached part's mfr. */
+function blockSubtitle(node: DiagramNode): string | null {
+  const raw = node.raw as any;
+  if (typeof raw.subtitle === 'string' && raw.subtitle.trim()) return raw.subtitle.trim();
+  const ap = Array.isArray(raw.attachedParts) ? raw.attachedParts[0] : null;
+  const p = ap?.part ?? ap;
+  if (p) return p.manufacturer || p.supplier || p.partDesc || null;
+  return null;
+}
+
+// ---- Detailed animated component (solar, turbine, robot arm, …) -------------
+// Maps a baked SVG part tree (from animShapes.bakeParts) to react-native-svg,
+// scaled into the node's box. Re-rendered each animation tick.
+function mapKey(k: string): string {
+  return k.includes('-') ? k.replace(/-([a-z])/g, (_m, c: string) => c.toUpperCase()) : k;
+}
+function partProps(attrs: Record<string, string>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(attrs)) out[mapKey(k)] = v;
+  return out;
+}
+function renderPart(p: Part, key: string): React.ReactNode {
+  const props = partProps(p.attrs);
+  const kids = p.children?.map((c, i) => renderPart(c, `${key}.${i}`));
+  switch (p.tag) {
+    case 'g':
+      return (
+        <G key={key} {...props}>
+          {kids}
+        </G>
+      );
+    case 'path':
+      return <Path key={key} {...props} />;
+    case 'circle':
+      return <Circle key={key} {...props} />;
+    case 'rect':
+      return <Rect key={key} {...props} />;
+    default:
+      return null;
+  }
+}
+
+const AnimComponentNode = React.memo(function AnimComponentNode({
+  node,
+  phase,
+  selected,
+}: {
+  node: DiagramNode;
+  phase: number;
+  selected: boolean;
+}) {
+  const def = node.shape ? ANIMATED_SYMBOLS[node.shape] : undefined;
+  if (!def) return <NodeShape node={node} selected={selected} />;
+  const sx = node.w / def.width;
+  const sy = node.h / def.height;
+  const parts = bakeParts(node.shape as string, phase);
+  return (
+    <>
+      <G transform={`translate(${node.x},${node.y}) scale(${sx},${sy})`}>
+        {parts.map((p, i) => renderPart(p, `${node.key}-${i}`))}
+      </G>
+      {selected ? (
+        <Rect x={node.x - 4} y={node.y - 4} width={node.w + 8} height={node.h + 8} fill="none" stroke={colors.primary} strokeWidth={1.6} rx={6} />
+      ) : null}
+      {node.text ? (
+        <SvgText x={node.x + node.w / 2} y={node.y + node.h + 12} fill={colors.canvasText} fontSize={11} fontWeight="600" textAnchor="middle">
           {node.text}
         </SvgText>
       ) : null}

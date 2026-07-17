@@ -161,6 +161,10 @@ function convertLegacy(cells: any[]): { nodeDataArray: any[]; linkDataArray: any
       const fill = a.body?.fill ?? a.rect?.fill;
       nodeDataArray.push({ key, category: 'shape', shape, loc, size: sizeStr, text: label,
         color: fill && fill !== 'none' ? fill : '#e2e8f0' });
+    } else if (shape.startsWith('anim-')) {
+      // Animated component (solar, turbine, robot arm, …) → keep the shape so the
+      // canvas renders the detailed animated glyph, matching the desktop editor.
+      nodeDataArray.push({ key, category: 'anim', shape, loc, size: sizeStr, text: label });
     } else {
       // rect / unknown / animated-not-ported → a coloured box or a labelled block.
       const body = a.body ?? a.rect ?? {};
