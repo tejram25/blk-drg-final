@@ -358,6 +358,11 @@ export function bakeParts(shape: string, phase: number): Part[] {
 
   const bake = (p: Part): Part => {
     const attrs: Record<string, string> = { ...p.attrs };
+    // The glyphs were authored for a dark canvas; remap the near-white parts so
+    // they stay visible on the app's light (arrow.com-style) canvas.
+    for (const k of ['fill', 'stroke'] as const) {
+      if ((attrs[k] ?? '').toLowerCase() === '#e2e8f0') attrs[k] = '#64707D';
+    }
     const cls = attrs['class'] ?? '';
     delete attrs['class'];
     let wrap = '';

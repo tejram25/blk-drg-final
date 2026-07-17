@@ -12,8 +12,8 @@ export function Icon({ name, size = 20, color = colors.text }: { name: IconName;
 }
 
 /**
- * Absolute-fill diagonal electric gradient — blue → violet — drawn with
- * react-native-svg (no extra native deps). This is the app's ONLY accent;
+ * Absolute-fill near-flat Arrow-green fill (subtle top-left highlight), drawn
+ * with react-native-svg (no extra native deps). This is the app's ONE accent;
  * parent needs `overflow: 'hidden'` + a borderRadius for rounded corners.
  */
 export function GradientFill({
@@ -123,7 +123,7 @@ export function Button({
 
 const VARIANTS: Record<Variant, { bg: string; fg: string; border?: string }> = {
   primary: { bg: colors.primary, fg: colors.onPrimary },
-  tonal: { bg: colors.primarySoft, fg: colors.primaryLight, border: colors.primary + '3D' },
+  tonal: { bg: colors.primarySoft, fg: colors.primaryDark, border: colors.primary + '3D' },
   ghost: { bg: 'transparent', fg: colors.text, border: colors.borderStrong },
   danger: { bg: colors.dangerSoft, fg: colors.danger, border: colors.danger + '33' },
 };

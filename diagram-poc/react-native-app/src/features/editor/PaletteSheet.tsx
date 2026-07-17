@@ -23,7 +23,7 @@ function Preview({ block }: { block: BlockType }) {
       <Svg width={PW} height={PH}>
         <G transform={`translate(${tx},${ty}) scale(${s})`}>
           {sym.paths.map((p, i) => (
-            <Path key={i} d={p.d} fill={p.fill ? '#DEE6F2' : 'none'} stroke="#DEE6F2" strokeWidth={1.4 / s} />
+            <Path key={i} d={p.d} fill={p.fill ? '#33404C' : 'none'} stroke="#33404C" strokeWidth={2.4 / s} />
           ))}
         </G>
       </Svg>

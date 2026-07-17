@@ -43,10 +43,10 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       go.Panel,
       'Grid',
       { gridCellSize: new go.Size(20, 20) },
-      $(go.Shape, 'LineH', { stroke: '#101010', strokeWidth: 1 }),
-      $(go.Shape, 'LineH', { stroke: '#1C1C1C', strokeWidth: 1, interval: 5 }),
-      $(go.Shape, 'LineV', { stroke: '#101010', strokeWidth: 1 }),
-      $(go.Shape, 'LineV', { stroke: '#1C1C1C', strokeWidth: 1, interval: 5 }),
+      $(go.Shape, 'LineH', { stroke: '#ECEEF1', strokeWidth: 1 }),
+      $(go.Shape, 'LineH', { stroke: '#DFE3E8', strokeWidth: 1, interval: 5 }),
+      $(go.Shape, 'LineV', { stroke: '#ECEEF1', strokeWidth: 1 }),
+      $(go.Shape, 'LineV', { stroke: '#DFE3E8', strokeWidth: 1, interval: 5 }),
     ),
     model: new go.GraphLinksModel({ linkKeyProperty: 'key', linkFromPortIdProperty: 'fromPort', linkToPortIdProperty: 'toPort' }),
   });
@@ -80,7 +80,7 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
   const selAdorn = $(
     go.Adornment,
     'Auto',
-    $(go.Shape, 'RoundedRectangle', { fill: null, stroke: '#7C5CFC', strokeWidth: 2, parameter1: 10 }),
+    $(go.Shape, 'RoundedRectangle', { fill: null, stroke: '#64A70B', strokeWidth: 2, parameter1: 10 }),
     $(go.Placeholder, { padding: 5 }),
   );
 
@@ -105,7 +105,7 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     toolTip: nodeTip,
     resizable: false,
     isShadowed: true,
-    shadowColor: 'rgba(0, 0, 0, 0.55)',
+    shadowColor: 'rgba(15, 23, 42, 0.16)',
     shadowBlur: 9,
     shadowOffset: new go.Point(0, 3),
   };
@@ -138,7 +138,7 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       ),
       $(
         go.TextBlock,
-        { font: '600 11px Inter, sans-serif', stroke: '#9A9A9A', textAlign: 'center', margin: new go.Margin(3, 0, 0, 0) },
+        { font: '600 11px Inter, sans-serif', stroke: '#5B6470', textAlign: 'center', margin: new go.Margin(3, 0, 0, 0) },
         new go.Binding('text', '', labelText),
       ),
     ),
@@ -221,7 +221,7 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       ),
       $(
         go.TextBlock,
-        { font: '600 11px Inter, sans-serif', stroke: '#9A9A9A', textAlign: 'center', margin: new go.Margin(3, 0, 0, 0) },
+        { font: '600 11px Inter, sans-serif', stroke: '#5B6470', textAlign: 'center', margin: new go.Margin(3, 0, 0, 0) },
         new go.Binding('text', '', labelText),
       ),
     ),
@@ -255,8 +255,8 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     new go.Binding('curve', 'routing', (r: string) => (r === 'smooth' ? go.Link.Bezier : go.Link.JumpOver)),
     $(
       go.Shape,
-      { strokeWidth: 2, stroke: '#8A8A8A', strokeCap: 'round', shadowVisible: false },
-      new go.Binding('stroke', 'color', (c: string) => c || '#8A8A8A'),
+      { strokeWidth: 2, stroke: '#66707C', strokeCap: 'round', shadowVisible: false },
+      new go.Binding('stroke', 'color', (c: string) => c || '#66707C'),
       new go.Binding('strokeWidth', 'width', (w: number) => w || 2),
       new go.Binding('strokeDashArray', 'dash'),
     ),
@@ -447,6 +447,6 @@ export default function DiagramCanvasWeb(props: Props) {
 
   return React.createElement('div', {
     ref: hostRef,
-    style: { flex: 1, width: '100%', height: '100%', minHeight: 300, background: '#000000' },
+    style: { flex: 1, width: '100%', height: '100%', minHeight: 300, background: '#F7F8F9' },
   });
 }

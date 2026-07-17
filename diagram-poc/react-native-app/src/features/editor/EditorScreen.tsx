@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -54,7 +55,7 @@ import { contentBounds, DiagramGraph, DiagramNode, linkFromRaw, linkId, nodeFrom
 import PaletteSheet, { PaletteGrid } from './PaletteSheet';
 
 const CLASSIFICATIONS = ['PUBLIC', 'INTERNAL', 'RESTRICTED'] as const;
-const CLASS_COLORS: Record<string, string> = { PUBLIC: '#22C48B', INTERNAL: '#5B8CFF', RESTRICTED: '#FF4D5E' };
+const CLASS_COLORS: Record<string, string> = { PUBLIC: '#2E9E5B', INTERNAL: '#0068C9', RESTRICTED: '#D93838' };
 
 const linkKey = linkId;
 
@@ -417,17 +418,18 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
+      <StatusBar style="light" />
       <View style={styles.header}>
         <IconButton
           name="chevron-back"
-          color={colors.canvasText}
+          color={colors.chromeText}
           onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Diagrams'))}
         />
         <Pressable style={styles.titleWrap} onPress={() => setRenaming(true)}>
           <Text style={styles.headerTitle} numberOfLines={1}>
             {name}
           </Text>
-          <Icon name="create-outline" size={13} color={colors.canvasSubtext} />
+          <Icon name="create-outline" size={13} color={colors.chromeSubtext} />
         </Pressable>
         {live ? (
           <View style={styles.presence}>
@@ -441,11 +443,11 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         ) : null}
         <IconButton
           name={dirty ? 'save' : 'checkmark-done'}
-          color={dirty ? colors.wire : colors.canvasSubtext}
+          color={dirty ? colors.wire : colors.chromeSubtext}
           disabled={!dirty || save.isPending}
           onPress={() => save.mutate()}
         />
-        <IconButton name="ellipsis-horizontal" color={colors.canvasText} onPress={() => setMenuOpen(true)} />
+        <IconButton name="ellipsis-horizontal" color={colors.chromeText} onPress={() => setMenuOpen(true)} />
       </View>
 
       <Pressable style={styles.classBanner} onPress={cycleClassification}>
@@ -810,7 +812,7 @@ function ToolBtn({
         { opacity: disabled ? 0.35 : pressed ? 0.8 : 1 },
       ]}
     >
-      <Icon name={icon} size={20} color={active ? colors.onPrimary : colors.canvasText} />
+      <Icon name={icon} size={20} color={active ? colors.onPrimary : colors.chromeText} />
       <Text style={[styles.toolBtnText, active && { color: colors.onPrimary }]}>{label}</Text>
     </Pressable>
   );
@@ -820,7 +822,7 @@ function ToolIcon({
   name,
   onPress,
   disabled,
-  color = colors.canvasText,
+  color = colors.chromeText,
 }: {
   name: React.ComponentProps<typeof Icon>['name'];
   onPress: () => void;
@@ -868,18 +870,18 @@ function RenameModal({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.canvasBg },
+  root: { flex: 1, backgroundColor: colors.chrome },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 6,
     paddingVertical: 6,
-    backgroundColor: colors.canvasSurface,
+    backgroundColor: colors.chrome,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.canvasBorder,
+    borderBottomColor: colors.chromeBorder,
   },
   titleWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 4 },
-  headerTitle: { color: colors.canvasText, fontSize: 16, fontWeight: '700', maxWidth: '80%' },
+  headerTitle: { color: colors.chromeText, fontSize: 16, fontWeight: '700', maxWidth: '80%' },
   hint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, paddingVertical: 9, paddingHorizontal: 16 },
   hintText: { color: '#fff', textAlign: 'center', fontWeight: '600' },
   classBanner: {
@@ -900,8 +902,8 @@ const styles = StyleSheet.create({
   railTitle: { ...font.overline, color: colors.faint, marginBottom: 10, paddingHorizontal: 2 },
   canvasWrap: { flex: 1, backgroundColor: colors.canvasBg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  status: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 6, backgroundColor: colors.canvasSurface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.canvasBorder },
-  statusText: { color: colors.canvasSubtext, fontSize: 12 },
+  status: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 6, backgroundColor: colors.chrome, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.chromeBorder },
+  statusText: { color: colors.chromeSubtext, fontSize: 12 },
   dot: { marginLeft: 8, width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent },
   toolbar: {
     flexDirection: 'row',
@@ -910,11 +912,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingTop: 8,
     paddingBottom: 12,
-    backgroundColor: colors.canvasSurface,
+    backgroundColor: colors.chrome,
   },
-  toolBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 8, borderRadius: radius.md, backgroundColor: colors.canvasSurface2 },
+  toolBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 8, borderRadius: radius.md, backgroundColor: colors.chromeAlt },
   toolBtnActive: { backgroundColor: colors.primary },
-  toolBtnText: { color: colors.canvasSubtext, fontSize: 11, fontWeight: '600' },
+  toolBtnText: { color: colors.chromeSubtext, fontSize: 11, fontWeight: '600' },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(2,6,23,0.55)', justifyContent: 'center', padding: 28 },
   modalCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 20, ...shadow(3) },
   modalTitle: { ...font.h3, color: colors.text, marginBottom: 14 },
@@ -933,9 +935,9 @@ const styles = StyleSheet.create({
   menuHeader: { ...font.overline, color: colors.faint, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4 },
   menuDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 4 },
   presence: { flexDirection: 'row', alignItems: 'center', marginRight: 6 },
-  avatar: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.canvasSurface },
+  avatar: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.chrome },
   avatarText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  more: { color: colors.canvasSubtext, fontSize: 12, marginLeft: 4 },
+  more: { color: colors.chromeSubtext, fontSize: 12, marginLeft: 4 },
   langRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13 },
   langLabel: { fontSize: 16, color: colors.text },
   langCheck: { color: colors.primary, fontSize: 16, fontWeight: '800' },

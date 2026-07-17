@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -20,7 +21,7 @@ import { diagramsApi, DiagramSummary } from './diagramsApi';
 
 const CLASS_TINT: Record<string, string> = {
   PUBLIC: colors.success,
-  INTERNAL: '#5B8CFF',
+  INTERNAL: '#0068C9',
   RESTRICTED: colors.danger,
 };
 
@@ -51,6 +52,7 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
+      <StatusBar style="light" />
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>{t('list.title')}</Text>
@@ -87,6 +89,7 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
         </View>
       ) : (
         <FlatList
+          style={{ backgroundColor: colors.bg }}
           contentContainerStyle={{ padding: 14, paddingBottom: 100 }}
           data={diagrams.data}
           keyExtractor={(d) => `${d.id}`}
@@ -146,29 +149,30 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+  // Black top chrome (arrow.com nav); the list body sits on the light page.
+  root: { flex: 1, backgroundColor: colors.chrome },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 18,
-    paddingTop: 8,
+    paddingTop: 10,
     paddingBottom: 14,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.chrome,
   },
-  headerTitle: { ...font.h1, color: colors.text },
-  headerSub: { ...font.caption, color: colors.subtext, marginTop: 2, textTransform: 'capitalize' },
+  headerTitle: { ...font.h1, color: colors.chromeText },
+  headerSub: { ...font.caption, color: colors.chromeSubtext, marginTop: 2, textTransform: 'capitalize' },
   avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.chromeAlt,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.primary + '33',
+    borderColor: colors.chromeBorder,
   },
-  avatarText: { color: colors.primary, fontWeight: '800', fontSize: 13 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  avatarText: { color: colors.chromeText, fontWeight: '800', fontSize: 13 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.bg },
   retry: { marginTop: 16, backgroundColor: colors.primary, paddingHorizontal: 22, paddingVertical: 11, borderRadius: radius.md },
   emptyWrap: { alignItems: 'center', marginTop: 80, gap: 12 },
   empty: { textAlign: 'center', color: colors.subtext, fontSize: 15 },

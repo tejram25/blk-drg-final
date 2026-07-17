@@ -109,5 +109,5 @@ const styles = StyleSheet.create({
     padding: 22,
   },
   link: { color: colors.subtext, textAlign: 'center', marginTop: 22, fontSize: 14 },
-  linkStrong: { color: colors.primaryLight, fontWeight: '800' },
+  linkStrong: { color: colors.primaryDark, fontWeight: '800' },
 });

@@ -425,9 +425,9 @@ const zoomStyles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.canvasSurface,
+    backgroundColor: colors.chrome,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.canvasBorder,
+    borderColor: colors.chromeBorder,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -436,7 +436,7 @@ const zoomStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  btnText: { color: colors.canvasText, fontSize: 22, fontWeight: '600', lineHeight: 26 },
+  btnText: { color: colors.chromeText, fontSize: 22, fontWeight: '600', lineHeight: 26 },
 });
 
 const NodeShape = React.memo(function NodeShape({ node, selected }: { node: DiagramNode; selected: boolean }) {
@@ -529,7 +529,7 @@ const NodeShape = React.memo(function NodeShape({ node, selected }: { node: Diag
     );
   }
 
-  const fill = node.color ?? colors.canvasSurface;
+  const fill = node.color ?? colors.surface;
   const readable = isLight(fill) ? '#111827' : '#ffffff';
   const muted = isLight(fill) ? '#475569' : 'rgba(255,255,255,0.82)';
   const subtitle = blockSubtitle(node);
@@ -656,7 +656,7 @@ function PartBadge({ node }: { node: DiagramNode }) {
   const cy = node.y;
   return (
     <>
-      <Circle cx={cx} cy={cy} r={9} fill="#f5a623" stroke={colors.canvasSurface} strokeWidth={1.5} />
+      <Circle cx={cx} cy={cy} r={9} fill="#f5a623" stroke={colors.canvasBg} strokeWidth={1.5} />
       <SvgText x={cx} y={cy + 4} fill="#1a1303" fontSize={11} fontWeight="800" textAnchor="middle">
         {`${count}`}
       </SvgText>

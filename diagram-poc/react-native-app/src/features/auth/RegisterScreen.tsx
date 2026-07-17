@@ -91,5 +91,5 @@ const styles = StyleSheet.create({
     ...shadow(2),
   },
   title: { ...font.h2, color: colors.text, textAlign: 'center' },
-  link: { color: colors.primaryLight, textAlign: 'center', marginTop: 18, fontWeight: '700' },
+  link: { color: colors.primaryDark, textAlign: 'center', marginTop: 18, fontWeight: '700' },
 });

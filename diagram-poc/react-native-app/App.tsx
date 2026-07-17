@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler';
-import { DarkTheme, NavigationContainer, Theme } from '@react-navigation/native';
+import { DefaultTheme, NavigationContainer, Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
@@ -21,11 +21,11 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
 });
 
-// Dark navigation theme so screen transitions never flash white.
+// Light navigation theme matching the arrow.com palette.
 const navTheme: Theme = {
-  ...DarkTheme,
+  ...DefaultTheme,
   colors: {
-    ...DarkTheme.colors,
+    ...DefaultTheme.colors,
     primary: colors.primary,
     background: colors.bg,
     card: colors.surface,
@@ -82,7 +82,7 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
           <I18nProvider>
             <AuthProvider>
-              <StatusBar style="light" />
+              <StatusBar style="dark" />
               <Root />
             </AuthProvider>
           </I18nProvider>

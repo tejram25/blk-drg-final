@@ -1,60 +1,68 @@
 import { Platform, ViewStyle } from 'react-native';
 
 /**
- * Design tokens — Netflix-discipline dark system.
+ * Design tokens — Arrow.com corporate system.
  *
- * The stage is pure black (#000). Chrome is NEUTRAL dark grey — never tinted —
- * so content (diagrams) owns all the colour. Text is white/grey. Exactly one
- * accent exists: an electric blue→violet ramp, and it is spent ONLY on primary
- * actions and selection. Everything else stays monochrome. That restraint is
- * what reads premium; a tint on every surface reads cheap.
+ * Mirrors arrow.com: a black navigation chrome (header/toolbars), clean white
+ * content on a light-grey page, thin neutral borders, and Arrow's signature
+ * green (Pantone 369 ≈ #64A70B) as the ONE call-to-action colour. Buttons are
+ * flat green with white text; links/info lean corporate blue; everything else
+ * stays neutral so product content leads — exactly like the site.
+ *
+ * `chrome*` tokens style the black bars; `canvas*` tokens style the editor
+ * drawing surface (light, engineering-paper look with dark symbols).
  */
 export const colors = {
-  // Brand — electric blue→violet. `primary` is the solid mid (selection,
-  // active states); gradientFrom/To drive CTA gradients. 6-digit hex only
-  // (screens derive alpha tints via `primary + '22'`).
-  primary: '#7C5CFC',
-  primaryDark: '#5A3EE8',
-  primaryLight: '#9F84FF',
-  primarySoft: '#1A1530',
-  gradientFrom: '#4E5DFB',
-  gradientTo: '#9B4DF7',
+  // Brand — Arrow green ramp. 6-digit hex only (screens derive `primary+'22'`).
+  primary: '#64A70B',
+  primaryDark: '#4F8A06',
+  primaryLight: '#7BC318',
+  primarySoft: '#EEF6E2',
+  gradientFrom: '#71B912',
+  gradientTo: '#579D07',
   accent: '#F5A623',
 
-  // Surfaces — pure black stage, neutral grey elevation steps (no tint).
-  bg: '#000000',
-  surface: '#141414',
-  surfaceAlt: '#1F1F1F',
-  card: '#141414',
-  border: '#262626',
-  borderStrong: '#3A3A3A',
-  chip: '#1F1F1F',
+  // Content surfaces — white on light grey, thin neutral borders.
+  bg: '#F5F6F7',
+  surface: '#FFFFFF',
+  surfaceAlt: '#F7F8FA',
+  card: '#FFFFFF',
+  border: '#E2E5E9',
+  borderStrong: '#C9CED4',
+  chip: '#EFF1F3',
 
-  // Text — Netflix greys.
-  text: '#FFFFFF',
-  subtext: '#B3B3B3',
-  faint: '#6E6E6E',
+  // Text
+  text: '#15191E',
+  subtext: '#58606B',
+  faint: '#8B939D',
   onPrimary: '#FFFFFF',
 
-  // Status — vivid foregrounds, neutral-dark soft containers.
-  danger: '#FF4D5E',
-  dangerSoft: '#2A1215',
-  success: '#22C48B',
-  successSoft: '#0F231C',
-  warning: '#F5A623',
-  warningSoft: '#272008',
-  info: '#38BDF8',
+  // Status
+  danger: '#D93838',
+  dangerSoft: '#FDECEC',
+  success: '#2E9E5B',
+  successSoft: '#E7F5EC',
+  warning: '#B97609',
+  warningSoft: '#FCF3E2',
+  info: '#0068C9',
 
-  // Editor canvas — same black stage; grid barely-there neutral.
-  canvasBg: '#000000',
-  canvasSurface: '#141414',
-  canvasSurface2: '#1F1F1F',
-  canvasGrid: '#101010',
-  canvasBorder: '#262626',
-  canvasText: '#EDEDED',
-  canvasSubtext: '#9A9A9A',
-  wire: '#38BDF8',
-  wireFlow: '#22D3EE',
+  // Black navigation chrome (arrow.com's top bar) — headers, toolbars, docks.
+  chrome: '#0B0D0F',
+  chromeAlt: '#1D2126',
+  chromeBorder: '#2A2F35',
+  chromeText: '#FFFFFF',
+  chromeSubtext: '#9BA3AC',
+
+  // Editor canvas — light engineering paper, dark symbols.
+  canvasBg: '#F7F8F9',
+  canvasSurface: '#FFFFFF',
+  canvasSurface2: '#EFF1F3',
+  canvasGrid: '#E9EBEE',
+  canvasBorder: '#D9DDE2',
+  canvasText: '#1A2027',
+  canvasSubtext: '#5B6470',
+  wire: '#0A85C7',
+  wireFlow: '#0AA9C2',
 };
 
 export const radius = { xs: 6, sm: 10, md: 14, lg: 18, xl: 24, pill: 999 };
@@ -62,7 +70,7 @@ export const radius = { xs: 6, sm: 10, md: 14, lg: 18, xl: 24, pill: 999 };
 export const space = (n: number) => n * 4;
 
 export const font = {
-  h1: { fontSize: 30, fontWeight: '800' as const, letterSpacing: -0.6 },
+  h1: { fontSize: 28, fontWeight: '800' as const, letterSpacing: -0.5 },
   h2: { fontSize: 22, fontWeight: '800' as const, letterSpacing: -0.3 },
   h3: { fontSize: 18, fontWeight: '700' as const },
   title: { fontSize: 16, fontWeight: '700' as const },
@@ -72,18 +80,18 @@ export const font = {
   overline: { fontSize: 11, fontWeight: '800' as const, letterSpacing: 0.6 },
 };
 
-/** Cross-platform elevation. On pure black, depth comes from deep soft shadow. */
+/** Cross-platform elevation — soft slate shadows for the light theme. */
 export function shadow(level: 1 | 2 | 3 = 1): ViewStyle {
   const cfg = {
-    1: { o: 0.4, r: 10, y: 3, e: 3 },
-    2: { o: 0.5, r: 20, y: 8, e: 6 },
-    3: { o: 0.6, r: 32, y: 14, e: 12 },
+    1: { o: 0.06, r: 8, y: 2, e: 2 },
+    2: { o: 0.1, r: 16, y: 6, e: 5 },
+    3: { o: 0.16, r: 28, y: 12, e: 10 },
   }[level];
   if (Platform.OS === 'web') {
-    return { boxShadow: `0 ${cfg.y}px ${cfg.r}px rgba(0,0,0,${cfg.o})` } as unknown as ViewStyle;
+    return { boxShadow: `0 ${cfg.y}px ${cfg.r}px rgba(15,23,42,${cfg.o})` } as unknown as ViewStyle;
   }
   return {
-    shadowColor: '#000000',
+    shadowColor: '#0f172a',
     shadowOpacity: cfg.o,
     shadowRadius: cfg.r,
     shadowOffset: { width: 0, height: cfg.y },
@@ -91,16 +99,16 @@ export function shadow(level: 1 | 2 | 3 = 1): ViewStyle {
   };
 }
 
-/** Electric halo for the few gradient CTAs — the only glow in the app. */
+/** Subtle green emphasis for the few flat-green CTAs (Arrow is flat, not glowy). */
 export function glow(color: string = colors.primary): ViewStyle {
   if (Platform.OS === 'web') {
-    return { boxShadow: `0 6px 26px ${color}52` } as unknown as ViewStyle;
+    return { boxShadow: `0 4px 14px ${color}3D` } as unknown as ViewStyle;
   }
   return {
     shadowColor: color,
-    shadowOpacity: 0.4,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 8,
+    shadowOpacity: 0.28,
+    shadowRadius: 9,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
   };
 }
