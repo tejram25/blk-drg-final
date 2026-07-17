@@ -122,6 +122,8 @@ export default function DiagramCanvas({
     grab: { x: 0, y: 0 },
     moved: false,
     dragCenter: { x: 0, y: 0 },
+    pinching: false,
+    hadPinch: false,
   });
 
   const nodesByKey = useMemo(() => {
@@ -243,8 +245,10 @@ export default function DiagramCanvas({
     const touches = e.nativeEvent.touches;
     start.current.t = t;
     start.current.moved = false;
+    start.current.pinching = false;
+    start.current.hadPinch = false;
+    start.current.dist = 0;
     if (touches.length >= 2) {
-      start.current.dist = dist(touches[0], touches[1]);
       start.current.dragKey = null;
     } else {
       const { locationX, locationY } = e.nativeEvent;
@@ -264,8 +268,21 @@ export default function DiagramCanvas({
   const move = (e: GestureResponderEvent, gesture: { dx: number; dy: number }) => {
     start.current.moved = start.current.moved || Math.hypot(gesture.dx, gesture.dy) > 4;
     const touches = e.nativeEvent.touches;
-    const s0 = start.current.t;
     if (touches.length >= 2) {
+      // Pinch-zoom. A pinch usually begins as one finger, so the second finger
+      // lands mid-gesture (no fresh grant) — capture the baseline distance and
+      // transform on the first two-finger frame. Cancel any node drag in flight.
+      if (!start.current.pinching) {
+        start.current.pinching = true;
+        start.current.hadPinch = true;
+        start.current.dist = dist(touches[0], touches[1]);
+        start.current.t = t;
+        if (start.current.dragKey) {
+          start.current.dragKey = null;
+          setDrag(null);
+        }
+      }
+      const s0 = start.current.t;
       const d = dist(touches[0], touches[1]);
       const ratio = start.current.dist ? d / start.current.dist : 1;
       const scale = Math.max(MIN_SCALE, Math.min(s0.scale * ratio, MAX_SCALE));
@@ -273,7 +290,14 @@ export default function DiagramCanvas({
       const midY = (touches[0].locationY + touches[1].locationY) / 2;
       const focal = toDiagram(midX, midY, s0);
       setT({ scale, tx: midX - focal.x * scale, ty: midY - focal.y * scale });
-    } else if (start.current.dragKey) {
+      return;
+    }
+    start.current.pinching = false;
+    // After a pinch, the leftover single finger has an unreliable gesture delta,
+    // so don't pan until the user lifts and starts a fresh gesture.
+    if (start.current.hadPinch) return;
+    const s0 = start.current.t;
+    if (start.current.dragKey) {
       const d = toDiagram(e.nativeEvent.locationX, e.nativeEvent.locationY, s0);
       const n = nodesByKey[start.current.dragKey];
       const tlx = d.x - start.current.grab.x;
@@ -299,7 +323,7 @@ export default function DiagramCanvas({
       setDrag(null);
       return;
     }
-    if (!start.current.moved) {
+    if (!start.current.moved && !start.current.hadPinch) {
       pickAt(e.nativeEvent.locationX, e.nativeEvent.locationY);
     }
   };

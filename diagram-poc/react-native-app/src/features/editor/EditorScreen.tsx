@@ -32,11 +32,13 @@ import EdgeStyleSheet from './EdgeStyleSheet';
 import {
   addLink,
   addNode,
+  attachedParts,
   attachPart,
   deleteLink,
   deleteNode,
   graphPartNumbers,
   linkComponent,
+  linkedComponents,
   primaryPartNumber,
   styleLink,
   unlinkComponent,
@@ -48,7 +50,7 @@ import BomModal from '../bom/BomModal';
 import TemplatesModal from '../templates/TemplatesModal';
 import ImageImportModal from '../imageimport/ImageImportModal';
 import { AlternativePart } from '../ai/aiApi';
-import { contentBounds, DiagramGraph, linkFromRaw, linkId, nodeFromRaw, parseModel } from './model';
+import { contentBounds, DiagramGraph, DiagramNode, linkFromRaw, linkId, nodeFromRaw, parseModel } from './model';
 import PaletteSheet, { PaletteGrid } from './PaletteSheet';
 
 const CLASSIFICATIONS = ['PUBLIC', 'INTERNAL', 'RESTRICTED'] as const;
@@ -505,6 +507,9 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             }}
           />
         )}
+        {selectedNode && nodeHasDetails(selectedNode) ? (
+          <NodeDetailsCard node={selectedNode} onClose={() => setSelected(null)} />
+        ) : null}
         </View>
       </View>
 
@@ -705,6 +710,58 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   );
 }
 
+// Whether a node has anything worth showing in the details "sticky note".
+function nodeHasDetails(node: DiagramNode): boolean {
+  return (
+    attachedParts(node.raw).length > 0 ||
+    linkedComponents(node.raw).length > 0 ||
+    !!(node.value && String(node.value).trim())
+  );
+}
+
+// Touch equivalent of the web hover tooltip: a dark card with the selected
+// node's value, attached parts and AI-linked components.
+function NodeDetailsCard({ node, onClose }: { node: DiagramNode; onClose: () => void }) {
+  const parts = Array.isArray(node.raw.attachedParts) ? (node.raw.attachedParts as any[]) : [];
+  const comps = linkedComponents(node.raw);
+  return (
+    <View style={styles.detailCard} pointerEvents="box-none">
+      <View style={styles.detailInner}>
+        <View style={styles.detailHead}>
+          <Text style={styles.detailTitle} numberOfLines={1}>
+            {node.text || node.shape || 'Component'}
+            {node.value ? <Text style={styles.detailValue}>{`  ·  ${node.value}`}</Text> : null}
+          </Text>
+          <Pressable hitSlop={8} onPress={onClose}>
+            <Text style={styles.detailClose}>✕</Text>
+          </Pressable>
+        </View>
+        {parts.length ? (
+          <>
+            <Text style={styles.detailSection}>{`Attached parts (${parts.length})`}</Text>
+            {parts.map((ap, i) => {
+              const p = ap?.part ?? ap ?? {};
+              const meta = [p.manufacturer, p.supplier].filter(Boolean).join(' · ');
+              return (
+                <Text key={i} style={styles.detailRow} numberOfLines={1}>
+                  {`• ${p.partNumber || 'Part'} (×${ap?.quantity ?? 1})`}
+                  {meta ? <Text style={styles.detailMeta}>{`  ${meta}`}</Text> : null}
+                </Text>
+              );
+            })}
+          </>
+        ) : null}
+        {comps.length ? (
+          <Text style={styles.detailRow} numberOfLines={2}>
+            <Text style={styles.detailSection}>AI components: </Text>
+            {comps.map((c: any) => c.partNumber).filter(Boolean).join(', ')}
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 function MenuHeader({ children }: { children: React.ReactNode }) {
   return <Text style={styles.menuHeader}>{children}</Text>;
 }
@@ -873,4 +930,13 @@ const styles = StyleSheet.create({
   langRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13 },
   langLabel: { fontSize: 16, color: colors.text },
   langCheck: { color: colors.primary, fontSize: 16, fontWeight: '800' },
+  detailCard: { position: 'absolute', top: 10, left: 10, right: 10, alignItems: 'flex-start' },
+  detailInner: { maxWidth: '92%', backgroundColor: '#1d1e23', borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth, borderColor: '#34353c', paddingHorizontal: 12, paddingVertical: 10, ...shadow(3) },
+  detailHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  detailTitle: { flex: 1, color: '#f4f4f5', fontSize: 13, fontWeight: '700' },
+  detailValue: { color: '#a1a1aa', fontWeight: '500' },
+  detailClose: { color: '#a1a1aa', fontSize: 14, fontWeight: '700' },
+  detailSection: { color: '#c7c7cc', fontSize: 11, fontWeight: '700', marginTop: 6 },
+  detailRow: { color: '#ececef', fontSize: 11, marginTop: 3 },
+  detailMeta: { color: '#9ca3af' },
 });

@@ -83,11 +83,25 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     $(go.Placeholder, { padding: 5 }),
   );
 
+  // Shared hover tooltip — a dark "sticky note" with the node's parts details,
+  // mirroring the Angular desktop editor. GoJS copies this template per hover.
+  const nodeTip = $(
+    'ToolTip',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { 'Border.fill': '#1d1e23', 'Border.stroke': '#34353c', 'Border.strokeWidth': 1 } as any,
+    $(
+      go.TextBlock,
+      { margin: 8, font: '11px Inter, Roboto, sans-serif', stroke: '#ececef', maxSize: new go.Size(280, NaN) },
+      new go.Binding('text', '', tooltipFor),
+    ),
+  );
+
   const nodeBase = {
     // Matches the desktop app: loc is the node centre.
     locationSpot: go.Spot.Center,
     selectionAdorned: true,
     selectionAdornmentTemplate: selAdorn,
+    toolTip: nodeTip,
     resizable: false,
     isShadowed: true,
     shadowColor: 'rgba(15, 23, 42, 0.18)',
@@ -236,6 +250,38 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
   );
 
   return dia;
+}
+
+/** Hover "sticky note" body for a node: name, value/type, attached parts, AI comps. */
+function tooltipFor(d: any): string {
+  const lines: string[] = [];
+  const shape = String(d.shape || '');
+  if (d.category === 'symbol' && shape.startsWith('elec-')) {
+    lines.push([d.text, symbolLabel(shape)].filter(Boolean).join(' — '));
+    if (d.value) lines.push(`Value: ${d.value}`);
+  } else {
+    lines.push(d.text || shape || 'Block');
+    if (d.value) lines.push(`Value: ${d.value}`);
+  }
+  const attached = Array.isArray(d.attachedParts) ? d.attachedParts : [];
+  if (attached.length) {
+    lines.push(`Attached parts (${attached.length}):`);
+    for (const ap of attached) {
+      const p = ap?.part ?? ap ?? {};
+      const pn = p.partNumber || p.arwPartNum?.name || 'Part';
+      const meta = [p.manufacturer, p.supplier].filter(Boolean).join(' · ');
+      lines.push(`• ${pn} (×${ap?.quantity ?? 1})${meta ? ` — ${meta}` : ''}`);
+    }
+  }
+  const comps = Array.isArray(d.components) ? d.components : [];
+  if (comps.length) lines.push(`AI components: ${comps.map((c: any) => c.partNumber).filter(Boolean).join(', ')}`);
+  return lines.filter(Boolean).join('\n');
+}
+
+/** Human label for an elec-* symbol id (e.g. "elec-resistor" → "Resistor"). */
+function symbolLabel(shape: string): string {
+  const base = shape.replace(/^elec-/, '').replace(/[-_]/g, ' ');
+  return base ? base.charAt(0).toUpperCase() + base.slice(1) : '';
 }
 
 /** Which side a fractional spot ("fx fy") is nearest to, so wires leave the port outward. */
