@@ -102,6 +102,6 @@ const styles = StyleSheet.create({
   chip: { paddingHorizontal: 14, height: 38, borderRadius: radius.pill, backgroundColor: colors.chip, alignItems: 'center', justifyContent: 'center' },
   chipOn: { backgroundColor: colors.primary },
   chipText: { color: colors.text, fontWeight: '600', textTransform: 'capitalize' },
-  delete: { marginTop: 22, height: 46, borderRadius: radius.sm, backgroundColor: '#fee2e2', alignItems: 'center', justifyContent: 'center' },
-  deleteText: { color: '#b91c1c', fontWeight: '700' },
+  delete: { marginTop: 22, height: 46, borderRadius: radius.sm, backgroundColor: colors.dangerSoft, alignItems: 'center', justifyContent: 'center' },
+  deleteText: { color: colors.danger, fontWeight: '700' },
 });

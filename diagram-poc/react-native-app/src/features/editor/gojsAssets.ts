@@ -8,7 +8,8 @@ import { ELECTRICAL_SYMBOLS, SymbolDef } from './symbols';
  * ones where they exist, otherwise custom figure generators registered here.
  */
 
-const STROKE = '#334155';
+// Light stroke — symbols render on the dark canvas.
+const STROKE = '#DEE6F2';
 
 function symbolInnerSvg(def: SymbolDef): string {
   const paths = def.paths

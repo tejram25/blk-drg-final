@@ -79,7 +79,17 @@ export default function RegisterScreen({ navigation }: ScreenProps<'Register'>) 
 
 const styles = StyleSheet.create({
   root: { flexGrow: 1, backgroundColor: colors.bg, justifyContent: 'center', padding: 22 },
-  card: { maxWidth: 420, width: '100%', alignSelf: 'center', backgroundColor: colors.surface, borderRadius: radius.xl, padding: 26, ...shadow(2) },
+  card: {
+    maxWidth: 420,
+    width: '100%',
+    alignSelf: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.xl,
+    padding: 24,
+    ...shadow(2),
+  },
   title: { ...font.h2, color: colors.text, textAlign: 'center' },
-  link: { color: colors.primary, textAlign: 'center', marginTop: 18, fontWeight: '700' },
+  link: { color: colors.primaryLight, textAlign: 'center', marginTop: 18, fontWeight: '700' },
 });

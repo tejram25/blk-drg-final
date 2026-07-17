@@ -1,11 +1,27 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { ApiError } from '../../api/client';
-import { colors, font, radius, shadow } from '../../theme';
+import { colors, font, glow, radius, shadow } from '../../theme';
 import { ErrorText, Field, PrimaryButton } from '../../ui/components';
-import { Icon } from '../../ui/kit';
+import { GradientFill, Icon } from '../../ui/kit';
 import { ScreenProps } from '../../navigation';
 import { useAuth } from './AuthContext';
+
+/** Soft blue halo behind the hero — gives the black screen depth. */
+function Glow() {
+  return (
+    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Defs>
+        <RadialGradient id="halo" cx="50%" cy="22%" r="60%">
+          <Stop offset="0" stopColor={colors.primary} stopOpacity="0.22" />
+          <Stop offset="1" stopColor={colors.primary} stopOpacity="0" />
+        </RadialGradient>
+      </Defs>
+      <Rect x="0" y="0" width="100%" height="100%" fill="url(#halo)" />
+    </Svg>
+  );
+}
 
 export default function LoginScreen({ navigation }: ScreenProps<'Login'>) {
   const { login } = useAuth();
@@ -33,13 +49,16 @@ export default function LoginScreen({ navigation }: ScreenProps<'Login'>) {
 
   return (
     <View style={styles.root}>
-      <View style={styles.card}>
-        <View style={styles.logo}>
+      <Glow />
+      <View style={styles.hero}>
+        <View style={[styles.logo, glow()]}>
+          <GradientFill />
           <Icon name="git-network" size={30} color="#fff" />
         </View>
         <Text style={styles.title}>Block Diagram Builder</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
-        <View style={{ height: 22 }} />
+        <Text style={styles.subtitle}>Design, source and collaborate</Text>
+      </View>
+      <View style={[styles.card, shadow(2)]}>
         <Field
           label="Email"
           value={email}
@@ -57,29 +76,38 @@ export default function LoginScreen({ navigation }: ScreenProps<'Login'>) {
         />
         <ErrorText>{error}</ErrorText>
         <PrimaryButton title="Sign in" onPress={submit} loading={busy} />
-        <Text style={styles.link} onPress={() => navigation.navigate('Register')}>
-          Don&apos;t have an account? Create one
-        </Text>
       </View>
+      <Text style={styles.link} onPress={() => navigation.navigate('Register')}>
+        Don&apos;t have an account? <Text style={styles.linkStrong}>Create one</Text>
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg, justifyContent: 'center', padding: 22 },
-  card: { maxWidth: 420, width: '100%', alignSelf: 'center', backgroundColor: colors.surface, borderRadius: radius.xl, padding: 26, ...shadow(2) },
+  hero: { alignItems: 'center', marginBottom: 26 },
   logo: {
-    width: 64,
-    height: 64,
+    width: 68,
+    height: 68,
     borderRadius: radius.lg,
-    backgroundColor: colors.primary,
-    alignSelf: 'center',
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 18,
-    ...shadow(2),
   },
   title: { ...font.h2, color: colors.text, textAlign: 'center' },
   subtitle: { color: colors.subtext, textAlign: 'center', marginTop: 6, fontSize: 15 },
-  link: { color: colors.primary, textAlign: 'center', marginTop: 18, fontWeight: '700' },
+  card: {
+    maxWidth: 420,
+    width: '100%',
+    alignSelf: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.xl,
+    padding: 22,
+  },
+  link: { color: colors.subtext, textAlign: 'center', marginTop: 22, fontSize: 14 },
+  linkStrong: { color: colors.primaryLight, fontWeight: '800' },
 });

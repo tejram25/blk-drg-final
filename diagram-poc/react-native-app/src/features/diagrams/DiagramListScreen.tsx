@@ -10,12 +10,12 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, font, radius, shadow } from '../../theme';
+import { colors, font, glow, radius, shadow } from '../../theme';
 import { ScreenProps } from '../../navigation';
 import { useAuth } from '../auth/AuthContext';
 import { initials } from '../auth/authApi';
 import { useI18n } from '../../i18n/I18nContext';
-import { Icon } from '../../ui/kit';
+import { GradientFill, Icon } from '../../ui/kit';
 import { diagramsApi, DiagramSummary } from './diagramsApi';
 
 const CLASS_TINT: Record<string, string> = {
@@ -127,7 +127,11 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
         />
       )}
 
-      <Pressable style={({ pressed }) => [styles.fab, shadow(2), pressed && { opacity: 0.9 }]} onPress={() => create.mutate()}>
+      <Pressable
+        style={({ pressed }) => [styles.fab, glow(), { transform: [{ scale: pressed ? 0.97 : 1 }] }]}
+        onPress={() => create.mutate()}
+      >
+        <GradientFill />
         {create.isPending ? (
           <ActivityIndicator color="#fff" />
         ) : (
@@ -197,6 +201,7 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: radius.pill,
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   fabText: { color: '#fff', fontWeight: '800', fontSize: 16 },
 });

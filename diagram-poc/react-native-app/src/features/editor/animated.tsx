@@ -35,7 +35,7 @@ export function AnimatedNode({
   const cx = node.x + w / 2;
   const cy = node.y + h / 2;
   const R = Math.min(w, h) / 2 - 3;
-  const stroke = selected ? '#4f46e5' : '#334155';
+  const stroke = selected ? '#3D7BFF' : '#94A3B8';
 
   const body = (() => {
     switch (node.shape) {
@@ -134,7 +134,7 @@ export function AnimatedNode({
     <>
       {body}
       {selected ? (
-        <Rect x={node.x - 4} y={node.y - 4} width={w + 8} height={h + 8} fill="none" stroke="#4f46e5" strokeWidth={1.6} rx={6} />
+        <Rect x={node.x - 4} y={node.y - 4} width={w + 8} height={h + 8} fill="none" stroke="#3D7BFF" strokeWidth={1.6} rx={6} />
       ) : null}
     </>
   );

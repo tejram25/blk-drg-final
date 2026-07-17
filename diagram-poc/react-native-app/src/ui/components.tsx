@@ -8,7 +8,8 @@ import {
   TextInputProps,
   View,
 } from 'react-native';
-import { colors, font, radius } from '../theme';
+import { colors, font, glow, radius } from '../theme';
+import { GradientFill } from './kit';
 
 export function PrimaryButton({
   title,
@@ -27,9 +28,11 @@ export function PrimaryButton({
       onPress={off ? undefined : onPress}
       style={({ pressed }) => [
         styles.btn,
-        { opacity: off ? 0.5 : pressed ? 0.85 : 1 },
+        !off ? glow() : null,
+        { opacity: off ? 0.45 : 1, transform: [{ scale: pressed && !off ? 0.98 : 1 }] },
       ]}
     >
+      <GradientFill />
       {loading ? (
         <ActivityIndicator color="#fff" />
       ) : (
@@ -66,14 +69,14 @@ export function ErrorText({ children }: { children?: React.ReactNode }) {
 
 const styles = StyleSheet.create({
   btn: {
-    backgroundColor: colors.primary,
     borderRadius: radius.md,
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  btnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
-  label: { ...font.label, color: colors.subtext, marginBottom: 6 },
+  btnText: { color: '#fff', fontWeight: '800', fontSize: 16, letterSpacing: 0.2 },
+  label: { ...font.label, color: colors.subtext, marginBottom: 7 },
   input: {
     borderWidth: 1.5,
     borderColor: colors.border,
