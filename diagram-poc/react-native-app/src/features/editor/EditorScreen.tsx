@@ -245,13 +245,22 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     setFuture([]);
   };
 
-  const moveNode = (key: string, x: number, y: number) => {
+  // cx,cy are the node CENTRE (both canvases report centre-based positions).
+  const moveNode = (key: string, cx: number, cy: number) => {
+    const loc = `${Math.round(cx)} ${Math.round(cy)}`;
     setGraph((g) =>
-      !g ? g : { ...g, nodes: g.nodes.map((n) => (n.key === key ? { ...n, x, y, raw: { ...n.raw, loc: `${x} ${y}` } } : n)) },
+      !g
+        ? g
+        : {
+            ...g,
+            nodes: g.nodes.map((n) =>
+              n.key === key ? { ...n, x: cx - n.w / 2, y: cy - n.h / 2, raw: { ...n.raw, loc } } : n,
+            ),
+          },
     );
     setDirty(true);
     const node = graphRef.current?.nodes.find((n) => n.key === key);
-    if (node) sessionRef.current?.setNode(key, { ...node.raw, loc: `${x} ${y}` });
+    if (node) sessionRef.current?.setNode(key, { ...node.raw, loc });
   };
 
   const styleSelectedEdge = (patch: WireStyle) => {
@@ -335,6 +344,31 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     commit(ng);
     const node = ng.nodes.find((n) => n.key === selected);
     if (node) sessionRef.current?.setNode(selected, node.raw);
+  };
+
+  // Part search picks: attach to the selected node, else drop a part card on the
+  // canvas (like the desktop app), so search works without a prior selection.
+  const onPickPart = (part: Part, quantity = 1) => {
+    if (selected) {
+      onAttach(part, quantity);
+      return;
+    }
+    const g = graphRef.current;
+    if (!g) return;
+    const b = contentBounds(g);
+    const block: BlockType = {
+      key: `part-${part.partNumber}`,
+      label: part.partNumber,
+      category: part.manufacturer || 'Part',
+      color: '#f59e0b',
+      icon: 'memory',
+    };
+    const { graph: ng, key } = addNode(g, block, b.x + b.w / 2, b.y + b.h / 2);
+    const ng2 = attachPart(ng, key, part, quantity);
+    commit(ng2);
+    setSelected(key);
+    const node = ng2.nodes.find((n) => n.key === key);
+    if (node) sessionRef.current?.setNode(key, node.raw);
   };
 
   const save = useMutation({
@@ -497,7 +531,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             setConnectFrom(null);
           }}
         />
-        <ToolBtn icon="hardware-chip" label={t('tool.part')} disabled={!selected} onPress={() => setPartOpen(true)} />
+        <ToolBtn icon="hardware-chip" label={t('tool.part')} onPress={() => setPartOpen(true)} />
         <ToolBtn icon="pricetag" label={t('tool.dw')} disabled={!selected} onPress={() => setDwOpen(true)} />
         {selectedEdge ? <ToolBtn icon="color-wand" label={t('tool.wire')} onPress={() => setEdgeSheet(true)} /> : null}
       </View>
@@ -518,7 +552,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
           setPartOpen(false);
           setPartSeed('');
         }}
-        onPick={(p) => onAttach(p)}
+        onPick={(p) => onPickPart(p)}
       />
       <DesignWinModal visible={dwOpen} onClose={() => setDwOpen(false)} onPick={(p, qty) => onAttach(p, qty)} />
 

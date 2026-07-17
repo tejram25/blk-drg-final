@@ -242,7 +242,11 @@ export default function DiagramCanvas({
       setT({ scale, tx: midX - focal.x * scale, ty: midY - focal.y * scale });
     } else if (start.current.dragKey) {
       const d = toDiagram(e.nativeEvent.locationX, e.nativeEvent.locationY, s0);
-      onNodeMove(start.current.dragKey, d.x - start.current.grab.x, d.y - start.current.grab.y);
+      const n = nodesByKey[start.current.dragKey];
+      const tlx = d.x - start.current.grab.x;
+      const tly = d.y - start.current.grab.y;
+      // Report the node CENTRE (loc convention), so it round-trips with the data.
+      onNodeMove(start.current.dragKey, tlx + (n?.w ?? 0) / 2, tly + (n?.h ?? 0) / 2);
     } else {
       setT({ scale: s0.scale, tx: s0.tx + gesture.dx, ty: s0.ty + gesture.dy });
     }
@@ -394,8 +398,13 @@ function NodeShape({ node, selected }: { node: DiagramNode; selected: boolean })
           />
         ) : null}
         {node.text ? (
-          <SvgText x={node.x} y={node.y + node.h + 12} fill={colors.canvasSubtext} fontSize={11}>
+          <SvgText x={node.x + node.w / 2} y={node.y + node.h + 12} fill={colors.canvasText} fontSize={11} fontWeight="600" textAnchor="middle">
             {node.text}
+          </SvgText>
+        ) : null}
+        {node.value ? (
+          <SvgText x={node.x + node.w / 2} y={node.y + node.h + (node.text ? 24 : 12)} fill={colors.canvasSubtext} fontSize={10} textAnchor="middle">
+            {node.value}
           </SvgText>
         ) : null}
         <PartBadge node={node} />

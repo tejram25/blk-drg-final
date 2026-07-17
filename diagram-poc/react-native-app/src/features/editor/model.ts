@@ -5,11 +5,18 @@ export interface NodePort {
   fy: number;
 }
 
-/** A node parsed from a GoJS node-data entry (`loc: "x y"`, `size: "w h"`). */
+import { ELECTRICAL_SYMBOLS } from './symbols';
+
+/**
+ * A node. NOTE: `loc` in the data is the node's CENTRE (GoJS locationSpot
+ * Center, as the desktop app saves), while x/y here are the derived TOP-LEFT
+ * corner used by the renderers.
+ */
 export interface DiagramNode {
   key: string;
   category: string;
   text: string;
+  value?: string;
   x: number;
   y: number;
   w: number;
@@ -66,12 +73,14 @@ function parseNode(raw: Record<string, unknown>): DiagramNode {
   const loc = parsePair(raw.loc) ?? [0, 0];
   const size = parsePair(raw.size) ?? [120, 60];
   const color = (raw.color ?? raw.fill) as string | undefined;
+  // loc is the node centre → derive the top-left corner the renderers use.
   return {
     key: `${raw.key}`,
     category: (raw.category as string) ?? '',
     text: (raw.text as string) ?? '',
-    x: loc[0],
-    y: loc[1],
+    value: typeof raw.value === 'string' ? (raw.value as string) : undefined,
+    x: loc[0] - size[0] / 2,
+    y: loc[1] - size[1] / 2,
     w: size[0],
     h: size[1],
     color: typeof color === 'string' && color.startsWith('#') ? color : undefined,
@@ -80,6 +89,10 @@ function parseNode(raw: Record<string, unknown>): DiagramNode {
     raw,
   };
 }
+
+/** `loc` string (centre) for a node whose top-left is at (x,y) with size w×h. */
+export const centerLoc = (x: number, y: number, w: number, h: number) =>
+  `${Math.round(x + w / 2)} ${Math.round(y + h / 2)}`;
 
 function parseLink(raw: Record<string, unknown>): DiagramLink {
   const pts: { x: number; y: number }[] = [];
@@ -108,13 +121,90 @@ function parseLink(raw: Record<string, unknown>): DiagramLink {
 export const nodeFromRaw = (raw: Record<string, unknown>) => parseNode(raw);
 export const linkFromRaw = (raw: Record<string, unknown>) => parseLink(raw);
 
-/** Parse a GoJS GraphLinksModel JSON string; returns an empty graph on error. */
+/**
+ * Convert a legacy AntV X6 graph (`{cells:[...]}`) into GoJS-shaped node/link
+ * data (centre-based loc), mirroring the desktop app's convertX6 so the older
+ * sample diagrams (Smart Microgrid, AMR Robot) load instead of coming up blank.
+ */
+function convertLegacy(cells: any[]): { nodeDataArray: any[]; linkDataArray: any[] } {
+  const nodeDataArray: any[] = [];
+  const linkDataArray: any[] = [];
+  const elecKeys = new Set<string>();
+  const edges: any[] = [];
+
+  for (const c of cells || []) {
+    if (c?.shape === 'edge' || c?.source || c?.target) {
+      edges.push(c);
+      continue;
+    }
+    const pos = c.position ?? { x: c.x ?? 0, y: c.y ?? 0 };
+    const size = c.size ?? { width: c.width ?? 140, height: c.height ?? 60 };
+    const loc = `${pos.x + size.width / 2} ${pos.y + size.height / 2}`;
+    const a = c.attrs ?? {};
+    const key = c.id;
+    const shape: string = c.shape ?? '';
+    const label = a.label?.text ?? a.title?.text ?? '';
+    const sizeStr = `${size.width} ${size.height}`;
+
+    if (shape === 'block-card') {
+      nodeDataArray.push({ key, category: 'block', loc, size: sizeStr, text: a.title?.text ?? label,
+        color: a.badge?.fill ?? '#1d4ed8', subtitle: a.subtitle?.text ?? 'Module' });
+    } else if (shape === 'part-card') {
+      nodeDataArray.push({ key, category: 'block', loc, size: sizeStr, text: a.title?.text ?? 'Part',
+        color: '#f59e0b', subtitle: 'Part' });
+    } else if (ELECTRICAL_SYMBOLS[shape]) {
+      const def = ELECTRICAL_SYMBOLS[shape];
+      elecKeys.add(key);
+      nodeDataArray.push({ key, category: 'symbol', shape, loc, size: `${def.width} ${def.height}`, text: label,
+        ports: def.pins.map((p, i) => ({ portId: `p${i}`, spot: `${p.x / def.width} ${p.y / def.height}` })) });
+    } else if (shape.startsWith('basic-')) {
+      const fill = a.body?.fill ?? a.rect?.fill;
+      nodeDataArray.push({ key, category: 'shape', shape, loc, size: sizeStr, text: label,
+        color: fill && fill !== 'none' ? fill : '#e2e8f0' });
+    } else {
+      // rect / unknown / animated-not-ported → a coloured box or a labelled block.
+      const body = a.body ?? a.rect ?? {};
+      const fill = body.fill && body.fill !== 'none' ? body.fill : null;
+      if (fill) {
+        nodeDataArray.push({ key, category: 'shape', shape: (body.rx ?? 0) > 0 ? 'basic-rounded' : 'basic-rectangle',
+          loc, size: sizeStr, text: label, color: fill });
+      } else {
+        nodeDataArray.push({ key, category: 'block', loc, size: sizeStr,
+          text: label || shape || 'Node', color: '#64748b', subtitle: 'Imported' });
+      }
+    }
+  }
+
+  for (const c of edges) {
+    const from = c.source?.cell ?? (typeof c.source === 'string' ? c.source : null);
+    const to = c.target?.cell ?? (typeof c.target === 'string' ? c.target : null);
+    if (!from || !to) continue;
+    const port = (end: any) => {
+      const p = end?.port;
+      return typeof p === 'string' ? p.replace(/^pin(\d+)$/, 'p$1') : '';
+    };
+    const line = c.attrs?.line ?? {};
+    const link: any = { category: 'link', from, to, fromPort: port(c.source), toPort: port(c.target),
+      wire: elecKeys.has(from) && elecKeys.has(to) };
+    if (line.stroke) link.color = line.stroke;
+    if (line.strokeWidth) link.width = line.strokeWidth;
+    if (line.strokeDasharray) {
+      link.dash = [6, 3];
+      link.flow = true;
+    }
+    linkDataArray.push(link);
+  }
+  return { nodeDataArray, linkDataArray };
+}
+
+/** Parse a diagram's contentJson (GoJS GraphLinksModel or legacy X6 cells). */
 export function parseModel(contentJson: string): DiagramGraph {
   if (!contentJson || !contentJson.trim()) return { nodes: [], links: [] };
   try {
     const d = JSON.parse(contentJson);
-    const nodes = Array.isArray(d.nodeDataArray) ? d.nodeDataArray.map(parseNode) : [];
-    const links = Array.isArray(d.linkDataArray) ? d.linkDataArray.map(parseLink) : [];
+    const src = Array.isArray(d.cells) ? convertLegacy(d.cells) : d;
+    const nodes = Array.isArray(src.nodeDataArray) ? src.nodeDataArray.map(parseNode) : [];
+    const links = Array.isArray(src.linkDataArray) ? src.linkDataArray.map(parseLink) : [];
     return { nodes, links };
   } catch {
     return { nodes: [], links: [] };

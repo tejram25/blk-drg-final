@@ -84,7 +84,8 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
   );
 
   const nodeBase = {
-    locationSpot: go.Spot.TopLeft,
+    // Matches the desktop app: loc is the node centre.
+    locationSpot: go.Spot.Center,
     selectionAdorned: true,
     selectionAdornmentTemplate: selAdorn,
     resizable: false,
@@ -94,6 +95,8 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     shadowOffset: new go.Point(0, 3),
   };
   const loc = new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify);
+  // Refdes + value on two lines (e.g. "R1" / "10 kΩ"), like the desktop editor.
+  const labelText = (d: any) => [d.text, d.value].filter(Boolean).join('\n');
 
   // Electrical symbol → bare go.Picture (inline-SVG data URI), no box. A boxed
   // shadow would look wrong on a schematic, so symbols aren't shadowed. The
@@ -118,7 +121,11 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
           new go.Binding('desiredSize', 'size', go.Size.parse),
         ),
       ),
-      $(go.TextBlock, { font: '600 11px Inter, sans-serif', stroke: '#475569', margin: new go.Margin(3, 0, 0, 0) }, new go.Binding('text')),
+      $(
+        go.TextBlock,
+        { font: '600 11px Inter, sans-serif', stroke: '#475569', textAlign: 'center', margin: new go.Margin(3, 0, 0, 0) },
+        new go.Binding('text', '', labelText),
+      ),
     ),
   );
 
@@ -139,7 +146,7 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
         new go.Binding('fill', 'color', (c: string) => c || '#e2e8f0'),
         new go.Binding('desiredSize', 'size', go.Size.parse),
       ),
-      $(go.TextBlock, { font: '600 13px Inter, sans-serif', stroke: '#0f172a' }, new go.Binding('text')),
+      $(go.TextBlock, { font: '600 13px Inter, sans-serif', stroke: '#0f172a', textAlign: 'center' }, new go.Binding('text', '', labelText)),
     ),
   );
 
@@ -185,7 +192,11 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
           new go.Binding('stroke', 'shape', (s: string) => ANIM_GLYPH[s]?.color ?? '#f59e0b'),
         ),
       ),
-      $(go.TextBlock, { font: '600 11px Inter, sans-serif', stroke: '#475569', margin: new go.Margin(3, 0, 0, 0) }, new go.Binding('text')),
+      $(
+        go.TextBlock,
+        { font: '600 11px Inter, sans-serif', stroke: '#475569', textAlign: 'center', margin: new go.Margin(3, 0, 0, 0) },
+        new go.Binding('text', '', labelText),
+      ),
     ),
   );
 
@@ -201,11 +212,11 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     $(go.TextBlock, { margin: 10, font: '600 13px Inter, sans-serif' }, new go.Binding('text')),
   );
 
-  // Node-avoiding orthogonal routing so wires never cut through components.
+  // Orthogonal routing with jump-overs — matches the desktop editor's clean wires.
   dia.linkTemplate = $(
     go.Link,
     {
-      routing: go.Link.AvoidsNodes,
+      routing: go.Link.Orthogonal,
       corner: 8,
       curve: go.Link.JumpOver,
       relinkableFrom: true,
@@ -213,13 +224,13 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       reshapable: true,
       selectable: true,
     },
-    new go.Binding('routing', 'routing', (r: string) => (r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.AvoidsNodes)),
+    new go.Binding('routing', 'routing', (r: string) => (r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.Orthogonal)),
     new go.Binding('curve', 'routing', (r: string) => (r === 'smooth' ? go.Link.Bezier : go.Link.JumpOver)),
     $(
       go.Shape,
-      { strokeWidth: 2.4, stroke: '#0ea5e9', strokeCap: 'round', shadowVisible: false },
-      new go.Binding('stroke', 'color', (c: string) => c || '#0ea5e9'),
-      new go.Binding('strokeWidth', 'width', (w: number) => (w || 2) + 0.4),
+      { strokeWidth: 2, stroke: '#64748b', strokeCap: 'round', shadowVisible: false },
+      new go.Binding('stroke', 'color', (c: string) => c || '#64748b'),
+      new go.Binding('strokeWidth', 'width', (w: number) => w || 2),
       new go.Binding('strokeDashArray', 'dash'),
     ),
   );
@@ -337,7 +348,7 @@ export default function DiagramCanvasWeb(props: Props) {
       ...n.raw,
       key: n.key,
       category: n.category || 'block',
-      loc: `${n.x} ${n.y}`,
+      loc: `${n.x + n.w / 2} ${n.y + n.h / 2}`,
       size: `${n.w} ${n.h}`,
     }));
     const linkData = props.graph.links.map((l) => ({
