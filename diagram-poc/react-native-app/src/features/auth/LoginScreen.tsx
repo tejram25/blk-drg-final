@@ -13,8 +13,8 @@ function Glow() {
   return (
     <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
-        <RadialGradient id="halo" cx="50%" cy="22%" r="60%">
-          <Stop offset="0" stopColor={colors.primary} stopOpacity="0.22" />
+        <RadialGradient id="halo" cx="50%" cy="20%" r="55%">
+          <Stop offset="0" stopColor={colors.primary} stopOpacity="0.16" />
           <Stop offset="1" stopColor={colors.primary} stopOpacity="0" />
         </RadialGradient>
       </Defs>

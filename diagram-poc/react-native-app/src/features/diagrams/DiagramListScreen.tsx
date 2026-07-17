@@ -20,7 +20,7 @@ import { diagramsApi, DiagramSummary } from './diagramsApi';
 
 const CLASS_TINT: Record<string, string> = {
   PUBLIC: colors.success,
-  INTERNAL: colors.primary,
+  INTERNAL: '#5B8CFF',
   RESTRICTED: colors.danger,
 };
 
@@ -105,8 +105,8 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
                 style={({ pressed }) => [styles.cardRow, shadow(1), pressed && { opacity: 0.96 }]}
                 onPress={() => navigation.navigate('Editor', { id: item.id, name: item.name })}
               >
-                <View style={[styles.cardIcon, { backgroundColor: tint + '18' }]}>
-                  <Icon name="git-network" size={20} color={tint} />
+                <View style={styles.cardIcon}>
+                  <Icon name="git-network" size={20} color={colors.subtext} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
   },
-  cardIcon: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  cardIcon: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.chip },
   cardTitle: { ...font.title, color: colors.text },
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   classDot: { width: 7, height: 7, borderRadius: 4 },

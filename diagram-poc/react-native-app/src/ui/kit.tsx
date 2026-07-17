@@ -12,12 +12,13 @@ export function Icon({ name, size = 20, color = colors.text }: { name: IconName;
 }
 
 /**
- * Absolute-fill vertical gradient (react-native-svg — no extra native deps).
- * Parent needs `overflow: 'hidden'` + a borderRadius for rounded corners.
+ * Absolute-fill diagonal electric gradient — blue → violet — drawn with
+ * react-native-svg (no extra native deps). This is the app's ONLY accent;
+ * parent needs `overflow: 'hidden'` + a borderRadius for rounded corners.
  */
 export function GradientFill({
-  from = colors.primaryLight,
-  to = colors.primaryDark,
+  from = colors.gradientFrom,
+  to = colors.gradientTo,
 }: {
   from?: string;
   to?: string;
@@ -25,7 +26,7 @@ export function GradientFill({
   return (
     <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
-        <LinearGradient id="gf" x1="0" y1="0" x2="0" y2="1">
+        <LinearGradient id="gf" x1="0" y1="0" x2="1" y2="1">
           <Stop offset="0" stopColor={from} />
           <Stop offset="1" stopColor={to} />
         </LinearGradient>

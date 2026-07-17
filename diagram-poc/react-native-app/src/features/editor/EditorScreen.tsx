@@ -54,7 +54,7 @@ import { contentBounds, DiagramGraph, DiagramNode, linkFromRaw, linkId, nodeFrom
 import PaletteSheet, { PaletteGrid } from './PaletteSheet';
 
 const CLASSIFICATIONS = ['PUBLIC', 'INTERNAL', 'RESTRICTED'] as const;
-const CLASS_COLORS: Record<string, string> = { PUBLIC: '#15803d', INTERNAL: '#1d4ed8', RESTRICTED: '#b91c1c' };
+const CLASS_COLORS: Record<string, string> = { PUBLIC: '#22C48B', INTERNAL: '#5B8CFF', RESTRICTED: '#FF4D5E' };
 
 const linkKey = linkId;
 
@@ -448,12 +448,11 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         <IconButton name="ellipsis-horizontal" color={colors.canvasText} onPress={() => setMenuOpen(true)} />
       </View>
 
-      <Pressable
-        style={[styles.classBanner, { backgroundColor: CLASS_COLORS[classification] ?? colors.primary }]}
-        onPress={cycleClassification}
-      >
-        <Icon name="lock-closed" size={11} color="#fff" />
-        <Text style={styles.classText}>{classification}</Text>
+      <Pressable style={styles.classBanner} onPress={cycleClassification}>
+        <View style={[styles.classDot, { backgroundColor: CLASS_COLORS[classification] ?? colors.primary }]} />
+        <Text style={[styles.classText, { color: CLASS_COLORS[classification] ?? colors.primary }]}>
+          {classification}
+        </Text>
         <Text style={styles.classHint}>· {t('class.tap')}</Text>
       </Pressable>
 
@@ -883,9 +882,19 @@ const styles = StyleSheet.create({
   headerTitle: { color: colors.canvasText, fontSize: 16, fontWeight: '700', maxWidth: '80%' },
   hint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, paddingVertical: 9, paddingHorizontal: 16 },
   hintText: { color: '#fff', textAlign: 'center', fontWeight: '600' },
-  classBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 4 },
-  classText: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.6 },
-  classHint: { color: 'rgba(255,255,255,0.72)', fontSize: 10 },
+  classBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 5,
+    backgroundColor: colors.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  classDot: { width: 7, height: 7, borderRadius: 4 },
+  classText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.6 },
+  classHint: { color: colors.faint, fontSize: 10 },
   bodyRow: { flex: 1, flexDirection: 'row' },
   rail: { width: 268, backgroundColor: colors.surface, borderRightWidth: 1, borderRightColor: colors.border, paddingHorizontal: 12, paddingTop: 12 },
   railTitle: { ...font.overline, color: colors.faint, marginBottom: 10, paddingHorizontal: 2 },
