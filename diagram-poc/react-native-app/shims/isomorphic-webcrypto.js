@@ -18,9 +18,15 @@ function getRandomValues(typedArray) {
   return typedArray;
 }
 
-const webcrypto = { getRandomValues, subtle: native ? native.subtle : undefined };
+// `ensureSecure` is called by lib0's react-native webcrypto wrapper; the real
+// isomorphic-webcrypto uses it to await native RNG init. Our RNG is sync, so
+// it's a no-op (returns a resolved promise for API compatibility).
+const ensureSecure = () => Promise.resolve();
+
+const webcrypto = { getRandomValues, subtle: native ? native.subtle : undefined, ensureSecure };
 
 module.exports = webcrypto;
 module.exports.default = webcrypto;
 module.exports.getRandomValues = getRandomValues;
 module.exports.subtle = webcrypto.subtle;
+module.exports.ensureSecure = ensureSecure;
