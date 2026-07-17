@@ -17,7 +17,7 @@ interface Props {
   onSelectEdge?: (id: string | null) => void;
   onNodeGrab?: (key: string) => void;
   onNodeMove: (key: string, x: number, y: number) => void;
-  onLinkCreate?: (fromKey: string, toKey: string) => void;
+  onLinkCreate?: (fromKey: string, toKey: string, fromPort?: string, toPort?: string) => void;
 }
 
 const $ = go.GraphObject.make;
@@ -259,6 +259,18 @@ function gradient(base: string): go.Brush {
   return b;
 }
 
+/** Push the app's selection into the diagram (used after reload and on change). */
+function applySelection(dia: go.Diagram, p: Props) {
+  dia.clearSelection();
+  if (p.selectedKey) {
+    const n = dia.findNodeForKey(p.selectedKey);
+    if (n) n.isSelected = true;
+  } else if (p.selectedEdge) {
+    const l = dia.findLinkForKey(p.selectedEdge);
+    if (l) l.isSelected = true;
+  }
+}
+
 export default function DiagramCanvasWeb(props: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const diaRef = useRef<go.Diagram | null>(null);
@@ -302,9 +314,13 @@ export default function DiagramCanvasWeb(props: Props) {
       const link = e.subject as go.Link;
       const from = link.fromNode?.data?.key;
       const to = link.toNode?.data?.key;
+      const fromPort = link.data?.fromPort;
+      const toPort = link.data?.toPort;
       // Remove GoJS's provisional link; the app model re-adds the canonical one.
       (dia.model as go.GraphLinksModel).removeLinkData(link.data);
-      if (from != null && to != null && from !== to) propsRef.current.onLinkCreate?.(String(from), String(to));
+      if (from != null && to != null && from !== to) {
+        propsRef.current.onLinkCreate?.(String(from), String(to), fromPort != null ? String(fromPort) : '', toPort != null ? String(toPort) : '');
+      }
     });
 
     return () => {
@@ -334,28 +350,28 @@ export default function DiagramCanvasWeb(props: Props) {
     const vpPos = dia.position.copy();
     const vpScale = dia.scale;
     const hadContent = dia.model.nodeDataArray.length > 0;
-    dia.model = new go.GraphLinksModel({ linkKeyProperty: 'key', nodeDataArray: nodeData, linkDataArray: linkData });
+    dia.model = new go.GraphLinksModel({
+      linkKeyProperty: 'key',
+      linkFromPortIdProperty: 'fromPort',
+      linkToPortIdProperty: 'toPort',
+      nodeDataArray: nodeData,
+      linkDataArray: linkData,
+    });
     if (hadContent) {
       dia.position = vpPos;
       dia.scale = vpScale;
     }
+    applySelection(dia, propsRef.current);
     applyingRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.graph]);
 
-  // Reflect external selection.
+  // Reflect external selection (rebuilding the model above also clears it).
   useEffect(() => {
     const dia = diaRef.current;
     if (!dia) return;
     applyingRef.current = true;
-    dia.clearSelection();
-    if (props.selectedKey) {
-      const n = dia.findNodeForKey(props.selectedKey);
-      if (n) n.isSelected = true;
-    } else if (props.selectedEdge) {
-      const l = dia.findLinkForKey(props.selectedEdge);
-      if (l) l.isSelected = true;
-    }
+    applySelection(dia, props);
     applyingRef.current = false;
   }, [props.selectedKey, props.selectedEdge]);
 

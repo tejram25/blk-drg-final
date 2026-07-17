@@ -12,6 +12,16 @@ export function newKey(g: DiagramGraph): string {
   return `${max + 1}`;
 }
 
+/** A unique numeric link key (so two wires between the same pair never collide). */
+function newLinkKey(g: DiagramGraph): number {
+  let max = 0;
+  for (const l of g.links) {
+    const k = Number(l.raw.key);
+    if (Number.isFinite(k) && k > max) max = k;
+  }
+  return max + 1;
+}
+
 /** Next reference designator for a prefix (R1, R2, … / U1, U2 …). */
 function nextRefdes(g: DiagramGraph, prefix: string): string {
   let max = 0;
@@ -69,18 +79,19 @@ export function addNode(
 }
 
 /** Connect two nodes (schematic wire between two symbols, else a connector). */
-export function addLink(g: DiagramGraph, fromKey: string, toKey: string): DiagramGraph {
+export function addLink(g: DiagramGraph, fromKey: string, toKey: string, fromPort = '', toPort = ''): DiagramGraph {
   if (fromKey === toKey) return g;
   const from = g.nodes.find((n) => n.key === fromKey);
   const to = g.nodes.find((n) => n.key === toKey);
   if (!from || !to) return g;
   const wire = from.category === 'symbol' && to.category === 'symbol';
   const raw: Record<string, unknown> = {
+    key: newLinkKey(g),
     category: 'link',
     from: fromKey,
     to: toKey,
-    fromPort: '',
-    toPort: '',
+    fromPort,
+    toPort,
     ...(wire ? { wire: true } : {}),
   };
   return { ...g, links: [...g.links, linkFromRaw(raw)] };
