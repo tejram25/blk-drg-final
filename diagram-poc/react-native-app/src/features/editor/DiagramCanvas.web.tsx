@@ -207,9 +207,8 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
           { ...port, imageStretch: go.GraphObject.Fill },
           new go.Binding('visible', 'shape', (s: string) => isDetailedAnim(s)),
           new go.Binding('desiredSize', 'size', go.Size.parse),
-          new go.Binding('source', '', (d: any) =>
-            isDetailedAnim(d.shape) ? animFrameUri(d.shape, d.__frame ?? 0) : '',
-          ),
+          // Static frame 0 — animations are disabled in this app.
+          new go.Binding('source', 'shape', (s: string) => (isDetailedAnim(s) ? animFrameUri(s, 0) : '')),
         ),
         $(
           go.Shape,
@@ -394,25 +393,7 @@ export default function DiagramCanvasWeb(props: Props) {
       }
     });
 
-    // Drive the animated components: refresh each anim node's baked SVG frame
-    // ~18 fps. Cheap when the diagram has none (the loop just no-ops).
-    const animTimer = setInterval(() => {
-      const d = diaRef.current;
-      if (!d) return;
-      const m = d.model;
-      const phase = (Date.now() % 2000) / 2000;
-      let any = false;
-      for (const data of m.nodeDataArray as any[]) {
-        if (isDetailedAnim(data.shape)) {
-          m.setDataProperty(data, '__frame', phase);
-          any = true;
-        }
-      }
-      void any;
-    }, 55);
-
     return () => {
-      clearInterval(animTimer);
       dia.div = null;
       diaRef.current = null;
     };

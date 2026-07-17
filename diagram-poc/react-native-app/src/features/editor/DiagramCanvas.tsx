@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
-  Easing,
   GestureResponderEvent,
   LayoutChangeEvent,
   PanResponder,
@@ -14,8 +13,6 @@ import {
 import Svg, { Circle, G, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { AnimatedNode, isAnimShape } from './animated';
 import { ANIMATED_SYMBOLS, bakeParts, isDetailedAnim, Part } from './animShapes';
-
-const AnimatedPath = Animated.createAnimatedComponent(Path);
 import { colors } from '../../theme';
 import { attachedCount, linkedComponents } from './editorOps';
 import {
@@ -70,30 +67,11 @@ export default function DiagramCanvas({
   const [drag, setDrag] = useState<{ key: string; cx: number; cy: number } | null>(null);
   const dragKey = drag?.key ?? null;
 
-  // A single 0→1 looping value drives every animation (flow wires + anim nodes).
+  // Animations are intentionally disabled: everything renders as a single static
+  // frame. `phase` is a frozen 0 value so the (now motionless) anim node and flow
+  // wire renderers keep working without a running loop.
   const phase = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.timing(phase, { toValue: 1, duration: 1600, easing: Easing.linear, useNativeDriver: false }),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [phase]);
-  const dashOffset = phase.interpolate({ inputRange: [0, 1], outputRange: [0, -16] });
   const fitted = useRef(false);
-
-  // Detailed animated components (solar, turbine, robot arm, …) are frame-driven:
-  // we bake the motion into fresh SVG parts each tick. Only run the ticker when
-  // such components are present, and keep them in their own layer so the big
-  // static scene (blocks/wires/symbols) is never rebuilt by the animation.
-  const hasDetailedAnim = useMemo(() => graph.nodes.some((n) => isDetailedAnim(n.shape)), [graph]);
-  const [anim01, setAnim01] = useState(0);
-  useEffect(() => {
-    if (!hasDetailedAnim) return;
-    const t0 = Date.now();
-    const id = setInterval(() => setAnim01(((Date.now() - t0) % 2000) / 2000), 55);
-    return () => clearInterval(id);
-  }, [hasDetailedAnim]);
 
   // Scale/translate the view so all content fits the viewport.
   const fitContent = () => {
@@ -363,18 +341,17 @@ export default function DiagramCanvas({
     const base = l.isWire ? colors.wire : colors.canvasSubtext;
     const stroke = sel ? '#f5a623' : l.color ?? base;
     const width = (l.width ?? (l.isWire ? 1.8 : 2)) + (sel ? 1 : 0);
-    if (l.raw.flow === true) {
-      return (
-        <AnimatedPath key={k} d={d} fill="none" stroke={stroke} strokeWidth={width} strokeDasharray="8,6" strokeDashoffset={dashOffset} strokeLinecap="round" />
-      );
-    }
+    // Flow links keep their dashed look but no longer march (animations disabled).
+    const dash = l.raw.flow === true ? '8,6' : l.dashed ? '6,3' : undefined;
     return (
-      <Path key={k} d={d} fill="none" stroke={stroke} strokeWidth={width} strokeDasharray={l.dashed ? '6,3' : undefined} strokeLinecap="round" />
+      <Path key={k} d={d} fill="none" stroke={stroke} strokeWidth={width} strokeDasharray={dash} strokeLinecap="round" />
     );
   };
 
   const nodeElement = (n: DiagramNode) =>
-    isAnimShape(n.shape) ? (
+    isDetailedAnim(n.shape) ? (
+      <AnimComponentNode key={n.key} node={n} selected={n.key === selectedKey} />
+    ) : isAnimShape(n.shape) ? (
       <AnimatedNode key={n.key} node={n} phase={phase} selected={n.key === selectedKey} />
     ) : (
       <NodeShape key={n.key} node={n} selected={n.key === selectedKey} />
@@ -387,10 +364,7 @@ export default function DiagramCanvas({
     const links = graph.links.map((l, i) =>
       dragKey && (l.from === dragKey || l.to === dragKey) ? null : linkElement(l, `l${i}`, linkPoints(l)),
     );
-    // Detailed animated components are drawn separately in the frame-driven layer.
-    const nodes = graph.nodes.map((n) =>
-      n.key === dragKey || isDetailedAnim(n.shape) ? null : nodeElement(n),
-    );
+    const nodes = graph.nodes.map((n) => (n.key === dragKey ? null : nodeElement(n)));
     return (
       <>
         {links}
@@ -399,13 +373,6 @@ export default function DiagramCanvas({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph, selectedKey, selectedEdge, dragKey]);
-
-  // Frame-driven layer: detailed animated components, re-rendered each tick.
-  const animLayer = graph.nodes.map((n) =>
-    !isDetailedAnim(n.shape) || n.key === dragKey ? null : (
-      <AnimComponentNode key={n.key} node={n} phase={anim01} selected={n.key === selectedKey} />
-    ),
-  );
 
   // Live overlay: the dragged node at its current position + its incident wires.
   // Re-renders each drag frame, but it's only one node and a few links.
@@ -420,11 +387,7 @@ export default function DiagramCanvas({
     return (
       <>
         {wires}
-        {isDetailedAnim(moved.shape) ? (
-          <AnimComponentNode node={moved} phase={anim01} selected />
-        ) : (
-          nodeElement(moved)
-        )}
+        {nodeElement(moved)}
       </>
     );
   })();
@@ -435,7 +398,6 @@ export default function DiagramCanvas({
         <Svg width={size.w} height={size.h}>
           <G transform={`translate(${t.tx},${t.ty}) scale(${t.scale})`}>
             {scene}
-            {animLayer}
             {overlay}
           </G>
         </Svg>
@@ -655,20 +617,20 @@ function renderPart(p: Part, key: string): React.ReactNode {
   }
 }
 
+// Detailed component glyph (solar, turbine, robot arm, …), rendered as a single
+// static frame — animations are disabled in this app.
 const AnimComponentNode = React.memo(function AnimComponentNode({
   node,
-  phase,
   selected,
 }: {
   node: DiagramNode;
-  phase: number;
   selected: boolean;
 }) {
   const def = node.shape ? ANIMATED_SYMBOLS[node.shape] : undefined;
   if (!def) return <NodeShape node={node} selected={selected} />;
   const sx = node.w / def.width;
   const sy = node.h / def.height;
-  const parts = bakeParts(node.shape as string, phase);
+  const parts = bakeParts(node.shape as string, 0);
   return (
     <>
       <G transform={`translate(${node.x},${node.y}) scale(${sx},${sy})`}>
