@@ -6,6 +6,9 @@ import {
   GestureResponderEvent,
   LayoutChangeEvent,
   PanResponder,
+  Pressable,
+  StyleSheet,
+  Text,
   View,
 } from 'react-native';
 import Svg, { Circle, G, Path, Rect, Text as SvgText } from 'react-native-svg';
@@ -72,22 +75,37 @@ export default function DiagramCanvas({
   const dashOffset = phase.interpolate({ inputRange: [0, 1], outputRange: [0, -16] });
   const fitted = useRef(false);
 
-  // Fit-to-content once we know the viewport and have nodes.
-  useEffect(() => {
-    if (fitted.current || size.w <= 0 || graph.nodes.length === 0) return;
+  // Scale/translate the view so all content fits the viewport.
+  const fitContent = () => {
+    if (size.w <= 0 || graph.nodes.length === 0) return;
     const b = contentBounds(graph);
-    const pad = 40;
-    const scale = Math.max(
-      MIN_SCALE,
-      Math.min((size.w - pad) / b.w, (size.h - pad) / b.h, MAX_SCALE),
-    );
+    const pad = 48;
+    const scale = Math.max(MIN_SCALE, Math.min((size.w - pad) / b.w, (size.h - pad) / b.h, MAX_SCALE));
     setT({
       scale,
       tx: (size.w - b.w * scale) / 2 - b.x * scale,
       ty: (size.h - b.h * scale) / 2 - b.y * scale,
     });
+  };
+
+  // Fit-to-content once we know the viewport and have nodes.
+  useEffect(() => {
+    if (fitted.current || size.w <= 0 || graph.nodes.length === 0) return;
+    fitContent();
     fitted.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph, size]);
+
+  // Zoom about the viewport centre (for the +/− buttons).
+  const zoomBy = (factor: number) =>
+    setT((s0) => {
+      const scale = Math.max(MIN_SCALE, Math.min(s0.scale * factor, MAX_SCALE));
+      const cx = size.w / 2;
+      const cy = size.h / 2;
+      const fx = (cx - s0.tx) / s0.scale;
+      const fy = (cy - s0.ty) / s0.scale;
+      return { scale, tx: cx - fx * scale, ty: cy - fy * scale };
+    });
 
   // Gesture bookkeeping (kept in refs so PanResponder closures stay stable).
   const start = useRef({ t, dist: 0, focal: { x: 0, y: 0 }, dragKey: null as string | null, grab: { x: 0, y: 0 }, moved: false });
@@ -270,59 +288,88 @@ export default function DiagramCanvas({
     }),
   ).current;
 
+  // Build the scene once per graph/selection change — NOT on every pan/zoom.
+  // Panning only changes the parent <G> transform; memoised children keep their
+  // element identity so react-native-svg skips re-rendering them (smooth pan).
+  const scene = useMemo(() => {
+    const links = graph.links.map((l, i) => {
+      const pts = linkPoints(l);
+      if (pts.length < 2) return null;
+      const d = `M ${pts.map((p) => `${p.x} ${p.y}`).join(' L ')}`;
+      const sel = selectedEdge != null && linkId(l) === selectedEdge;
+      const base = l.isWire ? colors.wire : colors.canvasSubtext;
+      const stroke = sel ? '#f5a623' : l.color ?? base;
+      const width = (l.width ?? (l.isWire ? 1.8 : 2)) + (sel ? 1 : 0);
+      if (l.raw.flow === true) {
+        return (
+          <AnimatedPath key={`l${i}`} d={d} fill="none" stroke={stroke} strokeWidth={width} strokeDasharray="8,6" strokeDashoffset={dashOffset} strokeLinecap="round" />
+        );
+      }
+      return (
+        <Path key={`l${i}`} d={d} fill="none" stroke={stroke} strokeWidth={width} strokeDasharray={l.dashed ? '6,3' : undefined} strokeLinecap="round" />
+      );
+    });
+    const nodes = graph.nodes.map((n) =>
+      isAnimShape(n.shape) ? (
+        <AnimatedNode key={n.key} node={n} phase={phase} selected={n.key === selectedKey} />
+      ) : (
+        <NodeShape key={n.key} node={n} selected={n.key === selectedKey} />
+      ),
+    );
+    return (
+      <>
+        {links}
+        {nodes}
+      </>
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graph, selectedKey, selectedEdge]);
+
   return (
-    <View style={{ flex: 1 }} onLayout={onLayout} {...responder.panHandlers}>
-      <Svg width={size.w} height={size.h}>
-        <G transform={`translate(${t.tx},${t.ty}) scale(${t.scale})`}>
-          {graph.links.map((l, i) => {
-            const pts = linkPoints(l);
-            if (pts.length < 2) return null;
-            const d = `M ${pts.map((p) => `${p.x} ${p.y}`).join(' L ')}`;
-            const sel = selectedEdge != null && linkId(l) === selectedEdge;
-            const base = l.isWire ? colors.wire : colors.canvasSubtext;
-            const stroke = sel ? '#f5a623' : l.color ?? base;
-            const width = (l.width ?? (l.isWire ? 1.8 : 2)) + (sel ? 1 : 0);
-            // "flow" wires animate current with moving dashes.
-            if (l.raw.flow === true) {
-              return (
-                <AnimatedPath
-                  key={`l${i}`}
-                  d={d}
-                  fill="none"
-                  stroke={stroke}
-                  strokeWidth={width}
-                  strokeDasharray="8,6"
-                  strokeDashoffset={dashOffset}
-                  strokeLinecap="round"
-                />
-              );
-            }
-            return (
-              <Path
-                key={`l${i}`}
-                d={d}
-                fill="none"
-                stroke={stroke}
-                strokeWidth={width}
-                strokeDasharray={l.dashed ? '6,3' : undefined}
-                strokeLinecap="round"
-              />
-            );
-          })}
-          {graph.nodes.map((n) =>
-            isAnimShape(n.shape) ? (
-              <AnimatedNode key={n.key} node={n} phase={phase} selected={n.key === selectedKey} />
-            ) : (
-              <NodeShape key={n.key} node={n} selected={n.key === selectedKey} />
-            ),
-          )}
-        </G>
-      </Svg>
+    <View style={{ flex: 1 }}>
+      <View style={{ flex: 1 }} onLayout={onLayout} {...responder.panHandlers}>
+        <Svg width={size.w} height={size.h}>
+          <G transform={`translate(${t.tx},${t.ty}) scale(${t.scale})`}>{scene}</G>
+        </Svg>
+      </View>
+      <View style={zoomStyles.dock} pointerEvents="box-none">
+        <ZoomButton label="+" onPress={() => zoomBy(1.25)} />
+        <ZoomButton label="−" onPress={() => zoomBy(0.8)} />
+        <ZoomButton label="⤢" onPress={fitContent} />
+      </View>
     </View>
   );
 }
 
-function NodeShape({ node, selected }: { node: DiagramNode; selected: boolean }) {
+function ZoomButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [zoomStyles.btn, pressed && { opacity: 0.7 }]}>
+      <Text style={zoomStyles.btnText}>{label}</Text>
+    </Pressable>
+  );
+}
+
+const zoomStyles = StyleSheet.create({
+  dock: { position: 'absolute', right: 12, bottom: 12, flexDirection: 'column', gap: 8 },
+  btn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.canvasSurface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.canvasBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  btnText: { color: colors.canvasText, fontSize: 22, fontWeight: '600', lineHeight: 26 },
+});
+
+const NodeShape = React.memo(function NodeShape({ node, selected }: { node: DiagramNode; selected: boolean }) {
   // Basic geometric shapes (rectangle, diamond, cylinder, …).
   if (isBasicShape(node.shape)) {
     const fill = node.color ?? '#ffffff';
@@ -441,7 +488,7 @@ function NodeShape({ node, selected }: { node: DiagramNode; selected: boolean })
       <PartBadge node={node} />
     </>
   );
-}
+});
 
 function PartBadge({ node }: { node: DiagramNode }) {
   const count = attachedCount(node.raw) + linkedComponents(node.raw).length;
