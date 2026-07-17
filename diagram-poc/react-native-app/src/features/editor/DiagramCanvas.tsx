@@ -62,6 +62,12 @@ export default function DiagramCanvas({
   const win = Dimensions.get('window');
   const [size, setSize] = useState({ w: win.width, h: Math.max(300, win.height - 160) });
   const [t, setT] = useState<Transform>({ scale: 1, tx: 0, ty: 0 });
+  // Live drag position of the node being moved. While dragging we keep this
+  // LOCAL (don't touch `graph`) so the big memoised scene stays frozen and only
+  // the dragged node + its wires re-render each frame — smooth on large diagrams.
+  // The move is committed to the graph once, on release.
+  const [drag, setDrag] = useState<{ key: string; cx: number; cy: number } | null>(null);
+  const dragKey = drag?.key ?? null;
 
   // A single 0→1 looping value drives every animation (flow wires + anim nodes).
   const phase = useRef(new Animated.Value(0)).current;
@@ -108,7 +114,15 @@ export default function DiagramCanvas({
     });
 
   // Gesture bookkeeping (kept in refs so PanResponder closures stay stable).
-  const start = useRef({ t, dist: 0, focal: { x: 0, y: 0 }, dragKey: null as string | null, grab: { x: 0, y: 0 }, moved: false });
+  const start = useRef({
+    t,
+    dist: 0,
+    focal: { x: 0, y: 0 },
+    dragKey: null as string | null,
+    grab: { x: 0, y: 0 },
+    moved: false,
+    dragCenter: { x: 0, y: 0 },
+  });
 
   const nodesByKey = useMemo(() => {
     const m: Record<string, DiagramNode> = {};
@@ -173,9 +187,9 @@ export default function DiagramCanvas({
   // Polyline for a link: explicit points, else an orthogonal route between the
   // two ends' connection points — the exact model port when the link names one
   // (matching the desktop/Angular render), otherwise the nearest pin / box edge.
-  const linkPoints = (l: DiagramLink): { x: number; y: number }[] => {
-    const a = nodesByKey[l.from];
-    const b = nodesByKey[l.to];
+  const linkPoints = (l: DiagramLink, moved?: DiagramNode | null): { x: number; y: number }[] => {
+    const a = moved && moved.key === l.from ? moved : nodesByKey[l.from];
+    const b = moved && moved.key === l.to ? moved : nodesByKey[l.to];
     if (!a || !b) return [];
     if (l.points.length >= 2) return l.points;
     const ac = nodeCenter(a);
@@ -240,6 +254,7 @@ export default function DiagramCanvas({
       if (key) {
         const n = nodesByKey[key];
         start.current.grab = { x: d.x - n.x, y: d.y - n.y };
+        start.current.dragCenter = nodeCenter(n);
         onSelect(key);
         onSelectEdge?.(null);
         onNodeGrab?.(key);
@@ -263,14 +278,28 @@ export default function DiagramCanvas({
       const n = nodesByKey[start.current.dragKey];
       const tlx = d.x - start.current.grab.x;
       const tly = d.y - start.current.grab.y;
-      // Report the node CENTRE (loc convention), so it round-trips with the data.
-      onNodeMove(start.current.dragKey, tlx + (n?.w ?? 0) / 2, tly + (n?.h ?? 0) / 2);
+      // Track the node CENTRE (loc convention) locally; commit on release so the
+      // heavy scene isn't rebuilt on every drag frame.
+      const cx = tlx + (n?.w ?? 0) / 2;
+      const cy = tly + (n?.h ?? 0) / 2;
+      start.current.dragCenter = { x: cx, y: cy };
+      setDrag({ key: start.current.dragKey, cx, cy });
     } else {
       setT({ scale: s0.scale, tx: s0.tx + gesture.dx, ty: s0.ty + gesture.dy });
     }
   };
   const release = (e: GestureResponderEvent) => {
-    if (!start.current.moved && !start.current.dragKey) {
+    if (start.current.dragKey) {
+      // Commit the drag once (moved nodes only, so a tap doesn't dirty the doc).
+      if (start.current.moved) {
+        const c = start.current.dragCenter;
+        onNodeMove(start.current.dragKey, c.x, c.y);
+      }
+      start.current.dragKey = null;
+      setDrag(null);
+      return;
+    }
+    if (!start.current.moved) {
       pickAt(e.nativeEvent.locationX, e.nativeEvent.locationY);
     }
   };
@@ -288,34 +317,39 @@ export default function DiagramCanvas({
     }),
   ).current;
 
-  // Build the scene once per graph/selection change — NOT on every pan/zoom.
-  // Panning only changes the parent <G> transform; memoised children keep their
-  // element identity so react-native-svg skips re-rendering them (smooth pan).
-  const scene = useMemo(() => {
-    const links = graph.links.map((l, i) => {
-      const pts = linkPoints(l);
-      if (pts.length < 2) return null;
-      const d = `M ${pts.map((p) => `${p.x} ${p.y}`).join(' L ')}`;
-      const sel = selectedEdge != null && linkId(l) === selectedEdge;
-      const base = l.isWire ? colors.wire : colors.canvasSubtext;
-      const stroke = sel ? '#f5a623' : l.color ?? base;
-      const width = (l.width ?? (l.isWire ? 1.8 : 2)) + (sel ? 1 : 0);
-      if (l.raw.flow === true) {
-        return (
-          <AnimatedPath key={`l${i}`} d={d} fill="none" stroke={stroke} strokeWidth={width} strokeDasharray="8,6" strokeDashoffset={dashOffset} strokeLinecap="round" />
-        );
-      }
+  // One wire's SVG element (shared by the frozen scene and the drag overlay).
+  const linkElement = (l: DiagramLink, k: string, pts: { x: number; y: number }[]) => {
+    if (pts.length < 2) return null;
+    const d = `M ${pts.map((p) => `${p.x} ${p.y}`).join(' L ')}`;
+    const sel = selectedEdge != null && linkId(l) === selectedEdge;
+    const base = l.isWire ? colors.wire : colors.canvasSubtext;
+    const stroke = sel ? '#f5a623' : l.color ?? base;
+    const width = (l.width ?? (l.isWire ? 1.8 : 2)) + (sel ? 1 : 0);
+    if (l.raw.flow === true) {
       return (
-        <Path key={`l${i}`} d={d} fill="none" stroke={stroke} strokeWidth={width} strokeDasharray={l.dashed ? '6,3' : undefined} strokeLinecap="round" />
+        <AnimatedPath key={k} d={d} fill="none" stroke={stroke} strokeWidth={width} strokeDasharray="8,6" strokeDashoffset={dashOffset} strokeLinecap="round" />
       );
-    });
-    const nodes = graph.nodes.map((n) =>
-      isAnimShape(n.shape) ? (
-        <AnimatedNode key={n.key} node={n} phase={phase} selected={n.key === selectedKey} />
-      ) : (
-        <NodeShape key={n.key} node={n} selected={n.key === selectedKey} />
-      ),
+    }
+    return (
+      <Path key={k} d={d} fill="none" stroke={stroke} strokeWidth={width} strokeDasharray={l.dashed ? '6,3' : undefined} strokeLinecap="round" />
     );
+  };
+
+  const nodeElement = (n: DiagramNode) =>
+    isAnimShape(n.shape) ? (
+      <AnimatedNode key={n.key} node={n} phase={phase} selected={n.key === selectedKey} />
+    ) : (
+      <NodeShape key={n.key} node={n} selected={n.key === selectedKey} />
+    );
+
+  // Build the scene once per graph/selection change — NOT on every pan/zoom or
+  // drag frame. Panning only changes the parent <G> transform; the dragged node
+  // and its wires are excluded here and drawn live in the overlay below.
+  const scene = useMemo(() => {
+    const links = graph.links.map((l, i) =>
+      dragKey && (l.from === dragKey || l.to === dragKey) ? null : linkElement(l, `l${i}`, linkPoints(l)),
+    );
+    const nodes = graph.nodes.map((n) => (n.key === dragKey ? null : nodeElement(n)));
     return (
       <>
         {links}
@@ -323,13 +357,34 @@ export default function DiagramCanvas({
       </>
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graph, selectedKey, selectedEdge]);
+  }, [graph, selectedKey, selectedEdge, dragKey]);
+
+  // Live overlay: the dragged node at its current position + its incident wires.
+  // Re-renders each drag frame, but it's only one node and a few links.
+  const overlay = (() => {
+    if (!drag) return null;
+    const src = nodesByKey[drag.key];
+    if (!src) return null;
+    const moved: DiagramNode = { ...src, x: drag.cx - src.w / 2, y: drag.cy - src.h / 2 };
+    const wires = graph.links
+      .filter((l) => l.from === drag.key || l.to === drag.key)
+      .map((l, i) => linkElement(l, `dl${i}`, linkPoints(l, moved)));
+    return (
+      <>
+        {wires}
+        {nodeElement(moved)}
+      </>
+    );
+  })();
 
   return (
     <View style={{ flex: 1 }}>
       <View style={{ flex: 1 }} onLayout={onLayout} {...responder.panHandlers}>
         <Svg width={size.w} height={size.h}>
-          <G transform={`translate(${t.tx},${t.ty}) scale(${t.scale})`}>{scene}</G>
+          <G transform={`translate(${t.tx},${t.ty}) scale(${t.scale})`}>
+            {scene}
+            {overlay}
+          </G>
         </Svg>
       </View>
       <View style={zoomStyles.dock} pointerEvents="box-none">

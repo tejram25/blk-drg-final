@@ -416,7 +416,11 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.header}>
-        <IconButton name="chevron-back" color={colors.canvasText} onPress={() => navigation.goBack()} />
+        <IconButton
+          name="chevron-back"
+          color={colors.canvasText}
+          onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Diagrams'))}
+        />
         <Pressable style={styles.titleWrap} onPress={() => setRenaming(true)}>
           <Text style={styles.headerTitle} numberOfLines={1}>
             {name}
@@ -532,7 +536,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
           }}
         />
         <ToolBtn icon="hardware-chip" label={t('tool.part')} onPress={() => setPartOpen(true)} />
-        <ToolBtn icon="pricetag" label={t('tool.dw')} disabled={!selected} onPress={() => setDwOpen(true)} />
+        <ToolBtn icon="pricetag" label={t('tool.dw')} onPress={() => setDwOpen(true)} />
         {selectedEdge ? <ToolBtn icon="color-wand" label={t('tool.wire')} onPress={() => setEdgeSheet(true)} /> : null}
       </View>
 
@@ -554,7 +558,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         }}
         onPick={(p) => onPickPart(p)}
       />
-      <DesignWinModal visible={dwOpen} onClose={() => setDwOpen(false)} onPick={(p, qty) => onAttach(p, qty)} />
+      <DesignWinModal visible={dwOpen} onClose={() => setDwOpen(false)} onPick={(p, qty) => onPickPart(p, qty)} />
 
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
         <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
