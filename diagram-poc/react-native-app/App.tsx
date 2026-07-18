@@ -2,6 +2,7 @@ import 'react-native-gesture-handler';
 import { DefaultTheme, NavigationContainer, Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -69,6 +70,19 @@ const PreviewComp = process.env.EXPO_PUBLIC_PREVIEW
   : null;
 
 export default function App() {
+  // Official corporate typeface (extracted from the Arrow brand template).
+  const [fontsLoaded] = useFonts({
+    'ArrowDisplay-Regular': require('./assets/fonts/ArrowDisplay-Regular.ttf'),
+    'ArrowDisplay-Medium': require('./assets/fonts/ArrowDisplay-Medium.ttf'),
+    'ArrowDisplay-Bold': require('./assets/fonts/ArrowDisplay-Bold.ttf'),
+  });
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
   if (PreviewComp) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>

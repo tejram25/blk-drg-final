@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, font, radius, shadow } from '../../theme';
+import { colors, font, fonts, radius, shadow } from '../../theme';
 import { Icon, IconButton } from '../../ui/kit';
 import { ScreenProps } from '../../navigation';
 import { diagramsApi } from '../diagrams/diagramsApi';
@@ -881,7 +881,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.chromeBorder,
   },
   titleWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 4 },
-  headerTitle: { color: colors.chromeText, fontSize: 16, fontWeight: '700', maxWidth: '80%' },
+  headerTitle: { color: colors.chromeText, fontSize: 16, fontFamily: fonts.bold, maxWidth: '80%' },
   hint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, paddingVertical: 9, paddingHorizontal: 16 },
   hintText: { color: '#fff', textAlign: 'center', fontWeight: '600' },
   classBanner: {

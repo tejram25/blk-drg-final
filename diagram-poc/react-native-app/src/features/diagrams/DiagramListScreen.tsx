@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, font, glow, radius, shadow } from '../../theme';
+import { colors, font, fonts, glow, radius, shadow } from '../../theme';
 import { ScreenProps } from '../../navigation';
 import { useAuth } from '../auth/AuthContext';
 import { initials } from '../auth/authApi';
@@ -214,5 +214,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  fabText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  fabText: { color: '#fff', fontFamily: fonts.bold, fontSize: 16 },
 });

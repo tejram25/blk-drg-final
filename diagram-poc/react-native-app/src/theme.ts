@@ -72,15 +72,28 @@ export const radius = { xs: 6, sm: 10, md: 14, lg: 18, xl: 24, pill: 999 };
 
 export const space = (n: number) => n * 4;
 
+/**
+ * Typography. Headings and CTAs use the official corporate typeface
+ * "Arrow Display" (extracted from Arrow's own template, loaded in App.tsx via
+ * expo-font); body copy stays on the system UI font — the same pairing the
+ * corporate template uses (Arrow Display + Segoe UI). The custom faces carry
+ * their own weight, so those tokens set fontFamily instead of fontWeight.
+ */
+export const fonts = {
+  regular: 'ArrowDisplay-Regular',
+  medium: 'ArrowDisplay-Medium',
+  bold: 'ArrowDisplay-Bold',
+};
+
 export const font = {
-  h1: { fontSize: 28, fontWeight: '800' as const, letterSpacing: -0.5 },
-  h2: { fontSize: 22, fontWeight: '800' as const, letterSpacing: -0.3 },
-  h3: { fontSize: 18, fontWeight: '700' as const },
-  title: { fontSize: 16, fontWeight: '700' as const },
+  h1: { fontSize: 28, fontFamily: fonts.bold, letterSpacing: -0.5 },
+  h2: { fontSize: 22, fontFamily: fonts.bold, letterSpacing: -0.3 },
+  h3: { fontSize: 18, fontFamily: fonts.medium },
+  title: { fontSize: 16, fontFamily: fonts.bold },
   body: { fontSize: 15, fontWeight: '400' as const },
-  label: { fontSize: 13, fontWeight: '600' as const },
+  label: { fontSize: 13, fontFamily: fonts.medium },
   caption: { fontSize: 12, fontWeight: '500' as const },
-  overline: { fontSize: 11, fontWeight: '800' as const, letterSpacing: 0.6 },
+  overline: { fontSize: 11, fontFamily: fonts.medium, letterSpacing: 0.6 },
 };
 
 /** Cross-platform elevation — soft slate shadows for the light theme. */
