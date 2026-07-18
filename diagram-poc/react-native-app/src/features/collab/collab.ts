@@ -9,6 +9,19 @@ export interface Peer {
   color: string;
 }
 
+/** A chat message in the live session (same schema as the desktop editor). */
+export interface ChatMessage {
+  id: string;
+  name: string;
+  color: string;
+  text: string;
+  /** epoch millis */
+  ts: number;
+  lang?: string;
+  /** true if the local user sent it (right-aligned bubble). */
+  isSelf: boolean;
+}
+
 export interface CollabModel {
   nodes: Record<string, unknown>[];
   links: Record<string, unknown>[];
@@ -26,7 +39,9 @@ export class CollabSession {
   readonly doc = new Y.Doc();
   readonly provider: WebsocketProvider;
   readonly cells: Y.Map<Record<string, unknown>>;
+  readonly chat: Y.Array<Record<string, unknown>>;
   readonly color: string;
+  private readonly myName: string;
 
   constructor(
     diagramId: number,
@@ -35,11 +50,14 @@ export class CollabSession {
       onRemoteModel: (m: CollabModel) => void;
       onPeers: (peers: Peer[]) => void;
       onSync: (roomHasContent: boolean) => void;
+      onChat?: (messages: ChatMessage[]) => void;
     },
   ) {
     this.provider = new WebsocketProvider(COLLAB_WS_URL, `gojs-${diagramId}`, this.doc);
     this.cells = this.doc.getMap('cells');
+    this.chat = this.doc.getArray('chat');
     this.color = PALETTE[this.provider.awareness.clientID % PALETTE.length];
+    this.myName = user.name;
     this.provider.awareness.setLocalStateField('user', {
       name: user.name,
       color: this.color,
@@ -51,10 +69,45 @@ export class CollabSession {
       if (e.transaction.local) return;
       this.handlers.onRemoteModel(this.model());
     });
+    this.chat.observe(() => this.handlers.onChat?.(this.messages()));
     this.provider.awareness.on('change', () => this.handlers.onPeers(this.peers()));
     this.provider.on('sync', (isSynced: boolean) => {
-      if (isSynced) this.handlers.onSync(this.cells.size > 0);
+      if (isSynced) {
+        this.handlers.onSync(this.cells.size > 0);
+        this.handlers.onChat?.(this.messages());
+      }
     });
+  }
+
+  /** Session chat history (same Yjs array + fields as the desktop editor). */
+  messages(): ChatMessage[] {
+    const me = this.provider.awareness.clientID;
+    return this.chat.toArray().map((m) => ({
+      id: `${m.id}`,
+      name: `${m.name ?? ''}`,
+      color: `${m.color ?? '#888888'}`,
+      text: `${m.text ?? ''}`,
+      ts: Number(m.ts) || 0,
+      lang: typeof m.lang === 'string' ? m.lang : undefined,
+      isSelf: m.clientId === me,
+    }));
+  }
+
+  sendChat(text: string, lang = ''): void {
+    const body = (text || '').trim();
+    if (!body) return;
+    const me = this.provider.awareness.clientID;
+    this.chat.push([
+      {
+        id: `${me}-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+        clientId: me,
+        name: this.myName,
+        color: this.color,
+        text: body,
+        ts: Date.now(),
+        lang,
+      },
+    ]);
   }
 
   model(): CollabModel {

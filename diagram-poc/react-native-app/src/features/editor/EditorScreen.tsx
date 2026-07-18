@@ -26,7 +26,8 @@ import VersionsModal from '../collab/VersionsModal';
 import FeedbackModal from '../collab/FeedbackModal';
 import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../../i18n/I18nContext';
-import { CollabSession, Peer } from '../collab/collab';
+import { ChatMessage, CollabSession, Peer } from '../collab/collab';
+import SessionChatSheet from '../collab/SessionChatSheet';
 import { BlockType } from './catalogApi';
 import DiagramCanvas from './DiagramCanvas';
 import EdgeStyleSheet from './EdgeStyleSheet';
@@ -94,6 +95,12 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   const [partSeed, setPartSeed] = useState('');
   const [docLoaded, setDocLoaded] = useState(false);
   const [peers, setPeers] = useState<Peer[]>([]);
+  const [chatMsgs, setChatMsgs] = useState<ChatMessage[]>([]);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatUnread, setChatUnread] = useState(0);
+  const chatOpenRef = useRef(false);
+  chatOpenRef.current = chatOpen;
+  const chatKnownRef = useRef(new Set<string>());
   const [classification, setClassification] = useState('INTERNAL');
   const [history, setHistory] = useState<DiagramGraph[]>([]);
   const [future, setFuture] = useState<DiagramGraph[]>([]);
@@ -214,6 +221,18 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             if (g) s.seed(g.nodes.map((n) => n.raw), g.links.map((l) => l.raw));
           }
         },
+        onChat: (msgs) => {
+          setChatMsgs(msgs);
+          // Badge fresh messages from others while the chat sheet is closed.
+          const known = chatKnownRef.current;
+          let fresh = 0;
+          for (const m of msgs) {
+            if (known.has(m.id)) continue;
+            known.add(m.id);
+            if (!m.isSelf && Date.now() - m.ts < 60_000 && !chatOpenRef.current) fresh += 1;
+          }
+          if (fresh) setChatUnread((c) => c + fresh);
+        },
       },
     );
     sessionRef.current = s;
@@ -221,6 +240,9 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       s.destroy();
       sessionRef.current = null;
       setPeers([]);
+      setChatMsgs([]);
+      setChatUnread(0);
+      chatKnownRef.current.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docLoaded, id, user]);
@@ -435,6 +457,21 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
           </Text>
           <Icon name="create-outline" size={13} color={colors.chromeSubtext} />
         </Pressable>
+        <View>
+          <IconButton
+            name="chatbubble-ellipses"
+            color={colors.chromeText}
+            onPress={() => {
+              setChatOpen(true);
+              setChatUnread(0);
+            }}
+          />
+          {chatUnread > 0 ? (
+            <View style={styles.chatBadge} pointerEvents="none">
+              <Text style={styles.chatBadgeText}>{chatUnread > 9 ? '9+' : chatUnread}</Text>
+            </View>
+          ) : null}
+        </View>
         {peers.length > 0 ? (
           <View style={styles.presence}>
             {peers.slice(0, 3).map((p, i) => (
@@ -673,6 +710,13 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
           </View>
         </Pressable>
       </Modal>
+
+      <SessionChatSheet
+        visible={chatOpen}
+        onClose={() => setChatOpen(false)}
+        messages={chatMsgs}
+        onSend={(text) => sessionRef.current?.sendChat(text, lang)}
+      />
 
       <CommentsModal visible={panel === 'comments'} onClose={() => setPanel(null)} diagramId={id} />
       <FeedbackModal visible={panel === 'feedback'} onClose={() => setPanel(null)} diagramId={id} />
@@ -922,6 +966,19 @@ const styles = StyleSheet.create({
   menuText: { fontSize: 15, color: colors.text, fontWeight: '500', flex: 1 },
   menuHeader: { ...font.overline, color: colors.faint, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4 },
   menuDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 4 },
+  chatBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 0,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: 3,
+    backgroundColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
   presence: { flexDirection: 'row', alignItems: 'center', marginRight: 6 },
   avatar: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.chrome },
   avatarText: { color: '#fff', fontSize: 11, fontWeight: '700' },
