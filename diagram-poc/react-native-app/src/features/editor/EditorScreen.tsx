@@ -92,7 +92,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     | 'lang'
   >(null);
   const [partSeed, setPartSeed] = useState('');
-  const [live, setLive] = useState(false);
+  const [docLoaded, setDocLoaded] = useState(false);
   const [peers, setPeers] = useState<Peer[]>([]);
   const [classification, setClassification] = useState('INTERNAL');
   const [history, setHistory] = useState<DiagramGraph[]>([]);
@@ -194,8 +194,11 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     restore(f[f.length - 1]);
   };
 
+  // File-level collaboration, matching the desktop editor: the session joins
+  // automatically once the diagram is loaded (room = diagram id) and leaves on
+  // unmount — no toggle. Presence avatars appear whenever someone else is in.
   useEffect(() => {
-    if (!live || !user) return;
+    if (!docLoaded || !user) return;
     const applyRemote = (m: { nodes: Record<string, unknown>[]; links: Record<string, unknown>[] }) =>
       setGraph({ nodes: m.nodes.map(nodeFromRaw), links: m.links.map(linkFromRaw) });
     const s = new CollabSession(
@@ -220,7 +223,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       setPeers([]);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [live, id, user]);
+  }, [docLoaded, id, user]);
 
   const serialize = () =>
     JSON.stringify({
@@ -238,6 +241,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       setClassification(q.data.classification ?? 'INTERNAL');
       setHistory([]);
       setFuture([]);
+      setDocLoaded(true);
     }
   }, [q.data]);
 
@@ -431,7 +435,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
           </Text>
           <Icon name="create-outline" size={13} color={colors.chromeSubtext} />
         </Pressable>
-        {live ? (
+        {peers.length > 0 ? (
           <View style={styles.presence}>
             {peers.slice(0, 3).map((p, i) => (
               <View key={i} style={[styles.avatar, { backgroundColor: p.color, marginLeft: i ? -8 : 0 }]}>
@@ -570,20 +574,6 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
           <Pressable style={styles.menu} onPress={(e) => e.stopPropagation?.()}>
             <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-              <Pressable
-                style={({ pressed }) => [styles.menuItem, live && styles.menuItemLive, pressed && styles.menuItemPressed]}
-                onPress={() => {
-                  setMenuOpen(false);
-                  setLive((v) => !v);
-                }}
-              >
-                <View style={styles.menuIcon}>
-                  <Icon name="people" size={18} color={live ? colors.success : colors.primary} />
-                </View>
-                <Text style={styles.menuText}>{live ? t('menu.golive.on') : t('menu.golive')}</Text>
-                {live ? <View style={styles.liveDot} /> : null}
-              </Pressable>
-
               <MenuHeader>{t('hdr.ai')}</MenuHeader>
               <MenuRow icon="sparkles" label={t('menu.recs')} onPress={() => { setMenuOpen(false); setPanel('recs'); }} />
               <MenuRow icon="clipboard" label={t('menu.review')} onPress={() => { setMenuOpen(false); setPanel('review'); }} />
@@ -928,10 +918,8 @@ const styles = StyleSheet.create({
   menu: { backgroundColor: colors.surface, borderRadius: radius.lg, paddingVertical: 8, minWidth: 260, maxWidth: 320, maxHeight: '80%', ...shadow(3) },
   menuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 11 },
   menuItemPressed: { backgroundColor: colors.surfaceAlt },
-  menuItemLive: { backgroundColor: colors.successSoft },
   menuIcon: { width: 26, alignItems: 'center' },
   menuText: { fontSize: 15, color: colors.text, fontWeight: '500', flex: 1 },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success },
   menuHeader: { ...font.overline, color: colors.faint, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4 },
   menuDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 4 },
   presence: { flexDirection: 'row', alignItems: 'center', marginRight: 6 },

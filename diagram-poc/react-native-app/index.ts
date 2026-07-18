@@ -1,3 +1,10 @@
+// Node-API polyfills must land before any library loads. y-websocket (via
+// lib0) touches `Buffer`, which Hermes and browsers don't provide.
+import { Buffer } from 'buffer';
+if (typeof global.Buffer === 'undefined') {
+  (global as unknown as { Buffer: typeof Buffer }).Buffer = Buffer;
+}
+
 import { registerRootComponent } from 'expo';
 
 import App from './App';
