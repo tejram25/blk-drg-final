@@ -34,6 +34,9 @@ interface Props {
   onSelectEdge?: (id: string | null) => void;
   onNodeGrab?: (key: string) => void;
   onNodeMove: (key: string, x: number, y: number) => void;
+  // Throttled position updates during a drag (for live collaboration); the local
+  // canvas still renders the drag itself, so this only feeds the collab room.
+  onNodeMoveLive?: (key: string, x: number, y: number) => void;
   // Web (GoJS) only: user drew a wire between two nodes. Ignored by the native SVG canvas.
   onLinkCreate?: (fromKey: string, toKey: string, fromPort?: string, toPort?: string) => void;
 }
@@ -55,6 +58,7 @@ export default function DiagramCanvas({
   onSelectEdge,
   onNodeGrab,
   onNodeMove,
+  onNodeMoveLive,
 }: Props) {
   // Seed from window dimensions so the SVG has a size even before onLayout.
   const win = Dimensions.get('window');
@@ -116,6 +120,7 @@ export default function DiagramCanvas({
     dragCenter: { x: 0, y: 0 },
     pinching: false,
     hadPinch: false,
+    liveTs: 0,
   });
 
   const nodesByKey = useMemo(() => {
@@ -300,6 +305,14 @@ export default function DiagramCanvas({
       const cy = tly + (n?.h ?? 0) / 2;
       start.current.dragCenter = { x: cx, y: cy };
       setDrag({ key: start.current.dragKey, cx, cy });
+      // Stream the position to collaborators, throttled (~20/s).
+      if (onNodeMoveLive) {
+        const now = Date.now();
+        if (now - start.current.liveTs > 50) {
+          start.current.liveTs = now;
+          onNodeMoveLive(start.current.dragKey, cx, cy);
+        }
+      }
     } else {
       setT({ scale: s0.scale, tx: s0.tx + gesture.dx, ty: s0.ty + gesture.dy });
     }

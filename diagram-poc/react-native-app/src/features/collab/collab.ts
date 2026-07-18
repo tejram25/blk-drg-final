@@ -27,6 +27,14 @@ export interface CollabModel {
   links: Record<string, unknown>[];
 }
 
+/** A single incremental change from the room (one node or link set/deleted). */
+export interface RemoteOp {
+  kind: 'node' | 'link';
+  key: string;
+  /** The new raw data, or null when the cell was deleted. */
+  data: Record<string, unknown> | null;
+}
+
 const PALETTE = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
 /**
@@ -48,6 +56,8 @@ export class CollabSession {
     user: { name: string; uid: string },
     private handlers: {
       onRemoteModel: (m: CollabModel) => void;
+      /** Incremental remote edits — patch only these keys (fast during drags). */
+      onRemoteOps?: (ops: RemoteOp[]) => void;
       onPeers: (peers: Peer[]) => void;
       onSync: (roomHasContent: boolean) => void;
       onChat?: (messages: ChatMessage[]) => void;
@@ -65,12 +75,36 @@ export class CollabSession {
     });
 
     // Only remote edits update the local canvas; local edits are already applied.
+    // Emit granular per-key ops so the editor patches just what changed instead
+    // of rebuilding the whole graph — this is what keeps live dragging smooth.
     this.cells.observe((e) => {
       if (e.transaction.local) return;
-      this.handlers.onRemoteModel(this.model());
+      if (this.handlers.onRemoteOps) {
+        const ops: RemoteOp[] = [];
+        e.changes.keys.forEach((change, k) => {
+          const kind = k.startsWith('n:') ? 'node' : k.startsWith('l:') ? 'link' : null;
+          if (!kind) return;
+          ops.push({
+            kind,
+            key: k.slice(2),
+            data: change.action === 'delete' ? null : (this.cells.get(k) ?? null),
+          });
+        });
+        if (ops.length) this.handlers.onRemoteOps(ops);
+      } else {
+        this.handlers.onRemoteModel(this.model());
+      }
     });
     this.chat.observe(() => this.handlers.onChat?.(this.messages()));
-    this.provider.awareness.on('change', () => this.handlers.onPeers(this.peers()));
+    // Awareness pings often with no roster change; only notify on real changes.
+    let lastPeers = '';
+    this.provider.awareness.on('change', () => {
+      const p = this.peers();
+      const sig = p.map((x) => x.uid + x.name).sort().join('|');
+      if (sig === lastPeers) return;
+      lastPeers = sig;
+      this.handlers.onPeers(p);
+    });
     this.provider.on('sync', (isSynced: boolean) => {
       if (isSynced) {
         this.handlers.onSync(this.cells.size > 0);

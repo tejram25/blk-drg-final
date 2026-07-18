@@ -18,6 +18,8 @@ interface Props {
   onSelectEdge?: (id: string | null) => void;
   onNodeGrab?: (key: string) => void;
   onNodeMove: (key: string, x: number, y: number) => void;
+  // Native-only live drag streaming; GoJS reports moves once on drop, so unused here.
+  onNodeMoveLive?: (key: string, x: number, y: number) => void;
   onLinkCreate?: (fromKey: string, toKey: string, fromPort?: string, toPort?: string) => void;
 }
 

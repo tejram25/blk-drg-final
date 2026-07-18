@@ -210,11 +210,40 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     if (!docLoaded || !user) return;
     const applyRemote = (m: { nodes: Record<string, unknown>[]; links: Record<string, unknown>[] }) =>
       setGraph({ nodes: m.nodes.map(nodeFromRaw), links: m.links.map(linkFromRaw) });
+    // Patch only the changed cells — O(changes), not O(graph) — so a remote
+    // drag re-renders just that node and its wires, in real time.
+    const applyRemoteOps = (ops: import('../collab/collab').RemoteOp[]) =>
+      setGraph((g) => {
+        if (!g) return g;
+        let nodes = g.nodes;
+        let links = g.links;
+        for (const op of ops) {
+          if (op.kind === 'node') {
+            if (!op.data) {
+              nodes = nodes.filter((n) => n.key !== op.key);
+            } else {
+              const nn = nodeFromRaw(op.data);
+              const i = nodes.findIndex((n) => n.key === op.key);
+              nodes = i >= 0 ? nodes.map((n) => (n.key === op.key ? nn : n)) : [...nodes, nn];
+            }
+          } else {
+            if (!op.data) {
+              links = links.filter((l) => linkId(l) !== op.key);
+            } else {
+              const nl = linkFromRaw(op.data);
+              const i = links.findIndex((l) => linkId(l) === op.key);
+              links = i >= 0 ? links.map((l) => (linkId(l) === op.key ? nl : l)) : [...links, nl];
+            }
+          }
+        }
+        return nodes === g.nodes && links === g.links ? g : { nodes, links };
+      });
     const s = new CollabSession(
       id,
       { name: user.name || user.email, uid: user.email },
       {
         onRemoteModel: applyRemote,
+        onRemoteOps: applyRemoteOps,
         onPeers: setPeers,
         onSync: (roomHasContent) => {
           if (roomHasContent) applyRemote(s.model());
@@ -293,6 +322,14 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     setDirty(true);
     const node = graphRef.current?.nodes.find((n) => n.key === key);
     if (node) sessionRef.current?.setNode(key, { ...node.raw, loc });
+  };
+
+  // Live position stream during a drag: push to the room only (no local graph
+  // rebuild, no history) so collaborators see the node move in real time while
+  // the local canvas keeps rendering it via its own lightweight drag overlay.
+  const moveNodeLive = (key: string, cx: number, cy: number) => {
+    const node = graphRef.current?.nodes.find((n) => n.key === key);
+    if (node) sessionRef.current?.setNode(key, { ...node.raw, loc: `${Math.round(cx)} ${Math.round(cy)}` });
   };
 
   const styleSelectedEdge = (patch: WireStyle) => {
@@ -545,6 +582,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             }}
             onNodeGrab={connectMode ? undefined : onNodeGrab}
             onNodeMove={connectMode ? () => {} : moveNode}
+            onNodeMoveLive={connectMode ? undefined : moveNodeLive}
             onLinkCreate={(from, to, fromPort, toPort) => {
               const g = graphRef.current;
               if (!g) return;
