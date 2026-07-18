@@ -80,7 +80,7 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
   const selAdorn = $(
     go.Adornment,
     'Auto',
-    $(go.Shape, 'RoundedRectangle', { fill: null, stroke: '#64A70B', strokeWidth: 2, parameter1: 10 }),
+    $(go.Shape, 'RoundedRectangle', { fill: null, stroke: '#0068C9', strokeWidth: 2, parameter1: 10 }),
     $(go.Placeholder, { padding: 5 }),
   );
 

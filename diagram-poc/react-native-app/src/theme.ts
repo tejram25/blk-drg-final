@@ -13,13 +13,14 @@ import { Platform, ViewStyle } from 'react-native';
  * drawing surface (light, engineering-paper look with dark symbols).
  */
 export const colors = {
-  // Brand — Arrow green ramp. 6-digit hex only (screens derive `primary+'22'`).
-  primary: '#64A70B',
-  primaryDark: '#4F8A06',
-  primaryLight: '#7BC318',
-  primarySoft: '#EEF6E2',
-  gradientFrom: '#71B912',
-  gradientTo: '#579D07',
+  // Brand — arrow.com's corporate blue ramp (site link/CTA blue). 6-digit hex
+  // only (screens derive `primary+'22'`).
+  primary: '#0068C9',
+  primaryDark: '#00509B',
+  primaryLight: '#2E8AE0',
+  primarySoft: '#E5F1FB',
+  gradientFrom: '#0F79D8',
+  gradientTo: '#0059AC',
   accent: '#F5A623',
 
   // Content surfaces — white on light grey, thin neutral borders.
