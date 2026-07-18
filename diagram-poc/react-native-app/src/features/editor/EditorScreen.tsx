@@ -55,7 +55,7 @@ import { contentBounds, DiagramGraph, DiagramNode, linkFromRaw, linkId, nodeFrom
 import PaletteSheet, { PaletteGrid } from './PaletteSheet';
 
 const CLASSIFICATIONS = ['PUBLIC', 'INTERNAL', 'RESTRICTED'] as const;
-const CLASS_COLORS: Record<string, string> = { PUBLIC: '#2E9E5B', INTERNAL: '#0068C9', RESTRICTED: '#D93838' };
+const CLASS_COLORS: Record<string, string> = { PUBLIC: '#2E9E5B', INTERNAL: '#0084D5', RESTRICTED: '#D93838' };
 
 const linkKey = linkId;
 

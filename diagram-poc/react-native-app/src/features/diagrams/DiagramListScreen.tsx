@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -21,7 +22,7 @@ import { diagramsApi, DiagramSummary } from './diagramsApi';
 
 const CLASS_TINT: Record<string, string> = {
   PUBLIC: colors.success,
-  INTERNAL: '#0068C9',
+  INTERNAL: '#0084D5',
   RESTRICTED: colors.danger,
 };
 
@@ -55,6 +56,11 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
       <StatusBar style="light" />
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
+          <Image
+            source={require('../../../assets/brand/arrow-logo-white.png')}
+            style={styles.brandLogo}
+            resizeMode="contain"
+          />
           <Text style={styles.headerTitle}>{t('list.title')}</Text>
           <Text style={styles.headerSub}>
             {diagrams.data ? `${diagrams.data.length} ${t('list.title').toLowerCase()}` : ' '}
@@ -159,6 +165,7 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     backgroundColor: colors.chrome,
   },
+  brandLogo: { width: 118, height: 26, marginBottom: 8 },
   headerTitle: { ...font.h1, color: colors.chromeText },
   headerSub: { ...font.caption, color: colors.chromeSubtext, marginTop: 2, textTransform: 'capitalize' },
   avatar: {

@@ -13,15 +13,17 @@ import { Platform, ViewStyle } from 'react-native';
  * drawing surface (light, engineering-paper look with dark symbols).
  */
 export const colors = {
-  // Brand — arrow.com's corporate blue ramp (site link/CTA blue). 6-digit hex
+  // Brand — OFFICIAL Arrow palette, extracted from Arrow's own PowerPoint
+  // template theme (accent1 #0084D5 = Arrow blue; greys #666666/#CCCCCC/#A3A6A3;
+  // secondary accents mint #47D7AC, gold #FFC845, coral #FF8674). 6-digit hex
   // only (screens derive `primary+'22'`).
-  primary: '#0068C9',
-  primaryDark: '#00509B',
-  primaryLight: '#2E8AE0',
-  primarySoft: '#E5F1FB',
-  gradientFrom: '#0F79D8',
-  gradientTo: '#0059AC',
-  accent: '#F5A623',
+  primary: '#0084D5',
+  primaryDark: '#0066A6',
+  primaryLight: '#33A0E3',
+  primarySoft: '#E5F4FC',
+  gradientFrom: '#0D93E4',
+  gradientTo: '#0072B9',
+  accent: '#FFC845',
 
   // Content surfaces — white on light grey, thin neutral borders.
   bg: '#F5F6F7',
@@ -32,10 +34,10 @@ export const colors = {
   borderStrong: '#C9CED4',
   chip: '#EFF1F3',
 
-  // Text
-  text: '#15191E',
-  subtext: '#58606B',
-  faint: '#8B939D',
+  // Text — brand black + the template's official greys.
+  text: '#0A0A0A',
+  subtext: '#666666',
+  faint: '#A3A6A3',
   onPrimary: '#FFFFFF',
 
   // Status
@@ -45,7 +47,7 @@ export const colors = {
   successSoft: '#E7F5EC',
   warning: '#B97609',
   warningSoft: '#FCF3E2',
-  info: '#0068C9',
+  info: '#0563C1',
 
   // Black navigation chrome (arrow.com's top bar) — headers, toolbars, docks.
   chrome: '#0B0D0F',
