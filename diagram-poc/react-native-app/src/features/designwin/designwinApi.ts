@@ -40,8 +40,10 @@ async function get(path: string, query: Record<string, string | undefined>) {
 }
 
 export const designwinApi = {
-  customers: async (): Promise<DwCustomer[]> =>
-    list(await get('customers', {}), 'customerServiceResult', 'customers').map((c) => ({
+  // The Arrow API (and the mock) require a customer name or bill-to to search,
+  // exactly like the desktop app — so the modal searches customers first.
+  customers: async (customerName?: string, billToNumber?: string): Promise<DwCustomer[]> =>
+    list(await get('customers', { customerName, billToNumber }), 'customerServiceResult', 'customers').map((c) => ({
       customerName: c.customerName ?? '',
       billTo: c.billTo ?? '',
       accountNumber: c.accountNumber ?? '',

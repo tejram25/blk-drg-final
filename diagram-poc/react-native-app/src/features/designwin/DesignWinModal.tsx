@@ -2,13 +2,16 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
-import { colors } from '../../theme';
+import { colors, radius } from '../../theme';
 import { Part } from '../parts/partsApi';
 import {
   designwinApi,
@@ -37,22 +40,45 @@ export default function DesignWinModal({
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Customer-first search, like the desktop Design Win explorer.
+  const [query, setQuery] = useState('');
+  const [searched, setSearched] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setStep('customers');
-      load('customers', null, null, null);
+      setItems([]);
+      setQuery('');
+      setSearched(false);
+      setError(null);
+      setCustomer(null);
+      setProject(null);
+      setBoard(null);
     }
   }, [visible]);
+
+  const searchCustomers = async () => {
+    const q = query.trim();
+    if (!q) return;
+    setLoading(true);
+    setError(null);
+    setSearched(true);
+    try {
+      setItems(await designwinApi.customers(q));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const load = async (s: Step, c: DwCustomer | null, p: DwProject | null, b: DwBoard | null) => {
     setLoading(true);
     setError(null);
     try {
-      if (s === 'customers') setItems(await designwinApi.customers());
-      else if (s === 'projects') setItems(await designwinApi.projects(c!.customerName));
+      if (s === 'projects') setItems(await designwinApi.projects(c!.customerName));
       else if (s === 'boards') setItems(await designwinApi.boards(p!.projectId));
-      else setItems(await designwinApi.custParts(p!.projectId, b!.boardNum));
+      else if (s === 'parts') setItems(await designwinApi.custParts(p!.projectId, b!.boardNum));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -64,6 +90,7 @@ export default function DesignWinModal({
     if (step === 'customers') return onClose();
     const prev: Step = step === 'parts' ? 'boards' : step === 'boards' ? 'projects' : 'customers';
     setStep(prev);
+    if (prev === 'customers') return; // keep the customer search results
     load(prev, customer, project, board);
   };
 
@@ -80,7 +107,7 @@ export default function DesignWinModal({
     if (step === 'customers') {
       const c = item as DwCustomer;
       return (
-        <Row title={c.customerName} sub={`${c.accountNumber} · ${c.status}`} chevron
+        <Row title={c.customerName} sub={[c.accountNumber, c.status].filter(Boolean).join(' · ')} chevron
           onPress={() => { setCustomer(c); setStep('projects'); load('projects', c, null, null); }} />
       );
     }
@@ -105,9 +132,19 @@ export default function DesignWinModal({
     );
   };
 
+  const emptyText =
+    step === 'customers' && !searched
+      ? 'Search a customer name to begin.'
+      : loading
+        ? ''
+        : 'Nothing here.';
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      <KeyboardAvoidingView
+        style={styles.backdrop}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <View style={styles.sheet}>
           <View style={styles.header}>
             <Pressable hitSlop={10} onPress={back}>
@@ -115,6 +152,25 @@ export default function DesignWinModal({
             </Pressable>
             <Text style={styles.title} numberOfLines={1}>{title}</Text>
           </View>
+
+          {step === 'customers' ? (
+            <View style={styles.searchRow}>
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Customer name (e.g. Tesla)"
+                placeholderTextColor={colors.faint}
+                style={styles.input}
+                autoFocus
+                returnKeyType="search"
+                onSubmitEditing={searchCustomers}
+              />
+              <Pressable style={styles.searchBtn} onPress={searchCustomers}>
+                <Text style={styles.searchBtnText}>Search</Text>
+              </Pressable>
+            </View>
+          ) : null}
+
           {loading ? (
             <ActivityIndicator color={colors.primary} style={{ marginTop: 24 }} />
           ) : error ? (
@@ -124,11 +180,12 @@ export default function DesignWinModal({
               data={items}
               keyExtractor={(_, i) => `${i}`}
               renderItem={renderItem}
-              ListEmptyComponent={<Text style={styles.msg}>Nothing here.</Text>}
+              keyboardShouldPersistTaps="handled"
+              ListEmptyComponent={emptyText ? <Text style={styles.msg}>{emptyText}</Text> : null}
             />
           )}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -151,6 +208,19 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingBottom: 8 },
   back: { fontSize: 20, color: colors.text, paddingHorizontal: 6, width: 32 },
   title: { flex: 1, fontSize: 17, fontWeight: '700', color: colors.text },
+  searchRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingHorizontal: 12,
+    height: 44,
+    color: colors.text,
+    backgroundColor: colors.surfaceAlt,
+  },
+  searchBtn: { backgroundColor: colors.primary, borderRadius: radius.sm, paddingHorizontal: 18, height: 44, alignItems: 'center', justifyContent: 'center' },
+  searchBtnText: { color: colors.onPrimary, fontWeight: '700' },
   msg: { textAlign: 'center', color: colors.subtext, marginTop: 24 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   rowTitle: { fontSize: 15, fontWeight: '600', color: colors.text },

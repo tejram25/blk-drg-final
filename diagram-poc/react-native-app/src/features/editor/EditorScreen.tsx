@@ -98,6 +98,8 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
   const [chatMsgs, setChatMsgs] = useState<ChatMessage[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatUnread, setChatUnread] = useState(0);
+  const [rosterOpen, setRosterOpen] = useState(false);
+  const [myColor, setMyColor] = useState('#0084D5');
   const chatOpenRef = useRef(false);
   chatOpenRef.current = chatOpen;
   const chatKnownRef = useRef(new Set<string>());
@@ -236,6 +238,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       },
     );
     sessionRef.current = s;
+    setMyColor(s.color);
     return () => {
       s.destroy();
       sessionRef.current = null;
@@ -472,16 +475,19 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
             </View>
           ) : null}
         </View>
-        {peers.length > 0 ? (
-          <View style={styles.presence}>
-            {peers.slice(0, 3).map((p, i) => (
-              <View key={i} style={[styles.avatar, { backgroundColor: p.color, marginLeft: i ? -8 : 0 }]}>
-                <Text style={styles.avatarText}>{(p.name[0] ?? '?').toUpperCase()}</Text>
-              </View>
-            ))}
-            {peers.length > 3 ? <Text style={styles.more}>+{peers.length - 3}</Text> : null}
+        <Pressable style={styles.presence} onPress={() => setRosterOpen(true)} hitSlop={6}>
+          {peers.slice(0, 3).map((p, i) => (
+            <View key={i} style={[styles.avatar, { backgroundColor: p.color, marginLeft: i ? -8 : 0 }]}>
+              <Text style={styles.avatarText}>{(p.name[0] ?? '?').toUpperCase()}</Text>
+            </View>
+          ))}
+          {peers.length > 3 ? <Text style={styles.more}>+{peers.length - 3}</Text> : null}
+          {/* Always show a people chip so you can see who's in the session. */}
+          <View style={[styles.peopleChip, peers.length ? { marginLeft: 6 } : null]}>
+            <Icon name="people" size={15} color={colors.chromeText} />
+            <Text style={styles.peopleCount}>{peers.length + 1}</Text>
           </View>
-        ) : null}
+        </Pressable>
         <IconButton
           name={dirty ? 'save' : 'checkmark-done'}
           color={dirty ? colors.wire : colors.chromeSubtext}
@@ -717,6 +723,28 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         messages={chatMsgs}
         onSend={(text) => sessionRef.current?.sendChat(text, lang)}
       />
+
+      <Modal visible={rosterOpen} transparent animationType="fade" onRequestClose={() => setRosterOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setRosterOpen(false)}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>In this session ({peers.length + 1})</Text>
+            <View style={styles.rosterRow}>
+              <View style={[styles.rosterDot, { backgroundColor: myColor }]} />
+              <Text style={styles.rosterName}>{user?.name || user?.email || 'You'}</Text>
+              <Text style={styles.rosterYou}>You</Text>
+            </View>
+            {peers.map((p, i) => (
+              <View key={i} style={styles.rosterRow}>
+                <View style={[styles.rosterDot, { backgroundColor: p.color }]} />
+                <Text style={styles.rosterName} numberOfLines={1}>{p.name || 'Collaborator'}</Text>
+              </View>
+            ))}
+            {peers.length === 0 ? (
+              <Text style={styles.rosterHint}>No one else is here yet. Share this diagram to collaborate live.</Text>
+            ) : null}
+          </View>
+        </Pressable>
+      </Modal>
 
       <CommentsModal visible={panel === 'comments'} onClose={() => setPanel(null)} diagramId={id} />
       <FeedbackModal visible={panel === 'feedback'} onClose={() => setPanel(null)} diagramId={id} />
@@ -979,7 +1007,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chatBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
-  presence: { flexDirection: 'row', alignItems: 'center', marginRight: 6 },
+  presence: { flexDirection: 'row', alignItems: 'center', marginRight: 4, paddingHorizontal: 2 },
+  peopleChip: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: colors.chromeAlt, borderRadius: radius.pill, paddingHorizontal: 8, height: 26 },
+  peopleCount: { color: colors.chromeText, fontSize: 12, fontWeight: '800' },
+  rosterRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9 },
+  rosterDot: { width: 10, height: 10, borderRadius: 5 },
+  rosterName: { flex: 1, fontSize: 15, color: colors.text, fontWeight: '600' },
+  rosterYou: { fontSize: 11, fontWeight: '800', color: colors.primary },
+  rosterHint: { color: colors.subtext, fontSize: 13, marginTop: 8, lineHeight: 19 },
   avatar: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.chrome },
   avatarText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   more: { color: colors.chromeSubtext, fontSize: 12, marginLeft: 4 },
