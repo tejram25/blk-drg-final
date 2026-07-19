@@ -34,6 +34,25 @@ Things that matter:
 - Optional collaboration: `EXPO_PUBLIC_COLLAB_WS_URL=wss://<host>:1234` if the
   y-websocket server runs on the VM.
 
+## Collaboration — ONE shared relay for web + mobile
+
+Angular and this app use the **same** Yjs relay and the **same** `gojs-<diagramId>`
+rooms, so a browser (Angular) and phones (React) editing the same diagram
+collaborate together — live edits, presence and chat. You run **one** relay, not
+two.
+
+- The Angular app already starts a relay. Start it bound to the LAN so phones can
+  reach it: `cd ../frontend && npm run start:lan` (plain `npm start` binds the
+  relay to `localhost`, which phones cannot reach).
+- The React app auto-targets `ws://<dev-machine-ip>:1234` in Expo Go — the same
+  machine and port — so it connects to that relay automatically. Nothing else to
+  start.
+- `npm run collab` / `npm run collab:lan` here is only a **fallback** for when the
+  Angular relay isn't running; if one is already up on :1234 it detects it and
+  exits (reuse), so it never conflicts.
+- Deployed web build: point both to the same public relay with
+  `EXPO_PUBLIC_COLLAB_WS_URL=wss://<host>:1234`.
+
 The backend deploys as before (Spring Boot):
 `cd ../backend && mvn package && java -jar target/*.jar`
 (mock part search is on by default; set `ARROW_MOCK=false` + Arrow credentials

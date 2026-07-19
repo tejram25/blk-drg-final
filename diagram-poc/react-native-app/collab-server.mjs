@@ -25,8 +25,30 @@ import * as awarenessProtocol from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
 
+import net from 'net';
+
 const PORT = Number(process.env.PORT) || 1234;
 const HOST = process.env.HOST || '0.0.0.0';
+
+// If a relay is already listening on this port — typically the one the Angular
+// app starts (`npm run start:lan`) — reuse it instead of crashing on EADDRINUSE.
+// Both apps speak the same protocol and join the same `gojs-<id>` rooms, so a
+// single relay serves web + mobile. You only need THIS server when Angular's
+// relay isn't running.
+const probeHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
+const inUse = await new Promise((resolve) => {
+  const sock = net.createConnection({ port: PORT, host: probeHost });
+  const done = (v) => { sock.destroy(); resolve(v); };
+  sock.setTimeout(700);
+  sock.once('connect', () => done(true));
+  sock.once('timeout', () => done(false));
+  sock.once('error', () => done(false));
+});
+if (inUse) {
+  console.log(`[collab] port ${PORT} already has a relay (e.g. the Angular app's) — reusing it.`);
+  console.log('[collab] Web (Angular) and mobile (React) share this one relay. Nothing to start here.');
+  process.exit(0);
+}
 
 const MESSAGE_SYNC = 0;
 const MESSAGE_AWARENESS = 1;
