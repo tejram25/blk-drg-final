@@ -50,6 +50,108 @@ interface Transform {
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 5;
 
+type Vec = { x: number; y: number };
+
+// How far a wire runs straight out of a port before it's allowed to turn — the
+// "stub" that makes GoJS orthogonal routes leave a component perpendicular to
+// its edge instead of cutting diagonally across it.
+const STUB = 16;
+// Corner rounding, matching the desktop editor's GoJS `corner: 8`.
+const CORNER = 8;
+
+// The side a port exits from — its nearest edge as a unit direction, mirroring
+// the web canvas's `nearestSide`/`fromSpot`. A genuinely central port (no clear
+// edge) falls back to the box side that faces the other end (`toward`).
+function portDir(n: DiagramNode, portId: string | undefined, toward: Vec): Vec {
+  if (portId && n.ports) {
+    const p = n.ports.find((pt) => pt.portId === portId);
+    if (p) {
+      const dl = p.fx;
+      const dr = 1 - p.fx;
+      const dt = p.fy;
+      const db = 1 - p.fy;
+      const m = Math.min(dl, dr, dt, db);
+      if (m <= 0.25) {
+        if (m === dl) return { x: -1, y: 0 };
+        if (m === dr) return { x: 1, y: 0 };
+        if (m === dt) return { x: 0, y: -1 };
+        return { x: 0, y: 1 };
+      }
+    }
+  }
+  return Math.abs(toward.x) >= Math.abs(toward.y)
+    ? { x: Math.sign(toward.x) || 1, y: 0 }
+    : { x: 0, y: Math.sign(toward.y) || 1 };
+}
+
+// Drop coincident and collinear points so the route has clean elbows only.
+function simplify(pts: Vec[]): Vec[] {
+  const uniq: Vec[] = [];
+  for (const p of pts) {
+    const last = uniq[uniq.length - 1];
+    if (!last || Math.abs(last.x - p.x) > 0.01 || Math.abs(last.y - p.y) > 0.01) uniq.push(p);
+  }
+  const out: Vec[] = [];
+  for (let i = 0; i < uniq.length; i++) {
+    if (i > 0 && i < uniq.length - 1) {
+      const a = out[out.length - 1];
+      const b = uniq[i];
+      const c = uniq[i + 1];
+      const collinear =
+        (Math.abs(a.x - b.x) < 0.01 && Math.abs(b.x - c.x) < 0.01) ||
+        (Math.abs(a.y - b.y) < 0.01 && Math.abs(b.y - c.y) < 0.01);
+      if (collinear) continue;
+    }
+    out.push(uniq[i]);
+  }
+  return out;
+}
+
+// A Manhattan route between two ports that leaves each one perpendicular to its
+// edge (the `STUB`), then joins the stubs with a single orthogonal jog/corner —
+// the clean orthogonal look the GoJS desktop/web canvas produces.
+function orthoRoute(p1: Vec, d1: Vec, p2: Vec, d2: Vec): Vec[] {
+  const a = { x: p1.x + d1.x * STUB, y: p1.y + d1.y * STUB };
+  const b = { x: p2.x + d2.x * STUB, y: p2.y + d2.y * STUB };
+  const h1 = d1.x !== 0;
+  const h2 = d2.x !== 0;
+  const mid: Vec[] = [];
+  if (h1 && h2) {
+    const mx = (a.x + b.x) / 2;
+    mid.push({ x: mx, y: a.y }, { x: mx, y: b.y });
+  } else if (!h1 && !h2) {
+    const my = (a.y + b.y) / 2;
+    mid.push({ x: a.x, y: my }, { x: b.x, y: my });
+  } else if (h1 && !h2) {
+    mid.push({ x: b.x, y: a.y });
+  } else {
+    mid.push({ x: a.x, y: b.y });
+  }
+  return simplify([p1, a, ...mid, b, p2]);
+}
+
+// Build an SVG path from a polyline, rounding each interior corner (radius
+// `CORNER`, clamped to the shorter adjacent segment) — matches GoJS `corner: 8`.
+function roundedPath(pts: Vec[]): string {
+  if (pts.length < 2) return '';
+  if (pts.length === 2) return `M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y}`;
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const l1 = Math.hypot(p1.x - p0.x, p1.y - p0.y) || 1;
+    const l2 = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1;
+    const r = Math.min(CORNER, l1 / 2, l2 / 2);
+    const c1 = { x: p1.x - ((p1.x - p0.x) / l1) * r, y: p1.y - ((p1.y - p0.y) / l1) * r };
+    const c2 = { x: p1.x + ((p2.x - p1.x) / l2) * r, y: p1.y + ((p2.y - p1.y) / l2) * r };
+    d += ` L ${c1.x} ${c1.y} Q ${p1.x} ${p1.y} ${c2.x} ${c2.y}`;
+  }
+  const last = pts[pts.length - 1];
+  d += ` L ${last.x} ${last.y}`;
+  return d;
+}
+
 export default function DiagramCanvas({
   graph,
   selectedKey,
@@ -195,12 +297,12 @@ export default function DiagramCanvas({
     const bc = nodeCenter(b);
     const p1 = portPoint(a, l.fromPort) ?? connectionPoint(a, bc.x, bc.y);
     const p2 = portPoint(b, l.toPort) ?? connectionPoint(b, ac.x, ac.y);
-    if (Math.abs(p2.x - p1.x) >= Math.abs(p2.y - p1.y)) {
-      const mx = (p1.x + p2.x) / 2;
-      return [p1, { x: mx, y: p1.y }, { x: mx, y: p2.y }, p2];
-    }
-    const my = (p1.y + p2.y) / 2;
-    return [p1, { x: p1.x, y: my }, { x: p2.x, y: my }, p2];
+    // Links explicitly saved as straight/curved keep a direct line; everything
+    // else uses the orthogonal router (the desktop/GoJS default).
+    if (l.routing === 'normal' || l.routing === 'smooth') return [p1, p2];
+    const d1 = portDir(a, l.fromPort, { x: p2.x - p1.x, y: p2.y - p1.y });
+    const d2 = portDir(b, l.toPort, { x: p1.x - p2.x, y: p1.y - p2.y });
+    return orthoRoute(p1, d1, p2, d2);
   };
 
   // Nearest link within `tol` diagram units of (dx,dy), else null.
@@ -349,7 +451,7 @@ export default function DiagramCanvas({
   // One wire's SVG element (shared by the frozen scene and the drag overlay).
   const linkElement = (l: DiagramLink, k: string, pts: { x: number; y: number }[]) => {
     if (pts.length < 2) return null;
-    const d = `M ${pts.map((p) => `${p.x} ${p.y}`).join(' L ')}`;
+    const d = roundedPath(pts);
     const sel = selectedEdge != null && linkId(l) === selectedEdge;
     const base = l.isWire ? colors.wire : colors.canvasSubtext;
     const stroke = sel ? '#f5a623' : l.color ?? base;
