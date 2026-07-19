@@ -52,18 +52,11 @@ const MAX_SCALE = 5;
 
 type Vec = { x: number; y: number };
 
-// How far a wire runs straight out of a port before it's allowed to turn — the
-// "stub" that makes GoJS orthogonal routes leave a component perpendicular to
-// its edge instead of cutting diagonally across it. Matches GoJS's default
-// endSegmentLength (10).
+// GoJS defaults we mirror: endSegmentLength (stub) 10, corner 8 on non-wires.
 const STUB = 10;
-// Corner rounding for non-wire links, matching the desktop editor's GoJS
-// `corner: 8`. Wires there use `corner: 0` (sharp), so we round only non-wires.
 const CORNER = 8;
 
-// The side a port exits from — its nearest edge as a unit direction, mirroring
-// the web canvas's `nearestSide`/`fromSpot`. A genuinely central port (no clear
-// edge) falls back to the box side that faces the other end (`toward`).
+/** A port's exit side as a unit direction (nearest edge); central ports face `toward` the other end. */
 function portDir(n: DiagramNode, portId: string | undefined, toward: Vec): Vec {
   if (portId && n.ports) {
     const p = n.ports.find((pt) => pt.portId === portId);
@@ -86,7 +79,7 @@ function portDir(n: DiagramNode, portId: string | undefined, toward: Vec): Vec {
     : { x: 0, y: Math.sign(toward.y) || 1 };
 }
 
-// Drop coincident and collinear points so the route has clean elbows only.
+/** Drop coincident and collinear points so the route has clean elbows only. */
 function simplify(pts: Vec[]): Vec[] {
   const uniq: Vec[] = [];
   for (const p of pts) {
@@ -109,11 +102,11 @@ function simplify(pts: Vec[]): Vec[] {
   return out;
 }
 
-// A Manhattan route between two ports that leaves each one perpendicular to its
-// edge (the `STUB`), then joins the stubs orthogonally — the clean look GoJS's
-// `Orthogonal` router produces. Crucially it never doubles back over a stub
-// (which would draw a little loop at the port); when a port faces away from its
-// target it routes AROUND, exactly like GoJS.
+/**
+ * Orthogonal route between two ports (GoJS-style): leave each perpendicular to
+ * its edge, join the stubs with a jog/corner, and never double back over a stub
+ * — a port facing away from its target routes around instead.
+ */
 function orthoRoute(p1: Vec, d1: Vec, p2: Vec, d2: Vec): Vec[] {
   const a = { x: p1.x + d1.x * STUB, y: p1.y + d1.y * STUB };
   const b = { x: p2.x + d2.x * STUB, y: p2.y + d2.y * STUB };
@@ -122,13 +115,9 @@ function orthoRoute(p1: Vec, d1: Vec, p2: Vec, d2: Vec): Vec[] {
   const mid: Vec[] = [];
   if (h1 && h2) {
     if (d1.x === d2.x) {
-      // Both exit the same horizontal way: jog past the further stub so neither
-      // segment reverses back over a port.
       const jx = d1.x > 0 ? Math.max(a.x, b.x) : Math.min(a.x, b.x);
       mid.push({ x: jx, y: a.y }, { x: jx, y: b.y });
     } else {
-      // Facing each other: split the gap if the target is ahead, else the ports
-      // overlap so route around with a horizontal mid instead of backtracking.
       const ahead = d1.x > 0 ? b.x >= a.x : b.x <= a.x;
       if (ahead) {
         const jx = (a.x + b.x) / 2;
@@ -153,21 +142,16 @@ function orthoRoute(p1: Vec, d1: Vec, p2: Vec, d2: Vec): Vec[] {
       }
     }
   } else if (h1 && !h2) {
-    // a exits horizontally, b vertically → one corner, chosen so a's stub isn't
-    // reversed (turn vertically at a's x when the box would be behind us).
     if (b.x === a.x || Math.sign(b.x - a.x) === d1.x) mid.push({ x: b.x, y: a.y });
     else mid.push({ x: a.x, y: b.y });
   } else {
-    // a exits vertically, b horizontally.
     if (b.y === a.y || Math.sign(b.y - a.y) === d1.y) mid.push({ x: a.x, y: b.y });
     else mid.push({ x: b.x, y: a.y });
   }
   return simplify([p1, a, ...mid, b, p2]);
 }
 
-// Build an SVG path from a polyline. With `corner > 0` each interior corner is
-// rounded (radius clamped to the shorter adjacent segment) — GoJS `corner: 8`
-// for non-wire links; wires pass `corner: 0` for sharp right angles.
+/** SVG path from a polyline; rounds interior corners when `corner > 0`, else sharp. */
 function svgPath(pts: Vec[], corner: number): string {
   if (pts.length < 2) return '';
   if (corner <= 0 || pts.length === 2) {
@@ -323,9 +307,7 @@ export default function DiagramCanvas({
     return p ? { x: n.x + p.fx * n.w, y: n.y + p.fy * n.h } : null;
   };
 
-  // Polyline for a link: explicit points, else an orthogonal route between the
-  // two ends' connection points — the exact model port when the link names one
-  // (matching the desktop/Angular render), otherwise the nearest pin / box edge.
+  /** Polyline for a link: explicit points, else an orthogonal route between its port points. */
   const linkPoints = (l: DiagramLink, moved?: DiagramNode | null): { x: number; y: number }[] => {
     const a = moved && moved.key === l.from ? moved : nodesByKey[l.from];
     const b = moved && moved.key === l.to ? moved : nodesByKey[l.to];
@@ -335,8 +317,6 @@ export default function DiagramCanvas({
     const bc = nodeCenter(b);
     const p1 = portPoint(a, l.fromPort) ?? connectionPoint(a, bc.x, bc.y);
     const p2 = portPoint(b, l.toPort) ?? connectionPoint(b, ac.x, ac.y);
-    // Links explicitly saved as straight/curved keep a direct line; everything
-    // else uses the orthogonal router (the desktop/GoJS default).
     if (l.routing === 'normal' || l.routing === 'smooth') return [p1, p2];
     const d1 = portDir(a, l.fromPort, { x: p2.x - p1.x, y: p2.y - p1.y });
     const d2 = portDir(b, l.toPort, { x: p1.x - p2.x, y: p1.y - p2.y });
@@ -486,10 +466,9 @@ export default function DiagramCanvas({
     }),
   ).current;
 
-  // One wire's SVG element (shared by the frozen scene and the drag overlay).
+  /** One wire's SVG element (shared by the frozen scene and the drag overlay). */
   const linkElement = (l: DiagramLink, k: string, pts: { x: number; y: number }[]) => {
     if (pts.length < 2) return null;
-    // Wires get sharp right angles (GoJS corner: 0); other links round at 8.
     const d = svgPath(pts, l.isWire ? 0 : CORNER);
     const sel = selectedEdge != null && linkId(l) === selectedEdge;
     const base = l.isWire ? colors.wire : colors.canvasSubtext;
@@ -594,8 +573,7 @@ const zoomStyles = StyleSheet.create({
 });
 
 const NodeShape = React.memo(function NodeShape({ node, selected }: { node: DiagramNode; selected: boolean }) {
-  // Catalogue "part" card — mirrors the Angular part node template: a white
-  // rounded card with a coloured accent bar, bold MPN, supplier line and specs.
+  // Catalogue part card — mirrors the Angular part node template.
   if (node.category === 'part') {
     const raw = node.raw as any;
     const specs: string[] = Array.isArray(raw.specs) ? raw.specs.filter((s: unknown) => typeof s === 'string' && s) : [];
@@ -613,7 +591,6 @@ const NodeShape = React.memo(function NodeShape({ node, selected }: { node: Diag
           stroke={selected ? colors.primary : '#D2D6DC'}
           strokeWidth={selected ? 2.5 : 1.5}
         />
-        {/* accent bar */}
         <Rect x={node.x + padX} y={node.y + 12} width={node.w - padX * 2} height={4} rx={2} fill={colors.primary} />
         <SvgText x={node.x + padX} y={node.y + 36} fill="#111827" fontSize={13} fontWeight="700" textAnchor="start">
           {node.text.length > 26 ? node.text.slice(0, 25) + '…' : node.text}

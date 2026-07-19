@@ -63,9 +63,7 @@ export const designwinApi = {
       registrationNum: b.registrationNum ?? '',
       status: b.status ?? '',
     })),
-  // The parts search requires a customer name or bill-to (the backend/Arrow API
-  // rejects it otherwise), so we pass them through from the chosen customer —
-  // exactly like the desktop Design Win panel.
+  // Parts search requires a customer name or bill-to (the backend rejects it otherwise).
   custParts: async (
     projectId: string,
     boardNum: string,

@@ -188,8 +188,7 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     ),
   );
 
-  // Catalogue part → white card with a coloured accent bar, bold MPN, supplier
-  // line and spec rows — matches the Angular desktop `part` node template.
+  // Catalogue part → white card matching the Angular desktop `part` template.
   dia.nodeTemplateMap.add(
     'part',
     $(
@@ -309,9 +308,8 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     $(go.TextBlock, { margin: 10, font: '600 13px Inter, sans-serif' }, new go.Binding('text')),
   );
 
-  // Orthogonal routing — matches the Angular desktop editor's link template
-  // exactly: sharp corners on wires (corner 0), rounded (8) on other links, and
-  // no jump-overs (curve None; Bezier only for the smooth router).
+  // Orthogonal routing matching the Angular link template: sharp wires (corner 0),
+  // rounded (8) other links, curve None (Bezier only for the smooth router).
   dia.linkTemplate = $(
     go.Link,
     {

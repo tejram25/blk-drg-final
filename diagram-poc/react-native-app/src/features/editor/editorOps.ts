@@ -78,13 +78,7 @@ export function addNode(
   };
 }
 
-/**
- * Add a catalogue part as its own canvas node — the desktop "add to canvas"
- * card. Uses the SAME `category: 'part'` data shape the Angular editor builds
- * (`text`, `supplier`, `specs`, `part`, `quantity`), so it renders as the white
- * part card (blue accent bar, MPN, supplier, specs) on both apps and round-trips
- * through a shared collab session.
- */
+/** Add a catalogue part as its own `category: 'part'` canvas node (the desktop part card shape). */
 export function addPartNode(
   g: DiagramGraph,
   part: { partNumber: string; manufacturer: string; supplier?: string; description?: string },
@@ -174,11 +168,7 @@ export function deleteNode(g: DiagramGraph, key: string): DiagramGraph {
   };
 }
 
-/**
- * The MPN of an attached-part record's `part`, reading BOTH the desktop/Angular
- * shape (`arwPartNum.name` / `suppPartNum.name`) and this app's flat shape
- * (`partNumber`), so parts attached from either app resolve identically.
- */
+/** The MPN of a part, reading both the desktop (`arwPartNum`/`suppPartNum`) and flat (`partNumber`) shapes. */
 export function partMpn(part: any): string {
   return (
     part?.arwPartNum?.name ||
@@ -189,13 +179,7 @@ export function partMpn(part: any): string {
   );
 }
 
-/**
- * Attach a catalogue part to a node. Writes the SAME `attachedParts` entry shape
- * the Angular desktop app uses — `{ part: { arwPartNum, suppPartNum, … }, quantity }`
- * — so an attach made on mobile shows up correctly in a shared collab session on
- * the web (and vice-versa). Attaching a part already on the node is a no-op
- * (the desktop app blocks duplicates the same way).
- */
+/** Attach a part to a node as desktop-compatible `attachedParts` metadata; a duplicate MPN is a no-op. */
 export function attachPart(
   g: DiagramGraph,
   key: string,
@@ -205,16 +189,14 @@ export function attachPart(
   const nodes = g.nodes.map((n) => {
     if (n.key !== key) return n;
     const existing = Array.isArray(n.raw.attachedParts) ? (n.raw.attachedParts as any[]) : [];
-    if (existing.some((e) => partMpn(e?.part ?? e) === part.partNumber)) return n; // already attached
+    if (existing.some((e) => partMpn(e?.part ?? e) === part.partNumber)) return n;
     const attachedParts = [
       ...existing,
       {
         part: {
-          // Desktop-compatible identity fields…
           arwPartNum: { name: part.partNumber },
           suppPartNum: { name: part.partNumber },
           mfr: { name: part.manufacturer },
-          // …plus the flat fields this app reads directly.
           partNumber: part.partNumber,
           manufacturer: part.manufacturer,
           supplier: part.supplier ?? '',
@@ -262,12 +244,7 @@ export function attachedCount(raw: Record<string, unknown>): number {
   return Array.isArray(raw.attachedParts) ? (raw.attachedParts as unknown[]).length : 0;
 }
 
-/**
- * Attached parts normalized to flat rows — MPN, maker, supplier, description and
- * the entry's quantity — regardless of whether the entry was written by this app
- * or the Angular desktop app. Order matches `raw.attachedParts` so a row's array
- * index is stable for edit/remove.
- */
+/** Attached parts as flat rows (MPN, maker, supplier, description, quantity); order matches `raw.attachedParts`. */
 export function attachedParts(raw: Record<string, unknown>): Record<string, unknown>[] {
   const list = Array.isArray(raw.attachedParts) ? (raw.attachedParts as any[]) : [];
   return list

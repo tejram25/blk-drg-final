@@ -416,10 +416,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     if (node) sessionRef.current?.setNode(key, node.raw);
   };
 
-  // Attach a catalogue/DW part to the SELECTED component (like the desktop
-  // "attach part" — it becomes `attachedParts` metadata on that node, NOT a new
-  // canvas node). Attaching to a component keeps mobile and web in lock-step in a
-  // shared session; it never spawns floating part cards.
+  // Attach a part to the selected component as `attachedParts` metadata.
   const onAttach = (part: Part, quantity = 1) => {
     if (!selected) return false;
     const g = graphRef.current;
@@ -435,10 +432,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     return true;
   };
 
-  // Part search / Design-Win picks. A component must be selected first — exactly
-  // like the desktop app ("Select a block to attach a part"). This is what keeps
-  // parts attached to components instead of piling up as duplicate nodes that
-  // replicate across a collab session.
+  // Part-search pick: requires a selected component, then attaches (like the desktop).
   const onPickPart = (part: Part, quantity = 1) => {
     if (!selected) {
       Alert.alert('Select a component', 'Tap a component on the canvas first, then add the part to attach it.');
@@ -447,10 +441,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     onAttach(part, quantity);
   };
 
-  // Design-Win part pick: if a component is selected, attach to it; otherwise
-  // drop the part onto the canvas as its own node — the desktop "add to canvas"
-  // behaviour — so it's linked to the diagram. Cascades to the right of existing
-  // content so repeated adds don't pile on one spot.
+  // Design-Win pick: attach to the selected component, else drop it as a part node on the canvas.
   const onPickDwPart = (part: Part, quantity = 1) => {
     if (selected) {
       onAttach(part, quantity);
@@ -869,10 +860,8 @@ function nodeHasDetails(node: DiagramNode): boolean {
   );
 }
 
-// Touch equivalent of the web parts dock: a card listing the selected node's
-// attached parts with per-part quantity steppers, remove, and an "Add part"
-// action — mirroring the Angular BOM/parts panel. Also shows AI-linked
-// components and the node value.
+// Card for the selected node: attached parts with quantity steppers, remove and
+// "Add part", plus AI-linked components — mirrors the Angular parts panel.
 function NodeDetailsCard({
   node,
   onClose,
