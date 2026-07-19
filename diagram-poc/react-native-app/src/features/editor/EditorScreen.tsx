@@ -898,30 +898,32 @@ function NodeDetailsCard({
         </View>
 
         {parts.length ? (
-          parts.map((p: any, i) => {
-            const meta = [p.manufacturer, p.supplier].filter(Boolean).join(' · ');
-            const qty = Number(p.quantity) || 1;
-            return (
-              <View key={i} style={styles.partRow}>
-                <View style={styles.partInfo}>
-                  <Text style={styles.partMpn} numberOfLines={1}>{p.partNumber || 'Part'}</Text>
-                  {meta ? <Text style={styles.detailMeta} numberOfLines={1}>{meta}</Text> : null}
-                </View>
-                <View style={styles.qtyBox}>
-                  <Pressable style={styles.qtyBtn} hitSlop={6} onPress={() => onSetQty(i, qty - 1)}>
-                    <Text style={styles.qtyBtnText}>−</Text>
+          <ScrollView style={{ maxHeight: 150 }} showsVerticalScrollIndicator={false}>
+            {parts.map((p: any, i) => {
+              const meta = [p.manufacturer, p.supplier].filter(Boolean).join(' · ');
+              const qty = Number(p.quantity) || 1;
+              return (
+                <View key={i} style={styles.partRow}>
+                  <View style={styles.partInfo}>
+                    <Text style={styles.partMpn} numberOfLines={1}>{p.partNumber || 'Part'}</Text>
+                    {meta ? <Text style={styles.detailMeta} numberOfLines={1}>{meta}</Text> : null}
+                  </View>
+                  <View style={styles.qtyBox}>
+                    <Pressable style={styles.qtyBtn} hitSlop={6} onPress={() => onSetQty(i, qty - 1)}>
+                      <Text style={styles.qtyBtnText}>−</Text>
+                    </Pressable>
+                    <Text style={styles.qtyValue}>{qty}</Text>
+                    <Pressable style={styles.qtyBtn} hitSlop={6} onPress={() => onSetQty(i, qty + 1)}>
+                      <Text style={styles.qtyBtnText}>+</Text>
+                    </Pressable>
+                  </View>
+                  <Pressable hitSlop={8} onPress={() => onRemove(i)} style={styles.partRemove}>
+                    <Text style={styles.partRemoveText}>✕</Text>
                   </Pressable>
-                  <Text style={styles.qtyValue}>{qty}</Text>
-                  <Pressable style={styles.qtyBtn} hitSlop={6} onPress={() => onSetQty(i, qty + 1)}>
-                    <Text style={styles.qtyBtnText}>+</Text>
-                  </Pressable>
                 </View>
-                <Pressable hitSlop={8} onPress={() => onRemove(i)} style={styles.partRemove}>
-                  <Text style={styles.partRemoveText}>✕</Text>
-                </Pressable>
-              </View>
-            );
-          })
+              );
+            })}
+          </ScrollView>
         ) : (
           <Text style={styles.detailMeta}>No parts yet — tap “+ Add part”.</Text>
         )}
@@ -1133,8 +1135,8 @@ const styles = StyleSheet.create({
   langRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13 },
   langLabel: { fontSize: 16, color: colors.text },
   langCheck: { color: colors.primary, fontSize: 16, fontWeight: '800' },
-  detailCard: { position: 'absolute', top: 10, left: 10, right: 10, alignItems: 'flex-start' },
-  detailInner: { width: '100%', backgroundColor: colors.surfaceAlt, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, ...shadow(3) },
+  detailCard: { position: 'absolute', top: 10, left: 10, right: 10, alignItems: 'flex-start', zIndex: 30, elevation: 12 },
+  detailInner: { width: '100%', maxHeight: 240, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, ...shadow(3) },
   detailHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   detailTitle: { flex: 1, color: colors.text, fontSize: 13, fontWeight: '700' },
   detailValue: { color: colors.subtext, fontWeight: '500' },

@@ -124,13 +124,15 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       go.Node,
       'Vertical',
       nodeBase,
-      { isShadowed: false },
+      // Anchor the saved position to the symbol BODY (like the desktop), so the
+      // label below doesn't offset where the symbol lands on the grid.
+      { isShadowed: false, locationObjectName: 'BODY' },
       loc,
       $(
         go.Panel,
         'Spot',
         portsBind,
-        { itemTemplate: portItem },
+        { name: 'BODY', itemTemplate: portItem },
         $(
           go.Picture,
           { ...port, imageStretch: go.GraphObject.Fill },
@@ -265,12 +267,13 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       go.Node,
       'Vertical',
       nodeBase,
+      { locationObjectName: 'BODY' },
       loc,
       $(
         go.Panel,
         'Spot',
         portsBind,
-        { itemTemplate: portItem },
+        { name: 'BODY', itemTemplate: portItem },
         $(
           go.Picture,
           { ...port, imageStretch: go.GraphObject.Fill },

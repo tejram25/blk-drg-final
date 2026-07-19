@@ -8,8 +8,10 @@ import { ELECTRICAL_SYMBOLS, SymbolDef } from './symbols';
  * ones where they exist, otherwise custom figure generators registered here.
  */
 
-// Dark slate stroke — symbols render on the light (arrow.com-style) canvas.
-const STROKE = '#2F3A45';
+// Symbol stroke + muted text on the light canvas — exactly matching the Angular
+// desktop editor (STROKE_ON_LIGHT / MUTED in its gojs-symbols.ts).
+const STROKE = '#334155';
+const MUTED = '#94a3b8';
 
 function symbolInnerSvg(def: SymbolDef): string {
   const paths = def.paths
@@ -22,9 +24,9 @@ function symbolInnerSvg(def: SymbolDef): string {
   const texts = (def.texts ?? [])
     .map(
       (t) =>
-        `<text x="${t.x}" y="${t.y}" font-size="${t.size ?? 8}" fill="${STROKE}" ` +
-        `text-anchor="${t.anchor ?? 'middle'}" font-weight="${t.bold ? '700' : '400'}" ` +
-        `font-family="Arial, sans-serif">${escapeXml(t.text)}</text>`,
+        `<text x="${t.x}" y="${t.y}" font-size="${t.size ?? 8}" ` +
+        `font-weight="${t.bold ? '700' : '400'}" fill="${t.bold ? STROKE : MUTED}" ` +
+        `text-anchor="${t.anchor ?? 'middle'}" font-family="Roboto, sans-serif">${escapeXml(t.text)}</text>`,
     )
     .join('');
   return paths + texts;
