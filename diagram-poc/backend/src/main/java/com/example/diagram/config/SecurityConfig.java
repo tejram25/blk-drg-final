@@ -93,7 +93,7 @@ public class SecurityConfig {
      * where the browser sends that Origin header even on same-origin POSTs and the
      * backend can't detect same-origin behind the proxy) works out of the box.
      * Override with APP_CORS_ALLOWED_ORIGINS for other hosts. */
-    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:4300,https://*.arrow.com}")
+    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:4300,http://localhost:8081,http://localhost:19006,https://*.arrow.com}")
     private String allowedOrigins;
 
     /**
