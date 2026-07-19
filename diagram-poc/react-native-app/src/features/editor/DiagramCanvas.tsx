@@ -174,6 +174,11 @@ function svgPath(pts: Vec[], corner: number): string {
   return d;
 }
 
+/** Native has no GoJS rasteriser; the editor falls back to JSON-only export. */
+export function captureDiagramImage(): string | null {
+  return null;
+}
+
 export default function DiagramCanvas({
   graph,
   selectedKey,

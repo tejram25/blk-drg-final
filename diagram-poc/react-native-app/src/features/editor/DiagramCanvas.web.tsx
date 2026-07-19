@@ -30,6 +30,15 @@ const $ = go.GraphObject.make;
 const LICENSE = process.env.EXPO_PUBLIC_GOJS_LICENSE;
 if (LICENSE) (go as unknown as { Diagram: { licenseKey: string } }).Diagram.licenseKey = LICENSE;
 
+// The mounted diagram, so the editor's Export can rasterise it (web only).
+let liveDiagram: go.Diagram | null = null;
+
+/** PNG data-URL of the whole diagram, or null if none is mounted. */
+export function captureDiagramImage(): string | null {
+  if (!liveDiagram) return null;
+  return liveDiagram.makeImageData({ scale: 2, background: 'white', type: 'image/png' }) as string;
+}
+
 function buildDiagram(div: HTMLDivElement): go.Diagram {
   registerFigures();
   const dia = new go.Diagram(div, {
@@ -163,9 +172,16 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
         { ...port, strokeWidth: 1.8, stroke: '#475569' },
         new go.Binding('figure', 'shape', (s: string) => SHAPE_FIGURE[s] ?? 'RoundedRectangle'),
         new go.Binding('fill', 'color', (c: string) => c || '#e2e8f0'),
+        new go.Binding('stroke', 'stroke', (s: string) => s || '#475569'),
         new go.Binding('desiredSize', 'size', go.Size.parse),
       ),
-      $(go.TextBlock, { font: '600 13px Inter, sans-serif', stroke: '#0f172a', textAlign: 'center' }, new go.Binding('text', '', labelText)),
+      $(
+        go.TextBlock,
+        { font: '600 13px Inter, sans-serif', stroke: '#0f172a', textAlign: 'center', maxSize: new go.Size(150, NaN) },
+        new go.Binding('text', '', labelText),
+        // Contrast label for coloured/dark fills (legacy imports), like the desktop.
+        new go.Binding('stroke', 'labelColor', (c: string) => c || '#0f172a'),
+      ),
     ),
   );
 
@@ -427,6 +443,7 @@ export default function DiagramCanvasWeb(props: Props) {
     if (!hostRef.current) return;
     const dia = buildDiagram(hostRef.current);
     diaRef.current = dia;
+    liveDiagram = dia;
 
     dia.addDiagramListener('ChangedSelection', () => {
       if (applyingRef.current) return;
@@ -468,6 +485,7 @@ export default function DiagramCanvasWeb(props: Props) {
     });
 
     return () => {
+      if (liveDiagram === dia) liveDiagram = null;
       dia.div = null;
       diaRef.current = null;
     };

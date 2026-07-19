@@ -126,6 +126,17 @@ export const linkFromRaw = (raw: Record<string, unknown>) => parseLink(raw);
  * data (centre-based loc), mirroring the desktop app's convertX6 so the older
  * sample diagrams (Smart Microgrid, AMR Robot) load instead of coming up blank.
  */
+/** Readable label colour (dark or white) for text drawn on a `#rrggbb` fill. */
+function readableOn(hex: string): string {
+  const h = hex.replace('#', '');
+  if (h.length < 6) return '#1f2937';
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  // Perceived luminance → white text on dark fills, dark text on light fills.
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#1f2937' : '#ffffff';
+}
+
 function convertLegacy(cells: any[]): { nodeDataArray: any[]; linkDataArray: any[] } {
   const nodeDataArray: any[] = [];
   const linkDataArray: any[] = [];
@@ -159,8 +170,9 @@ function convertLegacy(cells: any[]): { nodeDataArray: any[]; linkDataArray: any
         ports: def.pins.map((p, i) => ({ portId: `p${i}`, spot: `${p.x / def.width} ${p.y / def.height}` })) });
     } else if (shape.startsWith('basic-')) {
       const fill = a.body?.fill ?? a.rect?.fill;
+      const color = fill && fill !== 'none' ? fill : '#e2e8f0';
       nodeDataArray.push({ key, category: 'shape', shape, loc, size: sizeStr, text: label,
-        color: fill && fill !== 'none' ? fill : '#e2e8f0' });
+        color, labelColor: readableOn(color) });
     } else if (shape.startsWith('anim-')) {
       // Animated component (solar, turbine, robot arm, …) → keep the shape so the
       // canvas renders the detailed animated glyph, matching the desktop editor.
@@ -171,7 +183,7 @@ function convertLegacy(cells: any[]): { nodeDataArray: any[]; linkDataArray: any
       const fill = body.fill && body.fill !== 'none' ? body.fill : null;
       if (fill) {
         nodeDataArray.push({ key, category: 'shape', shape: (body.rx ?? 0) > 0 ? 'basic-rounded' : 'basic-rectangle',
-          loc, size: sizeStr, text: label, color: fill });
+          loc, size: sizeStr, text: label, color: fill, labelColor: readableOn(fill) });
       } else {
         nodeDataArray.push({ key, category: 'block', loc, size: sizeStr,
           text: label || shape || 'Node', color: '#64748b', subtitle: 'Imported' });

@@ -32,6 +32,7 @@ import SessionChatSheet from '../collab/SessionChatSheet';
 import { BlockType } from './catalogApi';
 import DiagramCanvas from './DiagramCanvas';
 import EdgeStyleSheet from './EdgeStyleSheet';
+import ExportModal from './ExportModal';
 import {
   addLink,
   addNode,
@@ -96,6 +97,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     | 'templates'
     | 'image'
     | 'lang'
+    | 'export'
   >(null);
   const [partSeed, setPartSeed] = useState('');
   const [docLoaded, setDocLoaded] = useState(false);
@@ -714,6 +716,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
                 onPress={() => { setMenuOpen(false); setPanel('lifecycle'); }}
               />
               <MenuRow icon="receipt" label={t('menu.bom')} onPress={() => { setMenuOpen(false); setPanel('bom'); }} />
+              <MenuRow icon="download" label={t('menu.export')} onPress={() => { setMenuOpen(false); setPanel('export'); }} />
 
               <MenuHeader>{t('hdr.collab')}</MenuHeader>
               <MenuRow icon="chatbubbles" label={t('menu.comments')} onPress={() => { setMenuOpen(false); setPanel('comments'); }} />
@@ -764,6 +767,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         onUnlink={unlinkComp}
       />
       <BomModal visible={panel === 'bom'} onClose={() => setPanel(null)} graph={graph} name={name} />
+      <ExportModal visible={panel === 'export'} onClose={() => setPanel(null)} name={name} getJson={serialize} />
       <TemplatesModal
         visible={panel === 'templates'}
         onClose={() => setPanel(null)}
