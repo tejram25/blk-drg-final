@@ -441,6 +441,7 @@ export default function DiagramCanvasWeb(props: Props) {
   const propsRef = useRef(props);
   propsRef.current = props;
   const applyingRef = useRef(false);
+  const prevKeysRef = useRef({ nodes: '', links: '' });
 
   // Init once.
   useEffect(() => {
@@ -474,6 +475,26 @@ export default function DiagramCanvasWeb(props: Props) {
         p.onNodeMove(String(n.data.key), Math.round(loc.x), Math.round(loc.y));
       }
     });
+
+    // Stream node positions live DURING a drag (throttled ~20/s), so a
+    // collaborator sees smooth movement instead of a jump on drop — matching the
+    // native canvas. GoJS has no per-frame move event, so hook the drag tool.
+    const dragTool = dia.toolManager.draggingTool;
+    const baseMove = dragTool.doMouseMove;
+    let liveTs = 0;
+    dragTool.doMouseMove = function () {
+      baseMove.call(dragTool);
+      const now = Date.now();
+      if (now - liveTs < 50) return;
+      liveTs = now;
+      const p = propsRef.current;
+      dia.selection.each((part) => {
+        if (part instanceof go.Node) {
+          const loc = part.location;
+          p.onNodeMoveLive?.(String(part.data.key), Math.round(loc.x), Math.round(loc.y));
+        }
+      });
+    };
 
     dia.addDiagramListener('LinkDrawn', (e) => {
       const link = e.subject as go.Link;
@@ -512,22 +533,54 @@ export default function DiagramCanvasWeb(props: Props) {
       from: l.from,
       to: l.to,
     }));
+
+    // When only node/link DATA changed (a move, a part attach, a wire restyle —
+    // same set of keys), patch the existing model in place instead of rebuilding
+    // it. That keeps live remote drags smooth and preserves the selection/viewport.
+    const nodeKeys = nodeData.map((n) => n.key).join(',');
+    const linkKeys = linkData.map((l) => l.key).join(',');
+    const structureSame =
+      dia.model.nodeDataArray.length > 0 &&
+      nodeKeys === prevKeysRef.current.nodes &&
+      linkKeys === prevKeysRef.current.links;
+    prevKeysRef.current = { nodes: nodeKeys, links: linkKeys };
+
     applyingRef.current = true;
-    const vpPos = dia.position.copy();
-    const vpScale = dia.scale;
-    const hadContent = dia.model.nodeDataArray.length > 0;
-    dia.model = new go.GraphLinksModel({
-      linkKeyProperty: 'key',
-      linkFromPortIdProperty: 'fromPort',
-      linkToPortIdProperty: 'toPort',
-      nodeDataArray: nodeData,
-      linkDataArray: linkData,
-    });
-    if (hadContent) {
-      dia.position = vpPos;
-      dia.scale = vpScale;
+    if (structureSame) {
+      const m = dia.model as go.GraphLinksModel;
+      m.startTransaction('sync');
+      for (const nd of nodeData) {
+        const cur = m.findNodeDataForKey(nd.key) as Record<string, unknown> | null;
+        if (!cur) continue;
+        for (const k of Object.keys(nd)) {
+          if ((cur as any)[k] !== (nd as any)[k]) m.setDataProperty(cur, k, (nd as any)[k]);
+        }
+      }
+      for (const ld of linkData) {
+        const cur = m.findLinkDataForKey(ld.key) as Record<string, unknown> | null;
+        if (!cur) continue;
+        for (const k of Object.keys(ld)) {
+          if ((cur as any)[k] !== (ld as any)[k]) m.setDataProperty(cur, k, (ld as any)[k]);
+        }
+      }
+      m.commitTransaction('sync');
+    } else {
+      const vpPos = dia.position.copy();
+      const vpScale = dia.scale;
+      const hadContent = dia.model.nodeDataArray.length > 0;
+      dia.model = new go.GraphLinksModel({
+        linkKeyProperty: 'key',
+        linkFromPortIdProperty: 'fromPort',
+        linkToPortIdProperty: 'toPort',
+        nodeDataArray: nodeData,
+        linkDataArray: linkData,
+      });
+      if (hadContent) {
+        dia.position = vpPos;
+        dia.scale = vpScale;
+      }
+      applySelection(dia, propsRef.current);
     }
-    applySelection(dia, propsRef.current);
     applyingRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.graph]);
@@ -541,8 +594,51 @@ export default function DiagramCanvasWeb(props: Props) {
     applyingRef.current = false;
   }, [props.selectedKey, props.selectedEdge]);
 
-  return React.createElement('div', {
-    ref: hostRef,
-    style: { flex: 1, width: '100%', height: '100%', minHeight: 300, background: '#F7F8F9' },
-  });
+  const zoom = (fn: (ch: go.CommandHandler) => void) => () => {
+    const dia = diaRef.current;
+    if (dia) fn(dia.commandHandler);
+  };
+  const zoomBtn = (label: string, onClick: () => void) =>
+    React.createElement(
+      'button',
+      { key: label, onClick, style: ZOOM_BTN_STYLE },
+      label,
+    );
+
+  return React.createElement(
+    'div',
+    { style: { position: 'relative', flex: 1, width: '100%', height: '100%', minHeight: 300 } },
+    React.createElement('div', {
+      ref: hostRef,
+      style: { position: 'absolute', inset: 0, background: '#F7F8F9' },
+    }),
+    React.createElement(
+      'div',
+      { style: ZOOM_DOCK_STYLE },
+      zoomBtn('+', zoom((ch) => ch.increaseZoom())),
+      zoomBtn('−', zoom((ch) => ch.decreaseZoom())),
+      zoomBtn('⇲', zoom((ch) => ch.zoomToFit())),
+    ),
+  );
 }
+
+const ZOOM_DOCK_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  right: 12,
+  bottom: 12,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 8,
+};
+const ZOOM_BTN_STYLE: React.CSSProperties = {
+  width: 44,
+  height: 44,
+  borderRadius: 22,
+  background: '#0B0D0F',
+  color: '#FFFFFF',
+  border: '1px solid #2A2F35',
+  fontSize: 22,
+  lineHeight: '22px',
+  cursor: 'pointer',
+  boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+};
