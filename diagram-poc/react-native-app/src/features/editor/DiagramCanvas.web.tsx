@@ -188,6 +188,74 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     ),
   );
 
+  // Catalogue part → white card with a coloured accent bar, bold MPN, supplier
+  // line and spec rows — matches the Angular desktop `part` node template.
+  dia.nodeTemplateMap.add(
+    'part',
+    $(
+      go.Node,
+      'Spot',
+      nodeBase,
+      loc,
+      portsBind,
+      { itemTemplate: portItem },
+      $(
+        go.Panel,
+        'Auto',
+        $(
+          go.Shape,
+          'RoundedRectangle',
+          { ...port, parameter1: 10, fill: '#ffffff', stroke: '#D2D6DC', strokeWidth: 1.5 },
+          new go.Binding('desiredSize', 'size', go.Size.parse),
+        ),
+        $(
+          go.Panel,
+          'Table',
+          { margin: 12, minSize: new go.Size(200, 0), stretch: go.GraphObject.Fill },
+          $(go.RowColumnDefinition, { column: 0, stretch: go.GraphObject.Horizontal }),
+          $(go.Shape, 'Rectangle', {
+            row: 0,
+            column: 0,
+            columnSpan: 2,
+            height: 4,
+            strokeWidth: 0,
+            fill: '#0084D5',
+            stretch: go.GraphObject.Horizontal,
+            margin: new go.Margin(0, 0, 6, 0),
+          }),
+          $(
+            go.TextBlock,
+            { row: 1, column: 0, font: '700 13px Inter, sans-serif', stroke: '#111827', alignment: go.Spot.Left },
+            new go.Binding('text'),
+          ),
+          $(
+            go.TextBlock,
+            { row: 2, column: 0, font: '10.5px Inter, sans-serif', stroke: '#6B7280', alignment: go.Spot.Left },
+            new go.Binding('text', 'supplier'),
+          ),
+          $(
+            go.Panel,
+            'Vertical',
+            { row: 3, column: 0, columnSpan: 2, alignment: go.Spot.Left, margin: new go.Margin(4, 0, 0, 0) },
+            new go.Binding('itemArray', 'specs'),
+            {
+              itemTemplate: $(
+                go.Panel,
+                'Auto',
+                { alignment: go.Spot.Left },
+                $(
+                  go.TextBlock,
+                  { font: '10.5px Inter, sans-serif', stroke: '#374151', alignment: go.Spot.Left },
+                  new go.Binding('text', ''),
+                ),
+              ),
+            },
+          ),
+        ),
+      ),
+    ),
+  );
+
   // Animated component → detailed animated glyph for the 20+ ported shapes
   // (solar, turbine, robot arm, …), else a compact coloured glyph fallback.
   // The Picture's source is a baked SVG frame refreshed by an animation timer

@@ -594,6 +594,51 @@ const zoomStyles = StyleSheet.create({
 });
 
 const NodeShape = React.memo(function NodeShape({ node, selected }: { node: DiagramNode; selected: boolean }) {
+  // Catalogue "part" card — mirrors the Angular part node template: a white
+  // rounded card with a coloured accent bar, bold MPN, supplier line and specs.
+  if (node.category === 'part') {
+    const raw = node.raw as any;
+    const specs: string[] = Array.isArray(raw.specs) ? raw.specs.filter((s: unknown) => typeof s === 'string' && s) : [];
+    const supplier = typeof raw.supplier === 'string' ? raw.supplier : '';
+    const padX = 14;
+    return (
+      <>
+        <Rect
+          x={node.x}
+          y={node.y}
+          width={node.w}
+          height={node.h}
+          rx={10}
+          fill="#ffffff"
+          stroke={selected ? colors.primary : '#D2D6DC'}
+          strokeWidth={selected ? 2.5 : 1.5}
+        />
+        {/* accent bar */}
+        <Rect x={node.x + padX} y={node.y + 12} width={node.w - padX * 2} height={4} rx={2} fill={colors.primary} />
+        <SvgText x={node.x + padX} y={node.y + 36} fill="#111827" fontSize={13} fontWeight="700" textAnchor="start">
+          {node.text.length > 26 ? node.text.slice(0, 25) + '…' : node.text}
+        </SvgText>
+        {supplier ? (
+          <SvgText x={node.x + padX} y={node.y + 52} fill="#6B7280" fontSize={10.5} textAnchor="start">
+            {supplier.length > 32 ? supplier.slice(0, 31) + '…' : supplier}
+          </SvgText>
+        ) : null}
+        {specs.slice(0, node.h >= 96 ? 2 : 1).map((s, i) => (
+          <SvgText
+            key={i}
+            x={node.x + padX}
+            y={node.y + 70 + i * 15}
+            fill="#374151"
+            fontSize={10.5}
+            textAnchor="start"
+          >
+            {s.length > 34 ? s.slice(0, 33) + '…' : s}
+          </SvgText>
+        ))}
+      </>
+    );
+  }
+
   // Basic geometric shapes (rectangle, diamond, cylinder, …).
   if (isBasicShape(node.shape)) {
     const fill = node.color ?? '#ffffff';

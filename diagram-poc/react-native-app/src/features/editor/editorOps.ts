@@ -78,6 +78,45 @@ export function addNode(
   };
 }
 
+/**
+ * Add a catalogue part as its own canvas node — the desktop "add to canvas"
+ * card. Uses the SAME `category: 'part'` data shape the Angular editor builds
+ * (`text`, `supplier`, `specs`, `part`, `quantity`), so it renders as the white
+ * part card (blue accent bar, MPN, supplier, specs) on both apps and round-trips
+ * through a shared collab session.
+ */
+export function addPartNode(
+  g: DiagramGraph,
+  part: { partNumber: string; manufacturer: string; supplier?: string; description?: string },
+  x: number,
+  y: number,
+  quantity = 1,
+): { graph: DiagramGraph; key: string } {
+  const key = newKey(g);
+  const specs = [part.manufacturer, part.description].filter(Boolean);
+  const raw: Record<string, unknown> = {
+    key,
+    category: 'part',
+    text: part.partNumber,
+    supplier: part.supplier || part.manufacturer || '',
+    specs,
+    partNumber: part.partNumber,
+    quantity,
+    part: {
+      arwPartNum: { name: part.partNumber },
+      suppPartNum: { name: part.partNumber },
+      mfr: { name: part.manufacturer },
+      partNumber: part.partNumber,
+      manufacturer: part.manufacturer,
+      supplier: part.supplier ?? '',
+      partDesc: part.description ?? '',
+    },
+    size: '224 96',
+    loc: `${x} ${y}`,
+  };
+  return { graph: { ...g, nodes: [...g.nodes, nodeFromRaw(raw)] }, key };
+}
+
 /** Connect two nodes (schematic wire between two symbols, else a connector). */
 export function addLink(g: DiagramGraph, fromKey: string, toKey: string, fromPort = '', toPort = ''): DiagramGraph {
   if (fromKey === toKey) return g;

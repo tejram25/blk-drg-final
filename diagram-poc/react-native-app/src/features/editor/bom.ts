@@ -33,6 +33,17 @@ export function buildBom(g: DiagramGraph): BomRow[] {
   };
 
   for (const n of g.nodes) {
+    // A standalone catalogue part node counts as one BOM line (its own quantity).
+    if (n.category === 'part') {
+      const p = (n.raw.part ?? {}) as any;
+      add({
+        partNumber: (n.raw.partNumber as string) || p.partNumber || p.arwPartNum?.name || n.text || '',
+        manufacturer: p.manufacturer || p.mfr?.name || '',
+        supplier: (n.raw.supplier as string) || p.supplier || '',
+        description: p.partDesc || p.description || '',
+        quantity: num(n.raw.quantity ?? p.quantity ?? 1, 1),
+      });
+    }
     for (const p of attachedParts(n.raw)) {
       const a = p as any;
       add({

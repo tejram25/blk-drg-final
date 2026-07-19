@@ -35,6 +35,7 @@ import EdgeStyleSheet from './EdgeStyleSheet';
 import {
   addLink,
   addNode,
+  addPartNode,
   attachedParts,
   attachPart,
   deleteLink,
@@ -458,18 +459,10 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     const g = graphRef.current;
     if (!g) return;
     const b = contentBounds(g);
-    const block: BlockType = {
-      key: `part-${part.partNumber}`,
-      label: part.partNumber,
-      category: part.manufacturer || 'Part',
-      color: '#f59e0b',
-      icon: 'memory',
-    };
-    const { graph: ng, key } = addNode(g, block, b.x + b.w + 80, b.y + 40);
-    const ng2 = attachPart(ng, key, part, quantity);
-    commit(ng2);
+    const { graph: ng, key } = addPartNode(g, part, b.x + b.w + 80, b.y + 40, quantity);
+    commit(ng);
     setSelected(key);
-    syncNode(ng2, key);
+    syncNode(ng, key);
   };
 
   // Quantity + removal for an attached part (index into the node's list).
