@@ -44,4 +44,6 @@ export const API_PREFIX = '/api';
 export const COLLAB_WS_URL =
   process.env.EXPO_PUBLIC_COLLAB_WS_URL ?? (host ? `ws://${host}:1234` : 'ws://localhost:1234');
 
-export const apiRoot = `${API_BASE_URL}${API_PREFIX}`;
+// EXPO_PUBLIC_API_ROOT (when set) is used verbatim, so a reverse-proxy path like
+// `https://host/diagram-api` maps straight to the backend without appending /api.
+export const apiRoot = process.env.EXPO_PUBLIC_API_ROOT ?? `${API_BASE_URL}${API_PREFIX}`;

@@ -1,38 +1,48 @@
 # Deploying the app
 
-## Web (your existing VM drag-and-drop flow)
+## Web — same drag-and-drop flow as Angular (Apache htdocs)
 
-The Expo app exports a static web build — the same kind of `dist/` folder as the
-Angular app. From `diagram-poc/react-native-app`:
+The Expo app exports a static web build — the same kind of `dist/` folder the
+Angular build drops into Apache `htdocs`. It reuses the Angular deployment's
+**same origin, same reverse-proxy paths and the same collab server** — nothing
+new to stand up on the VM.
+
+Angular deploy (for reference):
+`.../frontend/dist/diagram-builder-frontend/browser/` → `htdocs/diagram-builder-frontend/`
+→ `https://usdendrh5070.arrow.com/diagram-builder-frontend/`
+
+React deploy (mirror it under a sibling folder, e.g. `diagram-builder-mobile`):
 
 ```bash
+cd diagram-poc/react-native-app
 npm ci
-EXPO_PUBLIC_API_URL=https://<vm-host-or-ip>:8080 \
+EXPO_BASE_URL=/diagram-builder-mobile \
+EXPO_PUBLIC_API_ROOT=https://usdendrh5070.arrow.com/diagram-api \
+EXPO_PUBLIC_COLLAB_WS_URL=wss://usdendrh5070.arrow.com/diagram-collab \
 EXPO_PUBLIC_GOJS_LICENSE=<your-gojs-key> \
 npx expo export --platform web
 ```
 
-Then drag the **contents of `dist/`** to your VM's deploy location, exactly like
-the Angular build. Done.
+Then drag the **contents of `dist/`** into
+`/b001/app/apache_http_dev/htdocs/diagram-builder-mobile/`, exactly like the
+Angular `browser/` contents. Open `https://usdendrh5070.arrow.com/diagram-builder-mobile/`.
 
-Things that matter:
+Why each variable:
 
-- **`EXPO_PUBLIC_API_URL` is baked in at export time.** It must be the backend
-  URL that *users' browsers* can reach (the VM's hostname/IP, not `localhost`).
-  Changing it means re-exporting.
-- **CORS**: the backend only accepts browser calls from allow-listed origins.
-  Add the deployed site's origin on the backend host:
-  `APP_CORS_ALLOWED_ORIGINS=https://<site-origin>,http://localhost:4200 …`
-  (If you reverse-proxy `/api` to the backend on the same origin, CORS never
-  triggers and you can set `EXPO_PUBLIC_API_URL` to the site's own origin.)
-- **Session cookie**: same-site setups work as-is. If the site is served from a
-  different origin than the API over HTTPS, set the backend cookie to
-  `SameSite=None; Secure` (see `server.servlet.session.cookie.*` in
-  `application.properties`).
-- **GoJS license**: without `EXPO_PUBLIC_GOJS_LICENSE` the canvas shows the
+- **`EXPO_BASE_URL=/diagram-builder-mobile`** — the sub-path the site is served
+  from, so every asset URL is prefixed correctly (equivalent to Angular's
+  `--base-href`). It MUST match the htdocs folder name. Baked at export time.
+- **`EXPO_PUBLIC_API_ROOT`** — reuses the **existing** Apache proxy the Angular
+  app already relies on (`/diagram-api` → backend `/api`). Same origin ⇒ the
+  auth session cookie stays first-party and there's no CORS to configure.
+- **`EXPO_PUBLIC_COLLAB_WS_URL`** — the **same** collab endpoint Angular uses
+  (`/diagram-collab` → the `HOST=127.0.0.1 PORT=1234` y-websocket). Web + phones
+  join the identical `gojs-<diagramId>` rooms, so they co-edit together.
+- **GoJS license** — without `EXPO_PUBLIC_GOJS_LICENSE` the canvas shows the
   evaluation watermark.
-- Optional collaboration: `EXPO_PUBLIC_COLLAB_WS_URL=wss://<host>:1234` if the
-  y-websocket server runs on the VM.
+
+No Apache change is needed if `/diagram-api` and `/diagram-collab` already proxy
+for the Angular app — the React site rides on both.
 
 ## Collaboration — ONE shared relay for web + mobile
 
