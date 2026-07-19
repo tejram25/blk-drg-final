@@ -33,6 +33,7 @@ import { BlockType } from './catalogApi';
 import DiagramCanvas from './DiagramCanvas';
 import EdgeStyleSheet from './EdgeStyleSheet';
 import ExportModal from './ExportModal';
+import ImportModal from './ImportModal';
 import {
   addLink,
   addNode,
@@ -98,6 +99,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     | 'image'
     | 'lang'
     | 'export'
+    | 'import'
   >(null);
   const [partSeed, setPartSeed] = useState('');
   const [docLoaded, setDocLoaded] = useState(false);
@@ -518,6 +520,21 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     syncLive(ng);
   };
 
+  // Replace the canvas with a pasted/loaded GoJS model (or legacy X6 cells) —
+  // e.g. a diagram exported from the desktop app, to compare rendering.
+  const importJson = (jsonText: string) => {
+    try {
+      const g = parseModel(jsonText);
+      if (!g.nodes.length && !g.links.length) throw new Error('No diagram nodes found in that JSON.');
+      commit(g);
+      setSelected(null);
+      setSelectedEdge(null);
+      syncLive(g);
+    } catch (e) {
+      Alert.alert('Import failed', (e as Error)?.message || 'Could not parse that JSON.');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <StatusBar style="light" />
@@ -717,6 +734,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
               />
               <MenuRow icon="receipt" label={t('menu.bom')} onPress={() => { setMenuOpen(false); setPanel('bom'); }} />
               <MenuRow icon="download" label={t('menu.export')} onPress={() => { setMenuOpen(false); setPanel('export'); }} />
+              <MenuRow icon="cloud-upload" label={t('menu.import')} onPress={() => { setMenuOpen(false); setPanel('import'); }} />
 
               <MenuHeader>{t('hdr.collab')}</MenuHeader>
               <MenuRow icon="chatbubbles" label={t('menu.comments')} onPress={() => { setMenuOpen(false); setPanel('comments'); }} />
@@ -768,6 +786,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       />
       <BomModal visible={panel === 'bom'} onClose={() => setPanel(null)} graph={graph} name={name} />
       <ExportModal visible={panel === 'export'} onClose={() => setPanel(null)} name={name} getJson={serialize} />
+      <ImportModal visible={panel === 'import'} onClose={() => setPanel(null)} onImport={importJson} />
       <TemplatesModal
         visible={panel === 'templates'}
         onClose={() => setPanel(null)}
