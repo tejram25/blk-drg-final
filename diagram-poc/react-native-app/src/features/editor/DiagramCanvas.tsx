@@ -54,9 +54,11 @@ type Vec = { x: number; y: number };
 
 // How far a wire runs straight out of a port before it's allowed to turn — the
 // "stub" that makes GoJS orthogonal routes leave a component perpendicular to
-// its edge instead of cutting diagonally across it.
-const STUB = 16;
-// Corner rounding, matching the desktop editor's GoJS `corner: 8`.
+// its edge instead of cutting diagonally across it. Matches GoJS's default
+// endSegmentLength (10).
+const STUB = 10;
+// Corner rounding for non-wire links, matching the desktop editor's GoJS
+// `corner: 8`. Wires there use `corner: 0` (sharp), so we round only non-wires.
 const CORNER = 8;
 
 // The side a port exits from — its nearest edge as a unit direction, mirroring
@@ -108,8 +110,10 @@ function simplify(pts: Vec[]): Vec[] {
 }
 
 // A Manhattan route between two ports that leaves each one perpendicular to its
-// edge (the `STUB`), then joins the stubs with a single orthogonal jog/corner —
-// the clean orthogonal look the GoJS desktop/web canvas produces.
+// edge (the `STUB`), then joins the stubs orthogonally — the clean look GoJS's
+// `Orthogonal` router produces. Crucially it never doubles back over a stub
+// (which would draw a little loop at the port); when a port faces away from its
+// target it routes AROUND, exactly like GoJS.
 function orthoRoute(p1: Vec, d1: Vec, p2: Vec, d2: Vec): Vec[] {
   const a = { x: p1.x + d1.x * STUB, y: p1.y + d1.y * STUB };
   const b = { x: p2.x + d2.x * STUB, y: p2.y + d2.y * STUB };
@@ -117,24 +121,58 @@ function orthoRoute(p1: Vec, d1: Vec, p2: Vec, d2: Vec): Vec[] {
   const h2 = d2.x !== 0;
   const mid: Vec[] = [];
   if (h1 && h2) {
-    const mx = (a.x + b.x) / 2;
-    mid.push({ x: mx, y: a.y }, { x: mx, y: b.y });
+    if (d1.x === d2.x) {
+      // Both exit the same horizontal way: jog past the further stub so neither
+      // segment reverses back over a port.
+      const jx = d1.x > 0 ? Math.max(a.x, b.x) : Math.min(a.x, b.x);
+      mid.push({ x: jx, y: a.y }, { x: jx, y: b.y });
+    } else {
+      // Facing each other: split the gap if the target is ahead, else the ports
+      // overlap so route around with a horizontal mid instead of backtracking.
+      const ahead = d1.x > 0 ? b.x >= a.x : b.x <= a.x;
+      if (ahead) {
+        const jx = (a.x + b.x) / 2;
+        mid.push({ x: jx, y: a.y }, { x: jx, y: b.y });
+      } else {
+        const jy = (a.y + b.y) / 2;
+        mid.push({ x: a.x, y: jy }, { x: b.x, y: jy });
+      }
+    }
   } else if (!h1 && !h2) {
-    const my = (a.y + b.y) / 2;
-    mid.push({ x: a.x, y: my }, { x: b.x, y: my });
+    if (d1.y === d2.y) {
+      const jy = d1.y > 0 ? Math.max(a.y, b.y) : Math.min(a.y, b.y);
+      mid.push({ x: a.x, y: jy }, { x: b.x, y: jy });
+    } else {
+      const ahead = d1.y > 0 ? b.y >= a.y : b.y <= a.y;
+      if (ahead) {
+        const jy = (a.y + b.y) / 2;
+        mid.push({ x: a.x, y: jy }, { x: b.x, y: jy });
+      } else {
+        const jx = (a.x + b.x) / 2;
+        mid.push({ x: jx, y: a.y }, { x: jx, y: b.y });
+      }
+    }
   } else if (h1 && !h2) {
-    mid.push({ x: b.x, y: a.y });
+    // a exits horizontally, b vertically → one corner, chosen so a's stub isn't
+    // reversed (turn vertically at a's x when the box would be behind us).
+    if (b.x === a.x || Math.sign(b.x - a.x) === d1.x) mid.push({ x: b.x, y: a.y });
+    else mid.push({ x: a.x, y: b.y });
   } else {
-    mid.push({ x: a.x, y: b.y });
+    // a exits vertically, b horizontally.
+    if (b.y === a.y || Math.sign(b.y - a.y) === d1.y) mid.push({ x: a.x, y: b.y });
+    else mid.push({ x: b.x, y: a.y });
   }
   return simplify([p1, a, ...mid, b, p2]);
 }
 
-// Build an SVG path from a polyline, rounding each interior corner (radius
-// `CORNER`, clamped to the shorter adjacent segment) — matches GoJS `corner: 8`.
-function roundedPath(pts: Vec[]): string {
+// Build an SVG path from a polyline. With `corner > 0` each interior corner is
+// rounded (radius clamped to the shorter adjacent segment) — GoJS `corner: 8`
+// for non-wire links; wires pass `corner: 0` for sharp right angles.
+function svgPath(pts: Vec[], corner: number): string {
   if (pts.length < 2) return '';
-  if (pts.length === 2) return `M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y}`;
+  if (corner <= 0 || pts.length === 2) {
+    return `M ${pts.map((p) => `${p.x} ${p.y}`).join(' L ')}`;
+  }
   let d = `M ${pts[0].x} ${pts[0].y}`;
   for (let i = 1; i < pts.length - 1; i++) {
     const p0 = pts[i - 1];
@@ -142,7 +180,7 @@ function roundedPath(pts: Vec[]): string {
     const p2 = pts[i + 1];
     const l1 = Math.hypot(p1.x - p0.x, p1.y - p0.y) || 1;
     const l2 = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1;
-    const r = Math.min(CORNER, l1 / 2, l2 / 2);
+    const r = Math.min(corner, l1 / 2, l2 / 2);
     const c1 = { x: p1.x - ((p1.x - p0.x) / l1) * r, y: p1.y - ((p1.y - p0.y) / l1) * r };
     const c2 = { x: p1.x + ((p2.x - p1.x) / l2) * r, y: p1.y + ((p2.y - p1.y) / l2) * r };
     d += ` L ${c1.x} ${c1.y} Q ${p1.x} ${p1.y} ${c2.x} ${c2.y}`;
@@ -451,7 +489,8 @@ export default function DiagramCanvas({
   // One wire's SVG element (shared by the frozen scene and the drag overlay).
   const linkElement = (l: DiagramLink, k: string, pts: { x: number; y: number }[]) => {
     if (pts.length < 2) return null;
-    const d = roundedPath(pts);
+    // Wires get sharp right angles (GoJS corner: 0); other links round at 8.
+    const d = svgPath(pts, l.isWire ? 0 : CORNER);
     const sel = selectedEdge != null && linkId(l) === selectedEdge;
     const base = l.isWire ? colors.wire : colors.canvasSubtext;
     const stroke = sel ? '#f5a623' : l.color ?? base;

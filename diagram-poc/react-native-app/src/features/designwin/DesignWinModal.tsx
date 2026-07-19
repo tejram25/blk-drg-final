@@ -78,7 +78,8 @@ export default function DesignWinModal({
     try {
       if (s === 'projects') setItems(await designwinApi.projects(c!.customerName));
       else if (s === 'boards') setItems(await designwinApi.boards(p!.projectId));
-      else if (s === 'parts') setItems(await designwinApi.custParts(p!.projectId, b!.boardNum));
+      else if (s === 'parts')
+        setItems(await designwinApi.custParts(p!.projectId, b!.boardNum, c?.customerName, c?.billTo));
     } catch (e) {
       setError((e as Error).message);
     } finally {

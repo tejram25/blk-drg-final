@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -39,9 +40,12 @@ import {
   deleteLink,
   deleteNode,
   graphPartNumbers,
+  isPartAttached,
   linkComponent,
   linkedComponents,
   primaryPartNumber,
+  removeAttachedPart,
+  setAttachedQty,
   styleLink,
   unlinkComponent,
   WireStyle,
@@ -405,19 +409,48 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
     setSelected(null);
   };
 
-  const onAttach = (part: Part, quantity = 1) => {
-    if (!selected) return;
-    const g = graphRef.current;
-    if (!g) return;
-    const ng = attachPart(g, selected, part, quantity);
-    commit(ng);
-    const node = ng.nodes.find((n) => n.key === selected);
-    if (node) sessionRef.current?.setNode(selected, node.raw);
+  // Sync a single node's data into the shared collab room after an edit.
+  const syncNode = (g: DiagramGraph, key: string) => {
+    const node = g.nodes.find((n) => n.key === key);
+    if (node) sessionRef.current?.setNode(key, node.raw);
   };
 
-  // Part search picks: attach to the selected node, else drop a part card on the
-  // canvas (like the desktop app), so search works without a prior selection.
+  // Attach a catalogue/DW part to the SELECTED component (like the desktop
+  // "attach part" — it becomes `attachedParts` metadata on that node, NOT a new
+  // canvas node). Attaching to a component keeps mobile and web in lock-step in a
+  // shared session; it never spawns floating part cards.
+  const onAttach = (part: Part, quantity = 1) => {
+    if (!selected) return false;
+    const g = graphRef.current;
+    if (!g) return false;
+    const node = g.nodes.find((n) => n.key === selected);
+    if (node && isPartAttached(node.raw, part.partNumber)) {
+      Alert.alert('Already attached', `${part.partNumber} is already on "${node.text || 'this block'}".`);
+      return false;
+    }
+    const ng = attachPart(g, selected, part, quantity);
+    commit(ng);
+    syncNode(ng, selected);
+    return true;
+  };
+
+  // Part search / Design-Win picks. A component must be selected first — exactly
+  // like the desktop app ("Select a block to attach a part"). This is what keeps
+  // parts attached to components instead of piling up as duplicate nodes that
+  // replicate across a collab session.
   const onPickPart = (part: Part, quantity = 1) => {
+    if (!selected) {
+      Alert.alert('Select a component', 'Tap a component on the canvas first, then add the part to attach it.');
+      return;
+    }
+    onAttach(part, quantity);
+  };
+
+  // Design-Win part pick: if a component is selected, attach to it; otherwise
+  // drop the part onto the canvas as its own node — the desktop "add to canvas"
+  // behaviour — so it's linked to the diagram. Cascades to the right of existing
+  // content so repeated adds don't pile on one spot.
+  const onPickDwPart = (part: Part, quantity = 1) => {
     if (selected) {
       onAttach(part, quantity);
       return;
@@ -432,12 +465,29 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
       color: '#f59e0b',
       icon: 'memory',
     };
-    const { graph: ng, key } = addNode(g, block, b.x + b.w / 2, b.y + b.h / 2);
+    const { graph: ng, key } = addNode(g, block, b.x + b.w + 80, b.y + 40);
     const ng2 = attachPart(ng, key, part, quantity);
     commit(ng2);
     setSelected(key);
-    const node = ng2.nodes.find((n) => n.key === key);
-    if (node) sessionRef.current?.setNode(key, node.raw);
+    syncNode(ng2, key);
+  };
+
+  // Quantity + removal for an attached part (index into the node's list).
+  const onSetPartQty = (index: number, qty: number) => {
+    if (!selected) return;
+    const g = graphRef.current;
+    if (!g) return;
+    const ng = setAttachedQty(g, selected, index, qty);
+    commit(ng);
+    syncNode(ng, selected);
+  };
+  const onRemovePart = (index: number) => {
+    if (!selected) return;
+    const g = graphRef.current;
+    if (!g) return;
+    const ng = removeAttachedPart(g, selected, index);
+    commit(ng);
+    syncNode(ng, selected);
   };
 
   const save = useMutation({
@@ -594,7 +644,13 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
           />
         )}
         {selectedNode && nodeHasDetails(selectedNode) ? (
-          <NodeDetailsCard node={selectedNode} onClose={() => setSelected(null)} />
+          <NodeDetailsCard
+            node={selectedNode}
+            onClose={() => setSelected(null)}
+            onSetQty={onSetPartQty}
+            onRemove={onRemovePart}
+            onAddPart={() => setPartOpen(true)}
+          />
         ) : null}
         </View>
       </View>
@@ -649,7 +705,7 @@ export default function EditorScreen({ route, navigation }: ScreenProps<'Editor'
         }}
         onPick={(p) => onPickPart(p)}
       />
-      <DesignWinModal visible={dwOpen} onClose={() => setDwOpen(false)} onPick={(p, qty) => onPickPart(p, qty)} />
+      <DesignWinModal visible={dwOpen} onClose={() => setDwOpen(false)} onPick={(p, qty) => onPickDwPart(p, qty)} />
 
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
         <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
@@ -820,10 +876,24 @@ function nodeHasDetails(node: DiagramNode): boolean {
   );
 }
 
-// Touch equivalent of the web hover tooltip: a dark card with the selected
-// node's value, attached parts and AI-linked components.
-function NodeDetailsCard({ node, onClose }: { node: DiagramNode; onClose: () => void }) {
-  const parts = Array.isArray(node.raw.attachedParts) ? (node.raw.attachedParts as any[]) : [];
+// Touch equivalent of the web parts dock: a card listing the selected node's
+// attached parts with per-part quantity steppers, remove, and an "Add part"
+// action — mirroring the Angular BOM/parts panel. Also shows AI-linked
+// components and the node value.
+function NodeDetailsCard({
+  node,
+  onClose,
+  onSetQty,
+  onRemove,
+  onAddPart,
+}: {
+  node: DiagramNode;
+  onClose: () => void;
+  onSetQty: (index: number, qty: number) => void;
+  onRemove: (index: number) => void;
+  onAddPart: () => void;
+}) {
+  const parts = attachedParts(node.raw);
   const comps = linkedComponents(node.raw);
   return (
     <View style={styles.detailCard} pointerEvents="box-none">
@@ -837,23 +907,45 @@ function NodeDetailsCard({ node, onClose }: { node: DiagramNode; onClose: () => 
             <Text style={styles.detailClose}>✕</Text>
           </Pressable>
         </View>
+
+        <View style={styles.partsHeadRow}>
+          <Text style={styles.detailSection}>{`Attached parts (${parts.length})`}</Text>
+          <Pressable style={styles.addPartBtn} onPress={onAddPart} hitSlop={6}>
+            <Text style={styles.addPartText}>+ Add part</Text>
+          </Pressable>
+        </View>
+
         {parts.length ? (
-          <>
-            <Text style={styles.detailSection}>{`Attached parts (${parts.length})`}</Text>
-            {parts.map((ap, i) => {
-              const p = ap?.part ?? ap ?? {};
-              const meta = [p.manufacturer, p.supplier].filter(Boolean).join(' · ');
-              return (
-                <Text key={i} style={styles.detailRow} numberOfLines={1}>
-                  {`• ${p.partNumber || 'Part'} (×${ap?.quantity ?? 1})`}
-                  {meta ? <Text style={styles.detailMeta}>{`  ${meta}`}</Text> : null}
-                </Text>
-              );
-            })}
-          </>
-        ) : null}
+          parts.map((p: any, i) => {
+            const meta = [p.manufacturer, p.supplier].filter(Boolean).join(' · ');
+            const qty = Number(p.quantity) || 1;
+            return (
+              <View key={i} style={styles.partRow}>
+                <View style={styles.partInfo}>
+                  <Text style={styles.partMpn} numberOfLines={1}>{p.partNumber || 'Part'}</Text>
+                  {meta ? <Text style={styles.detailMeta} numberOfLines={1}>{meta}</Text> : null}
+                </View>
+                <View style={styles.qtyBox}>
+                  <Pressable style={styles.qtyBtn} hitSlop={6} onPress={() => onSetQty(i, qty - 1)}>
+                    <Text style={styles.qtyBtnText}>−</Text>
+                  </Pressable>
+                  <Text style={styles.qtyValue}>{qty}</Text>
+                  <Pressable style={styles.qtyBtn} hitSlop={6} onPress={() => onSetQty(i, qty + 1)}>
+                    <Text style={styles.qtyBtnText}>+</Text>
+                  </Pressable>
+                </View>
+                <Pressable hitSlop={8} onPress={() => onRemove(i)} style={styles.partRemove}>
+                  <Text style={styles.partRemoveText}>✕</Text>
+                </Pressable>
+              </View>
+            );
+          })
+        ) : (
+          <Text style={styles.detailMeta}>No parts yet — tap “+ Add part”.</Text>
+        )}
+
         {comps.length ? (
-          <Text style={styles.detailRow} numberOfLines={2}>
+          <Text style={[styles.detailRow, { marginTop: 8 }]} numberOfLines={2}>
             <Text style={styles.detailSection}>AI components: </Text>
             {comps.map((c: any) => c.partNumber).filter(Boolean).join(', ')}
           </Text>
@@ -1060,12 +1152,24 @@ const styles = StyleSheet.create({
   langLabel: { fontSize: 16, color: colors.text },
   langCheck: { color: colors.primary, fontSize: 16, fontWeight: '800' },
   detailCard: { position: 'absolute', top: 10, left: 10, right: 10, alignItems: 'flex-start' },
-  detailInner: { maxWidth: '92%', backgroundColor: colors.surfaceAlt, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, ...shadow(3) },
+  detailInner: { width: '100%', backgroundColor: colors.surfaceAlt, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, ...shadow(3) },
   detailHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   detailTitle: { flex: 1, color: colors.text, fontSize: 13, fontWeight: '700' },
   detailValue: { color: colors.subtext, fontWeight: '500' },
   detailClose: { color: colors.subtext, fontSize: 14, fontWeight: '700' },
   detailSection: { color: colors.subtext, fontSize: 11, fontWeight: '700', marginTop: 6 },
   detailRow: { color: colors.text, fontSize: 11, marginTop: 3 },
-  detailMeta: { color: colors.faint },
+  detailMeta: { color: colors.faint, fontSize: 11 },
+  partsHeadRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
+  addPartBtn: { backgroundColor: colors.primarySoft, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 4 },
+  addPartText: { color: colors.primary, fontSize: 11, fontWeight: '700' },
+  partRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingTop: 6 },
+  partInfo: { flex: 1 },
+  partMpn: { color: colors.text, fontSize: 12, fontWeight: '600' },
+  qtyBox: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, overflow: 'hidden' },
+  qtyBtn: { paddingHorizontal: 9, paddingVertical: 3, backgroundColor: colors.surface },
+  qtyBtnText: { color: colors.primary, fontSize: 15, fontWeight: '800' },
+  qtyValue: { minWidth: 26, textAlign: 'center', color: colors.text, fontSize: 12, fontWeight: '700' },
+  partRemove: { paddingHorizontal: 4 },
+  partRemoveText: { color: colors.danger, fontSize: 13, fontWeight: '700' },
 });

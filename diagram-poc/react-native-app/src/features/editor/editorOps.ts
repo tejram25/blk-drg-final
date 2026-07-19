@@ -135,7 +135,28 @@ export function deleteNode(g: DiagramGraph, key: string): DiagramGraph {
   };
 }
 
-/** Attach a catalogue part to a node (web `attachedParts` shape, round-trips). */
+/**
+ * The MPN of an attached-part record's `part`, reading BOTH the desktop/Angular
+ * shape (`arwPartNum.name` / `suppPartNum.name`) and this app's flat shape
+ * (`partNumber`), so parts attached from either app resolve identically.
+ */
+export function partMpn(part: any): string {
+  return (
+    part?.arwPartNum?.name ||
+    part?.suppPartNum?.name ||
+    part?.partNumber ||
+    part?.mfrPartNum ||
+    'Part'
+  );
+}
+
+/**
+ * Attach a catalogue part to a node. Writes the SAME `attachedParts` entry shape
+ * the Angular desktop app uses — `{ part: { arwPartNum, suppPartNum, … }, quantity }`
+ * — so an attach made on mobile shows up correctly in a shared collab session on
+ * the web (and vice-versa). Attaching a part already on the node is a no-op
+ * (the desktop app blocks duplicates the same way).
+ */
 export function attachPart(
   g: DiagramGraph,
   key: string,
@@ -144,11 +165,17 @@ export function attachPart(
 ): DiagramGraph {
   const nodes = g.nodes.map((n) => {
     if (n.key !== key) return n;
-    const existing = Array.isArray(n.raw.attachedParts) ? (n.raw.attachedParts as unknown[]) : [];
+    const existing = Array.isArray(n.raw.attachedParts) ? (n.raw.attachedParts as any[]) : [];
+    if (existing.some((e) => partMpn(e?.part ?? e) === part.partNumber)) return n; // already attached
     const attachedParts = [
       ...existing,
       {
         part: {
+          // Desktop-compatible identity fields…
+          arwPartNum: { name: part.partNumber },
+          suppPartNum: { name: part.partNumber },
+          mfr: { name: part.manufacturer },
+          // …plus the flat fields this app reads directly.
           partNumber: part.partNumber,
           manufacturer: part.manufacturer,
           supplier: part.supplier ?? '',
@@ -162,14 +189,61 @@ export function attachPart(
   return { ...g, nodes };
 }
 
+/** True if a part with this MPN is already attached to the node. */
+export function isPartAttached(raw: Record<string, unknown>, mpn: string): boolean {
+  const list = Array.isArray(raw.attachedParts) ? (raw.attachedParts as any[]) : [];
+  return list.some((e) => partMpn(e?.part ?? e) === mpn);
+}
+
+/** Set the quantity of the attached part at `index` (min 1). */
+export function setAttachedQty(g: DiagramGraph, key: string, index: number, qty: number): DiagramGraph {
+  const nodes = g.nodes.map((n) => {
+    if (n.key !== key) return n;
+    const list = Array.isArray(n.raw.attachedParts) ? [...(n.raw.attachedParts as any[])] : [];
+    if (index < 0 || index >= list.length) return n;
+    list[index] = { ...list[index], quantity: Math.max(1, Math.round(qty) || 1) };
+    return { ...n, raw: { ...n.raw, attachedParts: list } };
+  });
+  return { ...g, nodes };
+}
+
+/** Remove the attached part at `index`. */
+export function removeAttachedPart(g: DiagramGraph, key: string, index: number): DiagramGraph {
+  const nodes = g.nodes.map((n) => {
+    if (n.key !== key) return n;
+    const list = Array.isArray(n.raw.attachedParts) ? [...(n.raw.attachedParts as any[])] : [];
+    if (index < 0 || index >= list.length) return n;
+    list.splice(index, 1);
+    return { ...n, raw: { ...n.raw, attachedParts: list } };
+  });
+  return { ...g, nodes };
+}
+
 export function attachedCount(raw: Record<string, unknown>): number {
   return Array.isArray(raw.attachedParts) ? (raw.attachedParts as unknown[]).length : 0;
 }
 
-/** Part records attached to a node ({partNumber, manufacturer, supplier, partDesc}). */
+/**
+ * Attached parts normalized to flat rows — MPN, maker, supplier, description and
+ * the entry's quantity — regardless of whether the entry was written by this app
+ * or the Angular desktop app. Order matches `raw.attachedParts` so a row's array
+ * index is stable for edit/remove.
+ */
 export function attachedParts(raw: Record<string, unknown>): Record<string, unknown>[] {
   const list = Array.isArray(raw.attachedParts) ? (raw.attachedParts as any[]) : [];
-  return list.map((a) => (a?.part ?? a) as Record<string, unknown>).filter(Boolean);
+  return list
+    .map((a) => {
+      const p = (a?.part ?? a ?? {}) as any;
+      return {
+        ...p,
+        partNumber: partMpn(p),
+        manufacturer: p.manufacturer || p.mfr?.name || '',
+        supplier: p.supplier || '',
+        description: p.partDesc || p.description || '',
+        quantity: a?.quantity ?? p?.quantity ?? 1,
+      } as Record<string, unknown>;
+    })
+    .filter(Boolean);
 }
 
 /** All distinct part numbers referenced anywhere on the canvas (attached + linked). */

@@ -63,8 +63,16 @@ export const designwinApi = {
       registrationNum: b.registrationNum ?? '',
       status: b.status ?? '',
     })),
-  custParts: async (projectId: string, boardNum: string): Promise<DwPart[]> =>
-    list(await get('cust-parts', { projectId, boardNum }), 'custPartServiceResult', 'parts').map((p) => ({
+  // The parts search requires a customer name or bill-to (the backend/Arrow API
+  // rejects it otherwise), so we pass them through from the chosen customer —
+  // exactly like the desktop Design Win panel.
+  custParts: async (
+    projectId: string,
+    boardNum: string,
+    customerName?: string,
+    custBillTo?: string,
+  ): Promise<DwPart[]> =>
+    list(await get('cust-parts', { projectId, boardNum, customerName, custBillTo }), 'custPartServiceResult', 'parts').map((p) => ({
       partNumber: p.partNumber ?? '',
       mfrName: p.mfrName ?? '',
       description: p.description ?? '',

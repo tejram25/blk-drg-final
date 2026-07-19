@@ -241,20 +241,23 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     $(go.TextBlock, { margin: 10, font: '600 13px Inter, sans-serif' }, new go.Binding('text')),
   );
 
-  // Orthogonal routing with jump-overs — matches the desktop editor's clean wires.
+  // Orthogonal routing — matches the Angular desktop editor's link template
+  // exactly: sharp corners on wires (corner 0), rounded (8) on other links, and
+  // no jump-overs (curve None; Bezier only for the smooth router).
   dia.linkTemplate = $(
     go.Link,
     {
       routing: go.Link.Orthogonal,
       corner: 8,
-      curve: go.Link.JumpOver,
+      curve: go.Link.None,
       relinkableFrom: true,
       relinkableTo: true,
       reshapable: true,
       selectable: true,
     },
     new go.Binding('routing', 'routing', (r: string) => (r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.Orthogonal)),
-    new go.Binding('curve', 'routing', (r: string) => (r === 'smooth' ? go.Link.Bezier : go.Link.JumpOver)),
+    new go.Binding('curve', 'routing', (r: string) => (r === 'smooth' ? go.Link.Bezier : go.Link.None)),
+    new go.Binding('corner', 'wire', (w: boolean) => (w ? 0 : 8)),
     $(
       go.Shape,
       { strokeWidth: 2, stroke: '#66707C', strokeCap: 'round', shadowVisible: false },
