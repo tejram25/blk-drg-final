@@ -48,7 +48,9 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     contentAlignment: go.Spot.Center,
     initialAutoScale: go.Diagram.Uniform,
     padding: 40,
-    'linkingTool.isEnabled': true,
+    // Drag moves nodes; wires are created only via the Connect button (tap two
+    // components), so a drag never accidentally draws a wire.
+    'linkingTool.isEnabled': false,
     'toolManager.hoverDelay': 300,
     grid: $(
       go.Panel,
@@ -62,13 +64,13 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     model: new go.GraphLinksModel({ linkKeyProperty: 'key', linkFromPortIdProperty: 'fromPort', linkToPortIdProperty: 'toPort' }),
   });
 
+  // Node body: NOT linkable, so a drag on it moves the node instead of starting
+  // a wire. Wires are drawn only via the Connect button.
   const port = {
     portId: '',
-    fromLinkable: true,
-    toLinkable: true,
-    fromSpot: go.Spot.AllSides,
-    toSpot: go.Spot.AllSides,
-    cursor: 'pointer',
+    fromLinkable: false,
+    toLinkable: false,
+    cursor: 'move',
   } as const;
 
   // One named connection port (from the node's `ports` array) at its spot, so
@@ -79,7 +81,7 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
     $(
       go.Shape,
       'Circle',
-      { desiredSize: new go.Size(8, 8), fill: 'rgba(0,0,0,0)', strokeWidth: 0, fromLinkable: true, toLinkable: true, cursor: 'crosshair' },
+      { desiredSize: new go.Size(8, 8), fill: 'rgba(0,0,0,0)', strokeWidth: 0, fromLinkable: false, toLinkable: false, cursor: 'move' },
       new go.Binding('portId', 'portId'),
       new go.Binding('fromSpot', 'spot', (s: string) => nearestSide(s)),
       new go.Binding('toSpot', 'spot', (s: string) => nearestSide(s)),
@@ -335,9 +337,11 @@ function buildDiagram(div: HTMLDivElement): go.Diagram {
       routing: go.Link.Orthogonal,
       corner: 8,
       curve: go.Link.None,
-      relinkableFrom: true,
-      relinkableTo: true,
-      reshapable: true,
+      // Endpoints/segments aren't draggable — wiring is managed via Connect and
+      // the wire-style controls, so a stray drag can't re-route a wire.
+      relinkableFrom: false,
+      relinkableTo: false,
+      reshapable: false,
       selectable: true,
     },
     new go.Binding('routing', 'routing', (r: string) => (r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.Orthogonal)),
