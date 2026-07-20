@@ -1,3 +1,7 @@
+// Gesture handler must be the very first import in the entry file (Android
+// release builds crash otherwise).
+import 'react-native-gesture-handler';
+
 // Node-API polyfills must land before any library loads. y-websocket (via
 // lib0) touches `Buffer`, which Hermes and browsers don't provide.
 import { Buffer } from 'buffer';
