@@ -83,17 +83,15 @@ public class SecurityConfig {
     }
 
     /** Comma-separated allowlist of browser-origin PATTERNS permitted to send
-     * credentialed requests. Wildcards are allowed (e.g. {@code https://*.arrow.com})
+     * credentialed requests. Wildcards are allowed (e.g. {@code https://*.herokuapp.com})
      * because we use {@code setAllowedOriginPatterns}, which — unlike a bare "*"
      * with allowCredentials — reflects ONLY origins that match a pattern, so a
      * random site still can't read a signed-in user's data.
      *
-     * Defaults cover local dev AND the Arrow corporate domain, so the standard
-     * same-origin reverse-proxy deployment (e.g. https://usdendrh5070.arrow.com,
-     * where the browser sends that Origin header even on same-origin POSTs and the
-     * backend can't detect same-origin behind the proxy) works out of the box.
-     * Override with APP_CORS_ALLOWED_ORIGINS for other hosts. */
-    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:4300,http://localhost:8081,http://localhost:19006,https://*.arrow.com}")
+     * Defaults cover local dev and Heroku-hosted web builds. Native mobile apps
+     * (the APK) are not browsers and don't send an Origin, so CORS doesn't apply
+     * to them. Override with APP_CORS_ALLOWED_ORIGINS for other hosts. */
+    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:4300,http://localhost:8081,http://localhost:19006,https://*.herokuapp.com}")
     private String allowedOrigins;
 
     /**

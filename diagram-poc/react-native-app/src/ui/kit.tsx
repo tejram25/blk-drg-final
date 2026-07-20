@@ -12,7 +12,7 @@ export function Icon({ name, size = 20, color = colors.text }: { name: IconName;
 }
 
 /**
- * Absolute-fill near-flat Arrow-green fill (subtle top-left highlight), drawn
+ * Absolute-fill near-flat flat accent fill (subtle top-left highlight), drawn
  * with react-native-svg (no extra native deps). This is the app's ONE accent;
  * parent needs `overflow: 'hidden'` + a borderRadius for rounded corners.
  */

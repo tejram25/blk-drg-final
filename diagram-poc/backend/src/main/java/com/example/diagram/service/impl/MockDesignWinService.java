@@ -8,21 +8,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 
 /**
- * Sample/offline implementation of the Arrow Design Win APIs. Active when
- * {@code arrow.mock=true} (mirroring {@link MockPartSearchService}), so the whole
+ * Offline implementation of the Design Win APIs, so the whole
  * customer → project → board → registration / customer-parts + POS flow can be
- * demoed without live Arrow credentials. Data comes from the bundled
- * {@code sample-designwin.json}; the same required-parameter validation as the
- * live service is kept so the frontend behaves identically.
+ * demoed without any external service or credentials. Data comes from the bundled
+ * {@code sample-designwin.json}; required-parameter validation is kept so the
+ * frontend behaves identically.
  */
 @Service
-@ConditionalOnProperty(name = "arrow.mock", havingValue = "true")
 public class MockDesignWinService implements DesignWinService {
 
     private static final Logger log = LoggerFactory.getLogger(MockDesignWinService.class);
@@ -41,7 +38,7 @@ public class MockDesignWinService implements DesignWinService {
 
     @PostConstruct
     void announce() {
-        log.info("Design Win: MOCK mode — serving bundled sample data (arrow.mock=true).");
+        log.info("Design Win: serving bundled sample data (offline mode).");
     }
 
     @Override
@@ -87,11 +84,11 @@ public class MockDesignWinService implements DesignWinService {
     }
 
     @Override
-    public String registrationDetails(String arrowUniqueNum, String registrationNum,
+    public String registrationDetails(String uniqueNum, String registrationNum,
                                       String boardNum, String trackingNum) {
-        require(present(arrowUniqueNum) || present(registrationNum)
+        require(present(uniqueNum) || present(registrationNum)
                         || present(boardNum) || present(trackingNum),
-                "arrowUniqueNum, registrationNum, boardNum or trackingNum is required.");
+                "uniqueNum, registrationNum, boardNum or trackingNum is required.");
         return write(section("registration"));
     }
 

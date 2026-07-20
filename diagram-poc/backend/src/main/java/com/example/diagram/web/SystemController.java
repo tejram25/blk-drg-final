@@ -24,7 +24,8 @@ public class SystemController {
     @Value("${app.version:0.0.1-SNAPSHOT}")
     private String version;
 
-    @Value("${arrow.mock:false}")
+    // Parts/Design-Win always run from the bundled sample catalogue (offline).
+    @Value("${app.offline-mode:true}")
     private boolean partsMock;
 
     private final OllamaProperties ollama;

@@ -1,5 +1,5 @@
 {
-  "_comment": "Maps design-goal keywords to electronic-component catalogue search terms (grounded in Arrow.com's product taxonomy). Edit freely — reloaded on app restart. A rule fires when any of its single-word 'triggers' matches a word in the goal: exact token match, or a stem prefix for triggers >= 5 chars (e.g. 'regulat' -> 'regulator'). All of the rule's 'terms' are then searched in the Arrow catalogue. The recommendation caps the total number of searches, so breadth here is safe.",
+  "_comment": "Maps design-goal keywords to electronic-component catalogue search terms (grounded in a generic product taxonomy). Edit freely — reloaded on app restart. A rule fires when any of its single-word 'triggers' matches a word in the goal: exact token match, or a stem prefix for triggers >= 5 chars (e.g. 'regulat' -> 'regulator'). All of the rule's 'terms' are then searched in the parts catalogue. The recommendation caps the total number of searches, so breadth here is safe.",
   "rules": [
     {
       "terms": ["motor driver", "brushless motor controller", "stepper motor driver"],

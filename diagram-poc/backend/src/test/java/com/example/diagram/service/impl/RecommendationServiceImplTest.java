@@ -110,11 +110,11 @@ class RecommendationServiceImplTest {
         RecommendationResult res = service(live).recommend(
                 new RecommendationRequest("Design a power supply regulator", List.of()));
 
-        assertThat(res.note()).contains("live Arrow catalogue");
+        assertThat(res.note()).contains("parts catalogue");
         assertThat(res.items()).anyMatch(i ->
                 "part".equals(i.type())
                         && i.title().equals("LM317T")
-                        && i.source().contains("Arrow catalogue (live)")
+                        && i.source().contains("Parts catalogue")
                         && i.detail().contains("in stock"));
     }
 

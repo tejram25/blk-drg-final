@@ -9,18 +9,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 
 /**
- * Sample/offline implementation of part search. Active when {@code arrow.mock=true},
- * so the search → part card → BOM flow can be exercised without the live Arrow API.
- * Filters a small bundled catalogue (sample-parts.json) by the query.
+ * Offline implementation of part search backed by a bundled sample catalogue
+ * (sample-parts.json), so the search → part card → BOM flow works with no
+ * external API or credentials. Filters the catalogue by the query.
  */
 @Service
-@ConditionalOnProperty(name = "arrow.mock", havingValue = "true")
 public class MockPartSearchService implements PartSearchService {
 
     private static final Logger log = LoggerFactory.getLogger(MockPartSearchService.class);
@@ -39,7 +37,7 @@ public class MockPartSearchService implements PartSearchService {
 
     @PostConstruct
     void announce() {
-        log.info("Parts search: MOCK mode — serving the bundled sample catalogue (arrow.mock=true).");
+        log.info("Parts search: serving the bundled sample catalogue (offline mode).");
     }
 
     @Override
@@ -72,7 +70,7 @@ public class MockPartSearchService implements PartSearchService {
         out.put("ok", true);
         out.put("mock", true);
         out.put("stage", "mock");
-        out.put("detail", "Mock mode (arrow.mock=true) — serving the bundled sample catalogue.");
+        out.put("detail", "Offline mode — serving the bundled sample catalogue.");
         return out;
     }
 

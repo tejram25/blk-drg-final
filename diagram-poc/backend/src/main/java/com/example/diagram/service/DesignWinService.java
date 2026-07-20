@@ -1,9 +1,9 @@
 package com.example.diagram.service;
 
 /**
- * Proxies the Arrow Design Win APIs (customers, projects, boards, registration
+ * Proxies the Design Win APIs (customers, projects, boards, registration
  * details, customer part search and POS/sales). Each method returns the raw JSON
- * body from Arrow so the frontend can render it directly. Required-parameter
+ * body so the frontend can render it directly. Required-parameter
  * validation is enforced here; transport/auth is handled by the shared client.
  */
 public interface DesignWinService {
@@ -18,7 +18,7 @@ public interface DesignWinService {
     String boards(String projectId, String projectName);
 
     /** Registration details (AUN search). Requires one identifier. */
-    String registrationDetails(String arrowUniqueNum, String registrationNum,
+    String registrationDetails(String uniqueNum, String registrationNum,
                                String boardNum, String trackingNum);
 
     /** Customer part search. Requires customerName or custBillTo. */

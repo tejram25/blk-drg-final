@@ -63,8 +63,8 @@
             "name": "LM317T"
           },
           "supp": {
-            "cd": "Arrow",
-            "name": "Arrow"
+            "cd": "Demo Dist",
+            "name": "Demo Dist"
           },
           "mfr": {
             "cd": "STM",
@@ -119,7 +119,7 @@
           "text": "LM317T"
         },
         "supplier": {
-          "text": "Arrow"
+          "text": "Demo Dist"
         },
         "spec0": {
           "text": "Type: Adjustable LDO Regulator"
@@ -154,8 +154,8 @@
             "name": "LM317T"
           },
           "supp": {
-            "cd": "Arrow",
-            "name": "Arrow"
+            "cd": "Demo Dist",
+            "name": "Demo Dist"
           },
           "mfr": {
             "cd": "STM",
@@ -210,7 +210,7 @@
           "text": "LM317T"
         },
         "supplier": {
-          "text": "Arrow"
+          "text": "Demo Dist"
         },
         "spec0": {
           "text": "Type: Adjustable LDO Regulator"
@@ -321,8 +321,8 @@
             "name": "BAV23S"
           },
           "supp": {
-            "cd": "Arrow",
-            "name": "Arrow"
+            "cd": "Demo Dist",
+            "name": "Demo Dist"
           },
           "mfr": {
             "cd": "ONSEMI",
@@ -367,7 +367,7 @@
           "text": "BAV23S"
         },
         "supplier": {
-          "text": "Arrow"
+          "text": "Demo Dist"
         },
         "spec0": {
           "text": "Type: Switching Diode"

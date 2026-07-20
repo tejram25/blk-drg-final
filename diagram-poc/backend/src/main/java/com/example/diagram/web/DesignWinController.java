@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Design Win API proxy. The frontend calls these (authenticated) instead of
- * Arrow directly, so the OAuth credentials stay server-side. Each endpoint
+ * the upstream API directly, so the OAuth credentials stay server-side. Each endpoint
  * returns the raw Design Win JSON.
  */
 @RestController
@@ -43,11 +43,11 @@ public class DesignWinController {
     }
 
     @GetMapping("/registration-details")
-    public String registrationDetails(@RequestParam(required = false) String arrowUniqueNum,
+    public String registrationDetails(@RequestParam(required = false) String uniqueNum,
                                       @RequestParam(required = false) String registrationNum,
                                       @RequestParam(required = false) String boardNum,
                                       @RequestParam(required = false) String trackingNum) {
-        return designWin.registrationDetails(arrowUniqueNum, registrationNum, boardNum, trackingNum);
+        return designWin.registrationDetails(uniqueNum, registrationNum, boardNum, trackingNum);
     }
 
     @GetMapping("/cust-parts")

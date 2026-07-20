@@ -3,7 +3,7 @@ package com.example.diagram.web.dto;
 import java.util.List;
 
 /**
- * A suggested electronic component for a box, grounded in the Arrow catalogue and
+ * A suggested electronic component for a box, grounded in the Parts catalogue and
  * cross-checked against Design Win POS ({@code fieldProven} = has shipment
  * history) and, when the diagram is attached to a customer, against that
  * customer's registered/approved parts ({@code customerApproved}). {@code suppliers}

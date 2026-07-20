@@ -60,6 +60,8 @@
   </dependencies>
 
   <build>
+    <!-- Stable jar name so the Procfile can reference target/app.jar. -->
+    <finalName>app</finalName>
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>

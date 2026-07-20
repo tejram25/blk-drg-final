@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  * Catalogue-grounded recommendations. The AI (local Ollama, when enabled) — or a
  * keyword dictionary as a fallback — translates the design goal into concrete
  * component <em>search terms</em>. Those terms are then looked up in the live
- * Arrow part catalogue and cross-checked against Design Win POS, so the actual
+ * parts catalogue and cross-checked against Design Win POS, so the actual
  * recommended parts come from real data (stock, lifecycle, shipment history)
  * rather than the model's imagination. Template matches and a BOM nudge round
  * out the result; a generic fallback is used when nothing matches.
@@ -117,10 +117,10 @@ public class RecommendationServiceImpl implements RecommendationService {
         items = dedupeByTitle(items);
 
         boolean grounded = !partItems.isEmpty();
-        String model = grounded ? (usedAi ? "Local AI (" + props.getModel() + ") + catalogue" : "Arrow catalogue")
+        String model = grounded ? (usedAi ? "Local AI (" + props.getModel() + ") + catalogue" : "Parts catalogue")
                 : "rule-based";
         String note = grounded
-                ? "Grounded in the live Arrow catalogue (stock, lifecycle, POS)."
+                ? "Grounded in the parts catalogue (stock, lifecycle, POS)."
                 : (props.isConfigured() ? "No live catalogue matches — showing general guidance." : null);
         return new RecommendationResult(items, model, grounded, note);
     }
@@ -216,7 +216,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                     + ", " + stock + " in stock"
                     + (lead.isBlank() ? "" : ", lead " + lead + " wks")
                     + (proven ? " · field-proven (POS shipment history)" : "");
-            String source = "Arrow catalogue (live)" + (supplier.isBlank() ? "" : " · " + supplier);
+            String source = "Parts catalogue" + (supplier.isBlank() ? "" : " · " + supplier);
             String verify = stock > 0
                     ? "In stock now — confirm the lifecycle status and specs before committing."
                     : "Best match is out of stock — check lead time or pick an in-stock alternative.";
@@ -313,7 +313,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     // ---- helpers ----
 
     private RecommendationItem part(String pn, String detail, String verify) {
-        return new RecommendationItem("part", pn, detail, "Arrow catalogue", verify, pn);
+        return new RecommendationItem("part", pn, detail, "Parts catalogue", verify, pn);
     }
 
     private int score(Template t, String goal) {

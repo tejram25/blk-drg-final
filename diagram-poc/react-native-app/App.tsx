@@ -70,11 +70,11 @@ const PreviewComp = process.env.EXPO_PUBLIC_PREVIEW
   : null;
 
 export default function App() {
-  // Official corporate typeface (extracted from the Arrow brand template).
+  // App display typeface.
   const [fontsLoaded] = useFonts({
-    'ArrowDisplay-Regular': require('./assets/fonts/ArrowDisplay-Regular.ttf'),
-    'ArrowDisplay-Medium': require('./assets/fonts/ArrowDisplay-Medium.ttf'),
-    'ArrowDisplay-Bold': require('./assets/fonts/ArrowDisplay-Bold.ttf'),
+    'Display-Regular': require('./assets/fonts/Display-Regular.ttf'),
+    'Display-Medium': require('./assets/fonts/Display-Medium.ttf'),
+    'Display-Bold': require('./assets/fonts/Display-Bold.ttf'),
   });
   if (!fontsLoaded) {
     return (

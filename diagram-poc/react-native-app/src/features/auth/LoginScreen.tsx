@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { ApiError } from '../../api/client';
 import { colors, font, radius, shadow } from '../../theme';
@@ -50,11 +50,7 @@ export default function LoginScreen({ navigation }: ScreenProps<'Login'>) {
     <View style={styles.root}>
       <Glow />
       <View style={styles.hero}>
-        <Image
-          source={require('../../../assets/brand/arrow-logo-black.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <Text style={styles.brandMark}>◆</Text>
         <Text style={styles.title}>Block Diagram Builder</Text>
         <Text style={styles.subtitle}>Design, source and collaborate</Text>
       </View>
@@ -87,8 +83,7 @@ export default function LoginScreen({ navigation }: ScreenProps<'Login'>) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg, justifyContent: 'center', padding: 22 },
   hero: { alignItems: 'center', marginBottom: 26 },
-  // Official Arrow logo (Worm + Five Years Out), natural ratio 816:180.
-  logo: { width: 218, height: 48, marginBottom: 18 },
+  brandMark: { fontSize: 40, color: colors.primary, marginBottom: 10 },
   title: { ...font.h2, color: colors.text, textAlign: 'center' },
   subtitle: { color: colors.subtext, textAlign: 'center', marginTop: 6, fontSize: 15 },
   card: {

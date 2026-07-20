@@ -24,7 +24,7 @@ import java.util.Set;
 
 /**
  * Suggests the component a diagram box needs. The box's label/role/kind is turned
- * into a catalogue search term; the live Arrow catalogue is searched, results are
+ * into a catalogue search term; the parts catalogue is searched, results are
  * grouped per manufacturer part number, and each candidate is cross-checked
  * against Design Win POS so the parts most used in real designs (shipment
  * history) rank first. Suppliers offering each part are returned so the user can
@@ -85,7 +85,7 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
         } catch (Exception ex) {
             log.error("Box suggestion search for '{}' failed: {}", query, ex.toString());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "Could not reach the Arrow catalogue to suggest a component.");
+                    "Could not reach the Parts catalogue to suggest a component.");
         }
         if (!arr.isArray() || arr.isEmpty()) {
             return new BoxSuggestionResult(query, List.of(),
@@ -114,8 +114,8 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
         if (suggestions.size() > 6) suggestions = suggestions.subList(0, 6);
 
         String note = approved.isEmpty()
-                ? "Grounded in the Arrow catalogue; field-proven items have Design Win POS shipment history."
-                : "Grounded in the Arrow catalogue; parts this customer has already registered are marked "
+                ? "Grounded in the Parts catalogue; field-proven items have Design Win POS shipment history."
+                : "Grounded in the Parts catalogue; parts this customer has already registered are marked "
                         + "customer-approved and ranked first, then field-proven (POS) parts.";
         return new BoxSuggestionResult(query, suggestions, note);
     }
@@ -174,7 +174,7 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
         long totalStock = 0;
         Set<String> seen = new LinkedHashSet<>();
         for (JsonNode p : offers) {
-            String sName = firstText(p.at("/supp/name"), p.at("/mfr/name"), "Arrow");
+            String sName = firstText(p.at("/supp/name"), p.at("/mfr/name"), "Catalogue");
             if (!seen.add(sName.toLowerCase())) continue;
             long s = stockOf(p);
             totalStock += s;
@@ -186,7 +186,7 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
                 customerApproved, priceOf(best), moqOf(best), suppliers);
     }
 
-    /** Best-effort unit price from the Arrow part JSON (several shapes exist); 0 if none. */
+    /** Best-effort unit price from the part JSON (several shapes exist); 0 if none. */
     private static double priceOf(JsonNode p) {
         for (String path : new String[]{"/prices/0/price", "/pricing/0/price", "/resaleList/0/price",
                 "/priceBreaks/0/price", "/price", "/prc"}) {

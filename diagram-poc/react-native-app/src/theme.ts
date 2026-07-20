@@ -1,22 +1,18 @@
 import { Platform, ViewStyle } from 'react-native';
 
 /**
- * Design tokens — Arrow.com corporate system.
+ * Design tokens.
  *
- * Mirrors arrow.com: a black navigation chrome (header/toolbars), clean white
- * content on a light-grey page, thin neutral borders, and Arrow's signature
- * green (Pantone 369 ≈ #64A70B) as the ONE call-to-action colour. Buttons are
- * flat green with white text; links/info lean corporate blue; everything else
- * stays neutral so product content leads — exactly like the site.
+ * A black navigation chrome (header/toolbars), clean white content on a
+ * light-grey page, thin neutral borders, and a signature blue as the primary
+ * call-to-action colour; everything else stays neutral so product content leads.
  *
  * `chrome*` tokens style the black bars; `canvas*` tokens style the editor
  * drawing surface (light, engineering-paper look with dark symbols).
  */
 export const colors = {
-  // Brand — OFFICIAL Arrow palette, extracted from Arrow's own PowerPoint
-  // template theme (accent1 #0084D5 = Arrow blue; greys #666666/#CCCCCC/#A3A6A3;
-  // secondary accents mint #47D7AC, gold #FFC845, coral #FF8674). 6-digit hex
-  // only (screens derive `primary+'22'`).
+  // Brand palette (primary blue #0084D5; neutral greys; secondary accents mint
+  // #47D7AC, gold #FFC845, coral #FF8674). 6-digit hex only.
   primary: '#0084D5',
   primaryDark: '#0066A6',
   primaryLight: '#33A0E3',
@@ -49,7 +45,7 @@ export const colors = {
   warningSoft: '#FCF3E2',
   info: '#0563C1',
 
-  // Black navigation chrome (arrow.com's top bar) — headers, toolbars, docks.
+  // Black navigation chrome — headers, toolbars, docks.
   chrome: '#0B0D0F',
   chromeAlt: '#1D2126',
   chromeBorder: '#2A2F35',
@@ -73,16 +69,14 @@ export const radius = { xs: 6, sm: 10, md: 14, lg: 18, xl: 24, pill: 999 };
 export const space = (n: number) => n * 4;
 
 /**
- * Typography. Headings and CTAs use the official corporate typeface
- * "Arrow Display" (extracted from Arrow's own template, loaded in App.tsx via
- * expo-font); body copy stays on the system UI font — the same pairing the
- * corporate template uses (Arrow Display + Segoe UI). The custom faces carry
- * their own weight, so those tokens set fontFamily instead of fontWeight.
+ * Typography. Headings and CTAs use the bundled display typeface (loaded in
+ * App.tsx via expo-font); body copy stays on the system UI font. The custom
+ * faces carry their own weight, so those tokens set fontFamily not fontWeight.
  */
 export const fonts = {
-  regular: 'ArrowDisplay-Regular',
-  medium: 'ArrowDisplay-Medium',
-  bold: 'ArrowDisplay-Bold',
+  regular: 'Display-Regular',
+  medium: 'Display-Medium',
+  bold: 'Display-Bold',
 };
 
 export const font = {
@@ -115,7 +109,7 @@ export function shadow(level: 1 | 2 | 3 = 1): ViewStyle {
   };
 }
 
-/** Subtle green emphasis for the few flat-green CTAs (Arrow is flat, not glowy). */
+/** Subtle green emphasis for the few flat-green CTAs (flat, not glowy). */
 export function glow(color: string = colors.primary): ViewStyle {
   if (Platform.OS === 'web') {
     return { boxShadow: `0 4px 14px ${color}3D` } as unknown as ViewStyle;

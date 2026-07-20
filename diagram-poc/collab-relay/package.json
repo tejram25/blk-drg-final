@@ -1,0 +1,20 @@
+{
+  "name": "collab-relay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone Yjs collaboration relay (y-websocket protocol) for the Block Diagram Builder.",
+  "type": "module",
+  "main": "collab-server.mjs",
+  "scripts": {
+    "start": "node collab-server.mjs"
+  },
+  "engines": {
+    "node": "20.x"
+  },
+  "dependencies": {
+    "lib0": "^0.2.99",
+    "ws": "^8.18.0",
+    "y-protocols": "^1.0.6",
+    "yjs": "^13.6.20"
+  }
+}

@@ -2,7 +2,7 @@ package com.example.diagram.service;
 
 import java.util.Map;
 
-/** Proxies the Arrow Part Search API. */
+/** Parts search (bundled sample catalogue). */
 public interface PartSearchService {
 
     /**

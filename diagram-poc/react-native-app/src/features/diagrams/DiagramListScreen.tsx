@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -56,11 +55,7 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
       <StatusBar style="light" />
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
-          <Image
-            source={require('../../../assets/brand/arrow-logo-white.png')}
-            style={styles.brandLogo}
-            resizeMode="contain"
-          />
+          <Text style={styles.brandMark}>Block Diagram Builder</Text>
           <Text style={styles.headerTitle}>{t('list.title')}</Text>
           <Text style={styles.headerSub}>
             {diagrams.data ? `${diagrams.data.length} ${t('list.title').toLowerCase()}` : ' '}
@@ -155,7 +150,7 @@ export default function DiagramListScreen({ navigation }: ScreenProps<'Diagrams'
 }
 
 const styles = StyleSheet.create({
-  // Black top chrome (arrow.com nav); the list body sits on the light page.
+  // Black top chrome; the list body sits on the light page.
   root: { flex: 1, backgroundColor: colors.chrome },
   header: {
     flexDirection: 'row',
@@ -165,7 +160,7 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     backgroundColor: colors.chrome,
   },
-  brandLogo: { width: 118, height: 26, marginBottom: 8 },
+  brandMark: { color: '#9BA3AC', fontSize: 11, fontWeight: '700', letterSpacing: 0.5, marginBottom: 6, textTransform: 'uppercase' },
   headerTitle: { ...font.h1, color: colors.chromeText },
   headerSub: { ...font.caption, color: colors.chromeSubtext, marginTop: 2, textTransform: 'capitalize' },
   avatar: {

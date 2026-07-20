@@ -1,5 +1,5 @@
 {
-  "_note": "Bundled sample Design Win data served when arrow.mock=true (MockDesignWinService). Lets the whole customer → project → board → registration/parts + POS flow be demoed without the live Arrow APIs.",
+  "_note": "Bundled sample Design Win data served by MockDesignWinService (offline). Lets the whole customer → project → board → registration/parts + POS flow be demoed without any external service.",
   "customers": {
     "customerServiceResult": {
       "numItems": 2,
@@ -67,7 +67,7 @@
           "boardNum": "BMS-REV-C",
           "status": "Registered",
           "registrationNum": "REG-4471209",
-          "arrowUniqueNum": "AUN-7788120",
+          "uniqueNum": "AUN-7788120",
           "createDate": "2025-12-08"
         },
         {
@@ -75,7 +75,7 @@
           "boardNum": "CM-REV-B",
           "status": "In Design",
           "registrationNum": "REG-4471244",
-          "arrowUniqueNum": "AUN-7788155",
+          "uniqueNum": "AUN-7788155",
           "createDate": "2026-01-14"
         }
       ]
@@ -92,7 +92,7 @@
           "eau": "120000",
           "designStatus": "Design Win",
           "registrationNum": "REG-4471209",
-          "arrowUniqueNum": "AUN-7788120",
+          "uniqueNum": "AUN-7788120",
           "trackingNum": "TRK-33915",
           "customerApproved": "Yes"
         },
@@ -103,7 +103,7 @@
           "eau": "120000",
           "designStatus": "Registered",
           "registrationNum": "REG-4471209",
-          "arrowUniqueNum": "AUN-7788120",
+          "uniqueNum": "AUN-7788120",
           "trackingNum": "TRK-33916",
           "customerApproved": "Pending"
         }

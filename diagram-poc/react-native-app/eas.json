@@ -1,0 +1,29 @@
+{
+  "cli": {
+    "version": ">= 5.0.0"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://YOUR-BACKEND.herokuapp.com",
+        "EXPO_PUBLIC_COLLAB_WS_URL": "wss://YOUR-RELAY.herokuapp.com"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://YOUR-BACKEND.herokuapp.com",
+        "EXPO_PUBLIC_COLLAB_WS_URL": "wss://YOUR-RELAY.herokuapp.com"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

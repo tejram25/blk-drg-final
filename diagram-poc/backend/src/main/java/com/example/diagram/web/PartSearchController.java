@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 /**
- * Parts search proxy. The frontend calls this (authenticated) instead of Arrow
+ * Parts search proxy. The frontend calls this (authenticated) instead of the upstream parts API
  * directly, so the OAuth credentials stay server-side. Returns the raw
  * partserviceresult JSON.
  */
