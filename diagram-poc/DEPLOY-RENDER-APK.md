@@ -66,9 +66,33 @@ That URL is **`<backend>`**.
    ```
 3. EAS prints a **`.apk` download link** — install it on any Android device.
 
-## Verify
-Register in the app → diagram list loads from Render → open a sample, add parts
-(bundled catalogue), wire components. Install on a 2nd device, open the same
-diagram → live sync via the Render relay.
+## 4. (Optional) Shareable web UI — Render Static Site + QR
+
+Deploy the app's **web build** so anyone can open it in a browser (no install,
+any device) and you can share a link / QR. Static sites are free and never sleep.
+
+To keep login working on every browser (Safari blocks cross-site cookies), the
+static site proxies `/api` to the backend so the API is **same-origin**.
+
+1. **New → Static Site** → same repo.
+2. Configure:
+   - **Branch**: `react-native-apk`
+   - **Root Directory**: `diagram-poc/react-native-app`
+   - **Build Command**: `npm ci && npx expo export --platform web`
+   - **Publish Directory**: `dist`
+   - Name: `my-diagram-ui`
+3. **Environment** (Add Environment Variables):
+   - `EXPO_PUBLIC_API_ROOT` = `/api`   ← same-origin, via the rewrite below
+   - `EXPO_PUBLIC_COLLAB_WS_URL` = `wss://my-diagram-relay.onrender.com`
+   - (leave `EXPO_PUBLIC_GOJS_LICENSE` unset for the demo — the canvas shows a
+     small GoJS evaluation watermark; add a licence to remove it.)
+4. **Redirects/Rewrites** — add these two, IN ORDER:
+   1. Source `/api/*` → Destination `https://my-diagram-backend.onrender.com/api/:splat` → **Rewrite**
+   2. Source `/*` → Destination `/index.html` → **Rewrite**  (SPA fallback)
+5. **Create Static Site**. When live, share `https://my-diagram-ui.onrender.com`
+   (a QR of that URL opens the app on any phone).
+
+WebSockets (collab) connect directly to the relay's `wss://…onrender.com` — not
+subject to CORS — so live collaboration works from the shared web app too.
 
 > Note: data is in-memory (H2) and resets whenever a free service restarts/sleeps.
