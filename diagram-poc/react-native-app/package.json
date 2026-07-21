@@ -23,7 +23,7 @@
     "react-native-web": "^0.21.2",
     "y-websocket": "^3.0.0",
     "yjs": "^13.6.31",
-    "expo-font": "~57.0.1",
+    "expo-font": "~14.0.4",
     "buffer": "^5.7.1"
   },
   "devDependencies": {
