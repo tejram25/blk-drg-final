@@ -1,7 +1,7 @@
 .stars {
   display: inline-flex;
   align-items: center;
-  color: #f5b400;
+  color: var(--accent);
 }
 
 .star-icon,
@@ -30,11 +30,11 @@
   background: transparent;
   cursor: pointer;
   padding: 1px;
-  color: #6b7280;
+  color: var(--muted);
   display: inline-flex;
 }
 
 .star.on,
 .star:hover {
-  color: #f5b400;
+  color: var(--accent);
 }

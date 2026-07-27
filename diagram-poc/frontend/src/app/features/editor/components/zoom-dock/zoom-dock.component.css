@@ -54,7 +54,7 @@
 
 /* ---- Modern polish ---- */
 .zoom-dock {
-  background: color-mix(in srgb, var(--panel, #1d1e23) 84%, transparent);
+  background: color-mix(in srgb, var(--panel) 84%, transparent);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-radius: 12px;
 }
