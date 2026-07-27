@@ -167,7 +167,7 @@ export const BASIC_SHAPES: Record<string, BasicShapeDef> = {
     label: 'Text',
     width: 120, height: 40, tag: 'rect', noBox: true,
     body: { refWidth: '100%', refHeight: '100%' },
-    preview: '<text x="30" y="28" text-anchor="middle" font-size="22" fill="#e2e8f0" stroke="none" font-family="Roboto, sans-serif">T</text>',
+    preview: '<text x="30" y="28" text-anchor="middle" font-size="22" fill="#E8E8E8" stroke="none" font-family="Roboto, sans-serif">T</text>',
     drawioStyle: 'text;html=1;align=center;verticalAlign=middle;',
   },
 };

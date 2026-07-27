@@ -1285,3 +1285,6 @@
   0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
   50% { transform: scale(1.18); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 0%, transparent); }
 }
+
+/* Palette symbol previews use currentColor so they follow the canvas theme. */
+.symbol-item svg { color: var(--sym); }

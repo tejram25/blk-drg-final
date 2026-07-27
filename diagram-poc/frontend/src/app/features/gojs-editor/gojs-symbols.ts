@@ -11,12 +11,18 @@
 import { ELECTRICAL_SYMBOLS, SymbolDef } from '../editor/electrical-shapes';
 import { ANIM_FRAME_COUNT, ANIMATED_SYMBOLS, partsToSvg, partsToSvgFrame } from '../editor/animated-shapes';
 import { BASIC_SHAPES, BasicShapeDef } from '../editor/basic-shapes';
+import { readCanvasTheme } from './gojs-theme';
 
-/** Stroke colours per canvas theme. Light stroke reads on the dark canvas;
- * dark stroke reads on the white canvas. */
-const STROKE_ON_DARK = '#e2e8f0';
-const STROKE_ON_LIGHT = '#334155';
-const MUTED = '#94a3b8';
+/**
+ * Symbol strokes come from the theme tokens (`--sym`, `--node-sub`, `--node`)
+ * so the schematic library follows the Arrow palette in both themes instead of
+ * carrying its own colours. Resolved per call: symbols are re-encoded whenever
+ * the theme flips, so there is nothing to cache or invalidate.
+ */
+function symColors(): { stroke: string; muted: string; boxFill: string } {
+  const t = readCanvasTheme();
+  return { stroke: t.sym, muted: t.nodeSub, boxFill: t.node };
+}
 
 export interface SymbolInfo {
   /** SVG data-URI to feed a go.Picture `source`. */
@@ -46,8 +52,8 @@ function encodeSvg(inner: string, w: number, h: number): string {
 }
 
 /** Build the inner SVG for an electrical schematic symbol. */
-function electricalInner(def: SymbolDef, dark: boolean): string {
-  const s = dark ? STROKE_ON_DARK : STROKE_ON_LIGHT;
+function electricalInner(def: SymbolDef, _dark: boolean): string {
+  const { stroke: s, muted: MUTED } = symColors();
   const paths = def.paths
     .map(
       (p) =>
@@ -67,12 +73,13 @@ function electricalInner(def: SymbolDef, dark: boolean): string {
 }
 
 /** Build the inner SVG for a basic flowchart shape body (no label — GoJS adds it). */
-function basicInner(def: BasicShapeDef, dark: boolean): string {
+function basicInner(def: BasicShapeDef, _dark: boolean): string {
   const w = def.width;
   const h = def.height;
-  // Outline on the dark canvas (transparent fill); white-filled on the light canvas.
-  const fill = def.noBox ? 'none' : (dark ? 'none' : '#ffffff');
-  const stroke = def.noBox ? 'none' : (dark ? STROKE_ON_DARK : STROKE_ON_LIGHT);
+  // Body fill/stroke come from the node tokens so shapes match block cards.
+  const c = symColors();
+  const fill = def.noBox ? 'none' : c.boxFill;
+  const stroke = def.noBox ? 'none' : c.stroke;
   const sw = def.noBox ? 0 : 2;
   const common = `fill="${fill}" stroke="${stroke}" stroke-width="${sw}"`;
   if (def.tag === 'rect') {
@@ -88,8 +95,8 @@ function basicInner(def: BasicShapeDef, dark: boolean): string {
 
 /**
  * Resolve a palette shape name to its GoJS symbol rendering, or null if it's not
- * a symbol. `dark` = rendering on the dark canvas (light strokes); pass false for
- * the white canvas so the symbols get dark strokes and stay legible.
+ * a symbol. Colours come from the active theme tokens; the legacy `dark` flag is
+ * retained for call-site compatibility and no longer affects the palette.
  */
 export function symbolInfo(shape: string | undefined, dark = true): SymbolInfo | null {
   if (!shape) return null;
