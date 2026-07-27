@@ -11,7 +11,7 @@
 import { ELECTRICAL_SYMBOLS, SymbolDef } from '../editor/electrical-shapes';
 import { ANIM_FRAME_COUNT, ANIMATED_SYMBOLS, partsToSvg, partsToSvgFrame } from '../editor/animated-shapes';
 import { BASIC_SHAPES, BasicShapeDef } from '../editor/basic-shapes';
-import { readCanvasTheme } from './gojs-theme';
+import { CANVAS_FONT, readCanvasTheme } from './gojs-theme';
 
 /**
  * Symbol strokes come from the theme tokens (`--sym`, `--node-sub`, `--node`)
@@ -66,7 +66,7 @@ function electricalInner(def: SymbolDef, _dark: boolean): string {
       (t) =>
         `<text x="${t.x}" y="${t.y}" font-size="${t.size ?? 8}" ` +
         `font-weight="${t.bold ? 700 : 400}" fill="${t.bold ? s : MUTED}" ` +
-        `text-anchor="${t.anchor ?? 'middle'}" font-family="Roboto, sans-serif">${t.text}</text>`,
+        `text-anchor="${t.anchor ?? 'middle'}" font-family="${CANVAS_FONT}">${t.text}</text>`,
     )
     .join('');
   return paths + texts;

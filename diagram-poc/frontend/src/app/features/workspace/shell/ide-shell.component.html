@@ -1,6 +1,6 @@
 <div class="ide">
-  <!-- ─────────── top bar ─────────── -->
-  <header class="top">
+  <!-- ─────────── top bar — the only header ─────────── -->
+  <header class="top" [class.editing]="!!editorChrome.toolbar()">
     <span class="logo" role="img" aria-label="Arrow"></span>
     <span class="divider"></span>
 
@@ -17,9 +17,19 @@
       <mat-icon>cloud_done</mat-icon> Salesforce · {{ pw.sync().lastSync }}
     </span>
 
+    <!-- The diagram editor's controls, inline in this same header (IntelliJ
+         style) — present only while a diagram is open. -->
+    @if (editorChrome.toolbar(); as tp) {
+      <span class="divider"></span>
+      <div class="editor-slot">
+        <ng-template [cdkPortalOutlet]="tp"></ng-template>
+      </div>
+    }
+
     <span class="sp"></span>
 
-    <button type="button" class="search-trigger" (click)="paletteOpen.set(true)">
+    <button type="button" class="search-trigger" (click)="paletteOpen.set(true)"
+      [matTooltip]="'Search everywhere (Ctrl K)'">
       <mat-icon>search</mat-icon><span>Search everywhere</span><kbd>Ctrl K</kbd>
     </button>
 
@@ -85,13 +95,6 @@
       }
     </div>
   </header>
-
-  <!-- ─────────── editor toolbar (only while a block diagram is open) ─────────── -->
-  @if (editorChrome.toolbar(); as tp) {
-    <div class="editor-toolbar">
-      <ng-template [cdkPortalOutlet]="tp"></ng-template>
-    </div>
-  }
 
   <!-- ─────────── body ─────────── -->
   <div class="body">

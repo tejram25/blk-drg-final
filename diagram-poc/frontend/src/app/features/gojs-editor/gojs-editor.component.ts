@@ -33,7 +33,7 @@ import { forkJoin, of, Subscription, throwError, TimeoutError } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { SystemService } from '../../core/services/system.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { CanvasTheme, readCanvasTheme, WIRE_COLORS } from './gojs-theme';
+import { CANVAS_FONT, CanvasTheme, readCanvasTheme, WIRE_COLORS } from './gojs-theme';
 import { ProjectDetail, ProjectPart } from '../../core/services/integration.service';
 import { DesignWinContext } from '../../core/services/designwin.service';
 import { TemplateDetail } from '../../core/services/template.service';
@@ -671,22 +671,22 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       $(go.Panel, 'Horizontal', { alignment: go.Spot.Left },
         $(go.Shape, 'Circle', { desiredSize: new go.Size(5, 5), fill: this.canvasTheme.accent, stroke: null, margin: new go.Margin(0, 7, 0, 2) }),
         $(go.TextBlock, { font: '10px Menlo, monospace', stroke: this.canvasTheme.text }, mpnOf(it)),
-        $(go.TextBlock, { font: '9px Roboto, sans-serif', stroke: this.canvasTheme.muted, margin: new go.Margin(0, 0, 0, 12) }, '×' + (it?.quantity || 1)),
+        $(go.TextBlock, { font: `9px ${CANVAS_FONT}`, stroke: this.canvasTheme.muted, margin: new go.Margin(0, 0, 0, 12) }, '×' + (it?.quantity || 1)),
         $(go.TextBlock, { font: '12px "Material Icons"', stroke: this.canvasTheme.muted, margin: new go.Margin(0, 2, 0, 8) }, 'content_copy')));
     const inner: go.GraphObject[] = [
-      $(go.TextBlock, { font: '700 8px Roboto, sans-serif', stroke: this.canvasTheme.muted, margin: new go.Margin(0, 0, 5, 2) },
+      $(go.TextBlock, { font: `700 8px ${CANVAS_FONT}`, stroke: this.canvasTheme.muted, margin: new go.Margin(0, 0, 5, 2) },
         `PARTS · ${parts.length}  ·  TAP TO COPY`),
       ...shown.map(row),
     ];
     if (!showAll) {
       inner.push(btn(() => { this.partsDockIgnoreLeave = true; this.showPartsDock(part, true, true); },
-        $(go.TextBlock, { font: '700 9px Roboto, sans-serif', stroke: this.canvasTheme.accent, margin: new go.Margin(3, 2, 1, 2) },
+        $(go.TextBlock, { font: `700 9px ${CANVAS_FONT}`, stroke: this.canvasTheme.accent, margin: new go.Margin(3, 2, 1, 2) },
           `+${parts.length - CAP} more…`)));
     }
     inner.push(btn(() => this.copyFromDock(parts.map(mpnOf).join('\n'), parts.length),
       $(go.Panel, 'Horizontal', { alignment: go.Spot.Left, margin: new go.Margin(5, 2, 0, 2) },
         $(go.TextBlock, { font: '12px "Material Icons"', stroke: this.canvasTheme.accent, margin: new go.Margin(0, 5, 0, 0) }, 'content_copy'),
-        $(go.TextBlock, { font: '700 8.5px Roboto, sans-serif', stroke: this.canvasTheme.accent }, 'COPY ALL'))));
+        $(go.TextBlock, { font: `700 8.5px ${CANVAS_FONT}`, stroke: this.canvasTheme.accent }, 'COPY ALL'))));
 
     const keepOpen = () => clearTimeout(this.partsDockTimer);
     const ad = $(go.Adornment, 'Spot',
@@ -755,7 +755,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return $('ToolTip',
       { 'Border.fill': this.canvasTheme.panel, 'Border.stroke': this.canvasTheme.border } as any,
       $(go.TextBlock,
-        { margin: 7, font: '11px Roboto, sans-serif', stroke: this.canvasTheme.text, maxSize: new go.Size(260, NaN) },
+        { margin: 7, font: `11px ${CANVAS_FONT}`, stroke: this.canvasTheme.text, maxSize: new go.Size(260, NaN) },
         new go.Binding('text', '', (d: any) => this.tooltipFor(d)))) as go.Adornment;
   }
 
@@ -840,9 +840,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
             $(go.TextBlock, { font: '20px Material Icons', stroke: '#ffffff' }, new go.Binding('text', 'icon'))),
           $(go.Panel, 'Vertical', { alignment: go.Spot.Left },
             $(go.TextBlock,
-              { font: '600 12.5px Roboto, sans-serif', stroke: this.canvasTheme.nodeText, editable: true, alignment: go.Spot.Left },
+              { font: `600 12.5px ${CANVAS_FONT}`, stroke: this.canvasTheme.nodeText, editable: true, alignment: go.Spot.Left },
               new go.Binding('text').makeTwoWay()),
-            $(go.TextBlock, { font: '10px Roboto, sans-serif', stroke: this.canvasTheme.nodeSub, alignment: go.Spot.Left },
+            $(go.TextBlock, { font: `10px ${CANVAS_FONT}`, stroke: this.canvasTheme.nodeSub, alignment: go.Spot.Left },
               new go.Binding('text', 'subtitle'))))),
       ...sidePorts(),
     );
@@ -861,16 +861,16 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           $(go.Shape, 'Rectangle',
             { row: 0, column: 0, columnSpan: 2, height: 4, strokeWidth: 0, fill: this.canvasTheme.accent, stretch: go.GraphObject.Horizontal, margin: new go.Margin(0, 0, 6, 0) }),
           $(go.TextBlock,
-            { row: 1, column: 0, font: '700 13px Roboto, sans-serif', stroke: '#111827', editable: true, alignment: go.Spot.Left },
+            { row: 1, column: 0, font: `700 13px ${CANVAS_FONT}`, stroke: '#111827', editable: true, alignment: go.Spot.Left },
             new go.Binding('text').makeTwoWay()),
           $(go.Picture, { row: 1, column: 1, rowSpan: 2, width: 48, height: 48, imageStretch: go.GraphObject.Uniform },
             new go.Binding('source', 'img')),
-          $(go.TextBlock, { row: 2, column: 0, font: '10.5px Roboto, sans-serif', stroke: '#6b7280', alignment: go.Spot.Left },
+          $(go.TextBlock, { row: 2, column: 0, font: `10.5px ${CANVAS_FONT}`, stroke: '#6b7280', alignment: go.Spot.Left },
             new go.Binding('text', 'supplier')),
           $(go.Panel, 'Vertical', { row: 3, column: 0, columnSpan: 2, alignment: go.Spot.Left, margin: new go.Margin(4, 0, 0, 0) },
             new go.Binding('itemArray', 'specs'),
             { itemTemplate: $(go.Panel, 'Auto', { alignment: go.Spot.Left },
-                $(go.TextBlock, { font: '10.5px Roboto, sans-serif', stroke: '#374151', alignment: go.Spot.Left },
+                $(go.TextBlock, { font: `10.5px ${CANVAS_FONT}`, stroke: '#374151', alignment: go.Spot.Left },
                   new go.Binding('text', ''))) }))),
       ...sidePorts(),
     );
@@ -885,7 +885,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         $(go.Picture, { name: 'PIC', width: 120, height: 90, imageStretch: go.GraphObject.Uniform },
           new go.Binding('source', 'img'),
           sizeBind()),
-        $(go.TextBlock, { font: '11px Roboto, sans-serif', stroke: '#94a3b8', editable: true, margin: new go.Margin(4, 0, 0, 0) },
+        $(go.TextBlock, { font: `11px ${CANVAS_FONT}`, stroke: '#94a3b8', editable: true, margin: new go.Margin(4, 0, 0, 0) },
           new go.Binding('text').makeTwoWay())),
       ...sidePorts(),
     );
@@ -905,18 +905,18 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           new go.Binding('fill', 'fill'),
           new go.Binding('stroke', 'stroke')),
         $(go.TextBlock,
-          { editable: true, font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937',
+          { editable: true, font: `600 12.5px ${CANVAS_FONT}`, stroke: '#1f2937',
             textAlign: 'center', maxSize: new go.Size(150, NaN), margin: 6 },
           new go.Binding('text').makeTwoWay(),
           new go.Binding('stroke', 'labelColor')),
         $(go.Panel, 'Auto', { alignment: go.Spot.TopRight, alignmentFocus: go.Spot.TopRight, margin: 3, visible: false },
           new go.Binding('visible', 'components', (c) => Array.isArray(c) && c.length > 0),
           $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: '#f5a623', stroke: null }),
-          $(go.TextBlock, { font: '700 9px Roboto, sans-serif', stroke: '#1a1303', margin: new go.Margin(1, 5, 1, 5) },
+          $(go.TextBlock, { font: `700 9px ${CANVAS_FONT}`, stroke: '#1a1303', margin: new go.Margin(1, 5, 1, 5) },
             new go.Binding('text', 'components',
               (c) => !Array.isArray(c) || !c.length ? '' : (c.length === 1 ? c[0].partNumber : c.length + ' parts'))))),
       $(go.TextBlock, { alignment: new go.Spot(0.5, 1, 0, 7), alignmentFocus: go.Spot.Top,
-        font: '10.5px Roboto, sans-serif', stroke: '#94a3b8', editable: true, textAlign: 'center', maxSize: new go.Size(170, NaN) },
+        font: `10.5px ${CANVAS_FONT}`, stroke: '#94a3b8', editable: true, textAlign: 'center', maxSize: new go.Size(170, NaN) },
         new go.Binding('text', 'sub').makeTwoWay(),
         new go.Binding('stroke', 'capColor'),
         new go.Binding('visible', 'sub', (s) => !!s && String(s).length > 0)),
@@ -962,12 +962,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         $(go.Picture, { isPanelMain: true, stretch: go.GraphObject.Fill,
           imageStretch: go.GraphObject.Fill, background: 'transparent' },
           new go.Binding('source', 'source'))),
-      $(go.TextBlock, { font: 'bold 11px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
+      $(go.TextBlock, { font: `bold 11px ${CANVAS_FONT}`, stroke: '#94a3b8', editable: true },
         new go.Binding('text').makeTwoWay(),
         new go.Binding('stroke', 'labelColor'),
         new go.Binding('alignment', '', labelAlign(0)),
         new go.Binding('alignmentFocus', '', labelFocus)),
-      $(go.TextBlock, { font: '10px Roboto, sans-serif', stroke: '#94a3b8', editable: true },
+      $(go.TextBlock, { font: `10px ${CANVAS_FONT}`, stroke: '#94a3b8', editable: true },
         new go.Binding('text', 'value').makeTwoWay(),
         new go.Binding('visible', 'value', (v) => !!v),
         new go.Binding('stroke', 'labelColor'),
@@ -987,7 +987,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         $(go.Picture, { isPanelMain: true, stretch: go.GraphObject.Fill,
           imageStretch: go.GraphObject.Fill, background: 'transparent' },
           new go.Binding('source', 'source')),
-        $(go.TextBlock, { alignment: go.Spot.Center, font: '13px Roboto, sans-serif', stroke: '#1f2937',
+        $(go.TextBlock, { alignment: go.Spot.Center, font: `13px ${CANVAS_FONT}`, stroke: '#1f2937',
           editable: true, maxSize: new go.Size(160, NaN), textAlign: 'center' },
           new go.Binding('text').makeTwoWay(),
           new go.Binding('stroke', 'labelColor'))),
@@ -1012,7 +1012,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         { segmentIndex: NaN, segmentFraction: 0.5, visible: false },
         new go.Binding('visible', 'text', (t) => !!t),
         $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: 'rgba(14,15,17,0.75)', stroke: null }),
-        $(go.TextBlock, { font: '600 10px Roboto, sans-serif', stroke: '#e2e8f0', editable: true,
+        $(go.TextBlock, { font: `600 10px ${CANVAS_FONT}`, stroke: '#e2e8f0', editable: true,
           margin: new go.Margin(1.5, 5, 1.5, 5) },
           new go.Binding('text').makeTwoWay(),
           new go.Binding('stroke', 'color'))),
@@ -1052,7 +1052,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       $(go.Panel, 'Vertical', { defaultAlignment: go.Spot.Left },
         $(go.Panel, 'Horizontal', { margin: new go.Margin(6, 8, 0, 6) },
           $('SubGraphExpanderButton', { margin: new go.Margin(0, 6, 0, 0) }),
-          $(go.TextBlock, { font: 'bold 12px Roboto, sans-serif', stroke: '#f5a623', editable: true },
+          $(go.TextBlock, { font: `bold 12px ${CANVAS_FONT}`, stroke: '#f5a623', editable: true },
             new go.Binding('text').makeTwoWay())),
         $(go.Placeholder, { padding: 14 })),
     );

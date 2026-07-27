@@ -3,7 +3,10 @@
        EditorChromeService (TemplatePortal), so it shows only while a diagram is
        open. Bindings still resolve against this component. -->
   <ng-template #editorToolbarTpl>
-  <header class="topbar">
+  <!-- A div, not a <header>: this is a control group inside the shell's single
+       header, and nesting a second <header> would be the same duplication in
+       the accessibility tree that we just removed visually. -->
+  <div class="topbar" role="toolbar" aria-label="Diagram tools">
     <span class="panel-toggle">
       <button mat-icon-button [class.on]="paletteOpen" (click)="paletteOpen = !paletteOpen"
         [matTooltip]="'palette.components' | translate"><mat-icon>widgets</mat-icon></button>
@@ -217,7 +220,7 @@
                                               }
                                             </div>
                                           }
-                                        </header>
+                                        </div>
                                         </ng-template>
 
                                         <!-- Hidden pickers stay in the always-rendered view so their

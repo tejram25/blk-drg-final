@@ -7,6 +7,18 @@
  * of drifting into its own hard-coded colours.
  */
 
+/**
+ * Font stack for canvas text.
+ *
+ * GoJS cannot read `var(--font)` any more than it can read a colour token, so
+ * the brand stack is mirrored here — keep it in sync with `--font` in
+ * styles.css. Without this the canvas drifts onto its own typeface while the
+ * rest of the app renders in Arrow Display.
+ */
+/* Single-quoted family names so the same string is valid both in a canvas
+   `font` shorthand and inside a double-quoted SVG font-family attribute. */
+export const CANVAS_FONT = "'Arrow Display', 'Segoe UI', system-ui, sans-serif";
+
 export interface CanvasTheme {
   canvas: string;
   grid: string;

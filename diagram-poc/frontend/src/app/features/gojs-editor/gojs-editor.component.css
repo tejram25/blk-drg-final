@@ -1295,10 +1295,48 @@
    a second one. The language switcher stays: the shell has no equivalent. */
 .user-wrap { display: none; }
 
-/* The toolbar renders inside the shell header (see EditorChromeService), which
-   already carries the Arrow brand — no second brand mark, and the shell's own
-   chrome supplies the divider so the toolbar sits flush. The palette toggle is
-   gone too: the shell's activity bar owns palette visibility now. */
+/* The toolbar renders INSIDE the shell's single header row (see
+   EditorChromeService), so it must not look or behave like a bar of its own:
+   no background, border, shadow, height or padding — just an inline group of
+   controls. The shell already carries the Arrow brand and owns palette
+   visibility via the activity bar, so the brand mark and palette toggle go. */
 .brand { display: none; }
-.topbar { box-shadow: none; }
 .topbar > .panel-toggle:first-child { display: none; }
+.topbar {
+  min-height: 0; height: 100%; padding: 0; gap: 2px;
+  background: none; border: 0; box-shadow: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  flex-wrap: nowrap; min-width: 0;
+  /* As a standalone bar this was flex-shrink:0; sharing the header row it must
+     yield, or it overflows onto the account cluster instead of compacting. */
+  flex: 1 1 auto;
+}
+/* The shell's own `.sp` is the single flexible spacer in the header, so the
+   toolbar's internal one becomes a fixed gap between the left and right
+   control clusters instead of fighting it for space. */
+.topbar > .spacer { flex: 0 0 6px; }
+
+/* Sharing one row means yielding space gracefully rather than overflowing.
+   The name field shrinks (down to a still-usable 62px) instead of vanishing,
+   so renaming stays available at every width; the menus and action clusters
+   hold their size because they cannot shrink usefully. */
+.topbar .doc-name { flex: 0 1 168px; min-width: 62px; }
+.topbar .open-dd { flex: 0 1 auto; min-width: 0; }
+.topbar .open-dd .dd-trigger { max-width: 150px; }
+.topbar .tool-group.boxed, .topbar .menu-wrap { flex: none; }
+
+/* Progressive disclosure as the header narrows: shed the lowest-value chrome
+   first so the primary actions always fit. The classification pill keeps its
+   icon (and tooltip) after the label goes. */
+@media (max-width: 1600px) {
+  .topbar .cls-pill span { display: none; }
+  .topbar .cls-pill { padding: 0 7px; }
+}
+@media (max-width: 1500px) { .topbar .lang-wrap { display: none; } }
+/* Presence and Chat duplicate the dock's Collaboration tab, so they are the
+   right things to drop next — nothing becomes unreachable. */
+@media (max-width: 1400px) {
+  .topbar .chat-toggle,
+  .topbar > .menu-wrap:has(> .presence-btn) { display: none; }
+}
+@media (max-width: 1300px) { .topbar .open-dd { display: none; } }
