@@ -10,10 +10,10 @@ is the token set to import into the app.
 
 | File | What it is |
 |---|---|
-| `workspace-reference.html` | The canonical Option A reference, both themes, self-contained |
+| `workspace-reference.html` | The canonical Option A reference, both themes, self-contained (real Arrow logo + Arrow Display embedded) |
 | `tokens.css` | Design tokens to import into the Angular app |
+| `brand/` | Arrow wordmark, cropped from the official lockup, for light and dark chrome |
 | `ws-dark.png` / `ws-light.png` | Option A rendered in both themes |
-| `optA.png` / `optB.png` / `optC.png` | The three directions that were reviewed |
 
 ## Why Option A
 
@@ -23,19 +23,31 @@ is the token set to import into the app.
 | B — Studio | Canvas-first with floating dockable panels (Figma-like) | Modern but further from the "IntelliJ" ask |
 | C — Hub-embedded | Full Smart Ehub shell, editor as the active workspace | Most 1:1 with the hub, but less canvas room |
 
-## Palette
+## Palette — strictly the Arrow theme
 
-From the brand template (`theme1.xml` accents) plus the hub's own CSS:
+The brand guidelines say **"DON'T alter or add colors to the Arrow Color Theme."**
+These six are the whole palette:
 
-| Token | Value | Use |
+| Name | Value | Use here |
 |---|---|---|
-| `--brand` | `#E31837` | Logo mark, primary/destructive CTA. Sparingly. |
-| `--accent` | `#0084D5` | Interaction + selection — the "IDE blue" |
-| `--accent-2` | `#47D7AC` | Success / live / synced |
-| `--amber` | `#FFC845` | Warning |
-| `--coral` | `#FF8674` | Attention / needs review |
+| Arrow Black | `#000000` | Chrome, canvas ground (dark) |
+| White | `#FFFFFF` | Ground (light), text (dark) |
+| Sky Blue | `#0084D5` | **Primary interaction + selection** |
+| Patina Green | `#47D7AC` | Success / live / synced |
+| Copper Yellow | `#FFC845` | Warning |
+| Solar Orange | `#FF8674` | Attention / needs review |
 
-Type: **Inter** for UI, **Arrow Display** for the wordmark, monospace for MPNs.
+**Neutrals are pure tints of Arrow Black/White** — no hue is added. That is the
+fix for the earlier draft, which drifted off-brand by inventing navy/slate
+neutrals and using a red that isn't in the Arrow theme.
+
+Type: **Arrow Display** — Medium (600) for headings and emphasis, Regular (400)
+for body; monospace only for part numbers. Fonts ship in the repo at
+`diagram-poc/react-native-app/assets/fonts/`.
+
+Logo: the official Arrow wordmark (`brand/`), white on dark chrome, black on
+light — cropped from the full "ARROW / Five Years Out" lockup so it stays legible
+at top-bar height.
 
 > Rule: components consume **tokens only**, never raw hex — that's what keeps
 > dark and light in sync, including the canvas.

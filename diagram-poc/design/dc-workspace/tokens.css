@@ -1,81 +1,114 @@
 /* ============================================================================
-   DC-Workspace design tokens
-   Palette source: brand presentation template (.potx theme1) + Smart Ehub hub CSS.
-   Dark is the default; [data-theme="light"] redefines every token. Components must
-   consume the tokens only — never hard-code a hex — so both themes stay in sync.
+   DC-Workspace design tokens — STRICT Arrow brand palette.
+
+   Per the Arrow brand guidelines ("DON'T alter or add colors to the Arrow Color
+   Theme") the ONLY permitted colors are:
+
+     Arrow Black   #000000      White          #FFFFFF
+     Sky Blue      #0084D5      Patina Green   #47D7AC
+     Solar Orange  #FF8674      Copper Yellow  #FFC845
+
+   Neutrals below are pure tints of Arrow Black / White (no hue added), which is
+   what keeps the UI on-brand while still giving an IDE-grade surface ramp.
+   Type is Arrow Display (Medium for headings/emphasis, Regular for body).
+
+   Components must consume these tokens only — never a raw hex — so both themes,
+   including the diagram canvas, stay in sync.
    ========================================================================== */
 
 :root {
-  /* ---- brand (fixed in both themes) ------------------------------------- */
-  --brand: #E31837;        /* logo mark, destructive/primary CTA. Use sparingly. */
-  --accent: #0084D5;       /* interactive + selection. The "IDE blue". */
-  --accent-2: #47D7AC;     /* success / live / synced */
-  --amber: #FFC845;        /* warning */
-  --coral: #FF8674;        /* attention / needs review */
+  /* ---- Arrow palette (fixed, both themes) ------------------------------- */
+  --arrow-black: #000000;
+  --white: #FFFFFF;
+  --sky: #0084D5;          /* primary interaction + selection */
+  --patina: #47D7AC;       /* success / live / synced */
+  --solar: #FF8674;        /* attention / needs review */
+  --copper: #FFC845;       /* warning */
 
-  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font: 'Arrow Display', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  --display: 'Arrow Display', var(--sans);   /* wordmark only */
 
-  /* ---- surfaces (dark default) ------------------------------------------ */
-  --bg: #0d1524;           /* app background / editor area */
-  --panel: #111a2b;        /* tool windows: explorer, inspector */
-  --rail: #0a1120;         /* activity bar, top bar, tab strip, status bar */
-  --surface: #182135;      /* raised rows/cards inside panels */
-  --surface-s: #131d30;    /* inputs, secondary buttons */
-  --line: #243149;         /* structural borders */
-  --line-soft: #1a2436;    /* internal dividers */
-  --hover: #ffffff0d;
+  /* ---- dark theme: neutral ramp off Arrow Black ------------------------- */
+  --bg: #0a0a0a;           /* app background / editor area */
+  --panel: #121212;        /* tool windows: explorer, inspector */
+  --rail: #000000;         /* activity bar, top bar, tab strip, status bar */
+  --surface: #1c1c1c;      /* raised rows/cards */
+  --surface-s: #161616;    /* inputs, secondary buttons */
+  --line: #2a2a2a;
+  --line-soft: #1f1f1f;
+  --hover: #ffffff0f;
 
-  /* ---- text ------------------------------------------------------------- */
-  --ink: #e8edf7;
-  --muted: #95a3bd;
-  --faint: #61708c;        /* section labels, disabled */
+  --ink: #FFFFFF;
+  --muted: #a8a8a8;
+  --faint: #6e6e6e;
 
-  --accent-soft: #0084d528; /* selected row / chip background */
+  --accent: var(--sky);
+  --accent-soft: #0084d526; /* selected row / chip background */
+  --accent-ink: #4db4e8;    /* sky, lightened for text on dark */
 
   /* ---- canvas (GoJS) ---------------------------------------------------- */
-  --canvas: #0d1524;
-  --grid: #1c2842;
-  --node: #16223a;
-  --node-stroke: #2c3c5a;
-  --node-text: #e8edf7;
-  --node-sub: #7f8ba6;
-  --wire: #0084D5;         /* power/edited wires */
-  --wire-sig: #5b6b86;     /* signal links */
-  --sym: #cfe6f5;          /* electrical symbol strokes */
-  --cap-fill: #0d3350;     /* symbol body fill */
+  --canvas: #0a0a0a;
+  --grid: #242424;
+  --node: #161616;
+  --node-stroke: #3a3a3a;
+  --node-text: #FFFFFF;
+  --node-sub: #8f8f8f;
+  --wire: var(--sky);       /* power / edited wires */
+  --wire-sig: #6e6e6e;      /* signal links */
+  --sym: #e8e8e8;           /* electrical symbol strokes */
+  --sym-fill: #00131f;      /* symbol body fill */
 
-  /* ---- shape ------------------------------------------------------------ */
   --r-sm: 6px;
   --r: 9px;
-  --r-lg: 14px;
 }
 
 :root[data-theme="light"] {
-  --bg: #eef1f7;
-  --panel: #ffffff;
-  --rail: #e7ecf4;
-  --surface: #f4f7fc;
-  --surface-s: #f1f5fb;
-  --line: #d9e0ec;
-  --line-soft: #e8edf5;
-  --hover: #0b122008;
+  --bg: #f2f2f2;
+  --panel: #FFFFFF;
+  --rail: #FFFFFF;
+  --surface: #f7f7f7;
+  --surface-s: #f2f2f2;
+  --line: #dcdcdc;
+  --line-soft: #ebebeb;
+  --hover: #00000008;
 
-  --ink: #17233c;
-  --muted: #54627d;
-  --faint: #8593ab;
+  --ink: #000000;
+  --muted: #5c5c5c;
+  --faint: #8c8c8c;
 
-  --accent-soft: #0084d51c;
+  --accent-soft: #0084d517;
+  --accent-ink: #00699f;    /* sky, darkened for text on white */
 
-  --canvas: #f7f9fd;
-  --grid: #e0e7f2;
-  --node: #ffffff;
-  --node-stroke: #cdd7e7;
-  --node-text: #17233c;
-  --node-sub: #7a8aa5;
-  --wire: #0084D5;
-  --wire-sig: #9aa7bd;
-  --sym: #22405b;
-  --cap-fill: #e8f4fc;
+  --canvas: #FFFFFF;
+  --grid: #e6e6e6;
+  --node: #FFFFFF;
+  --node-stroke: #cfcfcf;
+  --node-text: #000000;
+  --node-sub: #6e6e6e;
+  --wire-sig: #a8a8a8;
+  --sym: #000000;
+  --sym-fill: #e8f5fd;
+}
+
+/* ---- Arrow Display -------------------------------------------------------
+   Font files live at diagram-poc/react-native-app/assets/fonts/. Point the
+   src at wherever they are served from in the host app.
+   -------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Arrow Display';
+  src: url('./fonts/ArrowDisplay-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Arrow Display';
+  src: url('./fonts/ArrowDisplay-Medium.ttf') format('truetype');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Arrow Display';
+  src: url('./fonts/ArrowDisplay-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
 }
