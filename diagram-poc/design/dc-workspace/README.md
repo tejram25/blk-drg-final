@@ -75,6 +75,9 @@ Problems / BOM / Collaboration.
 
 ## Phases
 
+All six phases are **implemented in the Angular app** (`diagram-poc/frontend`),
+not just specified here.
+
 | Phase | Scope | Notes |
 |---|---|---|
 | **0 · Tokens** ✅ | `tokens.css` + component kit (buttons, badges, panels, inputs) | Foundation, no visible risk |
@@ -85,6 +88,23 @@ Problems / BOM / Collaboration.
 | **5 · Polish** ✅ | Motion, empty states, light-theme QA, responsive | |
 
 Each phase is independently reviewable and revertible.
+
+## Implemented in the app
+
+| Where | What |
+|---|---|
+| `src/styles.css` | The token system. Re-pointing values here re-themes every surface. |
+| `src/app/core/services/theme.service.ts` | Applies the stored theme on boot, falls back to the OS preference, persists the choice, exposes `cssVar()`. |
+| `src/app/features/gojs-editor/gojs-theme.ts` | Resolves tokens into concrete colours for GoJS, which paints to a canvas and cannot read CSS variables. Also constrains the wire-colour picker to the Arrow palette. |
+| `src/assets/fonts`, `src/assets/brand` | Arrow Display and the Arrow wordmark. |
+
+Two rules keep it from drifting back:
+
+1. **Components consume tokens only, never a raw hex.** The app is currently at
+   zero bare hexes outside the token definitions; that is the state to hold.
+2. **Never redeclare tokens in a component.** A `:host` block in the editor was
+   shadowing the global palette and would have frozen the whole editor in the
+   old colours.
 
 ## Phase 2 — panels (done)
 
