@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { PortalModule } from '@angular/cdk/portal';
 import { AuthService } from '../../../core/services/auth.service';
+import { EditorToolbarService } from '../../../core/services/editor-toolbar.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { WorkspaceService } from '../services/workspace.service';
 import { ProjectWorkspaceService } from '../services/project-workspace.service';
@@ -31,7 +33,7 @@ type SidePanel = 'explorer' | 'search' | 'reviews' | 'business';
 @Component({
   selector: 'app-ide-shell',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterOutlet, MatIconModule, MatTooltipModule],
+  imports: [CommonModule, FormsModule, RouterOutlet, MatIconModule, MatTooltipModule, PortalModule],
   templateUrl: './ide-shell.component.html',
   styleUrls: ['./ide-shell.component.css'],
 })
@@ -39,6 +41,8 @@ export class IdeShellComponent {
   readonly pw = inject(ProjectWorkspaceService);
   readonly ws = inject(WorkspaceService);
   readonly auth = inject(AuthService);
+  /** Toolbar the block-diagram editor projects into the header while open. */
+  readonly editorToolbar = inject(EditorToolbarService);
   private readonly theme = inject(ThemeService);
   private readonly router = inject(Router);
 

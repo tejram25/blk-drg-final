@@ -1,5 +1,8 @@
 <div class="layout" [class.mobile]="isMobile">
-  <!-- Top bar -->
+  <!-- Top bar. Not rendered here: the shell hosts it in the workspace header via
+       EditorToolbarService (TemplatePortal), so it shows only while a diagram is
+       open. Bindings still resolve against this component. -->
+  <ng-template #editorToolbarTpl>
   <header class="topbar">
     <span class="panel-toggle">
       <button mat-icon-button [class.on]="paletteOpen" (click)="paletteOpen = !paletteOpen"
@@ -142,11 +145,6 @@
                                         </button>
                                         <button mat-icon-button [class.on]="commentsOpen" matTooltip="Comments" (click)="toggleComments()"><mat-icon>comment</mat-icon></button>
 
-                                        <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
-                                        <input #imageGenInput type="file" accept="image/*" hidden (change)="onGenerateImageSelected($event)" />
-                                        <input #jsonInput type="file" accept=".json,application/json" hidden (change)="onJsonSelected($event)" />
-                                        <input #drawioInput type="file" accept=".drawio,.xml,application/xml,text/xml" hidden (change)="onDrawioSelected($event)" />
-
                                         @if (collab.active) {
                                           <div class="menu-wrap">
                                             <button type="button" mat-stroked-button class="presence-btn" [class.live]="collab.connected"
@@ -220,6 +218,14 @@
                                             </div>
                                           }
                                         </header>
+                                        </ng-template>
+
+                                        <!-- Hidden pickers stay in the always-rendered view so their
+                                             ViewChild refs resolve even before the toolbar portal mounts. -->
+                                        <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
+                                        <input #imageGenInput type="file" accept="image/*" hidden (change)="onGenerateImageSelected($event)" />
+                                        <input #jsonInput type="file" accept=".json,application/json" hidden (change)="onJsonSelected($event)" />
+                                        <input #drawioInput type="file" accept=".drawio,.xml,application/xml,text/xml" hidden (change)="onDrawioSelected($event)" />
 
                                         <!-- Linked project banner -->
                                         @if (linkedProject; as p) {

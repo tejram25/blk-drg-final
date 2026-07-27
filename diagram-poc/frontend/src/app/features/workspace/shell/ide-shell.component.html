@@ -86,6 +86,13 @@
     </div>
   </header>
 
+  <!-- ─────────── editor toolbar (only while a block diagram is open) ─────────── -->
+  @if (editorToolbar.portal(); as tp) {
+    <div class="editor-toolbar">
+      <ng-template [cdkPortalOutlet]="tp"></ng-template>
+    </div>
+  }
+
   <!-- ─────────── body ─────────── -->
   <div class="body">
     <!-- activity bar -->

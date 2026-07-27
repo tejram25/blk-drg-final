@@ -726,7 +726,7 @@
       .topbar .chat-toggle, .topbar .lang-wrap,
       .topbar .badge-host, .topbar > .panel-toggle,
       .topbar button[mattooltip="Comments"] { display: none !important; }
-      .brand { display: flex; }
+      /* Brand stays hidden on phones too — the shell header brands the app. */
       .brand-name { display: none; }
       .doc-name { flex: 1; width: auto; min-width: 60px; }
       .mobile-keep { display: inline-flex !important; }
@@ -1294,3 +1294,9 @@
 /* The workspace shell header owns the account menu, so the editor must not show
    a second one. The language switcher stays: the shell has no equivalent. */
 .user-wrap { display: none; }
+
+/* The toolbar renders inside the shell header (see EditorToolbarService), which
+   already carries the Arrow brand — no second brand mark, and the shell's own
+   chrome supplies the divider so the toolbar sits flush. */
+.brand { display: none; }
+.topbar { box-shadow: none; }

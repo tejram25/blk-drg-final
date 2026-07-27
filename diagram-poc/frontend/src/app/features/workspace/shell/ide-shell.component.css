@@ -1,7 +1,14 @@
 /* IDE shell. Tokens only — see styles.css. */
 :host { display: block; height: 100%; }
 
-.ide { display: grid; grid-template-rows: 44px 1fr 24px; height: 100vh; overflow: hidden; }
+/* Rows: header · editor toolbar (auto — collapses when no diagram is open) ·
+   body · status. Explicit row placement so the optional toolbar can't shift
+   the others into the wrong track. */
+.ide { display: grid; grid-template-rows: 44px auto 1fr 24px; height: 100vh; overflow: hidden; }
+.ide > .top { grid-row: 1; }
+.ide > .editor-toolbar { grid-row: 2; min-width: 0; position: relative; z-index: 25; }
+.ide > .body { grid-row: 3; }
+.ide > .status { grid-row: 4; }
 
 /* ---------- top bar ---------- */
 .top {

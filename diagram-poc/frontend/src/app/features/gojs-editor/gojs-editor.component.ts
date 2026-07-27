@@ -1,7 +1,10 @@
 import {
-  AfterViewInit, ChangeDetectorRef, Component, effect, ElementRef, HostListener, NgZone, OnDestroy,
+  AfterViewInit, ChangeDetectorRef, Component, TemplateRef, ViewContainerRef, afterNextRender,
+  effect, ElementRef, HostListener, NgZone, OnDestroy,
   OnInit, ViewChild,
 } from '@angular/core';
+import { TemplatePortal } from '@angular/cdk/portal';
+import { EditorToolbarService } from '../../core/services/editor-toolbar.service';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -89,6 +92,7 @@ import { Command, CommandPaletteComponent } from '../../shared/components/comman
 export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLDivElement>;
   @ViewChild('minimap', { static: true }) minimapRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('editorToolbarTpl', { static: true }) toolbarTpl!: TemplateRef<unknown>;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('jsonInput') jsonInput!: ElementRef<HTMLInputElement>;
   @ViewChild('drawioInput') drawioInput!: ElementRef<HTMLInputElement>;
@@ -225,7 +229,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private location: Location,
     private themeSvc: ThemeService,
+    private toolbarHost: EditorToolbarService,
+    private vcr: ViewContainerRef,
   ) {
+    // Hand the toolbar to the shell header after the first render pass (so the
+    // shell — an ancestor already checked this cycle — updates in its own one).
+    afterNextRender(() => {
+      this.toolbarHost.attach(new TemplatePortal(this.toolbarTpl, this.vcr));
+    });
     this.lightCanvas = this.themeSvc.theme() === 'light';
     // GoJS paints to a canvas and cannot read CSS variables, so re-resolve the
     // palette and repaint whenever the app theme flips.
@@ -291,6 +302,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Leaving the editor: take the toolbar out of the shell header.
+    this.toolbarHost.clear();
     if (this.mobileMq && this.mobileMqListener) this.mobileMq.removeEventListener('change', this.mobileMqListener);
     this.chatSub?.unsubscribe();
     this.modelReplacedSub?.unsubscribe();
