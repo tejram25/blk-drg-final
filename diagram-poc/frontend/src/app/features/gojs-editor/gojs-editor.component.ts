@@ -4,7 +4,7 @@ import {
   OnInit, ViewChild,
 } from '@angular/core';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { EditorToolbarService } from '../../core/services/editor-toolbar.service';
+import { EditorChromeService } from '../../core/services/editor-chrome.service';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -93,6 +93,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLDivElement>;
   @ViewChild('minimap', { static: true }) minimapRef!: ElementRef<HTMLDivElement>;
   @ViewChild('editorToolbarTpl', { static: true }) toolbarTpl!: TemplateRef<unknown>;
+  @ViewChild('editorPaletteTpl', { static: true }) paletteTpl!: TemplateRef<unknown>;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('jsonInput') jsonInput!: ElementRef<HTMLInputElement>;
   @ViewChild('drawioInput') drawioInput!: ElementRef<HTMLInputElement>;
@@ -229,13 +230,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private location: Location,
     private themeSvc: ThemeService,
-    private toolbarHost: EditorToolbarService,
+    private chromeHost: EditorChromeService,
     private vcr: ViewContainerRef,
   ) {
-    // Hand the toolbar to the shell header after the first render pass (so the
-    // shell — an ancestor already checked this cycle — updates in its own one).
+    // Hand the toolbar + palette to the shell after the first render pass (so
+    // the shell — an ancestor already checked this cycle — updates in its own).
     afterNextRender(() => {
-      this.toolbarHost.attach(new TemplatePortal(this.toolbarTpl, this.vcr));
+      this.chromeHost.attachToolbar(new TemplatePortal(this.toolbarTpl, this.vcr));
+      this.chromeHost.attachPalette(new TemplatePortal(this.paletteTpl, this.vcr));
     });
     this.lightCanvas = this.themeSvc.theme() === 'light';
     // GoJS paints to a canvas and cannot read CSS variables, so re-resolve the
@@ -302,8 +304,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Leaving the editor: take the toolbar out of the shell header.
-    this.toolbarHost.clear();
+    // Leaving the editor: take the toolbar + palette out of the shell chrome.
+    this.chromeHost.clear();
     if (this.mobileMq && this.mobileMqListener) this.mobileMq.removeEventListener('change', this.mobileMqListener);
     this.chatSub?.unsubscribe();
     this.modelReplacedSub?.unsubscribe();

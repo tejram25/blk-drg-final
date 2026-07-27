@@ -1,6 +1,6 @@
 <div class="layout" [class.mobile]="isMobile">
   <!-- Top bar. Not rendered here: the shell hosts it in the workspace header via
-       EditorToolbarService (TemplatePortal), so it shows only while a diagram is
+       EditorChromeService (TemplatePortal), so it shows only while a diagram is
        open. Bindings still resolve against this component. -->
   <ng-template #editorToolbarTpl>
   <header class="topbar">
@@ -247,6 +247,10 @@
 
                                         <div class="body">
                                           <!-- Palette -->
+                                          <!-- Components palette. Like the toolbar, it renders in the shell —
+                                               as a tool window behind the activity bar's "Components" icon —
+                                               so only one left panel shows at a time. -->
+                                          <ng-template #editorPaletteTpl>
                                           <aside class="palette" [class.open]="paletteOpen">
                                             <div class="panel-title">{{ 'palette.components' | translate }}</div>
                                             <div class="search-wrap">
@@ -317,6 +321,7 @@
                                             </div>
                                             <p class="hint">{{ 'palette.hint' | translate }}</p>
                                           </aside>
+                                          </ng-template>
 
                                           <!-- Canvas -->
                                           <main class="canvas-wrap">

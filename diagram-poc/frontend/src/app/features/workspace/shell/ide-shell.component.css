@@ -97,6 +97,8 @@ kbd { font: inherit; font-size: 9.5px; padding: 1px 5px; border: 1px solid var(-
   display: flex; flex-direction: column; width: 262px; flex: none; min-height: 0;
   background: var(--panel); border-right: 1px solid var(--border);
 }
+/* Host for the editor's portaled Components palette: fill the tool window. */
+.tool-palette { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .tool-head {
   display: flex; align-items: center; gap: 8px; padding: 9px 12px; flex: none;
   border-bottom: 1px solid var(--border-soft);

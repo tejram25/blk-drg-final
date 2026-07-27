@@ -386,13 +386,13 @@
     /* ---- Layout ---- */
     .body { display: flex; flex: 1; min-height: 0; position: relative; }
 
-    /* ---- Palette ---- */
+    /* ---- Palette ----
+       Renders inside the shell's tool window (see EditorChromeService), which
+       supplies the column width and border — so it fills, no own chrome. */
     .palette {
-      width: clamp(190px, 16vw, 240px); padding: 11px;
-      background: color-mix(in srgb, var(--panel) 88%, transparent);
-      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-      border-right: 1px solid var(--border); overflow-y: auto;
-      box-shadow: 10px 0 30px rgba(0,0,0,.28);
+      width: 100%; height: 100%; box-sizing: border-box; padding: 11px;
+      background: transparent;
+      overflow-y: auto;
       display: flex; flex-direction: column; position: relative; z-index: 10;
     }
     .panel-title {
@@ -1295,8 +1295,10 @@
    a second one. The language switcher stays: the shell has no equivalent. */
 .user-wrap { display: none; }
 
-/* The toolbar renders inside the shell header (see EditorToolbarService), which
+/* The toolbar renders inside the shell header (see EditorChromeService), which
    already carries the Arrow brand — no second brand mark, and the shell's own
-   chrome supplies the divider so the toolbar sits flush. */
+   chrome supplies the divider so the toolbar sits flush. The palette toggle is
+   gone too: the shell's activity bar owns palette visibility now. */
 .brand { display: none; }
 .topbar { box-shadow: none; }
+.topbar > .panel-toggle:first-child { display: none; }

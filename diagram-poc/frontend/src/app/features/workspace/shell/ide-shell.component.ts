@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterOutlet } from '@angular/router';
@@ -6,13 +6,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { PortalModule } from '@angular/cdk/portal';
 import { AuthService } from '../../../core/services/auth.service';
-import { EditorToolbarService } from '../../../core/services/editor-toolbar.service';
+import { EditorChromeService } from '../../../core/services/editor-chrome.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { WorkspaceService } from '../services/workspace.service';
 import { ProjectWorkspaceService } from '../services/project-workspace.service';
 import { Artifact, Region, Role } from '../models/workspace.models';
 
-type SidePanel = 'explorer' | 'search' | 'reviews' | 'business';
+type SidePanel = 'explorer' | 'components' | 'search' | 'reviews' | 'business';
 
 /**
  * The IDE shell.
@@ -41,8 +41,8 @@ export class IdeShellComponent {
   readonly pw = inject(ProjectWorkspaceService);
   readonly ws = inject(WorkspaceService);
   readonly auth = inject(AuthService);
-  /** Toolbar the block-diagram editor projects into the header while open. */
-  readonly editorToolbar = inject(EditorToolbarService);
+  /** Chrome (toolbar + palette) the diagram editor projects in while open. */
+  readonly editorChrome = inject(EditorChromeService);
   private readonly theme = inject(ThemeService);
   private readonly router = inject(Router);
 
@@ -69,6 +69,17 @@ export class IdeShellComponent {
     { id: 'business', icon: 'insights', label: 'Business' },
   ];
 
+  /**
+   * Rail items. "Components" (the editor palette) slots in after Project, but
+   * only while a diagram is open — its presence tracks the editor's portal.
+   */
+  readonly railItems = computed(() => {
+    if (!this.editorChrome.palette()) return this.activities;
+    const items = [...this.activities];
+    items.splice(1, 0, { id: 'components', icon: 'widgets', label: 'Components' });
+    return items;
+  });
+
   readonly businessLinks = [
     { label: 'All projects', icon: 'work_outline', path: '/workspace/projects' },
     { label: 'Campaigns', icon: 'campaign', path: '/workspace/campaign' },
@@ -83,6 +94,17 @@ export class IdeShellComponent {
   constructor() {
     document.addEventListener('keydown', this.onKey, true);
     inject(DestroyRef).onDestroy(() => document.removeEventListener('keydown', this.onKey, true));
+
+    // Opening a diagram swaps the tool window to Components (you usually want
+    // the palette next); leaving swaps back so the panel never shows a hole.
+    effect(() => {
+      if (this.editorChrome.palette()) {
+        this.panel.set('components');
+        this.panelOpen.set(true);
+      } else if (this.panel() === 'components') {
+        this.panel.set('explorer');
+      }
+    });
   }
 
   // ---- project picker ----------------------------------------------------

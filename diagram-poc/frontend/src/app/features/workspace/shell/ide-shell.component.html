@@ -87,7 +87,7 @@
   </header>
 
   <!-- ─────────── editor toolbar (only while a block diagram is open) ─────────── -->
-  @if (editorToolbar.portal(); as tp) {
+  @if (editorChrome.toolbar(); as tp) {
     <div class="editor-toolbar">
       <ng-template [cdkPortalOutlet]="tp"></ng-template>
     </div>
@@ -97,7 +97,7 @@
   <div class="body">
     <!-- activity bar -->
     <nav class="rail" aria-label="Tool windows">
-      @for (a of activities; track a.id) {
+      @for (a of railItems(); track a.id) {
         <button type="button" class="ri" [class.on]="panel() === a.id && panelOpen()"
           (click)="selectPanel(a.id)" [matTooltip]="a.label" matTooltipPosition="right"
           [attr.aria-label]="a.label">
@@ -118,6 +118,13 @@
     @if (panelOpen()) {
       <aside class="tool">
         @switch (panel()) {
+          @case ('components') {
+            <!-- The editor's palette, projected here so only one left panel
+                 shows at a time (see EditorChromeService). -->
+            <div class="tool-palette">
+              <ng-template [cdkPortalOutlet]="editorChrome.palette()"></ng-template>
+            </div>
+          }
           @case ('explorer') {
             <div class="tool-head">
               <span class="tool-title">Project</span>
