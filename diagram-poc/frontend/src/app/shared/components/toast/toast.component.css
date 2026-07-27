@@ -1,11 +1,16 @@
+/* Toasts follow the workspace's popover language: panel surface, token radius
+   and border, the same soft elevation as .pop, and an inset accent strip rather
+   than a border-left bar. Tokens only — no raw colours. */
+
 .toast-stack {
   position: fixed;
   right: 16px;
-  bottom: 16px;
+  /* Clear the 24px status bar instead of sitting on top of it. */
+  bottom: 36px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   max-width: min(380px, calc(100vw - 32px));
 }
 
@@ -13,16 +18,18 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 12px 12px 12px 14px;
-  border-radius: 10px;
+  padding: 11px 11px 11px 13px;
+  border-radius: var(--radius);
   background: var(--panel);
   color: var(--text);
   border: 1px solid var(--border);
-  border-left: 4px solid var(--muted);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
-  font-size: 13px;
-  line-height: 1.4;
-  animation: toast-in 0.18s ease;
+  /* Same elevation as the header popovers; the negative spread keeps it soft
+     in light theme, where the old flat 50% black read as a grey halo. */
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .55);
+  font-family: var(--font);
+  font-size: 12.5px;
+  line-height: 1.45;
+  animation: toast-in .18s ease;
 }
 
 @keyframes toast-in {
@@ -30,40 +37,48 @@
   to { opacity: 1; transform: none; }
 }
 
-.toast.error { border-left-color: var(--danger); }
-.toast.success { border-left-color: var(--ok); }
-.toast.info { border-left-color: var(--accent-ink); }
+/* Accent strip as an inset shadow — the same treatment the activity bar and
+   editor tabs use for their active state. */
+.toast.success { box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .55), inset 3px 0 0 var(--ok); }
+.toast.error { box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .55), inset 3px 0 0 var(--danger); }
+.toast.info { box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .55), inset 3px 0 0 var(--accent); }
 
+/* Icon carries the tone colour, at the app's icon scale (17px, not 20px). */
 .toast-icon {
   flex: none;
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
 }
 
-.toast.error .toast-icon { color: var(--danger); }
 .toast.success .toast-icon { color: var(--ok); }
+.toast.error .toast-icon { color: var(--danger); }
 .toast.info .toast-icon { color: var(--accent-ink); }
 
 .toast-text {
   flex: 1 1 auto;
+  min-width: 0;
   word-break: break-word;
 }
 
 .toast-x {
   flex: none;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
   background: transparent;
-  color: var(--muted);
+  color: var(--faint);
   cursor: pointer;
-  padding: 0;
+  padding: 1px;
   display: inline-flex;
+  font: inherit;
 }
 
 .toast-x mat-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
 }
 
-.toast-x:hover { color: var(--text); }
+.toast-x:hover { color: var(--text); background: var(--panel-2); }
+.toast-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
