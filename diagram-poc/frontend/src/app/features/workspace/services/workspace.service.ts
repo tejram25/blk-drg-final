@@ -2,7 +2,7 @@ import { Injectable, computed, signal } from '@angular/core';
 import {
   ActivityEntry, Campaign, CrossReference, InspectionItem, Notification, PartResult,
   Project, Region, Role, Supplier, Ticket,
-} from './workspace.models';
+} from '../models/workspace.models';
 
 /**
  * Data for the workspace modules.

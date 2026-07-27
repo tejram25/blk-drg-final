@@ -1,5 +1,6 @@
 /* Shared layout + table styling for every workspace page. Tokens only. */
-:host { display: block; }
+/* Every page gets the same breathing room; individual pages must not re-pad. */
+:host { display: block; padding: 20px 22px 28px; }
 
 .grid { display: grid; gap: 14px; margin-bottom: 16px; }
 .grid.stats { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
@@ -102,6 +103,9 @@
 }
 .field textarea { min-height: 78px; resize: vertical; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Inner padding for content placed inside a flush panel (e.g. above a table). */
+.panel-pad { padding: 12px 15px; }
 
 /* ---- misc ---- */
 .empty { padding: 22px 4px; color: var(--muted); font-size: 12.5px; }

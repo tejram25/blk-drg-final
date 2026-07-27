@@ -2,8 +2,8 @@ import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { WorkspaceService } from '../workspace.service';
-import { WsBarComponent, WsPageHeaderComponent, WsPanelComponent, WsPillComponent, WsStatComponent } from '../ui/ws-ui';
+import { WorkspaceService } from '../../services/workspace.service';
+import { WsBarComponent, WsPageHeaderComponent, WsPanelComponent, WsPillComponent, WsStatComponent } from '../../ui';
 
 /**
  * Landing page. The headline figures change with the role picked in the header
@@ -18,7 +18,7 @@ import { WsBarComponent, WsPageHeaderComponent, WsPanelComponent, WsPillComponen
     WsPageHeaderComponent, WsPanelComponent, WsStatComponent, WsPillComponent, WsBarComponent,
   ],
   templateUrl: './dashboard.page.html',
-  styleUrls: ['./pages.css'],
+  styleUrls: ['../pages.css'],
 })
 export class DashboardPage {
   readonly ws = inject(WorkspaceService);

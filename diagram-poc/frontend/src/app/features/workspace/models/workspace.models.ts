@@ -145,8 +145,17 @@ export interface Artifact {
   author: string;
   /** Bytes, for documents and datasets. */
   size?: number;
-  /** Backing diagram id when kind === 'diagram' and it is a real saved record. */
+  /**
+   * Backing saved-diagram id, once resolved against the backend. Never seeded:
+   * ProjectWorkspaceService.resolveDiagram() fills it in on first open.
+   */
   diagramId?: number;
+  /**
+   * Name of the saved diagram this artefact opens (e.g. one of the backend's
+   * seeded samples). Defaults to the artefact's own name; if no diagram by
+   * that name exists, one is created from sample content on first open.
+   */
+  diagramName?: string;
   /** Where the artefact came from. Salesforce-sourced items are read-only here. */
   origin: 'salesforce' | 'workspace';
   /** Dataset preview: header row + a few rows. */

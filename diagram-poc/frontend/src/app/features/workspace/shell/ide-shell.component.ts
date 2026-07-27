@@ -4,11 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { AuthService } from '../../core/services/auth.service';
-import { ThemeService } from '../../core/services/theme.service';
-import { WorkspaceService } from './workspace.service';
-import { ProjectWorkspaceService } from './project-workspace.service';
-import { Artifact, Region, Role } from './workspace.models';
+import { AuthService } from '../../../core/services/auth.service';
+import { ThemeService } from '../../../core/services/theme.service';
+import { WorkspaceService } from '../services/workspace.service';
+import { ProjectWorkspaceService } from '../services/project-workspace.service';
+import { Artifact, Region, Role } from '../models/workspace.models';
 
 type SidePanel = 'explorer' | 'search' | 'reviews' | 'business';
 
@@ -112,6 +112,14 @@ export class IdeShellComponent {
 
   openArtifact(a: Artifact): void {
     this.pw.open(a);
+    if (a.kind === 'diagram') {
+      // Resolve to the saved diagram (creating it from a sample if new).
+      this.pw.resolveDiagram(a).subscribe({
+        next: (id) => this.router.navigate(['/workspace/block-diagram', id]),
+        error: () => this.router.navigate(['/workspace/block-diagram', 'new']),
+      });
+      return;
+    }
     this.router.navigateByUrl('/workspace/project');
   }
 

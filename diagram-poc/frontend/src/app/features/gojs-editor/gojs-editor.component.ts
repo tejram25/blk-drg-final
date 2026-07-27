@@ -252,6 +252,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Read the route id before the first change-detection pass, so bindings
+    // that depend on it ("Open saved…" vs the diagram name) render settled.
+    // The actual canvas load waits for ngAfterViewInit, which needs the view.
+    const routeId = this.route.snapshot.paramMap.get('id');
+    if (routeId && routeId !== 'new' && !Number.isNaN(Number(routeId))) {
+      this.selectedDiagramId = Number(routeId);
+    }
     this.loadPalette();
     this.refreshList();
     this.mobileMq = window.matchMedia('(max-width: 768px), (orientation: landscape) and (max-height: 500px)');
@@ -279,12 +286,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.zone.runOutsideAngular(() => this.initDiagram());
-    // `new` is the blank-canvas route; anything else is a saved diagram id.
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id && id !== 'new' && !Number.isNaN(Number(id))) {
-      this.selectedDiagramId = Number(id);
-      this.doLoad(Number(id));
-    }
+    // `new` is the blank-canvas route; a saved id was captured in ngOnInit.
+    if (this.selectedDiagramId != null) this.doLoad(this.selectedDiagramId);
   }
 
   ngOnDestroy(): void {

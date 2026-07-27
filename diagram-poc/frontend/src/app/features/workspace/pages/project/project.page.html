@@ -1,0 +1,95 @@
+@if (a(); as art) {
+  <!-- ── artefact viewer ── -->
+  <div>
+    <div class="art-head">
+      <mat-icon class="art-ico">{{ icon(art.kind) }}</mat-icon>
+      <div>
+        <h1>{{ art.name }}</h1>
+        <p class="detail">{{ art.folder }} · {{ art.author }} · updated {{ art.updated }}
+          @if (art.size) { · {{ size(art.size) }} }</p>
+      </div>
+      @if (art.origin === 'salesforce') {
+        <ws-pill tone="accent">Salesforce · read only</ws-pill>
+      }
+    </div>
+
+    @switch (art.kind) {
+      @case ('dataset') {
+        <ws-panel [heading]="'Preview — first ' + (art.preview?.rows?.length || 0) + ' rows'" [flush]="true">
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead><tr>@for (c of art.preview?.columns; track c) { <th>{{ c }}</th> }</tr></thead>
+              <tbody>
+                @for (r of art.preview?.rows; track $index) {
+                  <tr>@for (cell of r; track $index) { <td>{{ cell }}</td> }</tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </ws-panel>
+      }
+      @case ('bom') {
+        <ws-panel heading="Bill of materials">
+          <p class="detail">Rolled up from the parts attached across this project's diagrams.
+            Open a diagram to edit its parts; the roll-up follows.</p>
+        </ws-panel>
+      }
+      @case ('review') {
+        <ws-panel heading="Review">
+          <p style="margin:0;color:var(--text);font-size:13px">{{ art.summary }}</p>
+        </ws-panel>
+      }
+      @default {
+        <ws-panel heading="Document">
+          <p style="margin:0 0 10px;color:var(--text);font-size:13px">{{ art.summary }}</p>
+          <p class="detail">Preview is not rendered in this build — the file is stored against the
+            project and opens in your document viewer.</p>
+        </ws-panel>
+      }
+    }
+  </div>
+} @else {
+  <!-- ── project overview ── -->
+  <div>
+    <ws-page-header [title]="p().name"
+      [subtitle]="p().customer + ' · ' + p().id + ' · Salesforce ' + p().sfdcId">
+      <ws-pill [tone]="p().health">{{ p().health }}</ws-pill>
+      <ws-pill>{{ p().stage }}</ws-pill>
+    </ws-page-header>
+
+    <div class="grid stats">
+      <ws-stat label="Diagrams" [value]="count('diagram')" icon="account_tree" tone="accent" />
+      <ws-stat label="Documents" [value]="count('document')" icon="description" />
+      <ws-stat label="Datasets" [value]="count('dataset')" icon="table_chart" />
+      <ws-stat label="Design-win value" [value]="money(p().value)" icon="trending_up" />
+    </div>
+
+    <ws-panel heading="Everything in this project" [flush]="true">
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr><th></th><th>Name</th><th>Folder</th><th>Owner</th><th>Source</th><th class="num">Updated</th></tr></thead>
+          <tbody>
+            @for (art of p().artifacts; track art.id) {
+              <tr (click)="open(art.id)" style="cursor:pointer">
+                <td><mat-icon class="sev-icon">{{ icon(art.kind) }}</mat-icon></td>
+                <td class="ink">{{ art.name }}</td>
+                <td>{{ art.folder }}</td>
+                <td>{{ art.author }}</td>
+                <td>
+                  <ws-pill [tone]="art.origin === 'salesforce' ? 'accent' : ''">
+                    {{ art.origin === 'salesforce' ? 'Salesforce' : 'Workspace' }}</ws-pill>
+                </td>
+                <td class="num">{{ art.updated }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </ws-panel>
+
+    <p class="detail" style="margin-top:14px">
+      Projects and their workflow are owned by Salesforce and mirrored here nightly
+      (last run {{ pw.sync().lastSync }}). Engineering artefacts are added in this workspace.
+    </p>
+  </div>
+}

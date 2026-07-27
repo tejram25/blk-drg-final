@@ -1,5 +1,11 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { Artifact, ArtifactKind, OpenTab, ProjectWorkspace, SyncState } from './workspace.models';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, of } from 'rxjs';
+import { map, shareReplay, switchMap } from 'rxjs/operators';
+import { DiagramService } from '../../../core/services/diagram.service';
+import { Artifact, ArtifactKind, OpenTab, ProjectWorkspace, SyncState } from '../models/workspace.models';
+
+/** A fresh GoJS model, used only when no sample exists to clone from. */
+const EMPTY_MODEL = '{ "class": "GraphLinksModel", "nodeDataArray": [], "linkDataArray": [] }';
 
 /**
  * The IDE's project state.
@@ -15,6 +21,8 @@ import { Artifact, ArtifactKind, OpenTab, ProjectWorkspace, SyncState } from './
  */
 @Injectable({ providedIn: 'root' })
 export class ProjectWorkspaceService {
+  private readonly diagramApi = inject(DiagramService);
+
   // ---- Salesforce sync ---------------------------------------------------
   readonly sync = signal<SyncState>({
     lastSync: 'Today 04:12', nextSync: 'Tomorrow 04:00',
@@ -107,6 +115,53 @@ export class ProjectWorkspaceService {
   }
 
   closeAll(): void { this.tabs.set([]); this.activeTabId.set(null); }
+
+  // ---- diagram linking ---------------------------------------------------
+  /** In-flight resolutions by artifact id, so a double-open can't create twice. */
+  private readonly resolving = new Map<string, Observable<number>>();
+
+  /**
+   * The saved diagram behind a diagram artefact, resolved against the real
+   * backend by name: use the existing diagram if one matches, otherwise create
+   * it — seeded with a sample diagram's content so it never opens empty. The
+   * resolved id is cached on the artefact, so later opens skip the lookup.
+   */
+  resolveDiagram(a: Artifact): Observable<number> {
+    if (a.diagramId != null) return of(a.diagramId);
+    const inflight = this.resolving.get(a.id);
+    if (inflight) return inflight;
+
+    const wanted = (a.diagramName ?? a.name).trim().toLowerCase();
+    const resolved = this.diagramApi.list().pipe(
+      switchMap((list) => {
+        const hit = (list ?? []).find((d) => d.name.trim().toLowerCase() === wanted);
+        if (hit) return of(hit.id);
+        // No such diagram yet: create it from a sample so it has real content.
+        const sample = (list ?? []).find((d) => d.name.startsWith('Sample - ')) ?? (list ?? [])[0];
+        const content$ = sample
+          ? this.diagramApi.get(sample.id).pipe(map((d) => d.contentJson))
+          : of(EMPTY_MODEL);
+        return content$.pipe(
+          switchMap((contentJson) =>
+            this.diagramApi.create({ name: a.diagramName ?? a.name, contentJson })),
+          map((created) => created.id!),
+        );
+      }),
+      map((id) => { this.rememberDiagramId(a.id, id); return id; }),
+      shareReplay(1),
+    );
+    this.resolving.set(a.id, resolved);
+    return resolved;
+  }
+
+  /** Persist a resolved diagram id onto the artefact in the project list. */
+  private rememberDiagramId(artifactId: string, diagramId: number): void {
+    this.resolving.delete(artifactId);
+    this.all.update((projects) => projects.map((p) => ({
+      ...p,
+      artifacts: p.artifacts.map((x) => (x.id === artifactId ? { ...x, diagramId } : x)),
+    })));
+  }
 }
 
 const FOLDER_ORDER = ['Diagrams', 'Documents', 'Datasets', 'Bill of materials', 'Reviews'];
@@ -119,8 +174,8 @@ function seedProjects(): ProjectWorkspace[] {
       value: 1_240_000, owner: 'Priya Raman', health: 'ok' as const, updated: '2h ago',
       diagrams: 4, parts: 62,
       artifacts: [
-        d('a1', 'Power Architecture — Rev C', 'Diagrams', 1, 'Priya Raman', '2h ago'),
-        d('a2', 'BMS Sense Chain', 'Diagrams', 2, 'Marco Silva', '1d ago'),
+        d('a1', 'Power Architecture — Rev C', 'Diagrams', 'Sample - Smart Microgrid', 'Priya Raman', '2h ago'),
+        d('a2', 'BMS Sense Chain', 'Diagrams', 'Sample - 555 LED Blinker', 'Marco Silva', '1d ago'),
         d('a3', 'Cell Balancing', 'Diagrams', undefined, 'Priya Raman', '3d ago'),
         d('a4', 'Pack Interconnect', 'Diagrams', undefined, 'Tom Becker', '1w ago'),
         doc('a5', 'Requirements Spec v2.pdf', 480_000, 'salesforce',
@@ -150,7 +205,7 @@ function seedProjects(): ProjectWorkspace[] {
       value: 680_000, owner: 'Marco Silva', health: 'warn' as const, updated: '5h ago',
       diagrams: 3, parts: 41,
       artifacts: [
-        d('b1', 'Gateway Architecture', 'Diagrams', 3, 'Marco Silva', '5h ago'),
+        d('b1', 'Gateway Architecture', 'Diagrams', 'Sample - AMR Robot (FAST)', 'Marco Silva', '5h ago'),
         d('b2', 'Radio Front End', 'Diagrams', undefined, 'Marco Silva', '2d ago'),
         doc('b3', 'Certification plan.pdf', 320_000, 'salesforce', 'CE and FCC test plan.'),
         ds('b4', 'RF sweep.csv', 156_000, ['Freq MHz', 'Power dBm'],
@@ -192,9 +247,14 @@ function seedProjects(): ProjectWorkspace[] {
   return base as ProjectWorkspace[];
 }
 
-function d(id: string, name: string, folder: string, diagramId: number | undefined,
+/**
+ * Diagram artefact. `diagramName` pins it to a specific saved diagram (the
+ * backend's seeded samples); omitted, it resolves by the artefact's own name
+ * and is created from sample content on first open. See resolveDiagram().
+ */
+function d(id: string, name: string, folder: string, diagramName: string | undefined,
            author: string, updated: string): Artifact {
-  return { id, name, kind: 'diagram', folder, updated, author, diagramId, origin: 'workspace' };
+  return { id, name, kind: 'diagram', folder, updated, author, diagramName, origin: 'workspace' };
 }
 function doc(id: string, name: string, size: number,
              origin: 'salesforce' | 'workspace', summary: string): Artifact {
