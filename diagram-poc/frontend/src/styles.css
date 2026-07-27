@@ -1,30 +1,33 @@
 /* Self-hosted fonts (no Google Fonts CDN dependency, so icons and text always
-   render even when that CDN is blocked/slow). */
+   render even when that CDN is blocked/slow).
+   Roboto is deliberately not imported: --font is Arrow Display and nothing in
+   the app resolves to Roboto, so its 21 @font-face rules were pure CSS weight. */
 @import 'material-icons/iconfont/filled.css';
-@import '@fontsource/roboto/400.css';
-@import '@fontsource/roboto/500.css';
-@import '@fontsource/roboto/700.css';
-
 
 /* Angular Material base theme — component colours are re-tokenized below so
    they follow the Arrow palette in both themes. */
 @import '@angular/material/prebuilt-themes/purple-green.css';
 
 /* Arrow Display — the brand typeface. Medium carries headings and emphasis,
-   Regular carries body copy, per the Arrow font guidelines. */
+   Regular carries body copy, per the Arrow font guidelines.
+   WOFF2 first (~31 kB each, a third of the TTF); TTF kept as the fallback for
+   anything that cannot read WOFF2. */
 @font-face {
   font-family: 'Arrow Display';
-  src: url('assets/fonts/ArrowDisplay-Regular.ttf') format('truetype');
+  src: url('assets/fonts/ArrowDisplay-Regular.woff2') format('woff2'),
+       url('assets/fonts/ArrowDisplay-Regular.ttf') format('truetype');
   font-weight: 400; font-display: swap;
 }
 @font-face {
   font-family: 'Arrow Display';
-  src: url('assets/fonts/ArrowDisplay-Medium.ttf') format('truetype');
+  src: url('assets/fonts/ArrowDisplay-Medium.woff2') format('woff2'),
+       url('assets/fonts/ArrowDisplay-Medium.ttf') format('truetype');
   font-weight: 500 600; font-display: swap;
 }
 @font-face {
   font-family: 'Arrow Display';
-  src: url('assets/fonts/ArrowDisplay-Bold.ttf') format('truetype');
+  src: url('assets/fonts/ArrowDisplay-Bold.woff2') format('woff2'),
+       url('assets/fonts/ArrowDisplay-Bold.ttf') format('truetype');
   font-weight: 700; font-display: swap;
 }
 

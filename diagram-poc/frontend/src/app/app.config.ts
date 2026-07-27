@@ -1,7 +1,7 @@
 import { ApplicationConfig, APP_INITIALIZER, isDevMode } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideServiceWorker } from '@angular/service-worker';
 import { routes } from './app.routes';
 import { credentialsInterceptor } from './core/interceptors/credentials.interceptor';
@@ -16,7 +16,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     provideHttpClient(withInterceptors([credentialsInterceptor, errorInterceptor])),
-    provideAnimations(),
+    // Async: the animations engine is fetched after first paint instead of
+    // sitting in the initial bundle. Material components work either way.
+    provideAnimationsAsync(),
     {
       provide: APP_INITIALIZER,
       multi: true,
