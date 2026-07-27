@@ -594,6 +594,16 @@
                                             }
                                           </div>
 
+                                        @if (!isMobile) {
+                                          <app-workspace-dock
+                                            [findings]="reviewResult?.findings ?? null"
+                                            [reviewLoading]="reviewLoading"
+                                            [bomRows]="bomRows"
+                                            [participants]="collab.participants"
+                                            (runReview)="openDesignReview(false)"
+                                            (buildBom)="exportBom(false)"></app-workspace-dock>
+                                        }
+
                                           <!-- Session chat -->
                                           @if (showChat && collab.active) {
                                             <div class="chat">
@@ -728,7 +738,7 @@
                                         @if (reviewOpen) {
                                           <app-design-review-dialog [result]="reviewResult" [loading]="reviewLoading" (close)="reviewOpen = false"></app-design-review-dialog>
                                         }
-                                        @if (bomRows) {
+                                        @if (bomRows && bomDialogOpen) {
                                           <app-bom-dialog [rows]="bomRows" [diagramName]="diagramName" (close)="closeBom()"></app-bom-dialog>
                                         }
                                         @if (lifecycleOpen) {

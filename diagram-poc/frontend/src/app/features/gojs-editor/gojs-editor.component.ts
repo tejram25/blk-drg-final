@@ -54,6 +54,7 @@ import { ProjectPanelComponent } from '../editor/components/project-panel/projec
 import { PartSearchPanelComponent } from '../editor/components/part-search-panel/part-search-panel.component';
 import { DesignwinPanelComponent } from '../editor/components/designwin-panel/designwin-panel.component';
 import { VersionsDialogComponent } from '../editor/components/versions-dialog/versions-dialog.component';
+import { WorkspaceDockComponent } from '../editor/components/workspace-dock/workspace-dock.component';
 import { CommentsPanelComponent } from '../editor/components/comments-panel/comments-panel.component';
 import { FeedbackLoopPanelComponent } from '../editor/components/feedback-loop-panel/feedback-loop-panel.component';
 import { TemplatesDialogComponent } from '../editor/components/templates-dialog/templates-dialog.component';
@@ -80,6 +81,7 @@ import { Command, CommandPaletteComponent } from '../../shared/components/comman
         FeedbackLoopPanelComponent,
         TemplatesDialogComponent, ExportDialogComponent, CommandPaletteComponent,
         ReviewsDialogComponent, ZoomDockComponent, ConfirmDialogComponent,
+        WorkspaceDockComponent,
     ],
     templateUrl: './gojs-editor.component.html',
     styleUrls: ['./gojs-editor.component.css']
@@ -174,6 +176,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   recsOpen = false; recsLoading = false; recsResult: RecommendationResult | null = null;
   reviewOpen = false; reviewLoading = false; reviewResult: DesignReviewResult | null = null;
   bomRows: BomRow[] | null = null;
+  /** The BOM modal is separate from the rows so the dock can hold them alone. */
+  bomDialogOpen = false;
   lifecycleOpen = false; lifecycleLoading = false; lifecycleInfo: LifecycleInfo | null = null;
   feedbackOpen = false; feedbackSubmitting = false;
   projectPanelOpen = false; linkedProject: ProjectDetail | null = null;
@@ -2034,7 +2038,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ---- BOM / AI / lifecycle / feedback / project ----
 
-  exportBom(): void {
+  /**
+   * Build the bill of materials. `showDialog` is false when the bottom dock asks
+   * for it — the rows populate the dock's BOM tab instead of a modal.
+   */
+  exportBom(showDialog = true): void {
     const parts = this.partNodes().map((n) => ({ ...n.data.part, __bomQty: n.data.quantity || 1 })).filter((p) => p && Object.keys(p).length > 1);
     const linked: any[] = [];
     this.boxNodes().forEach((n) => {
@@ -2052,8 +2060,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     this.bomRows = this.bomService.buildCombined(parts, linked);
+    this.bomDialogOpen = showDialog;
   }
-  closeBom(): void { this.bomRows = null; }
+  /** Close the modal but keep the rows, so the dock's BOM tab stays populated. */
+  closeBom(): void { this.bomDialogOpen = false; }
 
   openRecommendations(): void {
     this.recsResult = null; this.recsLoading = true; this.recsOpen = true;
@@ -2071,7 +2081,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.notify.info(`Catalogue options for "${q}" — choose a supplier and add.`);
   }
 
-  openDesignReview(): void {
+  /**
+   * Run the design review. `showDialog` is false when the bottom dock asks for
+   * it — the findings land in the dock's Problems tab instead of a modal.
+   */
+  openDesignReview(showDialog = true): void {
     const blocks: ReviewBlock[] = []; const keyToName = new Map<go.Key, string>();
     this.diagram.nodes.each((n) => {
       const d = n.data; if (d.category === 'image') return;
@@ -2085,7 +2099,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     if (!blocks.length) { this.notify.info('Add some blocks to the canvas first, then run a design review.'); return; }
     const goal = this.diagramName && this.diagramName !== 'Untitled diagram' ? this.diagramName : '';
-    this.reviewResult = null; this.reviewLoading = true; this.reviewOpen = true;
+    this.reviewResult = null; this.reviewLoading = true; this.reviewOpen = showDialog;
     this.reviewApi.review(goal, blocks, links).subscribe({
       next: (res) => { this.reviewResult = res; this.reviewLoading = false; },
       error: () => { this.reviewLoading = false; this.reviewOpen = false; },

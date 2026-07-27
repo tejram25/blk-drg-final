@@ -1,0 +1,119 @@
+/* Bottom tool window. Colours come from the app tokens only — see styles.css. */
+
+/* The host must be a block-level flex item, or it defaults to inline and the
+   dock lands below the viewport instead of sharing height with the canvas. */
+:host { display: block; flex: 0 0 auto; }
+
+.dock {
+  display: flex; flex-direction: column;
+  height: 210px; flex: 0 0 auto;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+}
+.dock.collapsed { height: 34px; }
+
+.dock-bar {
+  display: flex; align-items: center; gap: 2px;
+  height: 34px; flex: 0 0 auto; padding: 0 8px;
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border-soft);
+}
+.dtab {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 11px; border: 0; border-radius: var(--radius);
+  background: transparent; color: var(--muted);
+  font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.dtab:hover { background: var(--panel-2); color: var(--text); }
+.dtab.on { background: var(--accent-soft); color: var(--accent-ink); }
+.dtab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.dtab .n {
+  font-size: 10px; font-weight: 700; padding: 0 6px; border-radius: 999px;
+  background: var(--panel-2); color: var(--muted);
+}
+.dtab.on .n { background: var(--accent-soft); color: var(--accent-ink); }
+.dock-bar .sp { flex: 1; }
+
+.dock-btn {
+  display: grid; place-items: center; width: 28px; height: 26px;
+  border: 0; border-radius: 5px; background: transparent;
+  color: var(--faint); cursor: pointer;
+}
+.dock-btn:hover { background: var(--panel-2); color: var(--text); }
+.dock-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.dock-btn mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+.dock-body { flex: 1; min-height: 0; overflow: auto; padding: 6px 0; }
+
+/* ---- empty / loading states ---- */
+.dock-empty {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 9px;
+  padding: 14px 16px; margin: 0; color: var(--muted); font-size: 12.5px;
+}
+.dock-empty.ok { flex-direction: row; align-items: center; color: var(--ok); }
+.dock-empty.ok mat-icon { font-size: 17px; width: 17px; height: 17px; }
+/* Outlined rather than filled: white-on-Sky is only 3.99:1, below WCAG AA for
+   text this size, whereas Sky-on-panel clears it comfortably in both themes. */
+.dock-cta {
+  border: 1px solid var(--accent); border-radius: var(--radius);
+  background: transparent; color: var(--accent-ink);
+  font: inherit; font-size: 12px; font-weight: 600;
+  padding: 6px 13px; cursor: pointer;
+}
+.dock-cta:hover { background: var(--accent-soft); }
+.dock-cta:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+/* ---- problems ---- */
+.prow {
+  display: grid; grid-template-columns: 20px 1fr auto; gap: 10px;
+  align-items: baseline; padding: 6px 16px; font-size: 12.5px;
+}
+.prow:hover { background: var(--panel-2); }
+.prow .sev { font-size: 16px; width: 16px; height: 16px; align-self: center; }
+.prow[data-sev='risk'] .sev { color: var(--danger); }
+.prow[data-sev='warn'] .sev { color: var(--warn); }
+.prow[data-sev='info'] .sev { color: var(--accent-ink); }
+.prow .msg { color: var(--text); min-width: 0; }
+.prow .detail { color: var(--muted); margin-left: 8px; }
+.prow .rule { color: var(--faint); font-size: 11px; white-space: nowrap; }
+
+/* ---- table ---- */
+.dock-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.dock-table th {
+  position: sticky; top: 0; z-index: 1;
+  text-align: left; padding: 6px 16px;
+  background: var(--panel); color: var(--faint);
+  font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  border-bottom: 1px solid var(--border-soft);
+}
+.dock-table td {
+  padding: 6px 16px; color: var(--muted);
+  border-bottom: 1px solid var(--border-soft);
+}
+.dock-table td.mono {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 11.5px; color: var(--accent-ink);
+}
+.dock-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.dock-table tr:hover td { background: var(--panel-2); }
+
+/* ---- collaboration ---- */
+.crow {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 16px; font-size: 12.5px;
+}
+.cav {
+  display: grid; place-items: center; flex: none;
+  width: 24px; height: 24px; border-radius: 50%;
+  color: #fff; font-weight: 700; font-size: 10px;
+}
+.crow .who { color: var(--text); font-weight: 600; }
+.crow .tagme, .crow .taghost {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+  padding: 2px 6px; border-radius: 5px;
+  background: var(--accent-soft); color: var(--accent-ink);
+}
+.crow .taghost { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+.crow .live { margin-left: auto; color: var(--ok); font-size: 11px; font-weight: 600; }
+
+@media (max-width: 768px) { .dock { display: none; } }
