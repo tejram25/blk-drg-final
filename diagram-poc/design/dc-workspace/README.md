@@ -13,7 +13,7 @@ is the token set to import into the app.
 | `workspace-reference.html` | The canonical Option A reference, both themes, self-contained (real Arrow logo + Arrow Display embedded) |
 | `tokens.css` | Design tokens to import into the Angular app |
 | `brand/` | Arrow wordmark, cropped from the official lockup, for light and dark chrome |
-| `p2-*.png` | Phase 2 panels: Problems, BOM, Collaboration (dark + light) |
+| `p2-*.png` … `p5-*.png` | Screenshots per phase: panels, canvas, symbols, command palette (dark + light) |
 
 ## Why Option A
 
@@ -80,9 +80,9 @@ Problems / BOM / Collaboration.
 | **0 · Tokens** ✅ | `tokens.css` + component kit (buttons, badges, panels, inputs) | Foundation, no visible risk |
 | **1 · Chrome** ✅ | Activity bar, top bar, breadcrumb, editor tabs, status bar | The "it's a tool now" moment |
 | **2 · Panels** ✅ | Explorer tree, inspector, bottom dock; wire to existing data | |
-| **3 · Canvas theming** | Recolor GoJS: grid, node fill/stroke, selection `--accent`, wires | Themed via tokens so light works too |
-| **4 · Symbols** | Recolor the electrical symbol library + part cards to brand | "even the block diagram" |
-| **5 · Polish** | Motion, empty states, light-theme QA, responsive | |
+| **3 · Canvas theming** ✅ | Recolor GoJS: grid, node fill/stroke, selection `--accent`, wires | Themed via tokens so light works too |
+| **4 · Symbols** ✅ | Recolor the electrical symbol library + part cards to brand | "even the block diagram" |
+| **5 · Polish** ✅ | Motion, empty states, light-theme QA, responsive | |
 
 Each phase is independently reviewable and revertible.
 
@@ -113,6 +113,36 @@ at its right edge:
 
 Severity and lifecycle are encoded in **color *and* glyph**, so state survives
 greyscale printing and colour-blind viewing.
+
+## Phases 3–5 — canvas, symbols, polish (done)
+
+**Phase 3 · Canvas theming.** The canvas is driven entirely by tokens, so it
+re-themes with the chrome instead of staying a dark island in a light shell:
+grid, node fill/stroke, wires, and the selection treatment. It now shows the
+editing states an engineer actually needs — **selection handles** and **ports**
+on the selected node, a **snap/alignment guide** (Copper), **net labels** on
+links, and signal-vs-power link weights.
+
+**Phase 4 · Symbols and part cards.** The activity bar switches the left tool
+window between **Project** and **Components**; Components is the electrical
+symbol palette, drawn from the same geometry as the real `elec-*` library and
+stroked with `--sym` so it inverts correctly in light mode. The on-canvas
+**part card** is themed too: Sky accent bar, MPN, supplier, specs, qty and a
+Patina lifecycle dot.
+
+**Phase 5 · Polish — command palette.** `Ctrl/⌘ K` (or the ⌕ activity icon)
+opens *Search everywhere*, grouped across **Symbols / Parts / Actions /
+Diagrams** with shortcut hints, `Esc` to dismiss. This is the single strongest
+"this is a real tool" cue, and it doubles as the search the hub already implies.
+
+## Implementation notes for the Angular app
+
+- Import `tokens.css` once at app root; set `data-theme` on `<html>`.
+- GoJS: bind node/link brushes to the token values read from
+  `getComputedStyle(document.documentElement)` and re-read on theme change —
+  do not hard-code hex in the templates.
+- The symbol palette should render from the existing `elec-*` geometry with
+  `stroke: var(--sym)`, not from baked PNGs, so it themes for free.
 
 ## Backlog — further IntelliJ-style ideas
 
