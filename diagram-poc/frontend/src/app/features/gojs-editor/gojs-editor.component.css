@@ -918,8 +918,8 @@
     }
   
 /* ---- GoJS canvas background (GoJS draws the grid; the div paints the base) ---- */
-.canvas { background: var(--bg-deep); }
-.canvas.canvas-light { background: #ffffff; }
+/* Canvas ground follows the theme tokens (see gojs-theme.ts for the GoJS side). */
+.canvas { background: var(--canvas); }
 
 /* Session chat popup */
 .chat { position: absolute; right: 16px; bottom: 78px; width: 280px; height: 340px; z-index: 60;

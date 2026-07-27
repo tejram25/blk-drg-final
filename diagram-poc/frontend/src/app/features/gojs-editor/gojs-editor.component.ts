@@ -1,5 +1,5 @@
 import {
-  AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, NgZone, OnDestroy,
+  AfterViewInit, ChangeDetectorRef, Component, effect, ElementRef, HostListener, NgZone, OnDestroy,
   OnInit, ViewChild,
 } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
@@ -29,6 +29,8 @@ import { BoxSuggestion, BoxSuggestionService, LinkedComponent } from '../../core
 import { forkJoin, of, Subscription, throwError, TimeoutError } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { SystemService } from '../../core/services/system.service';
+import { ThemeService } from '../../core/services/theme.service';
+import { CanvasTheme, readCanvasTheme, WIRE_COLORS } from './gojs-theme';
 import { ProjectDetail, ProjectPart } from '../../core/services/integration.service';
 import { DesignWinContext } from '../../core/services/designwin.service';
 import { TemplateDetail } from '../../core/services/template.service';
@@ -106,7 +108,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   showChat = false;
   chatDraft = '';
   minimapOpen = false;
+  /** Canvas follows the app theme; the toolbar toggle can still override it. */
   lightCanvas = true;
+  /** Resolved token colours for everything GoJS paints. */
+  private canvasTheme: CanvasTheme = readCanvasTheme();
   paletteOpen = true;
   propsOpen = true;
   private viewportTick: any = null;
@@ -148,8 +153,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   reviewTarget: DiagramSummary | null = null;
 
   // wire dock
-  readonly wireColors = ['#22d3ee', '#22c55e', '#f5a623', '#ef4444', '#a78bfa', '#64748b'];
-  wireColor = '#22d3ee';
+  readonly wireColors = WIRE_COLORS;
+  wireColor = WIRE_COLORS[0];
   /** Animated "flowing current" dashes by default, matching the classic editor. */
   wireStyle: 'flow' | 'dashed' | 'solid' = 'flow';
   wireWidth = 2;
@@ -215,7 +220,26 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private location: Location,
-  ) {}
+    private themeSvc: ThemeService,
+  ) {
+    this.lightCanvas = this.themeSvc.theme() === 'light';
+    // GoJS paints to a canvas and cannot read CSS variables, so re-resolve the
+    // palette and repaint whenever the app theme flips.
+    effect(() => {
+      const light = this.themeSvc.theme() === 'light';
+      this.lightCanvas = light;
+      this.canvasTheme = readCanvasTheme();
+      this.applyCanvasTheme();
+    });
+  }
+
+  /** Push the resolved token palette into the live diagram. */
+  private applyCanvasTheme(): void {
+    if (!this.diagram || !this.canvasRef) return;
+    this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
+    this.applyGridTheme();
+    this.retheme();
+  }
 
   /** Keep the URL in sync with the open diagram so a refresh reopens it. */
   private syncUrl(): void {
@@ -614,24 +638,24 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         margin: new go.Margin(0.5, 0, 0.5, 0), click: () => fn() }, content);
     const row = (it: any) => btn(() => this.copyFromDock(mpnOf(it)),
       $(go.Panel, 'Horizontal', { alignment: go.Spot.Left },
-        $(go.Shape, 'Circle', { desiredSize: new go.Size(5, 5), fill: '#38bdf8', stroke: null, margin: new go.Margin(0, 7, 0, 2) }),
-        $(go.TextBlock, { font: '10px Menlo, monospace', stroke: '#e5e7eb' }, mpnOf(it)),
-        $(go.TextBlock, { font: '9px Roboto, sans-serif', stroke: '#9aa0a8', margin: new go.Margin(0, 0, 0, 12) }, '×' + (it?.quantity || 1)),
-        $(go.TextBlock, { font: '12px "Material Icons"', stroke: '#5b6472', margin: new go.Margin(0, 2, 0, 8) }, 'content_copy')));
+        $(go.Shape, 'Circle', { desiredSize: new go.Size(5, 5), fill: this.canvasTheme.accent, stroke: null, margin: new go.Margin(0, 7, 0, 2) }),
+        $(go.TextBlock, { font: '10px Menlo, monospace', stroke: this.canvasTheme.text }, mpnOf(it)),
+        $(go.TextBlock, { font: '9px Roboto, sans-serif', stroke: this.canvasTheme.muted, margin: new go.Margin(0, 0, 0, 12) }, '×' + (it?.quantity || 1)),
+        $(go.TextBlock, { font: '12px "Material Icons"', stroke: this.canvasTheme.muted, margin: new go.Margin(0, 2, 0, 8) }, 'content_copy')));
     const inner: go.GraphObject[] = [
-      $(go.TextBlock, { font: '700 8px Roboto, sans-serif', stroke: '#8b93a1', margin: new go.Margin(0, 0, 5, 2) },
+      $(go.TextBlock, { font: '700 8px Roboto, sans-serif', stroke: this.canvasTheme.muted, margin: new go.Margin(0, 0, 5, 2) },
         `PARTS · ${parts.length}  ·  TAP TO COPY`),
       ...shown.map(row),
     ];
     if (!showAll) {
       inner.push(btn(() => { this.partsDockIgnoreLeave = true; this.showPartsDock(part, true, true); },
-        $(go.TextBlock, { font: '700 9px Roboto, sans-serif', stroke: '#f5a623', margin: new go.Margin(3, 2, 1, 2) },
+        $(go.TextBlock, { font: '700 9px Roboto, sans-serif', stroke: this.canvasTheme.accent, margin: new go.Margin(3, 2, 1, 2) },
           `+${parts.length - CAP} more…`)));
     }
     inner.push(btn(() => this.copyFromDock(parts.map(mpnOf).join('\n'), parts.length),
       $(go.Panel, 'Horizontal', { alignment: go.Spot.Left, margin: new go.Margin(5, 2, 0, 2) },
-        $(go.TextBlock, { font: '12px "Material Icons"', stroke: '#38bdf8', margin: new go.Margin(0, 5, 0, 0) }, 'content_copy'),
-        $(go.TextBlock, { font: '700 8.5px Roboto, sans-serif', stroke: '#38bdf8' }, 'COPY ALL'))));
+        $(go.TextBlock, { font: '12px "Material Icons"', stroke: this.canvasTheme.accent, margin: new go.Margin(0, 5, 0, 0) }, 'content_copy'),
+        $(go.TextBlock, { font: '700 8.5px Roboto, sans-serif', stroke: this.canvasTheme.accent }, 'COPY ALL'))));
 
     const keepOpen = () => clearTimeout(this.partsDockTimer);
     const ad = $(go.Adornment, 'Spot',
@@ -640,7 +664,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       $(go.Panel, 'Auto',
         { alignment: new go.Spot(1, 0, 10, 0), alignmentFocus: go.Spot.TopLeft,
           mouseEnter: keepOpen, mouseLeave: () => this.showPartsDock(part, false) },
-        $(go.Shape, 'RoundedRectangle', { parameter1: 9, fill: '#111827', stroke: '#2c3340', strokeWidth: 1 }),
+        $(go.Shape, 'RoundedRectangle', { parameter1: 9, fill: this.canvasTheme.panel, stroke: this.canvasTheme.border, strokeWidth: 1 }),
         $(go.Panel, 'Vertical', { margin: new go.Margin(8, 10, 8, 9), defaultAlignment: go.Spot.Left }, ...inner)));
     ad.adornedObject = part;
     part.addAdornment('partsDock', ad);
@@ -698,9 +722,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Shared hover tooltip: name, value/type and linked component MPNs. */
   private nodeTip($: typeof go.GraphObject.make): go.Adornment {
     return $('ToolTip',
-      { 'Border.fill': '#1d1e23', 'Border.stroke': '#34353c' } as any,
+      { 'Border.fill': this.canvasTheme.panel, 'Border.stroke': this.canvasTheme.border } as any,
       $(go.TextBlock,
-        { margin: 7, font: '11px Roboto, sans-serif', stroke: '#ececef', maxSize: new go.Size(260, NaN) },
+        { margin: 7, font: '11px Roboto, sans-serif', stroke: this.canvasTheme.text, maxSize: new go.Size(260, NaN) },
         new go.Binding('text', '', (d: any) => this.tooltipFor(d)))) as go.Adornment;
   }
 
@@ -735,7 +759,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const sidePort = (id: string, spot: go.Spot) => $(
       go.Shape, 'Circle',
       {
-        desiredSize: new go.Size(9, 9), fill: '#0f172a', stroke: '#22d3ee', strokeWidth: 1.5,
+        desiredSize: new go.Size(9, 9), fill: this.canvasTheme.canvas, stroke: this.canvasTheme.accent, strokeWidth: 1.5,
         cursor: 'crosshair', opacity: 0, alignment: spot, alignmentFocus: go.Spot.Center,
         portId: id, fromLinkable: true, toLinkable: true, fromSpot: spot, toSpot: spot,
       });
@@ -753,13 +777,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       go.Panel, 'Spot',
       new go.Binding('alignment', 'spot', go.Spot.parse),
       $(go.Shape, 'Circle',
-        { desiredSize: new go.Size(11, 11), fill: '#0f172a', stroke: '#22d3ee', strokeWidth: 1.5,
+        { desiredSize: new go.Size(11, 11), fill: this.canvasTheme.canvas, stroke: this.canvasTheme.accent, strokeWidth: 1.5,
           cursor: 'crosshair', opacity: 0.45, fromLinkable: true, toLinkable: true },
         new go.Binding('portId', 'portId'),
         new go.Binding('fromSpot', 'spot', sideSpot),
         new go.Binding('toSpot', 'spot', sideSpot)),
       $(go.Shape, 'Circle',
-        { name: 'JCT', desiredSize: new go.Size(7, 7), fill: '#94a3b8', strokeWidth: 0,
+        { name: 'JCT', desiredSize: new go.Size(7, 7), fill: this.canvasTheme.nodeSub, strokeWidth: 0,
           opacity: 0, pickable: false }),
     );
     const hover = {
@@ -777,7 +801,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Auto', body, { name: 'BODY' }, sizeBind(),
         $(go.Shape, 'RoundedRectangle',
-          { parameter1: 10, fill: '#ffffff', stroke: '#d2d6dc', strokeWidth: 1.5, minSize: new go.Size(150, 52) },
+          { parameter1: 10, fill: this.canvasTheme.node, stroke: this.canvasTheme.nodeStroke, strokeWidth: 1.5, minSize: new go.Size(150, 52) },
           new go.Binding('stroke', 'color')),
         $(go.Panel, 'Horizontal', { margin: 8 },
           $(go.Panel, 'Auto', { width: 36, height: 36, margin: new go.Margin(0, 8, 0, 0) },
@@ -785,9 +809,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
             $(go.TextBlock, { font: '20px Material Icons', stroke: '#ffffff' }, new go.Binding('text', 'icon'))),
           $(go.Panel, 'Vertical', { alignment: go.Spot.Left },
             $(go.TextBlock,
-              { font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937', editable: true, alignment: go.Spot.Left },
+              { font: '600 12.5px Roboto, sans-serif', stroke: this.canvasTheme.nodeText, editable: true, alignment: go.Spot.Left },
               new go.Binding('text').makeTwoWay()),
-            $(go.TextBlock, { font: '10px Roboto, sans-serif', stroke: '#9aa0a8', alignment: go.Spot.Left },
+            $(go.TextBlock, { font: '10px Roboto, sans-serif', stroke: this.canvasTheme.nodeSub, alignment: go.Spot.Left },
               new go.Binding('text', 'subtitle'))))),
       ...sidePorts(),
     );
@@ -800,11 +824,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Auto', body, { name: 'BODY' }, sizeBind(),
-        $(go.Shape, 'RoundedRectangle', { parameter1: 10, fill: '#ffffff', stroke: '#d2d6dc', strokeWidth: 1.5 }),
+        $(go.Shape, 'RoundedRectangle', { parameter1: 10, fill: this.canvasTheme.node, stroke: this.canvasTheme.nodeStroke, strokeWidth: 1.5 }),
         $(go.Panel, 'Table', { margin: 12, minSize: new go.Size(216, 0) },
           $(go.RowColumnDefinition, { column: 0, stretch: go.GraphObject.Horizontal }),
           $(go.Shape, 'Rectangle',
-            { row: 0, column: 0, columnSpan: 2, height: 4, strokeWidth: 0, fill: '#1d4ed8', stretch: go.GraphObject.Horizontal, margin: new go.Margin(0, 0, 6, 0) }),
+            { row: 0, column: 0, columnSpan: 2, height: 4, strokeWidth: 0, fill: this.canvasTheme.accent, stretch: go.GraphObject.Horizontal, margin: new go.Margin(0, 0, 6, 0) }),
           $(go.TextBlock,
             { row: 1, column: 0, font: '700 13px Roboto, sans-serif', stroke: '#111827', editable: true, alignment: go.Spot.Left },
             new go.Binding('text').makeTwoWay()),
@@ -843,7 +867,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Spot', body,
         $(go.Shape, 'Rectangle',
-          { name: 'SHAPE', isPanelMain: true, strokeWidth: 2, fill: '#ffffff', stroke: '#334155',
+          { name: 'SHAPE', isPanelMain: true, strokeWidth: 2, fill: this.canvasTheme.node, stroke: this.canvasTheme.nodeStroke,
             minSize: new go.Size(48, 40) },
           new go.Binding('figure', 'figure'),
           sizeBind(),
@@ -1112,13 +1136,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /** Label colour for shape captions, tuned to the current canvas theme. */
-  private get labelColor(): string { return this.lightCanvas ? '#1f2937' : '#e2e8f0'; }
+  private get labelColor(): string { return this.canvasTheme.nodeText; }
 
   /** Fill / stroke / label colours for native shapes on the current canvas theme. */
   private shapeTheme(): { fill: string; stroke: string; labelColor: string } {
-    return this.lightCanvas
-      ? { fill: '#ffffff', stroke: '#334155', labelColor: '#1f2937' }
-      : { fill: 'rgba(148,163,184,0.12)', stroke: '#e2e8f0', labelColor: '#e2e8f0' };
+    const t = this.canvasTheme;
+    return { fill: t.node, stroke: t.nodeStroke, labelColor: t.nodeText };
   }
 
   /** Node data for a palette entry, positioned at `loc`. */
@@ -1472,17 +1495,18 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   undo(): void { this.zone.runOutsideAngular(() => this.diagram.commandHandler.undo()); }
   redo(): void { this.zone.runOutsideAngular(() => this.diagram.commandHandler.redo()); }
 
+  /**
+   * Flip the whole app between light and dark. The canvas follows via the theme
+   * effect, so chrome and diagram never disagree.
+   */
   toggleCanvasTheme(): void {
-    this.lightCanvas = !this.lightCanvas;
-    this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
-    this.applyGridTheme();
-    this.retheme();
+    this.themeSvc.toggle();
   }
 
   /** Subtle grid line colour tuned per canvas theme. */
   private applyGridTheme(): void {
     if (!this.diagram || !this.diagram.grid) return;
-    const color = this.lightCanvas ? 'rgba(2,6,23,0.06)' : 'rgba(148,163,184,0.10)';
+    const color = this.canvasTheme.grid;
     this.zone.runOutsideAngular(() => this.diagram.grid.elements.each((e) => {
       if (e instanceof go.Shape) e.stroke = color;
     }));
@@ -2490,11 +2514,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   // ---- export / import ----
 
   exportPng(): void {
-    const data = this.diagram.makeImageData({ background: this.lightCanvas ? '#ffffff' : '#0e0f11', scale: 2, type: 'image/png' });
+    const data = this.diagram.makeImageData({ background: this.canvasTheme.canvas, scale: 2, type: 'image/png' });
     if (typeof data === 'string') this.download(data, this.fileName('png'));
   }
   exportSvg(): void {
-    const svg = this.diagram.makeSvg({ scale: 1, background: this.lightCanvas ? '#ffffff' : '#0e0f11' });
+    const svg = this.diagram.makeSvg({ scale: 1, background: this.canvasTheme.canvas });
     if (!svg) return;
     this.download(URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' })), this.fileName('svg'));
   }
