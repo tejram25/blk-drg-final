@@ -1,0 +1,117 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
+import { WorkspaceService } from '../workspace.service';
+import { WsPageHeaderComponent, WsPanelComponent, WsPillComponent, WsStatComponent } from '../ui/ws-ui';
+
+/** Part search with lifecycle, stock and lead-time signals surfaced up front. */
+@Component({
+  selector: 'app-ws-part-intelligence',
+  standalone: true,
+  imports: [
+    CommonModule, FormsModule, MatIconModule,
+    WsPageHeaderComponent, WsPanelComponent, WsStatComponent, WsPillComponent,
+  ],
+  styleUrls: ['./pages.css'],
+  template: `
+    <ws-page-header title="Part Intelligence"
+      subtitle="Search the catalogue with lifecycle and supply risk in the same view." />
+
+    <div class="filters">
+      <input [ngModel]="query()" (ngModelChange)="query.set($event)"
+        placeholder="Search by part number, description or category…" aria-label="Search parts" />
+      <select [ngModel]="manufacturer()" (ngModelChange)="manufacturer.set($event)" aria-label="Filter by manufacturer">
+        <option value="">All manufacturers</option>
+        @for (m of manufacturers(); track m) { <option [value]="m">{{ m }}</option> }
+      </select>
+      <select [ngModel]="lifecycle()" (ngModelChange)="lifecycle.set($event)" aria-label="Filter by lifecycle">
+        <option value="">Any lifecycle</option>
+        <option value="Active">Active</option><option value="NRND">NRND</option><option value="EOL">EOL</option>
+      </select>
+      <span class="spacer"></span>
+      <span class="link">{{ filtered().length }} results</span>
+    </div>
+
+    <div class="grid stats">
+      <ws-stat label="Results" [value]="filtered().length" icon="search" />
+      <ws-stat label="Active" [value]="countLifecycle('Active')" icon="check_circle" tone="ok" />
+      <ws-stat label="NRND / EOL" [value]="countLifecycle('NRND') + countLifecycle('EOL')"
+        icon="warning" [tone]="countLifecycle('NRND') + countLifecycle('EOL') ? 'warn' : 'ok'" />
+      <ws-stat label="Longest lead" [value]="maxLead() + ' wks'" icon="schedule"
+        [tone]="maxLead() > 12 ? 'warn' : ''" />
+    </div>
+
+    <div class="grid two">
+      <ws-panel heading="Search results" [flush]="true">
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Part</th><th>Manufacturer</th><th>Lifecycle</th>
+                <th class="num">Stock</th><th class="num">Price</th><th class="num">Lead</th><th class="num">Match</th></tr>
+            </thead>
+            <tbody>
+              @for (p of filtered(); track p.mpn) {
+                <tr>
+                  <td class="mono">{{ p.mpn }}<div class="detail">{{ p.description }}</div></td>
+                  <td>{{ p.manufacturer }}</td>
+                  <td><ws-pill [tone]="p.lifecycle === 'Active' ? 'ok' : p.lifecycle === 'NRND' ? 'warn' : 'risk'">
+                    {{ p.lifecycle }}</ws-pill></td>
+                  <td class="num">{{ p.stock | number }}</td>
+                  <td class="num">\${{ p.price.toFixed(3) }}</td>
+                  <td class="num">{{ p.leadTimeWeeks }}w</td>
+                  <td class="num">{{ p.match }}%</td>
+                </tr>
+              } @empty { <tr><td colspan="7" class="empty">No parts match that search.</td></tr> }
+            </tbody>
+          </table>
+        </div>
+      </ws-panel>
+
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+        <ws-panel heading="Recent searches">
+          <div class="quick">
+            @for (s of ws.recentSearches(); track s) {
+              <a (click)="query.set(s)" tabindex="0" (keydown.enter)="query.set(s)">
+                <mat-icon>history</mat-icon> {{ s }}
+              </a>
+            }
+          </div>
+        </ws-panel>
+
+        <ws-panel heading="Recommendations">
+          @for (p of recommendations(); track p.mpn) {
+            <div class="feed-row">
+              <mat-icon>auto_awesome</mat-icon>
+              <span class="feed-txt"><b>{{ p.mpn }}</b> — {{ p.description }}</span>
+              <span class="feed-when">{{ p.match }}%</span>
+            </div>
+          }
+          <p class="detail" style="margin-top:10px">
+            Ranked on lifecycle, stock and lead time against the current search.
+          </p>
+        </ws-panel>
+      </div>
+    </div>
+  `,
+})
+export class PartIntelligencePage {
+  readonly ws = inject(WorkspaceService);
+  readonly query = signal('');
+  readonly manufacturer = signal('');
+  readonly lifecycle = signal('');
+
+  readonly manufacturers = computed(() => [...new Set(this.ws.parts().map((p) => p.manufacturer))].sort());
+
+  readonly filtered = computed(() => {
+    const q = this.query().trim().toLowerCase();
+    const m = this.manufacturer(); const l = this.lifecycle();
+    return this.ws.parts().filter((p) =>
+      (!q || `${p.mpn} ${p.description} ${p.category}`.toLowerCase().includes(q)) &&
+      (!m || p.manufacturer === m) && (!l || p.lifecycle === l));
+  });
+  countLifecycle(l: string): number { return this.filtered().filter((p) => p.lifecycle === l).length; }
+  readonly maxLead = computed(() => Math.max(...this.filtered().map((p) => p.leadTimeWeeks), 0));
+  readonly recommendations = computed(() =>
+    [...this.ws.parts()].filter((p) => p.lifecycle === 'Active').sort((a, b) => b.match - a.match).slice(0, 3));
+}

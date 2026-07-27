@@ -1,7 +1,9 @@
     /* Tokens are global (styles.css). Deliberately not redeclared here: a local
        :host block would shadow the app theme and freeze this view in one palette. */
+    /* Fills the workspace shell's content area rather than the whole viewport. */
+    :host { display: block; height: 100%; min-height: 0; }
     .layout {
-      display: flex; flex-direction: column; height: 100vh;
+      display: flex; flex-direction: column; height: 100%;
       background: var(--bg); color: var(--text);
       font-family: var(--font);
     }
@@ -709,7 +711,7 @@
        everything else moves to the bottom app bar + "More" sheet.
        ============================================================ */
     @media (max-width: 768px), (orientation: landscape) and (max-height: 500px) {
-      .layout { height: 100dvh; }
+      .layout { height: 100%; }
 
       /* --- compact single-row top bar --- */
       .topbar {
@@ -1288,3 +1290,7 @@
 
 /* Palette symbol previews use currentColor so they follow the canvas theme. */
 .symbol-item svg { color: var(--sym); }
+
+/* The workspace shell header owns the account menu, so the editor must not show
+   a second one. The language switcher stays: the shell has no equivalent. */
+.user-wrap { display: none; }

@@ -1,0 +1,281 @@
+<div class="ide">
+  <!-- ─────────── top bar ─────────── -->
+  <header class="top">
+    <span class="logo" role="img" aria-label="Arrow"></span>
+    <span class="divider"></span>
+
+    <!-- project switcher: the catalogue is thousands deep, so it is a search, not a list -->
+    <button type="button" class="proj" (click)="projectPickerOpen.set(true)"
+      matTooltip="Switch project (Ctrl+O)">
+      <mat-icon>folder_open</mat-icon>
+      <span class="proj-name">{{ pw.openProject().name }}</span>
+      <span class="proj-id">{{ pw.openProject().id }}</span>
+      <mat-icon class="caret">expand_more</mat-icon>
+    </button>
+
+    <span class="sfdc" [matTooltip]="'Synced from Salesforce ' + pw.sync().lastSync">
+      <mat-icon>cloud_done</mat-icon> Salesforce · {{ pw.sync().lastSync }}
+    </span>
+
+    <span class="sp"></span>
+
+    <button type="button" class="search-trigger" (click)="paletteOpen.set(true)">
+      <mat-icon>search</mat-icon><span>Search everywhere</span><kbd>Ctrl K</kbd>
+    </button>
+
+    <div class="pop-wrap">
+      <button type="button" class="icon-btn" (click)="togglePopover('notify')"
+        matTooltip="Notifications" aria-label="Notifications">
+        <mat-icon>notifications_none</mat-icon>
+        @if (ws.unreadCount()) { <span class="dot-badge">{{ ws.unreadCount() }}</span> }
+      </button>
+      @if (notifyOpen()) {
+        <div class="pop pop-wide">
+          <div class="pop-head">Notifications</div>
+          @for (n of ws.notifications(); track n.id) {
+            <div class="note">
+              <mat-icon [attr.data-sev]="n.severity">
+                {{ n.severity === 'risk' ? 'error' : n.severity === 'warn' ? 'warning' : 'info' }}</mat-icon>
+              <span class="note-txt"><b>{{ n.title }}</b><span>{{ n.detail }}</span></span>
+              <span class="note-when">{{ n.when }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="pop-wrap">
+      <button type="button" class="chip-btn" (click)="togglePopover('region')" matTooltip="Region">
+        {{ ws.region() }} <mat-icon>expand_more</mat-icon>
+      </button>
+      @if (regionOpen()) {
+        <div class="pop">
+          @for (r of regions; track r) {
+            <button type="button" class="pop-item" [class.sel]="r === ws.region()" (click)="pickRegion(r)">
+              {{ r }} @if (r === ws.region()) { <mat-icon>check</mat-icon> }
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <button type="button" class="icon-btn" (click)="toggleTheme()"
+      [matTooltip]="themeIsLight() ? 'Switch to dark' : 'Switch to light'" aria-label="Toggle theme">
+      <mat-icon>{{ themeIsLight() ? 'dark_mode' : 'light_mode' }}</mat-icon>
+    </button>
+
+    <div class="pop-wrap">
+      <button type="button" class="avatar-btn" (click)="togglePopover('profile')" aria-label="Account">
+        <span class="avatar">{{ (auth.user()?.name || auth.user()?.email || '?').charAt(0) }}</span>
+      </button>
+      @if (profileOpen()) {
+        <div class="pop pop-wide">
+          <div class="pop-head">{{ auth.user()?.name || 'Signed in' }}
+            <span class="pop-sub">{{ auth.user()?.email }}</span></div>
+          <div class="pop-label">View as</div>
+          @for (r of roles; track r) {
+            <button type="button" class="pop-item" [class.sel]="r === ws.role()" (click)="pickRole(r)">
+              {{ r }} @if (r === ws.role()) { <mat-icon>check</mat-icon> }
+            </button>
+          }
+          <div class="pop-sep"></div>
+          <button type="button" class="pop-item danger" (click)="logout()">
+            <mat-icon>logout</mat-icon> Sign out</button>
+        </div>
+      }
+    </div>
+  </header>
+
+  <!-- ─────────── body ─────────── -->
+  <div class="body">
+    <!-- activity bar -->
+    <nav class="rail" aria-label="Tool windows">
+      @for (a of activities; track a.id) {
+        <button type="button" class="ri" [class.on]="panel() === a.id && panelOpen()"
+          (click)="selectPanel(a.id)" [matTooltip]="a.label" matTooltipPosition="right"
+          [attr.aria-label]="a.label">
+          <mat-icon>{{ a.icon }}</mat-icon>
+          @if (a.id === 'reviews' && ws.inspections().length) {
+            <span class="ri-badge">{{ ws.inspections().length }}</span>
+          }
+        </button>
+      }
+      <span class="ri-sp"></span>
+      <button type="button" class="ri" (click)="pw.resync()" matTooltip="Sync from Salesforce now"
+        matTooltipPosition="right" aria-label="Sync now">
+        <mat-icon [class.spin]="pw.sync().running">sync</mat-icon>
+      </button>
+    </nav>
+
+    <!-- tool window -->
+    @if (panelOpen()) {
+      <aside class="tool">
+        @switch (panel()) {
+          @case ('explorer') {
+            <div class="tool-head">
+              <span class="tool-title">Project</span>
+              <span class="tool-count">{{ pw.openProject().artifacts.length }} items</span>
+            </div>
+            <div class="tool-filter">
+              <mat-icon>filter_list</mat-icon>
+              <input [ngModel]="treeFilter()" (ngModelChange)="treeFilter.set($event)"
+                placeholder="Filter files" aria-label="Filter project files" />
+            </div>
+            <div class="tree">
+              <div class="tree-root">
+                <mat-icon>inventory_2</mat-icon>{{ pw.openProject().id }}
+                <span class="sfdc-tag" matTooltip="Mirrored from Salesforce">SFDC</span>
+              </div>
+              @for (g of filteredTree(); track g.folder) {
+                <button type="button" class="folder" (click)="toggleFolder(g.folder)">
+                  <mat-icon class="tw" [class.closed]="isCollapsed(g.folder)">expand_more</mat-icon>
+                  <mat-icon class="fi">folder</mat-icon>{{ g.folder }}
+                  <span class="n">{{ g.items.length }}</span>
+                </button>
+                @if (!isCollapsed(g.folder)) {
+                  @for (a of g.items; track a.id) {
+                    <button type="button" class="file" [class.on]="pw.activeTabId() === a.id"
+                      (click)="openArtifact(a)">
+                      <mat-icon class="fi">{{ artifactIcon(a.kind) }}</mat-icon>
+                      <span class="fn">{{ a.name }}</span>
+                      @if (a.origin === 'salesforce') {
+                        <mat-icon class="lock" matTooltip="Owned by Salesforce — read only">lock</mat-icon>
+                      }
+                    </button>
+                  }
+                }
+              } @empty {
+                <p class="tool-empty">Nothing matches “{{ treeFilter() }}”.</p>
+              }
+            </div>
+          }
+
+          @case ('search') {
+            <div class="tool-head"><span class="tool-title">Search in project</span></div>
+            <div class="tool-filter">
+              <mat-icon>search</mat-icon>
+              <input [ngModel]="treeFilter()" (ngModelChange)="treeFilter.set($event)"
+                placeholder="Find files, diagrams, datasets" aria-label="Search project" />
+            </div>
+            <div class="tree">
+              @for (g of filteredTree(); track g.folder) {
+                @for (a of g.items; track a.id) {
+                  <button type="button" class="file" (click)="openArtifact(a)">
+                    <mat-icon class="fi">{{ artifactIcon(a.kind) }}</mat-icon>
+                    <span class="fn">{{ a.name }}</span><span class="fmeta">{{ g.folder }}</span>
+                  </button>
+                }
+              } @empty { <p class="tool-empty">No matches in this project.</p> }
+            </div>
+          }
+
+          @case ('reviews') {
+            <div class="tool-head"><span class="tool-title">Reviews &amp; risks</span></div>
+            <div class="tree">
+              @for (i of ws.inspections(); track i.id) {
+                <div class="risk">
+                  <mat-icon [attr.data-sev]="i.severity">
+                    {{ i.severity === 'risk' ? 'error' : i.severity === 'warn' ? 'warning' : 'info' }}</mat-icon>
+                  <span class="risk-txt"><b>{{ i.title }}</b><span>{{ i.scope }} · {{ i.owner }}</span></span>
+                </div>
+              }
+            </div>
+          }
+
+          @case ('business') {
+            <div class="tool-head"><span class="tool-title">Business</span></div>
+            <p class="tool-note">Workspace-wide views that sit outside a single project.</p>
+            <div class="tree">
+              @for (b of businessLinks; track b.path) {
+                <button type="button" class="file" (click)="go(b.path)">
+                  <mat-icon class="fi">{{ b.icon }}</mat-icon><span class="fn">{{ b.label }}</span>
+                </button>
+              }
+            </div>
+          }
+        }
+      </aside>
+    }
+
+    <!-- editor area -->
+    <section class="editor">
+      @if (pw.tabs().length) {
+        <div class="tabs" role="tablist">
+          @for (t of pw.tabs(); track t.artifactId) {
+            <div class="tab" [class.on]="pw.activeTabId() === t.artifactId"
+              (click)="pw.activate(t.artifactId)" role="tab">
+              <mat-icon class="ti">{{ artifactIcon(t.kind) }}</mat-icon>
+              <span class="tn">{{ t.name }}</span>
+              <button type="button" class="tx" (click)="pw.close(t.artifactId); $event.stopPropagation()"
+                [attr.aria-label]="'Close ' + t.name"><mat-icon>close</mat-icon></button>
+            </div>
+          }
+        </div>
+      }
+      <div class="editor-body"><router-outlet></router-outlet></div>
+    </section>
+  </div>
+
+  <!-- ─────────── status bar ─────────── -->
+  <footer class="status">
+    <span class="g"><span class="led" [class.warn]="pw.sync().running"></span>
+      {{ pw.sync().running ? 'Syncing…' : 'Salesforce synced ' + pw.sync().lastSync }}</span>
+    <span class="g">{{ pw.total() | number }} projects</span>
+    <span class="g">{{ pw.openProject().id }} · {{ pw.openProject().stage }}</span>
+    <span class="sp"></span>
+    <span class="g">{{ pw.tabs().length }} open</span>
+    <span class="g">{{ ws.region() }} · {{ ws.role() }}</span>
+  </footer>
+
+  @if (notifyOpen() || profileOpen() || regionOpen()) {
+    <div class="backdrop" (click)="closePopovers()"></div>
+  }
+
+  <!-- ─────────── project picker ─────────── -->
+  @if (projectPickerOpen()) {
+    <div class="scrim" (click)="projectPickerOpen.set(false)">
+      <div class="cmdk" (click)="$event.stopPropagation()" role="dialog" aria-label="Open project">
+        <div class="cmdk-q">
+          <mat-icon>folder_open</mat-icon>
+          <input autofocus [ngModel]="projectQuery()" (ngModelChange)="projectQuery.set($event)"
+            placeholder="Open project — name, customer, PRJ or Salesforce id…" aria-label="Open project" />
+          <kbd>Esc</kbd>
+        </div>
+        <div class="cmdk-note">
+          {{ pw.total() | number }} projects mirrored from Salesforce · showing {{ projectMatches().length }}
+        </div>
+        <div class="cmdk-list">
+          @for (p of projectMatches(); track p.id) {
+            <button type="button" class="cmdk-item proj-item" (click)="pickProject(p.id)">
+              <span class="l">{{ p.name }}</span>
+              <span class="d">{{ p.customer }} · {{ p.id }} · {{ p.stage }}</span>
+              <span class="k">{{ p.artifacts.length }} items</span>
+            </button>
+          } @empty { <p class="cmdk-empty">No project matches “{{ projectQuery() }}”.</p> }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ─────────── command palette ─────────── -->
+  @if (paletteOpen()) {
+    <div class="scrim" (click)="paletteOpen.set(false)">
+      <div class="cmdk" (click)="$event.stopPropagation()" role="dialog" aria-label="Search everywhere">
+        <div class="cmdk-q">
+          <mat-icon>search</mat-icon>
+          <input autofocus [ngModel]="paletteQuery()" (ngModelChange)="paletteQuery.set($event)"
+            placeholder="Files in this project, other projects, or a page…" aria-label="Search everywhere" />
+          <kbd>Esc</kbd>
+        </div>
+        <div class="cmdk-list">
+          @for (r of paletteResults(); track r.kind + r.label) {
+            <button type="button" class="cmdk-item" (click)="runPalette(r)">
+              <span class="k">{{ r.kind }}</span><span class="l">{{ r.label }}</span>
+              <span class="d">{{ r.detail }}</span>
+            </button>
+          } @empty { <p class="cmdk-empty">No matches for “{{ paletteQuery() }}”.</p> }
+        </div>
+      </div>
+    </div>
+  }
+</div>

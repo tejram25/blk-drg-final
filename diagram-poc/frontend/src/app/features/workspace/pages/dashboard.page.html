@@ -1,0 +1,86 @@
+<ws-page-header title="Dashboard"
+  [subtitle]="'Viewing as ' + ws.role() + ' · ' + ws.region() + ' region'">
+  <a class="btn primary" routerLink="/workspace/block-diagram">
+    <mat-icon>add</mat-icon> New diagram
+  </a>
+</ws-page-header>
+
+<!-- Role-aware headline figures -->
+<div class="grid stats">
+  @if (ws.role() === 'Sales' || ws.role() === 'Leadership') {
+    <ws-stat label="Pipeline value" [value]="money(ws.pipelineValue())"
+      hint="across all open stages" icon="trending_up" tone="accent" />
+    <ws-stat label="Active campaigns" [value]="activeCampaigns()"
+      hint="generating leads now" icon="campaign" />
+  }
+  @if (ws.role() === 'Engineer' || ws.role() === 'Leadership') {
+    <ws-stat label="Block diagrams" [value]="totalDiagrams()"
+      hint="across active projects" icon="account_tree" />
+    <ws-stat label="Open queries" [value]="openTickets()"
+      hint="awaiting engineering" icon="forum" />
+  }
+  <ws-stat label="Open risks" [value]="openRisks()" hint="from the inspection loop"
+    icon="monitor_heart" [tone]="openRisks() ? 'risk' : 'ok'" />
+</div>
+
+<div class="grid two">
+  <!-- Project queue -->
+  <ws-panel heading="Project queue" [flush]="true">
+    <a panelTools class="link" routerLink="/workspace/projects">View all</a>
+    <div class="table-wrap">
+      <table class="tbl">
+        <thead>
+          <tr><th>Project</th><th>Customer</th><th>Stage</th><th class="num">Value</th><th>Health</th></tr>
+        </thead>
+        <tbody>
+          @for (p of queue(); track p.id) {
+            <tr>
+              <td class="ink">{{ p.name }}</td>
+              <td>{{ p.customer }}</td>
+              <td><ws-pill>{{ p.stage }}</ws-pill></td>
+              <td class="num">{{ money(p.value) }}</td>
+              <td><ws-pill [tone]="healthTone(p.health)">{{ p.health }}</ws-pill></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </ws-panel>
+
+  <!-- Recent activity -->
+  <ws-panel heading="Recent activity">
+    <div class="feed">
+      @for (a of ws.activity(); track a.when + a.target) {
+        <div class="feed-row">
+          <mat-icon>{{ activityIcon(a.kind) }}</mat-icon>
+          <span class="feed-txt"><b>{{ a.who }}</b> {{ a.action }} <b>{{ a.target }}</b></span>
+          <span class="feed-when">{{ a.when }}</span>
+        </div>
+      }
+    </div>
+  </ws-panel>
+</div>
+
+<div class="grid two">
+  <ws-panel heading="Projects by category">
+    @for (c of ws.byCategory(); track c.label) {
+      <ws-bar [label]="c.label" [value]="c.count" [pct]="(c.count / maxCategory()) * 100" />
+    }
+  </ws-panel>
+
+  <ws-panel heading="Pipeline by stage">
+    @for (s of ws.byStage(); track s.stage) {
+      <ws-bar [label]="s.stage" [value]="money(s.value)" [pct]="(s.count / maxStage()) * 100" />
+    }
+  </ws-panel>
+</div>
+
+<ws-panel heading="Quick actions">
+  <div class="quick">
+    <a routerLink="/workspace/block-diagram"><mat-icon>account_tree</mat-icon> Open a block diagram</a>
+    <a routerLink="/workspace/part-intelligence"><mat-icon>search</mat-icon> Find a part</a>
+    <a routerLink="/workspace/support"><mat-icon>forum</mat-icon> Raise a query</a>
+    <a routerLink="/workspace/fast-repository"><mat-icon>swap_horiz</mat-icon> Cross reference</a>
+    <a routerLink="/workspace/inspection"><mat-icon>monitor_heart</mat-icon> Review open risks</a>
+  </div>
+</ws-panel>

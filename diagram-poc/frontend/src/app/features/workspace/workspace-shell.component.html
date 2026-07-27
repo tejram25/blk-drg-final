@@ -1,0 +1,150 @@
+<div class="shell" [class.collapsed]="collapsed()">
+  <!-- ───────── sidebar ───────── -->
+  <aside class="side">
+    <div class="brand">
+      <span class="logo" role="img" aria-label="Arrow"></span>
+      <button type="button" class="collapse" (click)="toggleSidebar()"
+        [attr.aria-label]="collapsed() ? 'Expand navigation' : 'Collapse navigation'">
+        <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+      </button>
+    </div>
+
+    <nav class="nav">
+      @for (g of groups; track g.title) {
+        @if (g.title) { <div class="nav-group">{{ g.title }}</div> }
+        @for (i of g.items; track i.path) {
+          <a class="nav-link" [routerLink]="i.path" routerLinkActive="active"
+            [matTooltip]="collapsed() ? i.label : ''" matTooltipPosition="right">
+            <mat-icon>{{ i.icon }}</mat-icon>
+            <span class="nav-text">{{ i.label }}</span>
+            @if (i.badge && i.badge()) { <span class="nav-badge">{{ i.badge() }}</span> }
+          </a>
+        }
+      }
+    </nav>
+
+    <div class="side-foot">
+      <span class="env">{{ ws.region() }} · {{ ws.role() }}</span>
+    </div>
+  </aside>
+
+  <!-- ───────── main ───────── -->
+  <div class="main">
+    <header class="hdr">
+      <div class="crumb">
+        <mat-icon>home</mat-icon><span class="sep">/</span><b>Smart Ehub</b>
+      </div>
+
+      <button type="button" class="search-trigger" (click)="openSearch()">
+        <mat-icon>search</mat-icon>
+        <span>Search projects, parts…</span>
+        <kbd>Ctrl K</kbd>
+      </button>
+
+      <span class="sp"></span>
+
+      <!-- notifications -->
+      <div class="pop-wrap">
+        <button type="button" class="icon-btn" (click)="togglePopover('notify')"
+          matTooltip="Notifications" aria-label="Notifications">
+          <mat-icon>notifications_none</mat-icon>
+          @if (ws.unreadCount()) { <span class="dot-badge">{{ ws.unreadCount() }}</span> }
+        </button>
+        @if (notifyOpen()) {
+          <div class="pop pop-wide">
+            <div class="pop-head">Notifications</div>
+            @for (n of ws.notifications(); track n.id) {
+              <div class="note">
+                <mat-icon [attr.data-sev]="n.severity">
+                  {{ n.severity === 'risk' ? 'error' : n.severity === 'warn' ? 'warning' : 'info' }}
+                </mat-icon>
+                <span class="note-txt"><b>{{ n.title }}</b><span>{{ n.detail }}</span></span>
+                <span class="note-when">{{ n.when }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- region -->
+      <div class="pop-wrap">
+        <button type="button" class="chip-btn" (click)="togglePopover('region')" matTooltip="Region">
+          {{ ws.region() }} <mat-icon>expand_more</mat-icon>
+        </button>
+        @if (regionOpen()) {
+          <div class="pop">
+            @for (r of regions; track r) {
+              <button type="button" class="pop-item" [class.sel]="r === ws.region()" (click)="pickRegion(r)">
+                {{ r }}
+                @if (r === ws.region()) { <mat-icon>check</mat-icon> }
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <button type="button" class="icon-btn" (click)="toggleTheme()"
+        [matTooltip]="themeIsLight() ? 'Switch to dark' : 'Switch to light'" aria-label="Toggle theme">
+        <mat-icon>{{ themeIsLight() ? 'dark_mode' : 'light_mode' }}</mat-icon>
+      </button>
+
+      <!-- profile -->
+      <div class="pop-wrap">
+        <button type="button" class="avatar-btn" (click)="togglePopover('profile')" aria-label="Account">
+          <span class="avatar">{{ (auth.user()?.name || auth.user()?.email || '?').charAt(0) }}</span>
+          <mat-icon>expand_more</mat-icon>
+        </button>
+        @if (profileOpen()) {
+          <div class="pop pop-wide">
+            <div class="pop-head">
+              {{ auth.user()?.name || 'Signed in' }}
+              <span class="pop-sub">{{ auth.user()?.email }}</span>
+            </div>
+            <div class="pop-label">View as</div>
+            @for (r of roles; track r) {
+              <button type="button" class="pop-item" [class.sel]="r === ws.role()" (click)="pickRole(r)">
+                {{ r }}
+                @if (r === ws.role()) { <mat-icon>check</mat-icon> }
+              </button>
+            }
+            <div class="pop-sep"></div>
+            <button type="button" class="pop-item danger" (click)="logout()">
+              <mat-icon>logout</mat-icon> Sign out
+            </button>
+          </div>
+        }
+      </div>
+    </header>
+
+    <main class="content" [class.flush]="flushContent()"><router-outlet></router-outlet></main>
+  </div>
+
+  @if (notifyOpen() || profileOpen() || regionOpen()) {
+    <div class="backdrop" (click)="closePopovers()"></div>
+  }
+
+  <!-- ───────── command palette ───────── -->
+  @if (searchOpen()) {
+    <div class="scrim" (click)="closeSearch()">
+      <div class="cmdk" (click)="$event.stopPropagation()" role="dialog" aria-label="Search everywhere">
+        <div class="cmdk-q">
+          <mat-icon>search</mat-icon>
+          <input #q autofocus [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+            placeholder="Search pages, projects, parts…" aria-label="Search" />
+          <kbd>Esc</kbd>
+        </div>
+        <div class="cmdk-list">
+          @for (r of searchResults(); track r.label + r.kind) {
+            <button type="button" class="cmdk-item" (click)="go(r.path)">
+              <span class="k">{{ r.kind }}</span>
+              <span class="l">{{ r.label }}</span>
+              <span class="d">{{ r.detail }}</span>
+            </button>
+          } @empty {
+            <p class="cmdk-empty">No matches for “{{ searchQuery() }}”.</p>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

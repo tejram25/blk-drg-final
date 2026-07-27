@@ -246,7 +246,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /** Keep the URL in sync with the open diagram so a refresh reopens it. */
   private syncUrl(): void {
-    this.location.replaceState(this.diagramId != null ? `/editor/${this.diagramId}` : '/editor');
+    this.location.replaceState(this.diagramId != null
+      ? `/workspace/block-diagram/${this.diagramId}`
+      : '/workspace/block-diagram/new');
   }
 
   ngOnInit(): void {
@@ -277,8 +279,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.zone.runOutsideAngular(() => this.initDiagram());
+    // `new` is the blank-canvas route; anything else is a saved diagram id.
     const id = this.route.snapshot.paramMap.get('id');
-    if (id) { this.selectedDiagramId = Number(id); this.doLoad(Number(id)); }
+    if (id && id !== 'new' && !Number.isNaN(Number(id))) {
+      this.selectedDiagramId = Number(id);
+      this.doLoad(Number(id));
+    }
   }
 
   ngOnDestroy(): void {
@@ -323,7 +329,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!(e.ctrlKey || e.metaKey)) return;
     const k = e.key.toLowerCase();
     if (k === 's') { e.preventDefault(); this.save(); }
-    else if (k === 'k') { e.preventDefault(); this.commandPaletteOpen = true; this.cdr.detectChanges(); }
+    // Ctrl/Cmd-K belongs to the workspace shell (Search everywhere). The editor's
+    // own action palette uses Ctrl/Cmd-Shift-P, as in most IDEs, so the two do
+    // not fight over the same shortcut when the editor runs inside the shell.
+    else if (k === 'p' && e.shiftKey) {
+      e.preventDefault(); this.commandPaletteOpen = true; this.cdr.detectChanges();
+    }
   }
 
   // ---- language ----

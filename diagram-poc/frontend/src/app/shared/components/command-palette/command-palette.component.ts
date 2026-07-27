@@ -12,7 +12,7 @@ export interface Command {
 }
 
 /**
- * Ctrl/Cmd+K command palette: fuzzy-filterable list of actions with keyboard
+ * Ctrl/Cmd+Shift+P action palette: fuzzy-filterable list of actions with keyboard
  * navigation. Presentation only — the parent supplies the commands.
  */
 @Component({
