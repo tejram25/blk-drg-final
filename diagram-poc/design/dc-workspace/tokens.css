@@ -1,0 +1,81 @@
+/* ============================================================================
+   DC-Workspace design tokens
+   Palette source: brand presentation template (.potx theme1) + Smart Ehub hub CSS.
+   Dark is the default; [data-theme="light"] redefines every token. Components must
+   consume the tokens only — never hard-code a hex — so both themes stay in sync.
+   ========================================================================== */
+
+:root {
+  /* ---- brand (fixed in both themes) ------------------------------------- */
+  --brand: #E31837;        /* logo mark, destructive/primary CTA. Use sparingly. */
+  --accent: #0084D5;       /* interactive + selection. The "IDE blue". */
+  --accent-2: #47D7AC;     /* success / live / synced */
+  --amber: #FFC845;        /* warning */
+  --coral: #FF8674;        /* attention / needs review */
+
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --display: 'Arrow Display', var(--sans);   /* wordmark only */
+
+  /* ---- surfaces (dark default) ------------------------------------------ */
+  --bg: #0d1524;           /* app background / editor area */
+  --panel: #111a2b;        /* tool windows: explorer, inspector */
+  --rail: #0a1120;         /* activity bar, top bar, tab strip, status bar */
+  --surface: #182135;      /* raised rows/cards inside panels */
+  --surface-s: #131d30;    /* inputs, secondary buttons */
+  --line: #243149;         /* structural borders */
+  --line-soft: #1a2436;    /* internal dividers */
+  --hover: #ffffff0d;
+
+  /* ---- text ------------------------------------------------------------- */
+  --ink: #e8edf7;
+  --muted: #95a3bd;
+  --faint: #61708c;        /* section labels, disabled */
+
+  --accent-soft: #0084d528; /* selected row / chip background */
+
+  /* ---- canvas (GoJS) ---------------------------------------------------- */
+  --canvas: #0d1524;
+  --grid: #1c2842;
+  --node: #16223a;
+  --node-stroke: #2c3c5a;
+  --node-text: #e8edf7;
+  --node-sub: #7f8ba6;
+  --wire: #0084D5;         /* power/edited wires */
+  --wire-sig: #5b6b86;     /* signal links */
+  --sym: #cfe6f5;          /* electrical symbol strokes */
+  --cap-fill: #0d3350;     /* symbol body fill */
+
+  /* ---- shape ------------------------------------------------------------ */
+  --r-sm: 6px;
+  --r: 9px;
+  --r-lg: 14px;
+}
+
+:root[data-theme="light"] {
+  --bg: #eef1f7;
+  --panel: #ffffff;
+  --rail: #e7ecf4;
+  --surface: #f4f7fc;
+  --surface-s: #f1f5fb;
+  --line: #d9e0ec;
+  --line-soft: #e8edf5;
+  --hover: #0b122008;
+
+  --ink: #17233c;
+  --muted: #54627d;
+  --faint: #8593ab;
+
+  --accent-soft: #0084d51c;
+
+  --canvas: #f7f9fd;
+  --grid: #e0e7f2;
+  --node: #ffffff;
+  --node-stroke: #cdd7e7;
+  --node-text: #17233c;
+  --node-sub: #7a8aa5;
+  --wire: #0084D5;
+  --wire-sig: #9aa7bd;
+  --sym: #22405b;
+  --cap-fill: #e8f4fc;
+}

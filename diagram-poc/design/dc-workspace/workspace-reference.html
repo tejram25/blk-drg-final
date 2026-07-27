@@ -1,0 +1,200 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<title>Smart Ehub — Block Diagram Workspace</title>
+<style>
+/* ============================================================
+   DC-Workspace design tokens — Option A (IDE Classic)
+   Palette from the brand template (.potx) + Smart Ehub hub CSS.
+   Dark is the default; [data-theme="light"] overrides every token.
+   ============================================================ */
+:root{
+  --brand:#E31837; --accent:#0084D5; --accent-2:#47D7AC; --amber:#FFC845; --coral:#FF8674;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  /* dark (default) */
+  --bg:#0d1524; --panel:#111a2b; --rail:#0a1120; --surface:#182135; --surface-s:#131d30;
+  --line:#243149; --line-soft:#1a2436; --ink:#e8edf7; --muted:#95a3bd; --faint:#61708c;
+  --accent-soft:#0084d528; --hover:#ffffff0d;
+  /* canvas */
+  --canvas:#0d1524; --grid:#1c2842; --node:#16223a; --node-stroke:#2c3c5a;
+  --wire:#0084D5; --wire-sig:#5b6b86; --sym:#cfe6f5; --node-text:#e8edf7; --node-sub:#7f8ba6; --cap-fill:#0d3350;
+}
+:root[data-theme="light"]{
+  --bg:#eef1f7; --panel:#ffffff; --rail:#e7ecf4; --surface:#f4f7fc; --surface-s:#f1f5fb;
+  --line:#d9e0ec; --line-soft:#e8edf5; --ink:#17233c; --muted:#54627d; --faint:#8593ab;
+  --accent-soft:#0084d51c; --hover:#0b122008;
+  --canvas:#f7f9fd; --grid:#e0e7f2; --node:#ffffff; --node-stroke:#cdd7e7;
+  --wire:#0084D5; --wire-sig:#9aa7bd; --sym:#22405b; --node-text:#17233c; --node-sub:#7a8aa5; --cap-fill:#e8f4fc;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13px}
+.app{height:100vh;display:grid;grid-template-rows:44px 1fr 24px}
+.top{display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--rail);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:.2px}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:900;font-size:13px}
+.brand .sub{color:var(--faint);font-weight:600}
+.crumb{color:var(--muted);display:flex;gap:7px;align-items:center;font-size:12px}
+.crumb b{color:var(--ink);font-weight:600}.crumb .sep{color:var(--faint)}
+.top .sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--surface-s);color:var(--ink);border-radius:7px;padding:6px 12px;font:inherit;font-weight:600;font-size:12px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.btn:hover{background:var(--hover)}
+.btn.run{background:linear-gradient(135deg,#0084D5,#0069ab);border-color:#0084d5aa;color:#fff}
+.btn.brand{background:var(--brand);border-color:#e31837aa;color:#fff}
+.avatars{display:flex}
+.av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:11px;border:2px solid var(--rail);margin-left:-7px}
+.tt{margin-left:6px;border:1px solid var(--line);background:var(--surface-s);color:var(--muted);border-radius:999px;padding:5px 10px;font:inherit;font-size:11px;cursor:pointer}
+.mid{display:grid;grid-template-columns:48px 244px 1fr 286px;min-height:0}
+.rail{background:var(--rail);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:4px}
+.ri{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:var(--faint);cursor:pointer;font-size:17px}
+.ri.on{color:var(--accent);background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
+.ri:hover{color:var(--ink)}.ri.sp{margin-top:auto;margin-bottom:10px}
+.explorer{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+.ph .t{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:800}
+.tree{padding:6px;overflow:auto;font-size:12.5px}
+.node{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:6px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.node:hover{background:var(--hover);color:var(--ink)}
+.node.sel{background:var(--accent-soft);color:var(--accent)}
+.node .ico{width:15px;text-align:center;opacity:.85}
+.node.ind{padding-left:22px}.node.ind2{padding-left:38px}
+.dot{width:8px;height:8px;border-radius:50%;margin-left:auto}
+.grp{padding:9px 10px 3px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:800}
+.editor{display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.tabs{display:flex;background:var(--rail);border-bottom:1px solid var(--line);height:36px}
+.tab{display:flex;align-items:center;gap:8px;padding:0 14px;color:var(--muted);border-right:1px solid var(--line-soft);cursor:pointer;font-size:12.5px}
+.tab.on{background:var(--bg);color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.tab .x{color:var(--faint)}.tab .mod{color:var(--accent);font-size:16px;line-height:0}
+.subbar{display:flex;align-items:center;gap:10px;padding:5px 14px;border-bottom:1px solid var(--line-soft);color:var(--faint);font-size:11.5px}
+.pill{border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--muted)}
+.canvas{flex:1;position:relative;overflow:hidden;background:radial-gradient(circle at 1px 1px,var(--grid) 1px,transparent 0) 0 0/22px 22px,var(--canvas)}
+.canvas svg{width:100%;height:100%}
+.n-body{fill:var(--node);stroke:var(--node-stroke);stroke-width:1.6}
+.n-body.active{stroke:var(--accent);stroke-width:2}
+.n-text{fill:var(--node-text);font-weight:700}.n-title{fill:var(--node-text);font-weight:800}
+.n-sub{fill:var(--node-sub)}
+.wire{stroke:var(--wire);stroke-width:2.5;fill:none}
+.wire-sig{stroke:var(--wire-sig);stroke-width:2.5;fill:none}
+.sym{stroke:var(--sym);fill:none}.cap-fill{fill:var(--cap-fill);stroke:var(--accent);stroke-width:1.8}
+.pin{fill:var(--accent)}
+.hud{position:absolute;right:14px;bottom:14px;display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:5px}
+.hud .b{width:28px;height:26px;display:grid;place-items:center;color:var(--muted);border-radius:6px;cursor:pointer}
+.hud .b:hover{background:var(--hover);color:var(--ink)}
+.minimap{position:absolute;left:14px;bottom:14px;width:150px;height:92px;border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;opacity:.9}
+.inspector{background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.insec{padding:11px 13px;border-bottom:1px solid var(--line-soft)}
+.insec .h{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:800;margin-bottom:9px}
+.field{display:flex;justify-content:space-between;padding:5px 0;font-size:12.5px;color:var(--muted)}
+.field b{color:var(--ink);font-weight:600}
+.inp{width:100%;background:var(--surface-s);border:1px solid var(--line);border-radius:6px;padding:6px 9px;color:var(--ink);font:inherit;font-size:12.5px}
+.partrow{display:flex;align-items:center;gap:8px;padding:7px;border:1px solid var(--line-soft);border-radius:8px;margin-top:8px;background:var(--surface)}
+.partrow .mpn{font-family:var(--mono);font-size:11px;color:var(--accent)}
+.qty{margin-left:auto;background:var(--accent-soft);color:var(--accent);border-radius:5px;padding:1px 7px;font-weight:700;font-size:11px}
+.chip{display:inline-block;font-size:10px;padding:2px 8px;border-radius:999px;font-weight:700}
+.status{display:flex;align-items:center;gap:14px;background:var(--rail);border-top:1px solid var(--line);padding:0 12px;color:var(--faint);font-size:11px}
+.status .g{display:flex;gap:6px;align-items:center}.status .ok{color:var(--accent-2)}.status .sp{flex:1}
+.led{width:7px;height:7px;border-radius:50%;background:var(--accent-2);box-shadow:0 0 6px var(--accent-2)}
+</style></head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand"><span class="mark">A</span>Smart Ehub <span class="sub">· Block Diagram</span></div>
+    <div class="crumb"><span>Demand Creation</span><span class="sep">›</span><span>Power Supplies</span><span class="sep">›</span><b>Buck Converter — Rev C</b></div>
+    <div class="sp"></div>
+    <button class="btn">Import</button>
+    <button class="btn run">▶ Validate</button>
+    <button class="btn brand">Share</button>
+    <div class="avatars"><span class="av" style="background:#0084D5">P</span><span class="av" style="background:#8b5cf6">M</span><span class="av" style="background:linear-gradient(135deg,#47D7AC,#0084D5)">AI</span></div>
+    <button class="tt" id="tt">◐ Theme</button>
+  </div>
+
+  <div class="mid">
+    <div class="rail">
+      <div class="ri on" title="Explorer">▤</div>
+      <div class="ri" title="Components">◈</div>
+      <div class="ri" title="Search">⌕</div>
+      <div class="ri" title="Collaboration">◉</div>
+      <div class="ri" title="Reviews">✓</div>
+      <div class="ri sp" title="Settings">⚙</div>
+    </div>
+
+    <div class="explorer">
+      <div class="ph"><span class="t">Project</span><span style="color:var(--faint)">⋯</span></div>
+      <div class="tree">
+        <div class="node"><span class="ico">▾</span><span class="ico">🗀</span>Diagrams</div>
+        <div class="node ind sel"><span class="ico">▾</span><span class="ico">◧</span>Buck Converter — Rev C<span class="dot" style="background:var(--accent)"></span></div>
+        <div class="node ind2"><span class="ico">◦</span>Power stage</div>
+        <div class="node ind2"><span class="ico">◦</span>Feedback</div>
+        <div class="node ind"><span class="ico">◧</span>AMR Robot (FAST)</div>
+        <div class="node ind"><span class="ico">◧</span>Sensor Node v2</div>
+        <div class="grp">Component library</div>
+        <div class="node"><span class="ico">▾</span><span class="ico">⚡</span>Electrical (35)</div>
+        <div class="node ind"><span class="ico">◦</span>Resistor · Cap · Diode…</div>
+        <div class="node"><span class="ico">▸</span><span class="ico">▩</span>Basic shapes</div>
+        <div class="node"><span class="ico">▸</span><span class="ico">✦</span>Animated glyphs</div>
+        <div class="grp">Bill of materials</div>
+        <div class="node"><span class="ico">▤</span>BOM · 14 lines</div>
+      </div>
+    </div>
+
+    <div class="editor">
+      <div class="tabs">
+        <div class="tab on"><span class="mod">•</span>Buck Converter — Rev C <span class="x">✕</span></div>
+        <div class="tab">AMR Robot (FAST) <span class="x">✕</span></div>
+        <div class="tab">Sensor Node v2 <span class="x">✕</span></div>
+      </div>
+      <div class="subbar"><span class="pill">GoJS canvas</span><span>Zoom 100%</span><span>·</span><span>3 collaborators</span><span class="sp"></span><span>U1 selected</span></div>
+      <div class="canvas">
+        <svg viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet">
+          <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--wire)"/></marker>
+          <marker id="ahs" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--wire-sig)"/></marker></defs>
+          <path class="wire-sig" d="M250 260 L360 260" marker-end="url(#ahs)"/>
+          <path class="wire-sig" d="M520 260 L640 260" marker-end="url(#ahs)"/>
+          <path class="wire" d="M440 200 L440 156"/>
+          <path class="wire" d="M440 320 L440 380"/>
+          <g><rect class="n-body" x="140" y="230" width="110" height="60" rx="9"/><text class="n-text" x="195" y="258" text-anchor="middle" font-size="15">12V IN</text><text class="n-sub" x="195" y="276" text-anchor="middle" font-size="11">VIN</text></g>
+          <g><rect class="n-body active" x="360" y="200" width="160" height="120" rx="11"/><text class="n-title" x="440" y="248" text-anchor="middle" font-size="18">U1</text><text class="n-sub" x="440" y="270" text-anchor="middle" font-size="12">TPS563201 buck</text><circle class="pin" cx="440" cy="200" r="3.5"/></g>
+          <g><rect class="n-body" x="640" y="230" width="120" height="60" rx="9"/><text class="n-text" x="700" y="258" text-anchor="middle" font-size="15">3.3V OUT</text><text class="n-sub" x="700" y="276" text-anchor="middle" font-size="11">2 A</text></g>
+          <g><rect class="cap-fill" x="405" y="110" width="70" height="46" rx="8"/><line class="sym" x1="440" y1="118" x2="440" y2="128" stroke-width="2"/><line class="sym" x1="428" y1="128" x2="452" y2="128" stroke-width="2.4"/><line class="sym" x1="428" y1="136" x2="452" y2="136" stroke-width="2.4"/><line class="sym" x1="440" y1="136" x2="440" y2="146" stroke-width="2"/><text x="440" y="153" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--accent)">C1·0.1µF</text></g>
+          <g><line class="sym" x1="422" y1="380" x2="458" y2="380" stroke-width="2.6"/><line class="sym" x1="428" y1="386" x2="452" y2="386" stroke-width="2.6"/><line class="sym" x1="434" y1="392" x2="446" y2="392" stroke-width="2.6"/><text class="n-sub" x="440" y="410" text-anchor="middle" font-size="11" font-weight="700">GND</text></g>
+        </svg>
+        <div class="minimap"></div>
+        <div class="hud"><span class="b">−</span><span class="b">▢</span><span class="b">+</span></div>
+      </div>
+    </div>
+
+    <div class="inspector">
+      <div class="insec"><div class="h">Inspector · U1</div>
+        <div class="field">Label <b>U1</b></div>
+        <div class="field">Symbol <b>elec-ic555</b></div>
+        <div class="field">Part <b>TPS563201</b></div>
+        <input class="inp" value="TPS563201DDCR" style="margin-top:8px">
+        <span class="chip" style="background:var(--accent-soft);color:var(--accent);margin-top:10px">Power · Regulator</span>
+      </div>
+      <div class="insec"><div class="h">Attached parts</div>
+        <div class="partrow"><span>C1</span><span class="mpn">GRM155R71C104KA88D</span><span class="qty">×2</span></div>
+        <div class="partrow"><span>R1</span><span class="mpn">RC0402FR-07100KL</span><span class="qty">×1</span></div>
+      </div>
+      <div class="insec"><div class="h">Design review</div>
+        <span class="chip" style="background:#47D7AC26;color:#1a8f5f">✓ Passed · 0 issues</span>
+      </div>
+      <div class="insec"><div class="h">AI copilot</div>
+        <div style="color:var(--muted);font-size:12.5px">“Add a decoupling cap to U1” →</div>
+        <button class="btn run" style="margin-top:9px;width:100%;justify-content:center">Ask the agent</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status">
+    <span class="g"><span class="led"></span><span class="ok">Live · synced</span></span>
+    <span class="g">3 collaborators</span>
+    <span class="g">BOM: 14 lines</span>
+    <span class="sp"></span>
+    <span class="g">GoJS 4.0</span><span class="g">100%</span><span class="g">Rev C</span>
+  </div>
+</div>
+<script>
+  document.getElementById('tt').addEventListener('click',function(){
+    var r=document.documentElement,c=r.getAttribute('data-theme');
+    r.setAttribute('data-theme', c==='light'?'dark':'light');
+  });
+</script>
+</body></html>
