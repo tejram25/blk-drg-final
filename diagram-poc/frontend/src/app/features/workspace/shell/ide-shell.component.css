@@ -111,6 +111,37 @@ kbd { font: inherit; font-size: 9.5px; padding: 1px 5px; border: 1px solid var(-
 }
 /* Host for the editor's portaled Components palette: fill the tool window. */
 .tool-palette { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ---------- adding artefacts ---------- */
+.tool-add {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; padding: 0; flex: none;
+  border: 1px solid transparent; border-radius: var(--radius);
+  background: transparent; color: var(--muted); cursor: pointer;
+}
+.tool-add:hover { background: var(--panel-2); color: var(--accent-ink); border-color: var(--border); }
+.tool-add mat-icon { font-size: 16px; width: 16px; height: 16px; }
+.tool-add:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* The action that fills an empty folder — indented to sit under its folder. */
+.add-first {
+  display: flex; align-items: center; gap: 6px; width: 100%;
+  padding: 5px 10px 5px 34px; border: 0; background: none; text-align: left;
+  color: var(--accent-ink); font: inherit; font-size: 12px; cursor: pointer;
+}
+.add-first:hover { background: var(--panel-2); }
+.add-first mat-icon { font-size: 15px; width: 15px; height: 15px; }
+.add-first:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* External repository block in the search panel. */
+.repo-block { border-top: 1px solid var(--border-soft); padding: 10px 0 12px; flex: none; }
+.repo-head {
+  display: flex; align-items: center; gap: 6px; padding: 0 12px 6px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--faint);
+}
+.repo-head mat-icon { font-size: 15px; width: 15px; height: 15px; }
+.tool-empty.sub { padding: 2px 12px 8px; font-size: 11.5px; line-height: 1.5; }
 .tool-head {
   display: flex; align-items: center; gap: 8px; padding: 9px 12px; flex: none;
   border-bottom: 1px solid var(--border-soft);

@@ -63,9 +63,15 @@ export class ProjectWorkspaceService {
   }
 
   // ---- artefact tree -----------------------------------------------------
-  /** Artefacts of the open project grouped by their folder, folders sorted. */
+  /**
+   * Artefacts of the open project grouped by folder.
+   *
+   * Every canonical folder is emitted even when empty, so a project with no
+   * diagrams still shows a Diagrams folder the user can add the first one to —
+   * an empty folder is a place to put something, not something to hide.
+   */
   readonly tree = computed(() => {
-    const byFolder = new Map<string, Artifact[]>();
+    const byFolder = new Map<string, Artifact[]>(FOLDER_ORDER.map((f) => [f, []]));
     for (const a of this.openProject().artifacts) {
       const list = byFolder.get(a.folder) ?? [];
       list.push(a);
@@ -75,6 +81,11 @@ export class ProjectWorkspaceService {
       .map(([folder, items]) => ({ folder, items: items.sort((x, y) => x.name.localeCompare(y.name)) }))
       .sort((a, b) => FOLDER_ORDER.indexOf(a.folder) - FOLDER_ORDER.indexOf(b.folder));
   });
+
+  /** The artefact kind a folder accepts, used to drive its "add" affordance. */
+  kindForFolder(folder: string): ArtifactKind {
+    return FOLDER_KIND[folder] ?? 'document';
+  }
 
   countOf(kind: ArtifactKind): number {
     return this.openProject().artifacts.filter((a) => a.kind === kind).length;
@@ -154,6 +165,59 @@ export class ProjectWorkspaceService {
     return resolved;
   }
 
+  // ---- adding artefacts --------------------------------------------------
+  /**
+   * Add a file the user picked from their machine. Documents and datasets are
+   * normally found in the external repository (see DocumentRepository), but
+   * uploading is always available — and is the only route while that system is
+   * not integrated. Uploaded artefacts are `workspace` origin, so unlike the
+   * Salesforce mirror they stay editable.
+   */
+  async upload(file: File, kind: ArtifactKind = 'document'): Promise<Artifact> {
+    const artifact: Artifact = {
+      id: `up-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: file.name,
+      kind,
+      folder: kind === 'dataset' ? 'Datasets' : 'Documents',
+      updated: 'Just now',
+      author: 'You',
+      size: file.size,
+      origin: 'workspace',
+      preview: kind === 'dataset' ? await readTablePreview(file) : undefined,
+      summary: kind === 'dataset' ? undefined : `Uploaded ${new Date().toLocaleDateString()}.`,
+    };
+    this.addArtifact(artifact);
+    return artifact;
+  }
+
+  /**
+   * Start a new diagram on this project. The artefact is created immediately so
+   * it appears in the tree; resolveDiagram() creates the backing record on the
+   * server the first time it is opened.
+   */
+  newDiagram(name = 'Untitled diagram'): Artifact {
+    const artifact: Artifact = {
+      id: `dg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name, kind: 'diagram', folder: 'Diagrams',
+      updated: 'Just now', author: 'You', origin: 'workspace',
+      // No diagramName: resolveDiagram() falls back to the artefact's own name,
+      // finds nothing, and creates a fresh diagram seeded from a sample.
+    };
+    this.addArtifact(artifact);
+    return artifact;
+  }
+
+  /** Append an artefact to the open project and keep its rollup counts honest. */
+  private addArtifact(artifact: Artifact): void {
+    const openId = this.openProject().id;
+    this.all.update((projects) => projects.map((p) => p.id !== openId ? p : {
+      ...p,
+      artifacts: [...p.artifacts, artifact],
+      diagrams: artifact.kind === 'diagram' ? p.diagrams + 1 : p.diagrams,
+      updated: 'Just now',
+    }));
+  }
+
   /** Persist a resolved diagram id onto the artefact in the project list. */
   private rememberDiagramId(artifactId: string, diagramId: number): void {
     this.resolving.delete(artifactId);
@@ -165,6 +229,15 @@ export class ProjectWorkspaceService {
 }
 
 const FOLDER_ORDER = ['Diagrams', 'Documents', 'Datasets', 'Bill of materials', 'Reviews'];
+
+/** Which kind each folder holds — drives the per-folder "add" action. */
+const FOLDER_KIND: Record<string, ArtifactKind> = {
+  'Diagrams': 'diagram',
+  'Documents': 'document',
+  'Datasets': 'dataset',
+  'Bill of materials': 'bom',
+  'Reviews': 'review',
+};
 
 function seedProjects(): ProjectWorkspace[] {
   const base = [
@@ -252,6 +325,27 @@ function seedProjects(): ProjectWorkspace[] {
  * backend's seeded samples); omitted, it resolves by the artefact's own name
  * and is created from sample content on first open. See resolveDiagram().
  */
+/**
+ * Read the first rows of an uploaded CSV/TSV so the dataset viewer has a
+ * preview, matching the shape the seeded datasets use. Anything that does not
+ * parse as delimited text simply gets no preview.
+ */
+async function readTablePreview(file: File): Promise<Artifact['preview']> {
+  if (!/\.(csv|tsv|txt)$/i.test(file.name)) return undefined;
+  try {
+    const lines = (await file.text()).split(/\r?\n/).filter((l) => l.trim()).slice(0, 7);
+    if (lines.length < 2) return undefined;
+    const split = (l: string) => l.split(l.includes('\t') ? '\t' : ',').map((c) => c.trim());
+    const [head, ...body] = lines;
+    return {
+      columns: split(head),
+      rows: body.map((l) => split(l).map((c) => (c !== '' && !isNaN(Number(c)) ? Number(c) : c))),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 function d(id: string, name: string, folder: string, diagramName: string | undefined,
            author: string, updated: string): Artifact {
   return { id, name, kind: 'diagram', folder, updated, author, diagramName, origin: 'workspace' };

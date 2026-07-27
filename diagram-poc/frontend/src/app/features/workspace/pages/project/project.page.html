@@ -55,6 +55,9 @@
       [subtitle]="p().customer + ' · ' + p().id + ' · Salesforce ' + p().sfdcId">
       <ws-pill [tone]="p().health">{{ p().health }}</ws-pill>
       <ws-pill>{{ p().stage }}</ws-pill>
+      <button type="button" class="btn primary" (click)="newDiagram()">
+        <mat-icon>add</mat-icon> New diagram
+      </button>
     </ws-page-header>
 
     <div class="grid stats">
@@ -81,6 +84,11 @@
                 </td>
                 <td class="num">{{ art.updated }}</td>
               </tr>
+            } @empty {
+              <tr><td colspan="6" class="empty">
+                Nothing in this project yet — start a diagram, or add a document from
+                your machine. Use <b>+</b> in the Project panel.
+              </td></tr>
             }
           </tbody>
         </table>

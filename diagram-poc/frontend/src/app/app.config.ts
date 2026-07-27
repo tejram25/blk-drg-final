@@ -7,6 +7,7 @@ import { routes } from './app.routes';
 import { credentialsInterceptor } from './core/interceptors/credentials.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { AuthService } from './core/services/auth.service';
+import { DocumentRepository, NotConnectedDocumentRepository } from './core/services/document-repository.service';
 
 /**
  * Root providers. The session is restored once, up front, via APP_INITIALIZER so
@@ -15,6 +16,9 @@ import { AuthService } from './core/services/auth.service';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
+    // Documents and datasets are found in a separate application that is not
+    // integrated yet. Swap this for the real client when the endpoint exists.
+    { provide: DocumentRepository, useClass: NotConnectedDocumentRepository },
     provideHttpClient(withInterceptors([credentialsInterceptor, errorInterceptor])),
     // Async: the animations engine is fetched after first paint instead of
     // sitting in the initial bundle. Material components work either way.

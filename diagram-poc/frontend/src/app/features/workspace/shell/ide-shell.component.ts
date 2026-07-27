@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterOutlet } from '@angular/router';
@@ -7,10 +7,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { PortalModule } from '@angular/cdk/portal';
 import { AuthService } from '../../../core/services/auth.service';
 import { EditorChromeService } from '../../../core/services/editor-chrome.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import {
+  DocumentRepository, RepositoryHit, RepositorySearchResult,
+} from '../../../core/services/document-repository.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { WorkspaceService } from '../services/workspace.service';
 import { ProjectWorkspaceService } from '../services/project-workspace.service';
-import { Artifact, Region, Role } from '../models/workspace.models';
+import { Artifact, ArtifactKind, Region, Role } from '../models/workspace.models';
 
 type SidePanel = 'explorer' | 'components' | 'search' | 'reviews' | 'business';
 
@@ -45,6 +49,8 @@ export class IdeShellComponent {
   readonly editorChrome = inject(EditorChromeService);
   private readonly theme = inject(ThemeService);
   private readonly router = inject(Router);
+  private readonly notify = inject(NotificationService);
+  private readonly repo = inject(DocumentRepository);
 
   panel = signal<SidePanel>('explorer');
   panelOpen = signal(true);
@@ -136,6 +142,52 @@ export class IdeShellComponent {
     });
   }
 
+  // ---- adding artefacts --------------------------------------------------
+  @ViewChild('uploadInput') uploadInput!: ElementRef<HTMLInputElement>;
+  addMenuOpen = signal(false);
+  /** Kind the pending file picker is collecting, so one input serves both. */
+  private pendingKind: ArtifactKind = 'document';
+
+  /** Result of the last external-repository search (null until searched). */
+  readonly repoResult = signal<RepositorySearchResult | null>(null);
+
+  createDiagram(): void {
+    this.addMenuOpen.set(false);
+    const artifact = this.pw.newDiagram();
+    this.notify.success(`“${artifact.name}” added. Opening the canvas…`);
+    this.openArtifact(artifact);
+  }
+
+  pickUpload(kind: ArtifactKind): void {
+    this.addMenuOpen.set(false);
+    this.pendingKind = kind;
+    const input = this.uploadInput.nativeElement;
+    input.accept = kind === 'dataset' ? '.csv,.tsv,.xlsx,.xls,.json' : '';
+    input.value = '';           // so re-picking the same file still fires change
+    input.click();
+  }
+
+  async onUploadPicked(event: Event): Promise<void> {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    const artifact = await this.pw.upload(file, this.pendingKind);
+    this.notify.success(`“${artifact.name}” added to ${artifact.folder}.`);
+    this.openArtifact(artifact);
+  }
+
+  /** Show the repository panel; it reports "not connected" until integrated. */
+  openRepositorySearch(): void {
+    this.addMenuOpen.set(false);
+    this.panel.set('search');
+    this.panelOpen.set(true);
+    this.searchRepository();
+  }
+
+  /** Link a repository hit onto this project (available once connected). */
+  linkFromRepository(hit: RepositoryHit): void {
+    this.notify.info(`Linking “${hit.name}” from ${hit.source} is not available yet.`);
+  }
+
   openArtifact(a: Artifact): void {
     this.pw.open(a);
     if (a.kind === 'diagram') {
@@ -184,10 +236,18 @@ export class IdeShellComponent {
     if (this.panel() === p) { this.panelOpen.update((v) => !v); return; }
     this.panel.set(p);
     this.panelOpen.set(true);
+    // Opening Search should already answer "is the repository available?",
+    // rather than showing a bare heading until something is typed.
+    if (p === 'search') this.searchRepository();
+  }
+
+  private searchRepository(): void {
+    this.repo.search(this.treeFilter()).subscribe((r) => this.repoResult.set(r));
   }
 
   closePopovers(): void {
     this.notifyOpen.set(false); this.profileOpen.set(false); this.regionOpen.set(false);
+    this.addMenuOpen.set(false);
   }
   togglePopover(which: 'notify' | 'profile' | 'region'): void {
     const was = which === 'notify' ? this.notifyOpen()

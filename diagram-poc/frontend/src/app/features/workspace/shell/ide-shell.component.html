@@ -1,4 +1,7 @@
 <div class="ide">
+  <!-- Upload picker, shared by every "add a file" affordance. -->
+  <input #uploadInput type="file" hidden (change)="onUploadPicked($event)" />
+
   <!-- ─────────── top bar — the only header ─────────── -->
   <header class="top" [class.editing]="!!editorChrome.toolbar()">
     <span class="logo" role="img" aria-label="Arrow"></span>
@@ -132,6 +135,27 @@
             <div class="tool-head">
               <span class="tool-title">Project</span>
               <span class="tool-count">{{ pw.openProject().artifacts.length }} items</span>
+              <div class="pop-wrap">
+                <button type="button" class="tool-add" (click)="addMenuOpen.set(!addMenuOpen())"
+                  matTooltip="Add to this project" aria-label="Add to this project">
+                  <mat-icon>add</mat-icon>
+                </button>
+                @if (addMenuOpen()) {
+                  <div class="pop pop-wide">
+                    <button type="button" class="pop-item" (click)="createDiagram()">
+                      <mat-icon>account_tree</mat-icon> New diagram</button>
+                    <div class="pop-sep"></div>
+                    <div class="pop-label">Add a file</div>
+                    <button type="button" class="pop-item" (click)="pickUpload('document')">
+                      <mat-icon>upload_file</mat-icon> Upload document…</button>
+                    <button type="button" class="pop-item" (click)="pickUpload('dataset')">
+                      <mat-icon>table_chart</mat-icon> Upload dataset…</button>
+                    <div class="pop-sep"></div>
+                    <button type="button" class="pop-item" (click)="openRepositorySearch()">
+                      <mat-icon>travel_explore</mat-icon> Search repository…</button>
+                  </div>
+                }
+              </div>
             </div>
             <div class="tool-filter">
               <mat-icon>filter_list</mat-icon>
@@ -159,6 +183,28 @@
                         <mat-icon class="lock" matTooltip="Owned by Salesforce — read only">lock</mat-icon>
                       }
                     </button>
+                  } @empty {
+                    <!-- An empty folder is a place to add the first item, not a
+                         dead end — so it offers the action that fills it. -->
+                    @switch (pw.kindForFolder(g.folder)) {
+                      @case ('diagram') {
+                        <button type="button" class="add-first" (click)="createDiagram()">
+                          <mat-icon>add</mat-icon> New diagram</button>
+                      }
+                      @case ('dataset') {
+                        <button type="button" class="add-first" (click)="pickUpload('dataset')">
+                          <mat-icon>upload_file</mat-icon> Upload dataset</button>
+                        <button type="button" class="add-first" (click)="openRepositorySearch()">
+                          <mat-icon>travel_explore</mat-icon> Search repository</button>
+                      }
+                      @case ('document') {
+                        <button type="button" class="add-first" (click)="pickUpload('document')">
+                          <mat-icon>upload_file</mat-icon> Upload document</button>
+                        <button type="button" class="add-first" (click)="openRepositorySearch()">
+                          <mat-icon>travel_explore</mat-icon> Search repository</button>
+                      }
+                      @default { <p class="tool-empty sub">Nothing here yet.</p> }
+                    }
                   }
                 }
               } @empty {
@@ -183,6 +229,28 @@
                   </button>
                 }
               } @empty { <p class="tool-empty">No matches in this project.</p> }
+            </div>
+
+            <!-- Documents and datasets live in a separate system; this is the
+                 seam to it (DocumentRepository). Until it is wired up we say so
+                 plainly rather than showing an empty result list. -->
+            <div class="repo-block">
+              <div class="repo-head"><mat-icon>travel_explore</mat-icon> External repository</div>
+              @if (repoResult(); as r) {
+                @if (!r.connected) {
+                  <p class="tool-empty sub">Not connected yet. Documents and datasets will be
+                    searchable here once the repository integration is enabled.</p>
+                  <button type="button" class="add-first" (click)="pickUpload('document')">
+                    <mat-icon>upload_file</mat-icon> Upload a file instead</button>
+                } @else {
+                  @for (h of r.hits; track h.externalId) {
+                    <button type="button" class="file" (click)="linkFromRepository(h)">
+                      <mat-icon class="fi">{{ artifactIcon(h.kind) }}</mat-icon>
+                      <span class="fn">{{ h.name }}</span><span class="fmeta">{{ h.source }}</span>
+                    </button>
+                  } @empty { <p class="tool-empty sub">Nothing in the repository matches.</p> }
+                }
+              }
             </div>
           }
 

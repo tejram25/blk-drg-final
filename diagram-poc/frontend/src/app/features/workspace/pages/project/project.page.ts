@@ -45,6 +45,13 @@ export class ProjectPage {
     });
   }
 
+  /** Start a diagram on this project and open it straight away. */
+  newDiagram(): void {
+    const artifact = this.pw.newDiagram();
+    this.pw.open(artifact);
+    this.routeToDiagram(artifact);
+  }
+
   open(id: string): void {
     const art = this.p().artifacts.find((x) => x.id === id);
     if (!art) return;
