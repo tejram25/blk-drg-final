@@ -106,7 +106,7 @@
   border: 1px solid; font-size: 12.5px;
 }
 .pos-verdict.ok { border-color: color-mix(in srgb, var(--ok) 45%, transparent); background: color-mix(in srgb, var(--ok) 10%, transparent); }
-.pos-verdict.no { border-color: rgba(148,163,184,.35); background: rgba(148,163,184,.07); }
+.pos-verdict.no { border-color: color-mix(in srgb, var(--muted) 35%, transparent); background: color-mix(in srgb, var(--muted) 7%, transparent); }
 .pos-verdict mat-icon { font-size: 26px; width: 26px; height: 26px; flex: none; }
 .pos-verdict.ok mat-icon { color: var(--ok); }
 .pos-verdict.no mat-icon { color: var(--muted); }

@@ -48,7 +48,7 @@
 .rs-dist { flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px; }
 .rs-bar { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
 .rs-bk { width: 8px; text-align: right; }
-.rs-track { flex: 1 1 auto; height: 6px; border-radius: 3px; background: rgba(148, 163, 184, 0.18); overflow: hidden; }
+.rs-track { flex: 1 1 auto; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--muted) 18%, transparent); overflow: hidden; }
 .rs-fill { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
 .rs-bn { width: 16px; text-align: right; }
 

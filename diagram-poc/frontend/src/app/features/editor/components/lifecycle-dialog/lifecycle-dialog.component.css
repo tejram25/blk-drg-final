@@ -31,7 +31,7 @@
 .lc-status.bad, b.bad { color: var(--danger); }
 .lc-status.bad { background: color-mix(in srgb, var(--danger) 15%, transparent); }
 .lc-status.neutral, b.neutral { color: var(--muted); }
-.lc-status.neutral { background: rgba(148,163,184,.15); }
+.lc-status.neutral { background: color-mix(in srgb, var(--muted) 15%, transparent); }
 
 .lc-risk { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
 .lc-rec { font-size: 12.5px; color: var(--text); margin: 0 0 16px; line-height: 1.4; }

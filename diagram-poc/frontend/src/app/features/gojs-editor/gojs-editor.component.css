@@ -130,7 +130,7 @@
     }
     .cls-pill mat-icon { font-size: 14px; width: 14px; height: 14px; }
     .cls-pill.public { color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
-    .cls-pill.internal { color: var(--muted); border-color: rgba(148,163,184,.4); background: rgba(148,163,184,.1); }
+    .cls-pill.internal { color: var(--muted); border-color: color-mix(in srgb, var(--muted) 40%, transparent); background: color-mix(in srgb, var(--muted) 10%, transparent); }
     .cls-pill.restricted { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 50%, transparent); background: color-mix(in srgb, var(--danger) 12%, transparent); }
 
     /* Header controls run a touch shorter than the 36px form default so the bar

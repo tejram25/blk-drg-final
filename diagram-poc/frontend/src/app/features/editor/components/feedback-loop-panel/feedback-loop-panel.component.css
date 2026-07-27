@@ -64,7 +64,7 @@
 .fb-pill[data-status='open'] { color: var(--warn); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .fb-pill[data-status='changes-requested'] { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
 .fb-pill[data-status='approved'] { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
-.fb-pill[data-status='closed'] { color: var(--muted); background: rgba(148, 163, 184, 0.14); }
+.fb-pill[data-status='closed'] { color: var(--muted); background: color-mix(in srgb, var(--muted) 14%, transparent); }
 
 .fb-node {
   display: inline-flex; align-items: center; gap: 5px; margin: 0 12px 8px; cursor: pointer;

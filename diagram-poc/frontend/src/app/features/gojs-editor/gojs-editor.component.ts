@@ -236,7 +236,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Push the resolved token palette into the live diagram. */
   private applyCanvasTheme(): void {
     if (!this.diagram || !this.canvasRef) return;
-    this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
     this.applyGridTheme();
     this.retheme();
   }
@@ -490,7 +489,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       const w = tooltip.measuredBounds.width;
       tooltip.location = new go.Point(vb.centerX - w / 2, vb.y + 12 / this.diagram.scale);
     };
-    this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
     this.startAnimations();
   }
 

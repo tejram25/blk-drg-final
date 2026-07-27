@@ -110,7 +110,7 @@ html, body {
   --border: #2a2a2a; --border-soft: #1f1f1f;
 
   /* text */
-  --text: #ffffff; --muted: #a8a8a8; --faint: #6e6e6e;
+  --text: #ffffff; --muted: #a8a8a8; --faint: #808080;
 
   /* interaction — Sky Blue is the single accent */
   --accent: var(--sky); --accent-soft: #0084d526; --accent-ring: rgba(0, 132, 213, 0.22);
@@ -135,7 +135,7 @@ html, body {
   --panel: #ffffff; --panel-2: #f7f7f7;
   --border: #dcdcdc; --border-soft: #ebebeb;
 
-  --text: #000000; --muted: #5c5c5c; --faint: #8c8c8c;
+  --text: #000000; --muted: #5c5c5c; --faint: #6b6b6b;
 
   --accent-soft: #0084d517; --accent-ring: rgba(0, 132, 213, 0.18);
   --accent-ink: #00699f;
@@ -295,20 +295,22 @@ a:hover { text-decoration: underline; }
 
 /* Selected wire: local-only DOM highlight (never synced to collaborators) */
 .wire-selected path {
-  filter: drop-shadow(0 0 3px rgba(245, 166, 35, .9));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 90%, transparent));
 }
 
-/* ---- White canvas mode ----
-   Light strokes/fills (#e2e8f0) are invisible on white, so remap the
-   defaults to dark slate. Attribute selectors only match elements still
-   on their default color, so user-recolored nodes keep their color. */
-.canvas-light [stroke="#e2e8f0"] { stroke: #334155; }
-.canvas-light [fill="#e2e8f0"]   { fill: #334155; }
-.canvas-light text[fill="#94a3b8"] { fill: #475569; }
-.canvas-light [fill="#0f172a"]   { fill: #ffffff; }   /* port circles */
-.canvas-light [fill="#1e293b"]   { fill: #f1f5f9; }   /* pump volute, piston head bg */
+/* The old ".canvas-light" attribute-selector remaps lived here. Symbols now
+   draw with the theme tokens (see gojs-theme.ts), so there are no fixed default
+   colours left to rewrite. */
 
 @media (prefers-reduced-motion: reduce) {
+  /* Keep state changes instant rather than animated — but never remove them,
+     the UI must still show what happened. */
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
   .x6-edge path,
   .anim-spin, .anim-spin-slow, .anim-arm-upper,
   .anim-pulse, .anim-pulse-alt, .anim-belt,
@@ -327,10 +329,10 @@ a:hover { text-decoration: underline; }
   font-size: 13px; max-width: 190px; min-width: 0;
   cursor: pointer; font-family: inherit;
 }
-.user-chip:hover { background: #26282f; border-color: #44454d; }
+.user-chip:hover { background: var(--panel-2); border-color: var(--faint); }
 .user-chip.on { border-color: var(--accent); }
 .user-chip mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--accent); flex: none; }
-.user-chip .caret { color: #9aa0a8; margin-left: -2px; }
+.user-chip .caret { color: var(--muted); margin-left: -2px; }
 .user-chip .user-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 720px) { .user-chip .user-name { display: none; } }
 
