@@ -13,7 +13,7 @@ is the token set to import into the app.
 | `workspace-reference.html` | The canonical Option A reference, both themes, self-contained (real Arrow logo + Arrow Display embedded) |
 | `tokens.css` | Design tokens to import into the Angular app |
 | `brand/` | Arrow wordmark, cropped from the official lockup, for light and dark chrome |
-| `ws-dark.png` / `ws-light.png` | Option A rendered in both themes |
+| `p2-*.png` | Phase 2 panels: Problems, BOM, Collaboration (dark + light) |
 
 ## Why Option A
 
@@ -77,14 +77,42 @@ Problems / BOM / Collaboration.
 
 | Phase | Scope | Notes |
 |---|---|---|
-| **0 · Tokens** | `tokens.css` + component kit (buttons, badges, panels, inputs) | Foundation, no visible risk |
-| **1 · Chrome** | Activity bar, top bar, breadcrumb, editor tabs, status bar | The "it's a tool now" moment |
-| **2 · Panels** | Explorer tree, inspector, bottom dock; wire to existing data | |
+| **0 · Tokens** ✅ | `tokens.css` + component kit (buttons, badges, panels, inputs) | Foundation, no visible risk |
+| **1 · Chrome** ✅ | Activity bar, top bar, breadcrumb, editor tabs, status bar | The "it's a tool now" moment |
+| **2 · Panels** ✅ | Explorer tree, inspector, bottom dock; wire to existing data | |
 | **3 · Canvas theming** | Recolor GoJS: grid, node fill/stroke, selection `--accent`, wires | Themed via tokens so light works too |
 | **4 · Symbols** | Recolor the electrical symbol library + part cards to brand | "even the block diagram" |
 | **5 · Polish** | Motion, empty states, light-theme QA, responsive | |
 
 Each phase is independently reviewable and revertible.
+
+## Phase 2 — panels (done)
+
+The reference is now **interactive**; open it and click around.
+
+**Explorer** — filter box with a `Ctrl K` affordance, and a real collapsible
+tree (chevrons rotate, children hide) across Diagrams, Component library and BOM.
+
+**Inspector** — three tool tabs so the panel stops being one long scroll:
+
+| Tab | Contents |
+|---|---|
+| Properties | label, symbol, part, classification chip, geometry |
+| Parts | attached parts with qty, “Attach part”, lifecycle + stock |
+| AI | copilot prompt and recent suggestions |
+
+**Bottom dock** — the IntelliJ tool-window pattern, collapsible via the button
+at its right edge:
+
+| Tab | Contents |
+|---|---|
+| **Problems** `3` | DRC + AI-review findings, severity-coded (Solar = error, Copper = warning, Patina = pass), each with the offending node and the rule that fired |
+| **Bill of materials** `14` | Ref / MPN / description / qty / lifecycle table, NRND flagged in Copper |
+| **Collaboration** `3` | Live participants and the recent activity feed, including the AI agent's edits |
+| **History** | Revision trail with author and age |
+
+Severity and lifecycle are encoded in **color *and* glyph**, so state survives
+greyscale printing and colour-blind viewing.
 
 ## Backlog — further IntelliJ-style ideas
 

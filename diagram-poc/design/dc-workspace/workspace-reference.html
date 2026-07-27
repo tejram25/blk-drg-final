@@ -37,7 +37,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:13px;-webkit-font-smoothing:antialiased}
-.app{height:100vh;display:grid;grid-template-rows:46px 1fr 24px}
+.app{height:100vh;display:grid;grid-template-rows:46px 1fr auto 24px}
 /* top bar */
 .top{display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--rail);border-bottom:1px solid var(--line)}
 .logo{width:96px;height:21px;background:var(--logo) left center/contain no-repeat}
@@ -55,6 +55,56 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .tt{margin-left:6px;border:1px solid var(--line);background:var(--surface-s);color:var(--muted);border-radius:999px;padding:5px 10px;font:inherit;font-size:11px;cursor:pointer}
 /* layout */
 .mid{display:grid;grid-template-columns:48px 244px 1fr 286px;min-height:0}
+/* explorer filter */
+.filter{margin:8px 8px 4px;display:flex;align-items:center;gap:7px;background:var(--surface-s);border:1px solid var(--line);border-radius:var(--r-sm);padding:5px 8px}
+.filter input{flex:1;background:none;border:0;color:var(--ink);font:inherit;font-size:12px;outline:none;min-width:0}
+.filter input::placeholder{color:var(--faint)}
+.filter .k{font-size:9.5px;color:var(--faint);border:1px solid var(--line);border-radius:4px;padding:1px 4px}
+/* collapsible tree */
+.node .tw{width:12px;display:inline-block;text-align:center;color:var(--faint);font-size:9px;transition:transform .15s}
+.node.collapsed .tw{transform:rotate(-90deg)}
+.kids.hide{display:none}
+/* inspector tabs */
+.itabs{display:flex;border-bottom:1px solid var(--line);background:var(--surface-s)}
+.itab{flex:1;text-align:center;padding:8px 4px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}
+.itab.on{color:var(--accent-ink);border-bottom-color:var(--sky);background:var(--panel)}
+.ipane{display:none}.ipane.on{display:block}
+/* ---- bottom dock (IntelliJ tool window) ---- */
+.dock{background:var(--panel);border-top:1px solid var(--line);display:flex;flex-direction:column;height:212px}
+.dock.min{height:32px}
+.dock.min .dockbody{display:none}
+.dockbar{display:flex;align-items:center;gap:2px;height:32px;padding:0 8px;background:var(--rail);border-bottom:1px solid var(--line-soft);flex:0 0 auto}
+.dtab{display:flex;align-items:center;gap:7px;padding:5px 11px;border-radius:var(--r-sm);color:var(--muted);cursor:pointer;font-size:12px;font-weight:600}
+.dtab:hover{background:var(--hover);color:var(--ink)}
+.dtab.on{background:var(--accent-soft);color:var(--accent-ink)}
+.dtab .n{font-size:10px;background:var(--surface);color:var(--muted);border-radius:999px;padding:0 6px;font-weight:600}
+.dtab.on .n{background:#0084d533;color:var(--accent-ink)}
+.dockbar .sp{flex:1}
+.dockbtn{width:26px;height:24px;display:grid;place-items:center;color:var(--faint);border-radius:5px;cursor:pointer;font-size:13px}
+.dockbtn:hover{background:var(--hover);color:var(--ink)}
+.dockbody{flex:1;overflow:auto;min-height:0}
+.dpane{display:none;padding:6px 0}.dpane.on{display:block}
+/* problems */
+.prow{display:grid;grid-template-columns:18px 1fr auto auto;gap:10px;align-items:center;padding:6px 14px;cursor:pointer;font-size:12.5px}
+.prow:hover{background:var(--hover)}
+.prow .sev{font-size:13px;text-align:center}
+.prow .msg{color:var(--ink)}
+.prow .loc{color:var(--faint);font-family:var(--mono);font-size:11px}
+.prow .rule{color:var(--faint);font-size:11px}
+/* table */
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+table.t th{text-align:left;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;padding:6px 14px;border-bottom:1px solid var(--line-soft);position:sticky;top:0;background:var(--panel)}
+table.t td{padding:6px 14px;border-bottom:1px solid var(--line-soft);color:var(--muted)}
+table.t td.ink{color:var(--ink);font-weight:600}
+table.t td.mono{font-family:var(--mono);font-size:11.5px;color:var(--accent-ink)}
+table.t td.num{text-align:right;font-variant-numeric:tabular-nums}
+table.t tr:hover td{background:var(--hover)}
+/* collaboration */
+.crow{display:flex;align-items:center;gap:10px;padding:7px 14px;font-size:12.5px}
+.cav{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:10px;color:#000}
+.crow .who{color:var(--ink);font-weight:600}
+.crow .act{color:var(--faint)}
+.crow .t{margin-left:auto;color:var(--faint);font-size:11px;font-variant-numeric:tabular-nums}
 .rail{background:var(--rail);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:4px}
 .ri{width:34px;height:34px;border-radius:var(--r-sm);display:grid;place-items:center;color:var(--faint);cursor:pointer;font-size:17px}
 .ri.on{color:var(--sky);background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--sky)}
@@ -142,18 +192,27 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 
     <div class="explorer">
       <div class="ph"><span class="t">Project</span><span style="color:var(--faint)">⋯</span></div>
+      <div class="filter"><span style="color:var(--faint)">⌕</span><input placeholder="Filter diagrams &amp; symbols"><span class="k">Ctrl K</span></div>
       <div class="tree">
-        <div class="node"><span class="ico">▾</span><span class="ico">🗀</span>Diagrams</div>
-        <div class="node ind sel"><span class="ico">▾</span><span class="ico">◧</span>Buck Converter — Rev C<span class="dot"></span></div>
-        <div class="node ind2"><span class="ico">◦</span>Power stage</div>
-        <div class="node ind2"><span class="ico">◦</span>Feedback</div>
-        <div class="node ind"><span class="ico">◧</span>AMR Robot (FAST)</div>
-        <div class="node ind"><span class="ico">◧</span>Sensor Node v2</div>
+        <div class="node tg" data-kids="k1"><span class="tw">▾</span><span class="ico">🗀</span>Diagrams</div>
+        <div class="kids" id="k1">
+          <div class="node ind sel tg" data-kids="k2"><span class="tw">▾</span><span class="ico">◧</span>Buck Converter — Rev C<span class="dot"></span></div>
+          <div class="kids" id="k2">
+            <div class="node ind2"><span class="ico">◦</span>Power stage</div>
+            <div class="node ind2"><span class="ico">◦</span>Feedback</div>
+          </div>
+          <div class="node ind"><span class="ico">◧</span>AMR Robot (FAST)</div>
+          <div class="node ind"><span class="ico">◧</span>Sensor Node v2</div>
+        </div>
         <div class="grp">Component library</div>
-        <div class="node"><span class="ico">▾</span><span class="ico">⚡</span>Electrical (35)</div>
-        <div class="node ind"><span class="ico">◦</span>Resistor · Cap · Diode…</div>
-        <div class="node"><span class="ico">▸</span><span class="ico">▩</span>Basic shapes</div>
-        <div class="node"><span class="ico">▸</span><span class="ico">✦</span>Animated glyphs</div>
+        <div class="node tg" data-kids="k3"><span class="tw">▾</span><span class="ico">⚡</span>Electrical (35)</div>
+        <div class="kids" id="k3">
+          <div class="node ind"><span class="ico">◦</span>Resistor · Cap · Diode…</div>
+        </div>
+        <div class="node tg collapsed" data-kids="k4"><span class="tw">▾</span><span class="ico">▩</span>Basic shapes</div>
+        <div class="kids hide" id="k4"><div class="node ind"><span class="ico">◦</span>Rect · Ellipse · Flow…</div></div>
+        <div class="node tg collapsed" data-kids="k5"><span class="tw">▾</span><span class="ico">✦</span>Animated glyphs</div>
+        <div class="kids hide" id="k5"><div class="node ind"><span class="ico">◦</span>Motor · Fan · Signal…</div></div>
         <div class="grp">Bill of materials</div>
         <div class="node"><span class="ico">▤</span>BOM · 14 lines</div>
       </div>
@@ -188,6 +247,12 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     </div>
 
     <div class="inspector">
+      <div class="itabs">
+        <div class="itab on" data-ip="ip1">Properties</div>
+        <div class="itab" data-ip="ip2">Parts</div>
+        <div class="itab" data-ip="ip3">AI</div>
+      </div>
+      <div class="ipane on" id="ip1">
       <div class="insec"><div class="h">Inspector · U1</div>
         <div class="field">Label <b>U1</b></div>
         <div class="field">Symbol <b>elec-ic555</b></div>
@@ -195,16 +260,75 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
         <input class="inp" value="TPS563201DDCR" style="margin-top:8px">
         <div style="margin-top:10px"><span class="chip sky">Power · Regulator</span></div>
       </div>
+      <div class="insec"><div class="h">Geometry</div>
+        <div class="field">Position <b>440, 260</b></div>
+        <div class="field">Size <b>160 × 120</b></div>
+      </div>
+      </div><!-- /ip1 -->
+
+      <div class="ipane" id="ip2">
       <div class="insec"><div class="h">Attached parts</div>
         <div class="partrow"><span>C1</span><span class="mpn">GRM155R71C104KA88D</span><span class="qty">×2</span></div>
         <div class="partrow"><span>R1</span><span class="mpn">RC0402FR-07100KL</span><span class="qty">×1</span></div>
+        <button class="btn" style="margin-top:10px;width:100%;justify-content:center">＋ Attach part</button>
       </div>
-      <div class="insec"><div class="h">Design review</div>
-        <span class="chip ok">Passed · 0 issues</span>
+      <div class="insec"><div class="h">Lifecycle</div>
+        <div class="field">Status <b style="color:var(--patina)">Active</b></div>
+        <div class="field">Stock <b>12,480</b></div>
       </div>
-      <div class="insec"><div class="h">AI copilot</div>
+      </div><!-- /ip2 -->
+
+      <div class="ipane" id="ip3">
+      <div class="insec"><div class="h">AI copilot · in session</div>
         <div style="color:var(--muted);font-size:12.5px">“Add a decoupling cap to U1”</div>
         <button class="btn primary" style="margin-top:9px;width:100%;justify-content:center">Ask the agent</button>
+      </div>
+      <div class="insec"><div class="h">Recent suggestions</div>
+        <div class="partrow"><span style="color:var(--muted);font-size:12px">Add feedback divider R1/R2</span></div>
+        <div class="partrow"><span style="color:var(--muted);font-size:12px">Swap C1 → X7R 25V</span></div>
+      </div>
+      </div><!-- /ip3 -->
+    </div>
+  </div>
+
+  <div class="dock" id="dock">
+    <div class="dockbar">
+      <div class="dtab on" data-dp="dp1">Problems <span class="n">3</span></div>
+      <div class="dtab" data-dp="dp2">Bill of materials <span class="n">14</span></div>
+      <div class="dtab" data-dp="dp3">Collaboration <span class="n">3</span></div>
+      <div class="dtab" data-dp="dp4">History</div>
+      <span class="sp"></span>
+      <span class="dockbtn" id="dockmin" title="Collapse">▁</span>
+    </div>
+    <div class="dockbody">
+      <div class="dpane on" id="dp1">
+        <div class="prow"><span class="sev" style="color:var(--solar)">●</span><span class="msg">U1 VCC has no local decoupling capacitor</span><span class="loc">U1.VCC</span><span class="rule">DRC · decoupling</span></div>
+        <div class="prow"><span class="sev" style="color:var(--copper)">▲</span><span class="msg">Feedback divider not connected to FB pin</span><span class="loc">U1.FB</span><span class="rule">DRC · feedback</span></div>
+        <div class="prow"><span class="sev" style="color:var(--copper)">▲</span><span class="msg">Output capacitor value below recommended 22µF</span><span class="loc">C2</span><span class="rule">AI review</span></div>
+        <div class="prow"><span class="sev" style="color:var(--patina)">✓</span><span class="msg">All nets have a driver</span><span class="loc">—</span><span class="rule">DRC · nets</span></div>
+      </div>
+      <div class="dpane" id="dp2">
+        <table class="t">
+          <thead><tr><th>Ref</th><th>Manufacturer part</th><th>Description</th><th style="text-align:right">Qty</th><th>Lifecycle</th></tr></thead>
+          <tbody>
+            <tr><td class="ink">U1</td><td class="mono">TPS563201DDCR</td><td>Buck converter, 4.5–17V, 3A</td><td class="num">1</td><td style="color:var(--patina)">Active</td></tr>
+            <tr><td class="ink">C1</td><td class="mono">GRM155R71C104KA88D</td><td>Cap, 0.1µF 0402 X7R 16V</td><td class="num">2</td><td style="color:var(--patina)">Active</td></tr>
+            <tr><td class="ink">R1</td><td class="mono">RC0402FR-07100KL</td><td>Res, 100kΩ 0402 0.1%</td><td class="num">1</td><td style="color:var(--patina)">Active</td></tr>
+            <tr><td class="ink">R2</td><td class="mono">RC0402FR-0733KL</td><td>Res, 33kΩ 0402 0.1%</td><td class="num">1</td><td style="color:var(--copper)">NRND</td></tr>
+            <tr><td class="ink">L1</td><td class="mono">744325220</td><td>Inductor, 2.2µH shielded</td><td class="num">1</td><td style="color:var(--patina)">Active</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="dpane" id="dp3">
+        <div class="crow"><span class="cav" style="background:var(--sky);color:#fff">P</span><span class="who">Priya</span><span class="act">editing U1</span><span class="t">now</span></div>
+        <div class="crow"><span class="cav" style="background:var(--copper)">M</span><span class="who">Marco</span><span class="act">viewing</span><span class="t">now</span></div>
+        <div class="crow"><span class="cav" style="background:var(--patina)">AI</span><span class="who">Claude</span><span class="act">added C1 · attached GRM155R71C104KA88D</span><span class="t">2m</span></div>
+        <div class="crow"><span class="cav" style="background:var(--sky);color:#fff">P</span><span class="who">Priya</span><span class="act">renamed “Buck Converter” → “Buck Converter — Rev C”</span><span class="t">14m</span></div>
+      </div>
+      <div class="dpane" id="dp4">
+        <div class="crow"><span class="who">Rev C</span><span class="act">Feedback divider routed · Marco</span><span class="t">2m</span></div>
+        <div class="crow"><span class="who">Rev B</span><span class="act">Decoupling added · Claude</span><span class="t">18m</span></div>
+        <div class="crow"><span class="who">Rev A</span><span class="act">Initial import from FAST · Priya</span><span class="t">1h</span></div>
       </div>
     </div>
   </div>
@@ -221,6 +345,39 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 document.getElementById('tt').addEventListener('click',function(){
   var r=document.documentElement;
   r.setAttribute('data-theme', r.getAttribute('data-theme')==='light'?'dark':'light');
+});
+// tree expand / collapse
+document.querySelectorAll('.node.tg').forEach(function(n){
+  n.addEventListener('click',function(e){
+    e.stopPropagation();
+    n.classList.toggle('collapsed');
+    var k=document.getElementById(n.dataset.kids);
+    if(k) k.classList.toggle('hide');
+  });
+});
+// generic tab switcher: .itab/.ipane and .dtab/.dpane
+function tabs(tabSel, paneAttr){
+  document.querySelectorAll(tabSel).forEach(function(t){
+    t.addEventListener('click',function(){
+      var group=t.parentElement.querySelectorAll(tabSel);
+      group.forEach(function(x){x.classList.remove('on')});
+      t.classList.add('on');
+      var id=t.dataset[paneAttr];
+      var pane=document.getElementById(id);
+      if(pane){
+        pane.parentElement.querySelectorAll('.'+pane.className.split(' ')[0]).forEach(function(p){p.classList.remove('on')});
+        pane.classList.add('on');
+      }
+    });
+  });
+}
+tabs('.itab','ip');
+tabs('.dtab','dp');
+// dock collapse
+document.getElementById('dockmin').addEventListener('click',function(){
+  var d=document.getElementById('dock');
+  d.classList.toggle('min');
+  this.textContent = d.classList.contains('min') ? '▔' : '▁';
 });
 </script>
 </body></html>
