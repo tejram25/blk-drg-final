@@ -35,8 +35,11 @@ public class PartSearchController {
             @RequestParam("q") String query,
             @RequestParam(value = "manufacturer", required = false) String manufacturer,
             @RequestParam(value = "inStock", required = false, defaultValue = "false") boolean inStockOnly,
-            @RequestParam(value = "active", required = false, defaultValue = "false") boolean activeOnly) {
-        return parts.search(query, manufacturer, inStockOnly, activeOnly);
+            @RequestParam(value = "active", required = false, defaultValue = "false") boolean activeOnly,
+            @RequestParam(value = "start", required = false, defaultValue = "0") int start,
+            @RequestParam(value = "limit", required = false, defaultValue = "25") int limit) {
+        return parts.search(query, manufacturer, inStockOnly, activeOnly,
+                Math.max(start, 0), Math.max(1, Math.min(limit, 100)));
     }
 
     /** Connectivity check — reports whether the catalogue is reachable. */

@@ -76,8 +76,14 @@ export interface CatalogPart {
 
 export interface PartSearchResponse {
   query: string;
-  /** Rows the upstream returned, before de-duplication. */
+  /** First upstream row in this page. */
+  start: number;
+  /** Rows the upstream returned in this page, before de-duplication. */
   returned: number;
+  /** First row of the next page. */
+  nextStart: number;
+  /** More rows exist upstream — drives "load more". */
+  hasMore: boolean;
   total: number;
   exactMatchFound: boolean;
   matchReason: string;
@@ -97,13 +103,67 @@ const API = apiBaseUrl();
 export class PartSearchService {
   private readonly http = inject(HttpClient);
 
-  search(query: string, filters: PartSearchFilters = {}): Observable<PartSearchResponse> {
-    let params = new HttpParams().set('q', query);
+  search(query: string, filters: PartSearchFilters = {},
+         start = 0, limit = 25): Observable<PartSearchResponse> {
+    let params = new HttpParams()
+      .set('q', query)
+      .set('start', String(start))
+      .set('limit', String(limit));
     if (filters.manufacturer) params = params.set('manufacturer', filters.manufacturer);
     if (filters.inStock) params = params.set('inStock', 'true');
     if (filters.active) params = params.set('active', 'true');
     return this.http.get<PartSearchResponse>(`${API}/parts/search`, { params });
   }
+}
+
+/**
+ * Fold a newly-loaded page into the parts already on screen.
+ *
+ * Paging is over upstream rows, so a later page usually carries *more
+ * locations for parts already shown* rather than new parts. Appending pages
+ * blindly would list the same part twice, so parts are merged by id and their
+ * aggregates recomputed from the combined locations — mirroring what
+ * PartSearchNormalizer does server-side for a single page.
+ */
+export function mergeParts(existing: CatalogPart[], incoming: CatalogPart[]): CatalogPart[] {
+  const byId = new Map(existing.map((p) => [p.id, p]));
+  for (const part of incoming) {
+    const seen = byId.get(part.id);
+    if (!seen) {
+      byId.set(part.id, part);
+      continue;
+    }
+    const known = new Set(seen.locations.map((l) => l.id));
+    const locations = [...seen.locations, ...part.locations.filter((l) => !known.has(l.id))];
+    byId.set(part.id, { ...seen, locations, stock: rollUp(locations) });
+  }
+  return [...byId.values()];
+}
+
+/** Recompute the stock roll-up from a part's locations. */
+function rollUp(locations: PartLocation[]): PartStock {
+  let totalOnHand = 0;
+  let inStockLocations = 0;
+  let nextQty = 0;
+  let nextDelivery = '';
+  for (const l of locations) {
+    totalOnHand += l.onHand;
+    if (l.onHand > 0) inStockLocations++;
+    if (l.nextDelivery && (!nextDelivery || isEarlier(l.nextDelivery, nextDelivery))) {
+      nextDelivery = l.nextDelivery;
+      nextQty = l.nextQty;
+    }
+  }
+  return { totalOnHand, nextQty, nextDelivery, locationCount: locations.length, inStockLocations };
+}
+
+/** Compare "22-APR-2026" dates by value; lexical order would be wrong. */
+function isEarlier(a: string, b: string): boolean {
+  const t = (v: string) => {
+    const ms = Date.parse(v.replace(/-/g, ' '));
+    return Number.isNaN(ms) ? Number.POSITIVE_INFINITY : ms;
+  };
+  return t(a) < t(b);
 }
 
 /** Lifecycle tone for a status string, for pills and icons. */

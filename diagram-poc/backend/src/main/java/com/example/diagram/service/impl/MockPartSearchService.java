@@ -64,29 +64,36 @@ public class MockPartSearchService implements PartSearchService {
     }
 
     @Override
-    public PartSearchResponse search(String query, String manufacturer, boolean inStockOnly, boolean activeOnly) {
+    public PartSearchResponse search(String query, String manufacturer, boolean inStockOnly,
+                                     boolean activeOnly, int start, int limit) {
         if (query == null || query.isBlank()) {
             throw new IllegalArgumentException("Search text is required.");
         }
         String q = query.trim().toLowerCase();
 
-        ArrayNode matched = objectMapper.createArrayNode();
+        ArrayNode all = objectMapper.createArrayNode();
         for (JsonNode part : catalogue) {
-            if (haystack(part).contains(q)) matched.add(part);
+            if (haystack(part).contains(q)) all.add(part);
         }
+        // Page over rows, exactly as the upstream does.
+        int from = Math.min(Math.max(start, 0), all.size());
+        int to = Math.min(from + Math.max(limit, 1), all.size());
+        ArrayNode matched = objectMapper.createArrayNode();
+        for (int i = from; i < to; i++) matched.add(all.get(i));
 
         // Re-wrap as a partserviceresult so the same normaliser handles mock and
         // live responses — there is no second code path to keep in step.
         ObjectNode result = objectMapper.createObjectNode();
         result.set("parts", matched);
         result.put("numItems", matched.size());
-        result.put("totalItems", matched.size());
+        result.put("totalItems", all.size());
+        result.put("nextStart", to);
         result.put("exactMatchFound", exactMatch(matched, q) ? "Y" : "N");
         result.putObject("matchReason").put("description", "Srchtxt Match");
         ObjectNode root = objectMapper.createObjectNode();
         root.set("partserviceresult", result);
 
-        PartSearchResponse response = normalizer.normalize(root, query);
+        PartSearchResponse response = normalizer.normalize(root, query, from);
         return filter(response, manufacturer, inStockOnly, activeOnly);
     }
 
@@ -100,8 +107,8 @@ public class MockPartSearchService implements PartSearchService {
                 .filter(p -> !activeOnly || p.locations().stream()
                         .anyMatch(l -> "Active".equalsIgnoreCase(l.status())))
                 .toList();
-        return new PartSearchResponse(r.query(), r.returned(), r.total(),
-                r.exactMatchFound(), r.matchReason(), kept);
+        return new PartSearchResponse(r.query(), r.start(), r.returned(), r.nextStart(),
+                r.hasMore(), r.total(), r.exactMatchFound(), r.matchReason(), kept);
     }
 
     private boolean exactMatch(ArrayNode rows, String q) {

@@ -15,12 +15,19 @@ public interface PartSearchService {
      * that belongs on the server so every client — the Parts tab and the
      * block-diagram panel — sees the same view. See {@link PartSearchNormalizer}.
      *
+     * <p>Paging is over upstream rows, not parts: a page can add locations to
+     * parts already seen rather than new parts, so callers page until
+     * {@code hasMore} is false rather than until a page looks empty.
+     *
      * @param query        required search text
      * @param manufacturer optional manufacturer filter (contains, case-insensitive)
      * @param inStockOnly  keep only parts with stock at some location
      * @param activeOnly   keep only parts Active at some location
+     * @param start        first upstream row to return
+     * @param limit        maximum upstream rows to return
      */
-    PartSearchResponse search(String query, String manufacturer, boolean inStockOnly, boolean activeOnly);
+    PartSearchResponse search(String query, String manufacturer, boolean inStockOnly,
+                              boolean activeOnly, int start, int limit);
 
     /**
      * Diagnostic for {@code GET /api/parts/health}: reports whether the service

@@ -39,6 +39,11 @@ import java.util.Map;
 public class PartSearchNormalizer {
 
     public PartSearchResponse normalize(JsonNode root, String query) {
+        return normalize(root, query, 0);
+    }
+
+    /** As {@link #normalize(JsonNode, String)}, for a page starting at {@code start}. */
+    public PartSearchResponse normalize(JsonNode root, String query, int start) {
         JsonNode result = root.path("partserviceresult");
         JsonNode rows = result.path("parts");
 
@@ -54,10 +59,17 @@ public class PartSearchNormalizer {
         List<CatalogPart> parts = new ArrayList<>();
         byItem.forEach((id, group) -> parts.add(toPart(id, group)));
 
+        int returned = rows.isArray() ? rows.size() : 0;
+        long total = result.path("totalItems").asLong(0);
+        // The upstream advertises the next offset; fall back to counting rows
+        // for responses (like the mock's) that do not.
+        int nextStart = result.hasNonNull("nextStart")
+                ? result.path("nextStart").asInt(start + returned)
+                : start + returned;
+        boolean hasMore = returned > 0 && nextStart < total;
+
         return new PartSearchResponse(
-                query,
-                rows.isArray() ? rows.size() : 0,
-                result.path("totalItems").asLong(0),
+                query, start, returned, nextStart, hasMore, total,
                 "Y".equalsIgnoreCase(result.path("exactMatchFound").asText("")),
                 result.path("matchReason").path("description").asText(""),
                 parts);

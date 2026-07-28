@@ -188,7 +188,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     /** Search the catalogue for one term and turn the BEST hit into a grounded item. */
     private RecommendationItem lookupCatalogue(String term) {
         try {
-            PartSearchResponse res = parts.search(term, null, false, false);
+            PartSearchResponse res = parts.search(term, null, false, false, 0, 25);
             CatalogPart best = null;
             int bestScore = Integer.MIN_VALUE;
             for (CatalogPart p : res.parts()) {

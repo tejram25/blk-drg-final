@@ -4,12 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
-  CatalogPart, PartSearchResponse, PartSearchService, formatPrice, statusTone,
+  CatalogPart, PartSearchResponse, PartSearchService, formatPrice, mergeParts, statusTone,
 } from '../../../../core/services/part-search.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { PartLinkService } from '../../services/part-link.service';
 import { ProjectWorkspaceService } from '../../services/project-workspace.service';
 import { WsPageHeaderComponent, WsPanelComponent, WsPillComponent, WsStatComponent } from '../../ui';
+
+/** Upstream rows per request — the catalogue's own page size. */
+const PAGE_SIZE = 25;
 
 /**
  * Part search.
@@ -45,12 +48,17 @@ export class PartsPage {
   readonly activeOnly = signal(false);
 
   readonly loading = signal(false);
+  readonly loadingMore = signal(false);
   readonly searched = signal(false);
   readonly result = signal<PartSearchResponse | null>(null);
   readonly selected = signal<CatalogPart | null>(null);
   readonly qty = signal(1);
 
-  readonly parts = computed(() => this.result()?.parts ?? []);
+  /** Parts accumulated across pages — see mergeParts for why this is not a concat. */
+  readonly parts = signal<CatalogPart[]>([]);
+  /** Upstream rows loaded so far, which is what the catalogue actually pages. */
+  readonly rowsLoaded = signal(0);
+  readonly hasMore = computed(() => this.result()?.hasMore ?? false);
 
   /** Manufacturers present in the current result, for the narrowing filter. */
   readonly manufacturers = computed(() =>
@@ -62,18 +70,53 @@ export class PartsPage {
   readonly locationCount = computed(() =>
     this.parts().reduce((sum, p) => sum + p.stock.locationCount, 0));
 
+  private filters() {
+    return {
+      manufacturer: this.manufacturer() || undefined,
+      inStock: this.inStockOnly(),
+      active: this.activeOnly(),
+    };
+  }
+
   search(): void {
     const q = this.query().trim();
     if (!q) return;
     this.loading.set(true);
     this.selected.set(null);
-    this.api.search(q, {
-      manufacturer: this.manufacturer() || undefined,
-      inStock: this.inStockOnly(),
-      active: this.activeOnly(),
-    }).subscribe({
-      next: (r) => { this.result.set(r); this.loading.set(false); this.searched.set(true); },
-      error: () => { this.loading.set(false); this.searched.set(true); this.result.set(null); },
+    this.parts.set([]);
+    this.rowsLoaded.set(0);
+    this.api.search(q, this.filters(), 0, PAGE_SIZE).subscribe({
+      next: (r) => {
+        this.result.set(r);
+        this.parts.set(r.parts);
+        this.rowsLoaded.set(r.returned);
+        this.loading.set(false);
+        this.searched.set(true);
+      },
+      error: () => {
+        this.loading.set(false); this.searched.set(true);
+        this.result.set(null); this.parts.set([]);
+      },
+    });
+  }
+
+  /**
+   * Load the next page of upstream rows and fold it in. A page often adds
+   * locations to parts already listed rather than new parts, which is why the
+   * button reports rows loaded rather than promising more results.
+   */
+  loadMore(): void {
+    const r = this.result();
+    if (!r || !r.hasMore || this.loadingMore()) return;
+    this.loadingMore.set(true);
+    this.api.search(r.query, this.filters(), r.nextStart, PAGE_SIZE).subscribe({
+      next: (next) => {
+        this.parts.set(mergeParts(this.parts(), next.parts));
+        this.rowsLoaded.update((n) => n + next.returned);
+        this.result.set(next);
+        this.loadingMore.set(false);
+      },
+      error: () => this.loadingMore.set(false),
     });
   }
 

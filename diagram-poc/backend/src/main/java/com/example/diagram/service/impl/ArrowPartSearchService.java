@@ -47,7 +47,8 @@ public class ArrowPartSearchService implements PartSearchService {
 
     @Override
     public PartSearchResponse search(String query, String manufacturer,
-                                     boolean inStockOnly, boolean activeOnly) {
+                                     boolean inStockOnly, boolean activeOnly,
+                                     int start, int limit) {
         if (query == null || query.isBlank()) {
             throw new IllegalArgumentException("Search text is required.");
         }
@@ -60,15 +61,15 @@ public class ArrowPartSearchService implements PartSearchService {
                 .queryParam("render", "json")
                 .queryParam("appid", props.getAppId() == null || props.getAppId().isBlank()
                         ? "gen" : props.getAppId())
-                .queryParam("start", 0)
-                .queryParam("limit", props.getSearchLimit());
+                .queryParam("start", Math.max(start, 0))
+                .queryParam("limit", limit > 0 ? limit : props.getSearchLimit());
         // The upstream filters by supplier, not manufacturer; manufacturer is
         // applied below against the normalised result.
         String json = client.getJson(url.encode().build().toUriString());
 
         PartSearchResponse response;
         try {
-            response = normalizer.normalize(objectMapper.readTree(json), query);
+            response = normalizer.normalize(objectMapper.readTree(json), query, Math.max(start, 0));
         } catch (Exception ex) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
                     "Could not read the parts catalogue response.", ex);
@@ -85,8 +86,8 @@ public class ArrowPartSearchService implements PartSearchService {
                 .filter(p -> !activeOnly || p.locations().stream()
                         .anyMatch(l -> "Active".equalsIgnoreCase(l.status())))
                 .toList();
-        return new PartSearchResponse(r.query(), r.returned(), r.total(),
-                r.exactMatchFound(), r.matchReason(), kept);
+        return new PartSearchResponse(r.query(), r.start(), r.returned(), r.nextStart(),
+                r.hasMore(), r.total(), r.exactMatchFound(), r.matchReason(), kept);
     }
 
     @Override

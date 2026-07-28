@@ -1,7 +1,7 @@
 <ws-page-header title="Part search"
   subtitle="Search the catalogue, then link a part to this project or to a block on a diagram.">
   @if (result(); as r) {
-    <span class="detail">{{ r.returned }} catalogue rows → {{ parts().length }} parts</span>
+    <span class="detail">{{ rowsLoaded() }} of {{ r.total }} catalogue rows → {{ parts().length }} parts</span>
   }
 </ws-page-header>
 
@@ -41,7 +41,7 @@
   <!-- ── result summary ── -->
   <div class="grid stats">
     <ws-stat label="Parts found" [value]="parts().length" icon="memory" tone="accent"
-      [hint]="r.returned + ' catalogue rows'" />
+      [hint]="rowsLoaded() + ' of ' + r.total + ' catalogue rows'" />
     <ws-stat label="In stock" [value]="inStockCount()" icon="inventory_2"
       [tone]="inStockCount() ? 'ok' : 'warn'" [hint]="locationCount() + ' stocking locations'" />
     <ws-stat label="Active lifecycle" [value]="activeCount()" icon="verified"
@@ -163,5 +163,19 @@
         }
       }
     </ws-panel>
+  }
+
+  <!-- Paging is over upstream rows, so this reports rows rather than promising
+       more parts — a page often just adds locations to parts already listed. -->
+  @if (hasMore()) {
+    <div class="more">
+      <button type="button" class="btn" [disabled]="loadingMore()" (click)="loadMore()">
+        <mat-icon>expand_more</mat-icon>
+        {{ loadingMore() ? 'Loading…' : 'Load more' }}
+      </button>
+      <span class="detail">Showing {{ rowsLoaded() }} of {{ result()?.total }} catalogue rows</span>
+    </div>
+  } @else if (parts().length && result()?.total) {
+    <p class="detail more-end">All {{ result()?.total }} catalogue rows loaded.</p>
   }
 }

@@ -59,3 +59,7 @@
   .part { flex-wrap: wrap; }
   .part-actions { width: 100%; flex-direction: row; flex-wrap: wrap; }
 }
+
+/* Load-more footer. */
+.more { display: flex; align-items: center; gap: 12px; padding: 4px 0 2px; }
+.more-end { padding-top: 6px; }
