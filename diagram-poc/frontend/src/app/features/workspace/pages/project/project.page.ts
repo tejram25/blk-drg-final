@@ -2,7 +2,9 @@ import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { CatalogPart, formatPrice, statusTone } from '../../../../core/services/part-search.service';
 import { ProjectWorkspaceService } from '../../services/project-workspace.service';
+import { LinkedPart, PartLinkService } from '../../services/part-link.service';
 import { Artifact } from '../../models/workspace.models';
 import { WsPageHeaderComponent, WsPanelComponent, WsPillComponent, WsStatComponent } from '../../ui';
 
@@ -22,9 +24,13 @@ import { WsPageHeaderComponent, WsPanelComponent, WsPillComponent, WsStatCompone
 })
 export class ProjectPage {
   readonly pw = inject(ProjectWorkspaceService);
+  private readonly links = inject(PartLinkService);
   private readonly router = inject(Router);
 
   readonly p = computed(() => this.pw.openProject());
+  /** Parts linked to this project — the BOM the viewer shows. */
+  readonly linkedParts = computed(() =>
+    this.links.all().filter((l) => l.projectId === this.pw.openProject().id));
   /** The open artefact, unless it is a diagram — those route to the canvas editor. */
   readonly a = computed(() => {
     const art = this.pw.activeArtifact();
@@ -70,4 +76,15 @@ export class ProjectPage {
   money(n: number): string {
     return n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(1)}M` : `$${Math.round(n / 1000)}k`;
   }
+
+  // ---- linked-parts (BOM) helpers ----------------------------------------
+  tone(status: string) { return statusTone(status); }
+  price(part: CatalogPart): string { return formatPrice(part.pricing.unitPrice, part.pricing.currency); }
+  /** Extended price for a BOM line: unit × quantity, in the part's currency. */
+  ext(l: LinkedPart): string {
+    const unit = Number(l.part.pricing.unitPrice);
+    if (!unit || Number.isNaN(unit)) return '—';
+    return formatPrice(String(unit * l.qty), l.part.pricing.currency);
+  }
+  unlinkPart(partId: string): void { this.links.unlink(partId, this.pw.openProject().id); }
 }

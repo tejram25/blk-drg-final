@@ -1,12 +1,14 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   CatalogPart, PartSearchResponse, PartSearchService, formatPrice, mergeParts, statusTone,
 } from '../../../../core/services/part-search.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { Artifact } from '../../models/workspace.models';
 import { PartLinkService } from '../../services/part-link.service';
 import { ProjectWorkspaceService } from '../../services/project-workspace.service';
 import { WsPageHeaderComponent, WsPanelComponent, WsPillComponent, WsStatComponent } from '../../ui';
@@ -39,6 +41,7 @@ export class PartsPage {
   private readonly api = inject(PartSearchService);
   private readonly notify = inject(NotificationService);
   private readonly links = inject(PartLinkService);
+  private readonly router = inject(Router);
   readonly pw = inject(ProjectWorkspaceService);
 
   // Signals, not plain fields: the computed views below only track signals.
@@ -125,19 +128,61 @@ export class PartsPage {
   }
 
   // ---- linking -----------------------------------------------------------
-  /** Attach the part to the open project's BOM. */
+  /** Attach the part to the open project's BOM — it shows up in the project. */
   linkToProject(p: CatalogPart): void {
-    this.links.linkToProject(p, this.qty());
+    this.links.linkToProject(p, this.qty(), this.pw.openProject().id);
+    this.pw.ensureBom();   // give the linked part a home in the project tree
     this.notify.success(`${p.partNumber} linked to ${this.pw.openProject().name}.`);
   }
 
+  // ---- diagram picker ----------------------------------------------------
+  /** Diagrams in the open project — the choices for "Use in diagram". */
+  readonly diagrams = computed(() =>
+    this.pw.openProject().artifacts.filter((a) => a.kind === 'diagram'));
+  /** The part awaiting a diagram choice; opens the picker when set. */
+  readonly pendingPart = signal<CatalogPart | null>(null);
+
   /**
-   * Stage the part for the diagram: the editor picks it up and attaches it to
-   * the selected block (or drops it on the canvas when nothing is selected).
+   * "Use in diagram". With one diagram, go straight there; with several, ask
+   * which; with none, offer to start one. Either way the part is staged so the
+   * editor can attach it to a block once you pick one.
    */
   linkToDiagram(p: CatalogPart): void {
+    const diagrams = this.diagrams();
+    if (diagrams.length === 0) {
+      const created = this.pw.newDiagram();
+      this.stageAndOpen(p, created);
+      return;
+    }
+    if (diagrams.length === 1) {
+      this.stageAndOpen(p, diagrams[0]);
+      return;
+    }
+    this.pendingPart.set(p);   // several: show the picker
+  }
+
+  /** A diagram was chosen from the picker. */
+  chooseDiagram(artifact: Artifact): void {
+    const p = this.pendingPart();
+    this.pendingPart.set(null);
+    if (p) this.stageAndOpen(p, artifact);
+  }
+
+  cancelPicker(): void { this.pendingPart.set(null); }
+
+  /** Stage the part for the editor, then open the chosen diagram for block selection. */
+  private stageAndOpen(p: CatalogPart, artifact: Artifact): void {
     this.links.stageForDiagram(p, this.qty());
-    this.notify.info(`${p.partNumber} staged — open a diagram and pick a block to attach it.`);
+    // A part used on a project's diagram is part of that project — link it and
+    // give it a BOM home so it appears in the workspace either way.
+    this.links.linkToProject(p, this.qty(), this.pw.openProject().id);
+    this.pw.ensureBom();
+    this.pw.open(artifact);
+    this.notify.info(`${p.partNumber} staged — pick a block in “${artifact.name}” to attach it.`);
+    this.pw.resolveDiagram(artifact).subscribe({
+      next: (id) => this.router.navigate(['/workspace/block-diagram', id]),
+      error: () => this.router.navigate(['/workspace/block-diagram', 'new']),
+    });
   }
 
   // ---- display helpers ---------------------------------------------------

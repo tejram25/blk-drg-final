@@ -207,6 +207,34 @@ export class ProjectWorkspaceService {
     return artifact;
   }
 
+  /**
+   * Ensure the open project has a Bill of materials artefact, so parts linked
+   * from the Parts tab have a home that shows up in the project tree. Returns
+   * the existing one if there already is one.
+   */
+  ensureBom(): Artifact {
+    const existing = this.openProject().artifacts.find((a) => a.kind === 'bom');
+    if (existing) {
+      this.touchArtifact(existing.id);
+      return existing;
+    }
+    const bom: Artifact = {
+      id: `bom-${this.openProject().id}`, name: 'Bill of materials', kind: 'bom',
+      folder: 'Bill of materials', updated: 'Just now', author: 'Generated', origin: 'workspace',
+    };
+    this.addArtifact(bom);
+    return bom;
+  }
+
+  /** Bump an artefact's updated time (e.g. when its linked parts change). */
+  private touchArtifact(artifactId: string): void {
+    const openId = this.openProject().id;
+    this.all.update((projects) => projects.map((p) => p.id !== openId ? p : {
+      ...p,
+      artifacts: p.artifacts.map((a) => a.id === artifactId ? { ...a, updated: 'Just now' } : a),
+    }));
+  }
+
   /** Append an artefact to the open project and keep its rollup counts honest. */
   private addArtifact(artifact: Artifact): void {
     const openId = this.openProject().id;

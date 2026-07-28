@@ -316,10 +316,10 @@
         <div class="tabs" role="tablist">
           @for (t of pw.tabs(); track t.artifactId) {
             <div class="tab" [class.on]="pw.activeTabId() === t.artifactId"
-              (click)="pw.activate(t.artifactId)" role="tab">
+              (click)="activateTab(t.artifactId)" role="tab">
               <mat-icon class="ti">{{ artifactIcon(t.kind) }}</mat-icon>
               <span class="tn">{{ t.name }}</span>
-              <button type="button" class="tx" (click)="pw.close(t.artifactId); $event.stopPropagation()"
+              <button type="button" class="tx" (click)="closeTab(t.artifactId); $event.stopPropagation()"
                 [attr.aria-label]="'Close ' + t.name"><mat-icon>close</mat-icon></button>
             </div>
           }

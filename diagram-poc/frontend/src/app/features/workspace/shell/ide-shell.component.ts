@@ -54,13 +54,14 @@ export class IdeShellComponent {
   private readonly repo = inject(DocumentRepository);
   readonly partLinks = inject(PartLinkService);
 
-  /** Parts linked to the open project, shown in the Parts tool window. */
-  readonly linkedParts = computed(() => this.partLinks.all());
+  /** Parts linked to the OPEN project, shown in the Parts tool window. */
+  readonly linkedParts = computed(() =>
+    this.partLinks.all().filter((l) => l.projectId === this.pw.openProject().id));
 
   /** Open the full part-search page; the tool window lists what is already linked. */
   goPartSearch(): void { this.go('/workspace/parts'); }
 
-  unlinkPart(id: string): void { this.partLinks.unlink(id); }
+  unlinkPart(id: string): void { this.partLinks.unlink(id, this.pw.openProject().id); }
 
   panel = signal<SidePanel>('explorer');
   panelOpen = signal(true);
@@ -201,6 +202,35 @@ export class IdeShellComponent {
 
   openArtifact(a: Artifact): void {
     this.pw.open(a);
+    this.routeToArtifact(a);
+  }
+
+  /**
+   * Switch to an already-open tab. Selecting the tab is not enough: a diagram
+   * lives on the /block-diagram route while everything else renders on
+   * /project, so switching tabs has to move the router too — otherwise the
+   * outlet stays on whatever was last routed (the reported bug: every tab kept
+   * showing the diagram).
+   */
+  activateTab(artifactId: string): void {
+    this.pw.activate(artifactId);
+    const art = this.pw.openProject().artifacts.find((a) => a.id === artifactId);
+    if (art) this.routeToArtifact(art);
+  }
+
+  /** Close a tab, then follow the router to whatever tab is now active. */
+  closeTab(artifactId: string): void {
+    this.pw.close(artifactId);
+    const next = this.pw.activeTabId();
+    const art = next
+      ? this.pw.openProject().artifacts.find((a) => a.id === next)
+      : undefined;
+    if (art) this.routeToArtifact(art);
+    else this.router.navigateByUrl('/workspace/project');
+  }
+
+  /** Route to where an artefact renders — the canvas for diagrams, /project otherwise. */
+  private routeToArtifact(a: Artifact): void {
     if (a.kind === 'diagram') {
       // Resolve to the saved diagram (creating it from a sample if new).
       this.pw.resolveDiagram(a).subscribe({

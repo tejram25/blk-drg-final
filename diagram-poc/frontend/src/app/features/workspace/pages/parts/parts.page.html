@@ -179,3 +179,27 @@
     <p class="detail more-end">All {{ result()?.total }} catalogue rows loaded.</p>
   }
 }
+
+<!-- ── which diagram? (only when the project has more than one) ── -->
+@if (pendingPart(); as p) {
+  <div class="picker-backdrop" (click)="cancelPicker()">
+    <div class="picker" (click)="$event.stopPropagation()" role="dialog" aria-label="Choose a diagram">
+      <div class="picker-head">
+        <span>Attach <b>{{ p.partNumber }}</b> to which diagram?</span>
+        <button type="button" class="picker-x" (click)="cancelPicker()" aria-label="Cancel">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="picker-list">
+        @for (d of diagrams(); track d.id) {
+          <button type="button" class="picker-item" (click)="chooseDiagram(d)">
+            <mat-icon>account_tree</mat-icon>
+            <span class="picker-name">{{ d.name }}</span>
+            <span class="detail">{{ d.author }} · {{ d.updated }}</span>
+          </button>
+        }
+      </div>
+      <p class="detail picker-note">The diagram opens so you can pick a block to attach the part to.</p>
+    </div>
+  </div>
+}
