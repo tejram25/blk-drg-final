@@ -1,7 +1,8 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { map, shareReplay, switchMap } from 'rxjs/operators';
 import { DiagramService } from '../../../core/services/diagram.service';
+import { LinkedPart, PartLinkService } from './part-link.service';
 import { Artifact, ArtifactKind, OpenTab, ProjectWorkspace, SyncState } from '../models/workspace.models';
 
 /** A fresh GoJS model, used only when no sample exists to clone from. */
@@ -22,6 +23,16 @@ const EMPTY_MODEL = '{ "class": "GraphLinksModel", "nodeDataArray": [], "linkDat
 @Injectable({ providedIn: 'root' })
 export class ProjectWorkspaceService {
   private readonly diagramApi = inject(DiagramService);
+  private readonly partLinks = inject(PartLinkService);
+
+  constructor() {
+    // Load the open project's persisted part links up front, then keep its
+    // derived artefacts — the Bill of materials and a "Linked parts" dataset —
+    // in step with those links. Doing it reactively means every link/unlink,
+    // from anywhere, updates the project tree with no extra call sites.
+    this.partLinks.loadFor(this.openProjectId());
+    effect(() => this.syncLinkedArtifacts(), { allowSignalWrites: true });
+  }
 
   // ---- Salesforce sync ---------------------------------------------------
   readonly sync = signal<SyncState>({
@@ -50,6 +61,7 @@ export class ProjectWorkspaceService {
   openProjectById(id: string): void {
     if (!this.all().some((p) => p.id === id)) return;
     this.openProjectId.set(id);
+    this.partLinks.loadFor(id);   // bring in its persisted part links
     this.tabs.set([]);
     this.activeTabId.set(null);
   }
@@ -207,32 +219,45 @@ export class ProjectWorkspaceService {
     return artifact;
   }
 
+  // ---- derived artefacts (BOM + Linked parts dataset) --------------------
+  /** Last links signature synced per project, so the effect converges (no loop). */
+  private readonly syncedSig = new Map<string, string>();
+
   /**
-   * Ensure the open project has a Bill of materials artefact, so parts linked
-   * from the Parts tab have a home that shows up in the project tree. Returns
-   * the existing one if there already is one.
+   * Reconcile the open project's derived artefacts with its linked parts. Runs
+   * from an effect on every link/unlink: it gives the parts a home in the tree
+   * — a Bill of materials, and a "Linked parts" dataset — so linking surfaces
+   * both a BOM line and a dataset, per the workspace requirement.
    */
-  ensureBom(): Artifact {
-    const existing = this.openProject().artifacts.find((a) => a.kind === 'bom');
-    if (existing) {
-      this.touchArtifact(existing.id);
-      return existing;
-    }
-    const bom: Artifact = {
-      id: `bom-${this.openProject().id}`, name: 'Bill of materials', kind: 'bom',
-      folder: 'Bill of materials', updated: 'Just now', author: 'Generated', origin: 'workspace',
-    };
-    this.addArtifact(bom);
-    return bom;
+  private syncLinkedArtifacts(): void {
+    const projectId = this.openProjectId();
+    const links = this.partLinks.linksFor(projectId);   // tracks the links signal
+    const sig = JSON.stringify(links.map((l) => [l.part.id, l.qty]));
+    if (this.syncedSig.get(projectId) === sig) return;  // unchanged → nothing to write
+    this.syncedSig.set(projectId, sig);
+    this.all.update((projects) =>
+      projects.map((p) => p.id === projectId ? this.withDerivedArtifacts(p, links) : p));
   }
 
-  /** Bump an artefact's updated time (e.g. when its linked parts change). */
-  private touchArtifact(artifactId: string): void {
-    const openId = this.openProject().id;
-    this.all.update((projects) => projects.map((p) => p.id !== openId ? p : {
-      ...p,
-      artifacts: p.artifacts.map((a) => a.id === artifactId ? { ...a, updated: 'Just now' } : a),
-    }));
+  /** A project with its BOM and Linked-parts dataset brought up to date. */
+  private withDerivedArtifacts(p: ProjectWorkspace, links: LinkedPart[]): ProjectWorkspace {
+    const dsId = `ds-parts-${p.id}`;
+    // Drop the managed dataset; re-add it below if there are links.
+    let artifacts = p.artifacts.filter((a) => a.id !== dsId);
+    if (links.length && !artifacts.some((a) => a.kind === 'bom')) {
+      artifacts = [...artifacts, {
+        id: `bom-${p.id}`, name: 'Bill of materials', kind: 'bom',
+        folder: 'Bill of materials', updated: 'Just now', author: 'Generated', origin: 'workspace',
+      }];
+    }
+    if (links.length) {
+      artifacts = [...artifacts, {
+        id: dsId, name: 'Linked parts.csv', kind: 'dataset', folder: 'Datasets',
+        updated: 'Just now', author: 'Generated', origin: 'workspace',
+        preview: linkedPartsPreview(links),
+      }];
+    }
+    return { ...p, artifacts };
   }
 
   /** Append an artefact to the open project and keep its rollup counts honest. */
@@ -254,6 +279,22 @@ export class ProjectWorkspaceService {
       artifacts: p.artifacts.map((x) => (x.id === artifactId ? { ...x, diagramId } : x)),
     })));
   }
+}
+
+/** The "Linked parts" dataset preview built from a project's linked parts. */
+function linkedPartsPreview(links: LinkedPart[]): { columns: string[]; rows: (string | number)[][] } {
+  return {
+    columns: ['Part', 'Manufacturer', 'Status', 'In stock', 'Lead (wk)', 'Unit', 'Qty'],
+    rows: links.map((l) => [
+      l.part.partNumber,
+      l.part.manufacturer,
+      l.part.status || '—',
+      l.part.stock?.totalOnHand ?? 0,
+      l.part.leadTime?.arrowWeeks || '—',
+      l.part.pricing?.unitPrice || '—',
+      l.qty,
+    ]),
+  };
 }
 
 const FOLDER_ORDER = ['Diagrams', 'Documents', 'Datasets', 'Bill of materials', 'Reviews'];

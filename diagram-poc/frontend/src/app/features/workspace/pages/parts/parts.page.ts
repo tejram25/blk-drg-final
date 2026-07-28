@@ -131,7 +131,7 @@ export class PartsPage {
   /** Attach the part to the open project's BOM — it shows up in the project. */
   linkToProject(p: CatalogPart): void {
     this.links.linkToProject(p, this.qty(), this.pw.openProject().id);
-    this.pw.ensureBom();   // give the linked part a home in the project tree
+    // The workspace reactively grows a BOM line and a Linked-parts dataset.
     this.notify.success(`${p.partNumber} linked to ${this.pw.openProject().name}.`);
   }
 
@@ -176,7 +176,6 @@ export class PartsPage {
     // A part used on a project's diagram is part of that project — link it and
     // give it a BOM home so it appears in the workspace either way.
     this.links.linkToProject(p, this.qty(), this.pw.openProject().id);
-    this.pw.ensureBom();
     this.pw.open(artifact);
     this.notify.info(`${p.partNumber} staged — pick a block in “${artifact.name}” to attach it.`);
     this.pw.resolveDiagram(artifact).subscribe({
