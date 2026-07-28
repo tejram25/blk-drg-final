@@ -133,6 +133,22 @@ kbd { font: inherit; font-size: 9.5px; padding: 1px 5px; border: 1px solid var(-
 .add-first mat-icon { font-size: 15px; width: 15px; height: 15px; }
 .add-first:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
+/* A part linked to the project, in the Parts tool window. */
+.linked { display: flex; align-items: center; gap: 8px; padding: 5px 10px 5px 12px; }
+.linked .fn { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 12.5px; }
+.linked .fn i {
+  font-style: normal; font-size: 11px; color: var(--faint);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.linked .fi { font-size: 16px; width: 16px; height: 16px; color: var(--accent-ink); flex: none; }
+.unlink {
+  flex: none; border: 0; background: none; color: var(--faint);
+  cursor: pointer; padding: 2px; display: inline-flex; border-radius: 6px;
+}
+.unlink mat-icon { font-size: 14px; width: 14px; height: 14px; }
+.unlink:hover { color: var(--text); background: var(--panel-2); }
+.linked:hover { background: var(--panel-2); }
+
 /* External repository block in the search panel. */
 .repo-block { border-top: 1px solid var(--border-soft); padding: 10px 0 12px; flex: none; }
 .repo-head {

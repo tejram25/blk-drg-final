@@ -20,12 +20,19 @@ export interface BomRow {
  */
 @Injectable({ providedIn: 'root' })
 export class BomService {
-  /** Group part objects by part number and tally quantities. */
+  /**
+   * Group part objects by part number and tally quantities.
+   *
+   * Reads both shapes: the normalised CatalogPart that part search now produces,
+   * and the raw catalogue JSON stored inside diagrams saved before that change.
+   * Both stay readable, so old diagrams still export a correct BOM.
+   */
   build(parts: any[]): BomRow[] {
     const byKey = new Map<string, BomRow>();
     for (const part of parts) {
-      const partNumber =
-        part?.arwPartNum?.name || part?.suppPartNum?.name || part?.partKey || 'Unknown';
+      const partNumber = part?.partNumber                       // normalised
+        || part?.arwPartNum?.name || part?.suppPartNum?.name || part?.partKey  // legacy
+        || 'Unknown';
       // Quantity chosen in the search panel (__bomQty); otherwise one per card.
       const qty = Math.max(1, Number(part?.__bomQty ?? 1));
       const existing = byKey.get(partNumber);
@@ -35,10 +42,13 @@ export class BomService {
       }
       byKey.set(partNumber, {
         partNumber,
-        manufacturer: part?.mfr?.name || '',
-        supplier: part?.supp?.name || '',
-        description: part?.invOrgs?.[0]?.desc || part?.icc?.name || '',
+        manufacturer: part?.manufacturer || part?.mfr?.name || '',
+        supplier: part?.supplier || part?.supp?.name || '',
+        description: part?.description
+          || part?.invOrgs?.[0]?.desc || part?.category || part?.icc?.name || '',
         quantity: qty,
+        unitPrice: Number(part?.pricing?.unitPrice) || 0,
+        moq: Number(part?.packaging?.minOrderQty) || Number(part?.invOrgs?.[0]?.minOrdQty) || 0,
       });
     }
     return [...byKey.values()].sort((a, b) => a.partNumber.localeCompare(b.partNumber));

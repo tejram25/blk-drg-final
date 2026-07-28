@@ -4,6 +4,7 @@ import com.example.diagram.service.BoxSuggestionService;
 import com.example.diagram.service.DesignWinService;
 import com.example.diagram.service.PartSearchService;
 import com.example.diagram.web.dto.BoxSuggestion;
+import com.example.diagram.web.dto.CatalogPart;
 import com.example.diagram.web.dto.BoxSuggestionRequest;
 import com.example.diagram.web.dto.BoxSuggestionResult;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -76,32 +77,33 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
     public BoxSuggestionResult suggest(BoxSuggestionRequest req) {
         String label = req.label(), sub = req.sub(), kind = req.kind();
         String query = queryFor(label, sub, kind);
-        JsonNode arr;
+        List<CatalogPart> found;
         try {
-            String json = parts.search(query, null, true);
-            arr = mapper.readTree(json == null ? "" : json).at("/partserviceresult/parts");
+            found = parts.search(query, null, false, false).parts();
         } catch (ResponseStatusException ex) {
             throw ex;
         } catch (Exception ex) {
             log.error("Box suggestion search for '{}' failed: {}", query, ex.toString());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "Could not reach the Arrow catalogue to suggest a component.");
+                    "Could not reach the catalogue to suggest a component.");
         }
-        if (!arr.isArray() || arr.isEmpty()) {
+        if (found.isEmpty()) {
             return new BoxSuggestionResult(query, List.of(),
                     "No catalogue matches for \"" + query + "\". Try renaming the box or searching parts directly.");
         }
 
         Set<String> approved = approvedMpns(req);
 
-        Map<String, List<JsonNode>> byMpn = new LinkedHashMap<>();
-        for (JsonNode p : arr) {
-            String mpn = mpnOf(p);
+        // One CatalogPart per supplier offer; group them by MPN so a box gets one
+        // suggestion per part with its alternative sources beneath.
+        Map<String, List<CatalogPart>> byMpn = new LinkedHashMap<>();
+        for (CatalogPart p : found) {
+            String mpn = p.partNumber();
             if (!mpn.isBlank()) byMpn.computeIfAbsent(mpn, k -> new ArrayList<>()).add(p);
         }
 
         List<BoxSuggestion> suggestions = new ArrayList<>();
-        for (Map.Entry<String, List<JsonNode>> e : byMpn.entrySet()) {
+        for (Map.Entry<String, List<CatalogPart>> e : byMpn.entrySet()) {
             suggestions.add(toSuggestion(e.getKey(), e.getValue(), approved));
         }
         suggestions.sort((a, b) -> {
@@ -159,62 +161,41 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
         }
     }
 
-    private BoxSuggestion toSuggestion(String mpn, List<JsonNode> offers, Set<String> approved) {
-        JsonNode best = offers.get(0);
-        String mfr = firstText(best.at("/mfr/name"), best.at("/supp/name"), "");
-        JsonNode org = best.at("/invOrgs/0");
-        String desc = firstText(org.at("/desc"), best.at("/icc/name"), mpn);
-        String category = firstText(best.at("/icc/tree"), best.at("/icc/name"), "");
-        String status = org.at("/status").asText("");
-        String lead = best.at("/leadTime/arwLT").asText("");
+    private BoxSuggestion toSuggestion(String mpn, List<CatalogPart> offers, Set<String> approved) {
+        CatalogPart best = offers.get(0);
+        String mfr = best.manufacturer().isBlank() ? best.supplier() : best.manufacturer();
+        String desc = best.description().isBlank() ? best.category() : best.description();
+        if (desc.isBlank()) desc = mpn;
+        String category = String.join(" / ", best.categoryPath());
+        if (category.isBlank()) category = best.category();
         boolean proven = fieldProven(mpn, mfr);
         boolean customerApproved = !approved.isEmpty() && approved.contains(mpn.trim().toLowerCase());
 
         List<BoxSuggestion.Supplier> suppliers = new ArrayList<>();
         long totalStock = 0;
         Set<String> seen = new LinkedHashSet<>();
-        for (JsonNode p : offers) {
-            String sName = firstText(p.at("/supp/name"), p.at("/mfr/name"), "Arrow");
+        for (CatalogPart p : offers) {
+            String sName = p.supplier().isBlank() ? p.manufacturer() : p.supplier();
+            if (sName.isBlank()) sName = "Arrow";
             if (!seen.add(sName.toLowerCase())) continue;
-            long s = stockOf(p);
-            totalStock += s;
+            totalStock += p.stock().totalOnHand();
             suppliers.add(new BoxSuggestion.Supplier(sName,
-                    firstText(p.at("/suppPartNum/name"), p.at("/arwPartNum/name"), mpn),
-                    s, p.at("/leadTime/arwLT").asText(""), priceOf(p), moqOf(p)));
+                    p.supplierPartNumber().isBlank() ? p.partNumber() : p.supplierPartNumber(),
+                    p.stock().totalOnHand(), p.leadTime().arrowWeeks(),
+                    priceOf(p), p.packaging().minOrderQty()));
         }
-        return new BoxSuggestion(mpn, mfr, desc, category, status, totalStock, lead, proven,
-                customerApproved, priceOf(best), moqOf(best), suppliers);
+        return new BoxSuggestion(mpn, mfr, desc, category, best.status(), totalStock,
+                best.leadTime().arrowWeeks(), proven, customerApproved,
+                priceOf(best), best.packaging().minOrderQty(), suppliers);
     }
 
-    /** Best-effort unit price from the Arrow part JSON (several shapes exist); 0 if none. */
-    private static double priceOf(JsonNode p) {
-        for (String path : new String[]{"/prices/0/price", "/pricing/0/price", "/resaleList/0/price",
-                "/priceBreaks/0/price", "/price", "/prc"}) {
-            JsonNode n = p.at(path);
-            if (n.isNumber()) return n.asDouble();
-            if (n.isTextual()) {
-                try {
-                    return Double.parseDouble(n.asText().replaceAll("[^0-9.]", ""));
-                } catch (NumberFormatException ignored) {
-                }
-            }
+    /** Unit price from the normalised pricing; 0 when the catalogue quotes none. */
+    private static double priceOf(CatalogPart p) {
+        try {
+            return Double.parseDouble(p.pricing().unitPrice());
+        } catch (RuntimeException ex) {
+            return 0;
         }
-        return 0;
-    }
-
-    /** Best-effort minimum order quantity; 0 if none. */
-    private static int moqOf(JsonNode p) {
-        for (String path : new String[]{"/minOrderQty", "/moq", "/invOrgs/0/moq", "/orderMultiple", "/invOrgs/0/pkgQty"}) {
-            JsonNode n = p.at(path);
-            if (n.isNumber()) return n.asInt();
-            if (n.isTextual()) {
-                try {
-                    return Integer.parseInt(n.asText().replaceAll("[^0-9]", ""));
-                } catch (NumberFormatException ignored) {
-                }
-            }
-        }
-        return 0;
     }
 
     /** True when Design Win POS reports shipment history for the part (field-proven / most used). */

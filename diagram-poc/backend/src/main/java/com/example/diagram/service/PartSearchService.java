@@ -1,23 +1,30 @@
 package com.example.diagram.service;
 
+import com.example.diagram.web.dto.PartSearchResponse;
+
 import java.util.Map;
 
-/** Proxies the Arrow Part Search API. */
+/** Searches the parts catalogue. */
 public interface PartSearchService {
 
     /**
-     * Search the parts catalogue. Returns the raw {@code partserviceresult} JSON
-     * (the same shape the frontend already renders into part cards).
+     * Search the catalogue and return the normalised result.
      *
-     * @param query     required search text (srchtxt)
-     * @param supplier  optional supplier filter (suppname)
-     * @param designWin whether to include design-win data (dw)
+     * <p>Implementations return the typed model rather than the upstream JSON:
+     * the upstream sends one row per inventory organisation, and de-duplicating
+     * that belongs on the server so every client — the Parts tab and the
+     * block-diagram panel — sees the same view. See {@link PartSearchNormalizer}.
+     *
+     * @param query        required search text
+     * @param manufacturer optional manufacturer filter (contains, case-insensitive)
+     * @param inStockOnly  keep only parts with stock at some location
+     * @param activeOnly   keep only parts Active at some location
      */
-    String search(String query, String supplier, boolean designWin);
+    PartSearchResponse search(String query, String manufacturer, boolean inStockOnly, boolean activeOnly);
 
     /**
      * Diagnostic for {@code GET /api/parts/health}: reports whether the service
-     * can authenticate (and the resolved endpoints), without exposing secrets.
+     * can reach the catalogue, without exposing secrets.
      */
     Map<String, Object> health();
 }

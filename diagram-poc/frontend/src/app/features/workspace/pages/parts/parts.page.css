@@ -1,0 +1,61 @@
+/* Host padding comes from pages.css; these are the part-card specifics. */
+.chk {
+  display: inline-flex; align-items: center; gap: 6px; flex: none;
+  font-size: 12.5px; color: var(--muted); cursor: pointer; white-space: nowrap;
+}
+/* pages.css stretches `.filters input` for the text box; a checkbox must not
+   inherit that width or the box drifts away from its label. */
+.chk input[type='checkbox'] {
+  flex: none; min-width: 0; max-width: none; width: 14px; height: 14px;
+  margin: 0; padding: 0; accent-color: var(--accent);
+}
+
+.part { display: flex; gap: 14px; align-items: flex-start; }
+
+.part-img {
+  width: 64px; height: 64px; flex: none; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--bg-deep); object-fit: contain; padding: 4px;
+}
+.part-img.ph { display: grid; place-items: center; }
+.part-img.ph mat-icon { color: var(--faint); }
+
+.part-main { flex: 1 1 auto; min-width: 0; }
+.part-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.part-head h3 {
+  margin: 0; font-size: 15px; font-weight: 600; color: var(--text);
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+.part-desc { margin: 6px 0 2px; font-size: 13px; color: var(--text); }
+
+/* The numbers an engineer actually decides on, on one line. */
+.facts { display: flex; flex-wrap: wrap; gap: 18px; margin: 10px 0 8px; }
+.fact { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; }
+.fact b { font-size: 14px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.fact i { font-style: normal; font-size: 11px; color: var(--faint); }
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.part-actions { display: flex; flex-direction: column; gap: 7px; align-items: stretch; flex: none; width: 176px; }
+.part-actions .btn { justify-content: center; }
+.qty { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+.qty input {
+  flex: 1; min-width: 0; font: inherit; font-size: 12.5px; padding: 6px 8px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg-deep); color: var(--text);
+}
+.part-actions .link { text-align: center; background: none; border: 0; cursor: pointer; padding: 2px; }
+
+.detail-table { margin-top: 14px; border-top: 1px solid var(--border-soft); }
+
+.breaks { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding-top: 10px; }
+.breaks-title {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--faint);
+}
+.brk { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.brk b { color: var(--accent-ink); font-weight: 600; }
+
+@media (max-width: 900px) {
+  .part { flex-wrap: wrap; }
+  .part-actions { width: 100%; flex-direction: row; flex-wrap: wrap; }
+}

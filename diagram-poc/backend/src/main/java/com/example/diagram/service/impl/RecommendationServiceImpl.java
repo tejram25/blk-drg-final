@@ -6,6 +6,8 @@ import com.example.diagram.repository.TemplateRepository;
 import com.example.diagram.service.DesignWinService;
 import com.example.diagram.service.PartSearchService;
 import com.example.diagram.service.RecommendationService;
+import com.example.diagram.web.dto.CatalogPart;
+import com.example.diagram.web.dto.PartSearchResponse;
 import com.example.diagram.web.dto.RecommendationItem;
 import com.example.diagram.web.dto.RecommendationRequest;
 import com.example.diagram.web.dto.RecommendationResult;
@@ -186,13 +188,10 @@ public class RecommendationServiceImpl implements RecommendationService {
     /** Search the catalogue for one term and turn the BEST hit into a grounded item. */
     private RecommendationItem lookupCatalogue(String term) {
         try {
-            String json = parts.search(term, null, false);
-            JsonNode arr = mapper.readTree(json == null ? "" : json).at("/partserviceresult/parts");
-            if (!arr.isArray() || arr.isEmpty()) return null;
-
-            JsonNode best = null;
+            PartSearchResponse res = parts.search(term, null, false, false);
+            CatalogPart best = null;
             int bestScore = Integer.MIN_VALUE;
-            for (JsonNode p : arr) {
+            for (CatalogPart p : res.parts()) {
                 int s = partScore(p);
                 if (s > bestScore) {
                     bestScore = s;
@@ -201,13 +200,13 @@ public class RecommendationServiceImpl implements RecommendationService {
             }
             if (best == null) return null;
 
-            String pn = firstText(best.at("/arwPartNum/name"), best.at("/suppPartNum/name"), term);
-            String supplier = firstText(best.at("/mfr/name"), best.at("/supp/name"), "");
-            JsonNode org = best.at("/invOrgs/0");
-            String status = org.at("/status").asText("");
-            long stock = stockOf(best);
-            String lead = best.at("/leadTime/arwLT").asText("");
-            String desc = firstText(org.at("/desc"), best.at("/icc/name"), pn);
+            String pn = best.partNumber().isBlank() ? term : best.partNumber();
+            String supplier = best.manufacturer().isBlank() ? best.supplier() : best.manufacturer();
+            String status = best.status();
+            long stock = best.stock().totalOnHand();
+            String lead = best.leadTime().arrowWeeks();
+            String desc = best.description().isBlank() ? best.category() : best.description();
+            if (desc.isBlank()) desc = pn;
 
             boolean proven = hasPosSales(pn, supplier);
 
@@ -228,20 +227,15 @@ public class RecommendationServiceImpl implements RecommendationService {
     }
 
     /** Rank a catalogue part: in-stock and an active lifecycle status score highest. */
-    private int partScore(JsonNode part) {
-        String status = part.at("/invOrgs/0/status").asText("").toLowerCase();
+    private int partScore(CatalogPart part) {
+        String status = part.status().toLowerCase();
         boolean dead = status.contains("nvr") || status.contains("never")
                 || status.contains("obsolete") || status.contains("eol");
         boolean active = !dead && (status.contains("active") || status.contains("new"));
         int s = 0;
-        if (stockOf(part) > 0) s += 3;
+        if (part.stock().totalOnHand() > 0) s += 3;
         if (active) s += 2;
         return s;
-    }
-
-    private long stockOf(JsonNode part) {
-        JsonNode avail = part.at("/invOrgs/0/avail");
-        return avail.at("/totohQty").asLong(avail.at("/FOHQty").asLong(avail.at("/ACFOHQty").asLong(0)));
     }
 
     /** True when the Design Win POS API reports shipment history for the part. */

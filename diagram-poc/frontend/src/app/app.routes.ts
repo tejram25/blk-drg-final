@@ -59,6 +59,10 @@ export const routes: Routes = [
       // The editor, embedded in the shell. `new` starts a blank diagram.
       { path: 'block-diagram/:id', loadComponent: editor },
       {
+        path: 'parts',
+        loadComponent: () => import('./features/workspace/pages/parts/parts.page').then((m) => m.PartsPage),
+      },
+      {
         path: 'part-intelligence',
         loadComponent: () =>
           import('./features/workspace/pages/part-intelligence/part-intelligence.page').then((m) => m.PartIntelligencePage),

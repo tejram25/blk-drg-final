@@ -1,8 +1,8 @@
 package com.example.diagram.web;
 
 import com.example.diagram.service.PartSearchService;
+import com.example.diagram.web.dto.PartSearchResponse;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -11,9 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 /**
- * Parts search proxy. The frontend calls this (authenticated) instead of Arrow
- * directly, so the OAuth credentials stay server-side. Returns the raw
- * partserviceresult JSON.
+ * Parts catalogue search. The frontend calls this rather than the catalogue
+ * directly, so credentials stay server-side and every client gets the same
+ * de-duplicated model (see PartSearchNormalizer). Thin: delegates to the
+ * service layer.
  */
 @RestController
 @RequestMapping("/api")
@@ -25,14 +26,20 @@ public class PartSearchController {
         this.parts = parts;
     }
 
+    /**
+     * Search the catalogue. {@code q} is required; the rest narrow the result
+     * after grouping, so the counts still describe what the user is looking at.
+     */
     @GetMapping(value = "/parts/search", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> search(@RequestParam("q") String query,
-                                         @RequestParam(value = "supplier", required = false) String supplier,
-                                         @RequestParam(value = "dw", required = false, defaultValue = "false") boolean designWin) {
-        return ResponseEntity.ok(parts.search(query, supplier, designWin));
+    public PartSearchResponse search(
+            @RequestParam("q") String query,
+            @RequestParam(value = "manufacturer", required = false) String manufacturer,
+            @RequestParam(value = "inStock", required = false, defaultValue = "false") boolean inStockOnly,
+            @RequestParam(value = "active", required = false, defaultValue = "false") boolean activeOnly) {
+        return parts.search(query, manufacturer, inStockOnly, activeOnly);
     }
 
-    /** Connectivity/credentials check — tries to authenticate and reports the outcome. */
+    /** Connectivity check — reports whether the catalogue is reachable. */
     @GetMapping(value = "/parts/health", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> health() {
         return parts.health();

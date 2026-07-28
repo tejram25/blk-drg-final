@@ -1,0 +1,167 @@
+<ws-page-header title="Part search"
+  subtitle="Search the catalogue, then link a part to this project or to a block on a diagram.">
+  @if (result(); as r) {
+    <span class="detail">{{ r.returned }} catalogue rows → {{ parts().length }} parts</span>
+  }
+</ws-page-header>
+
+<!-- ── search ── -->
+<div class="filters">
+  <input [ngModel]="query()" (ngModelChange)="query.set($event)" (keyup.enter)="search()"
+    placeholder="Part number, manufacturer or description…" aria-label="Search parts" />
+  <select [ngModel]="manufacturer()" (ngModelChange)="manufacturer.set($event)"
+    aria-label="Filter by manufacturer">
+    <option value="">All manufacturers</option>
+    @for (m of manufacturers(); track m) { <option [value]="m">{{ m }}</option> }
+  </select>
+  <label class="chk">
+    <input type="checkbox" [ngModel]="inStockOnly()" (ngModelChange)="inStockOnly.set($event)" />
+    In stock
+  </label>
+  <label class="chk">
+    <input type="checkbox" [ngModel]="activeOnly()" (ngModelChange)="activeOnly.set($event)" />
+    Active only
+  </label>
+  <button type="button" class="btn primary" [disabled]="!query().trim() || loading()" (click)="search()">
+    <mat-icon>search</mat-icon> Search
+  </button>
+</div>
+
+@if (loading()) {
+  <p class="empty">Searching the catalogue…</p>
+} @else if (searched() && !parts().length) {
+  <ws-panel><p class="empty">No parts match “{{ query() }}”. Try a shorter part number or a keyword.</p></ws-panel>
+} @else if (!searched()) {
+  <ws-panel>
+    <p class="empty">Search by part number (e.g. <b>BAV99</b>), manufacturer or description.
+      Results are grouped per part — one card per part, with every stocking location inside.</p>
+  </ws-panel>
+} @else if (result(); as r) {
+
+  <!-- ── result summary ── -->
+  <div class="grid stats">
+    <ws-stat label="Parts found" [value]="parts().length" icon="memory" tone="accent"
+      [hint]="r.returned + ' catalogue rows'" />
+    <ws-stat label="In stock" [value]="inStockCount()" icon="inventory_2"
+      [tone]="inStockCount() ? 'ok' : 'warn'" [hint]="locationCount() + ' stocking locations'" />
+    <ws-stat label="Active lifecycle" [value]="activeCount()" icon="verified"
+      [tone]="activeCount() ? 'ok' : 'warn'" />
+    <ws-stat label="Exact match" [value]="r.exactMatchFound ? 'Yes' : 'No'" icon="target"
+      [tone]="r.exactMatchFound ? 'ok' : ''" [hint]="r.matchReason" />
+  </div>
+
+  <!-- ── results ── -->
+  @for (p of parts(); track p.id) {
+    <ws-panel>
+      <div class="part">
+        @if (p.imageUrl) {
+          <img class="part-img" [src]="p.imageUrl" [alt]="p.partNumber" loading="lazy" />
+        } @else {
+          <div class="part-img ph"><mat-icon>memory</mat-icon></div>
+        }
+
+        <div class="part-main">
+          <div class="part-head">
+            <h3>{{ p.partNumber }}</h3>
+            @if (p.exactMatch) { <ws-pill tone="accent">Exact match</ws-pill> }
+            <ws-pill [tone]="tone(p.status)">{{ p.status || 'Status n/a' }}</ws-pill>
+            @if (p.designWinEligible) { <ws-pill tone="ok">Design-win eligible</ws-pill> }
+            @if (p.compliance.svhc) {
+              <ws-pill tone="warn" matTooltip="Flagged against REACH SVHC">SVHC</ws-pill>
+            }
+          </div>
+
+          <p class="part-desc">{{ p.description || p.category }}</p>
+          <p class="detail">
+            {{ p.manufacturer }}
+            @if (p.supplierPartNumber && p.supplierPartNumber !== p.partNumber) {
+              · supplier P/N {{ p.supplierPartNumber }}
+            }
+            @if (p.categoryPath.length) { · {{ p.categoryPath.join(' › ') }} }
+          </p>
+
+          <!-- the numbers an engineer decides on -->
+          <div class="facts">
+            <span class="fact"><b>{{ qtyLabel(p.stock.totalOnHand) }}</b> in stock
+              <i>{{ p.stock.inStockLocations }} of {{ p.stock.locationCount }} sites</i></span>
+            <span class="fact"><b>{{ lead(p) }}</b> lead time
+              @if (p.leadTime.supplierWeeks) { <i>supplier {{ p.leadTime.supplierWeeks }} wk</i> }</span>
+            <span class="fact"><b>{{ price(p) }}</b> unit
+              @if (p.pricing.breaks.length > 1) { <i>{{ p.pricing.breaks.length }} price breaks</i> }</span>
+            <span class="fact"><b>{{ p.packaging.minOrderQty || '—' }}</b> MOQ
+              @if (p.packaging.packageType) { <i>{{ p.packaging.packageType }}</i> }</span>
+            @if (p.stock.nextDelivery) {
+              <span class="fact"><b>{{ qtyLabel(p.stock.nextQty) }}</b> incoming
+                <i>{{ p.stock.nextDelivery }}</i></span>
+            }
+          </div>
+
+          <div class="tags">
+            @for (c of p.compliance.standards; track c) { <ws-pill tone="ok">{{ c }}</ws-pill> }
+            @if (p.compliance.eccnUs) { <ws-pill>ECCN {{ p.compliance.eccnUs }}</ws-pill> }
+            @if (p.compliance.countryOfOrigin) { <ws-pill>Origin {{ p.compliance.countryOfOrigin }}</ws-pill> }
+            @if (p.crossReferenced) {
+              <ws-pill tone="accent" [matTooltip]="p.crossRefTypes.join(', ')">Alternates available</ws-pill>
+            }
+          </div>
+        </div>
+
+        <div class="part-actions">
+          <label class="qty">Qty
+            <input type="number" min="1" [ngModel]="qty()" (ngModelChange)="qty.set(+$event || 1)" />
+          </label>
+          <button type="button" class="btn primary" (click)="linkToProject(p)">
+            <mat-icon>link</mat-icon> Link to project
+          </button>
+          <button type="button" class="btn" (click)="linkToDiagram(p)">
+            <mat-icon>account_tree</mat-icon> Use in diagram
+          </button>
+          @if (p.datasheetUrl) {
+            <a class="btn" [href]="p.datasheetUrl" target="_blank" rel="noopener">
+              <mat-icon>description</mat-icon> Datasheet
+            </a>
+          }
+          <button type="button" class="link" (click)="select(p)">
+            {{ selected()?.id === p.id ? 'Hide' : 'Show' }} {{ p.locations.length }} locations
+          </button>
+        </div>
+      </div>
+
+      <!-- ── per-location detail: the rows the upstream sent separately ── -->
+      @if (selected()?.id === p.id) {
+        <div class="table-wrap detail-table">
+          <table class="tbl">
+            <thead>
+              <tr><th>Site</th><th>Type</th><th>Status</th><th class="num">On hand</th>
+                <th class="num">MOQ</th><th class="num">Next delivery</th><th></th></tr>
+            </thead>
+            <tbody>
+              @for (l of p.locations; track l.id) {
+                <tr>
+                  <td class="ink">{{ l.description || l.code }}<div class="detail">{{ l.operatingUnit }}</div></td>
+                  <td>{{ l.type }}</td>
+                  <td><ws-pill [tone]="tone(l.status)">{{ l.status }}</ws-pill></td>
+                  <td class="num">{{ l.onHand ? qtyLabel(l.onHand) : '—' }}</td>
+                  <td class="num">{{ l.minOrderQty || '—' }}</td>
+                  <td class="num">{{ l.nextDelivery || '—' }}</td>
+                  <td>
+                    @if (l.preferred) { <ws-pill tone="accent">Preferred</ws-pill> }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (p.pricing.breaks.length) {
+          <div class="breaks">
+            <span class="breaks-title">Price breaks ({{ p.pricing.currency }})</span>
+            @for (b of p.pricing.breaks; track b.minQty) {
+              <span class="brk"><b>{{ b.price }}</b> {{ b.minQty }}–{{ b.maxQty }}</span>
+            }
+          </div>
+        }
+      }
+    </ws-panel>
+  }
+}

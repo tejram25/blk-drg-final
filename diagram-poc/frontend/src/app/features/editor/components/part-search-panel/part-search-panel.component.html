@@ -12,14 +12,14 @@
     </button>
   </div>
 
-  <!-- Supplier filter + result count -->
+  <!-- Manufacturer filter + result count -->
   @if (!loading && results.length) {
     <div class="ps-filter">
       <span class="ps-count">{{ visibleResults.length }} of {{ results.length }}</span>
       <label class="ps-supplabel">
         <mat-icon>filter_list</mat-icon>
         <select [(ngModel)]="supplierFilter">
-          <option value="">All suppliers</option>
+          <option value="">All manufacturers</option>
           @for (s of suppliers; track s) {
             <option [value]="s">{{ s }}</option>
           }
@@ -39,7 +39,7 @@
       <p class="ps-msg">Search the catalogue, then add a part to the canvas.</p>
     }
 
-    @for (hit of visibleResults; track hit) {
+    @for (hit of visibleResults; track hit.id) {
       <div class="ps-item">
         <div class="ps-info">
           <span class="ps-pn">{{ hit.partNumber }}</span>
@@ -52,21 +52,36 @@
             @if (hit.status) {
               <span class="ps-chip" [class]="statusClass(hit.status)">{{ hit.status }}</span>
             }
-            <span class="ps-chip stock" [class.zero]="!hit.inStock">
-              <mat-icon>inventory_2</mat-icon>{{ hit.inStock | number }} in stock
+            <span class="ps-chip stock" [class.zero]="!hit.stock.totalOnHand">
+              <mat-icon>inventory_2</mat-icon>{{ hit.stock.totalOnHand | number }} in stock
             </span>
-            @if (hit.leadTime) {
+            @if (hit.stock.locationCount > 1) {
+              <span class="ps-chip">{{ hit.stock.inStockLocations }}/{{ hit.stock.locationCount }} sites</span>
+            }
+            @if (hit.leadTime.arrowWeeks) {
               <span class="ps-chip">
-                <mat-icon>schedule</mat-icon>LT {{ hit.leadTime }}
+                <mat-icon>schedule</mat-icon>LT {{ hit.leadTime.arrowWeeks }} wk
               </span>
             }
-            @for (c of hit.compliance; track c) {
+            @if (hit.pricing.unitPrice) {
+              <span class="ps-chip">{{ price(hit) }}</span>
+            }
+            @if (hit.packaging.minOrderQty) {
+              <span class="ps-chip">MOQ {{ hit.packaging.minOrderQty | number }}</span>
+            }
+            @for (c of hit.compliance.standards; track c) {
               <span class="ps-chip">{{ c }}</span>
+            }
+            @if (hit.datasheetUrl) {
+              <a class="ps-chip link" [href]="hit.datasheetUrl" target="_blank" rel="noopener">
+                <mat-icon>description</mat-icon>Datasheet
+              </a>
             }
           </div>
         </div>
         <div class="ps-actions">
-          <input class="ps-qty" type="number" min="1" [(ngModel)]="hit.qty" (change)="clampQty(hit)"
+          <input class="ps-qty" type="number" min="1"
+            [ngModel]="qtyOf(hit)" (ngModelChange)="setQty(hit, $event)"
             title="Order quantity" />
           @if (hasSelection) {
             <button type="button" class="ps-attach" (click)="attach(hit)" title="Attach to selected block">

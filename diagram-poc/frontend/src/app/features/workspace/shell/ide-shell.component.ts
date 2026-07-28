@@ -13,10 +13,11 @@ import {
 } from '../../../core/services/document-repository.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { WorkspaceService } from '../services/workspace.service';
+import { PartLinkService } from '../services/part-link.service';
 import { ProjectWorkspaceService } from '../services/project-workspace.service';
 import { Artifact, ArtifactKind, Region, Role } from '../models/workspace.models';
 
-type SidePanel = 'explorer' | 'components' | 'search' | 'reviews' | 'business';
+type SidePanel = 'explorer' | 'components' | 'parts' | 'search' | 'reviews' | 'business';
 
 /**
  * The IDE shell.
@@ -51,6 +52,15 @@ export class IdeShellComponent {
   private readonly router = inject(Router);
   private readonly notify = inject(NotificationService);
   private readonly repo = inject(DocumentRepository);
+  readonly partLinks = inject(PartLinkService);
+
+  /** Parts linked to the open project, shown in the Parts tool window. */
+  readonly linkedParts = computed(() => this.partLinks.all());
+
+  /** Open the full part-search page; the tool window lists what is already linked. */
+  goPartSearch(): void { this.go('/workspace/parts'); }
+
+  unlinkPart(id: string): void { this.partLinks.unlink(id); }
 
   panel = signal<SidePanel>('explorer');
   panelOpen = signal(true);
@@ -70,6 +80,7 @@ export class IdeShellComponent {
 
   readonly activities: { id: SidePanel; icon: string; label: string }[] = [
     { id: 'explorer', icon: 'folder_open', label: 'Project' },
+    { id: 'parts', icon: 'memory', label: 'Parts' },
     { id: 'search', icon: 'search', label: 'Search in project' },
     { id: 'reviews', icon: 'fact_check', label: 'Reviews & risks' },
     { id: 'business', icon: 'insights', label: 'Business' },
@@ -82,7 +93,7 @@ export class IdeShellComponent {
   readonly railItems = computed(() => {
     if (!this.editorChrome.palette()) return this.activities;
     const items = [...this.activities];
-    items.splice(1, 0, { id: 'components', icon: 'widgets', label: 'Components' });
+    items.splice(2, 0, { id: 'components', icon: 'widgets', label: 'Components' });
     return items;
   });
 

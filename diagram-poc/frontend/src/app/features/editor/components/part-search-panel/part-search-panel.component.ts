@@ -1,13 +1,17 @@
-import { Component, EventEmitter, Input, Output, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { PartHit, PartSearchService } from '../../../../core/services/part-search.service';
+import {
+  CatalogPart, PartSearchService, formatPrice, statusTone,
+} from '../../../../core/services/part-search.service';
 
 /**
- * Side dock to search the Arrow parts catalogue (via the backend proxy). Shows
- * all results with inventory info, lets the user filter by supplier and pick an
- * order quantity, then adds a chosen part to the canvas as a part card.
+ * Side dock to search the parts catalogue. Results arrive already grouped per
+ * part (the catalogue returns one row per stocking location — see
+ * PartSearchNormalizer), so this shows one row per part with its aggregated
+ * stock, lead time and price, and adds the chosen part to the canvas or
+ * attaches it to the selected block.
  */
 @Component({
     selector: 'app-part-search-panel',
@@ -16,6 +20,8 @@ import { PartHit, PartSearchService } from '../../../../core/services/part-searc
     styleUrls: ['./part-search-panel.component.css']
 })
 export class PartSearchPanelComponent implements AfterViewInit {
+  private readonly api = inject(PartSearchService);
+
   @Output() close = new EventEmitter<void>();
   @Output() addPart = new EventEmitter<any>();
   @Output() attachPart = new EventEmitter<any>();
@@ -26,13 +32,13 @@ export class PartSearchPanelComponent implements AfterViewInit {
   @ViewChild('box') boxRef!: ElementRef<HTMLInputElement>;
 
   query = '';
-  results: PartHit[] = [];
+  results: CatalogPart[] = [];
   loading = false;
   searched = false;
-  /** Selected supplier filter ('' = all suppliers). */
+  /** Manufacturer filter ('' = all). */
   supplierFilter = '';
-
-  constructor(private api: PartSearchService) {}
+  /** Chosen order quantity per part id. */
+  qtyById: Record<string, number> = {};
 
   ngAfterViewInit(): void {
     if (this.seedQuery && this.seedQuery.trim()) {
@@ -50,12 +56,18 @@ export class PartSearchPanelComponent implements AfterViewInit {
     this.searched = true;
     this.supplierFilter = '';
     this.api.search(q).subscribe({
-      next: (hits) => { this.results = hits; this.loading = false; },
+      next: (res) => {
+        this.results = res.parts;
+        for (const p of res.parts) {
+          this.qtyById[p.id] = Math.max(1, p.packaging.minOrderQty || 1);
+        }
+        this.loading = false;
+      },
       error: () => { this.results = []; this.loading = false; },
     });
   }
 
-  /** Distinct suppliers in the current results, for the filter dropdown. */
+  /** Distinct manufacturers in the current results, for the filter dropdown. */
   get suppliers(): string[] {
     const set = new Set<string>();
     for (const r of this.results) {
@@ -65,36 +77,60 @@ export class PartSearchPanelComponent implements AfterViewInit {
     return [...set].sort((a, b) => a.localeCompare(b));
   }
 
-  /** Results after applying the supplier filter. */
-  get visibleResults(): PartHit[] {
+  get visibleResults(): CatalogPart[] {
     if (!this.supplierFilter) return this.results;
-    return this.results.filter(
-      (r) => (r.manufacturer || r.supplier) === this.supplierFilter,
-    );
+    return this.results.filter((r) => (r.manufacturer || r.supplier) === this.supplierFilter);
   }
 
-  /** Clamp a hit's quantity to a sane minimum (its MOQ, or 1). */
-  clampQty(hit: PartHit): void {
-    const min = Math.max(1, hit.minOrderQty || 1);
-    if (!hit.qty || hit.qty < min) hit.qty = min;
+  qtyOf(p: CatalogPart): number { return this.qtyById[p.id] ?? 1; }
+  setQty(p: CatalogPart, value: number): void {
+    this.qtyById[p.id] = Math.max(1, Number(value) || 1);
   }
 
   /** CSS modifier for the lifecycle-status pill. */
   statusClass(status: string): string {
-    const s = (status || '').toLowerCase();
-    if (s.includes('nvr')) return 'neutral';
-    if (s.includes('active') || s.includes('new')) return 'ok';
-    if (s.includes('nrnd') || s.includes('eol') || s.includes('obsolete')) return 'bad';
-    return 'neutral';
+    const tone = statusTone(status);
+    return tone === 'ok' ? 'ok' : tone === 'risk' ? 'bad' : 'neutral';
   }
 
-  add(hit: PartHit): void {
-    const part = { ...hit.raw, __bomQty: Math.max(1, hit.qty || 1) };
-    this.addPart.emit(part);
-  }
+  price(p: CatalogPart): string { return formatPrice(p.pricing.unitPrice, p.pricing.currency); }
 
-  attach(hit: PartHit): void {
-    const part = { ...hit.raw, __bomQty: Math.max(1, hit.qty || 1) };
-    this.attachPart.emit(part);
+  add(p: CatalogPart): void { this.addPart.emit(this.forCanvas(p)); }
+  attach(p: CatalogPart): void { this.attachPart.emit(this.forCanvas(p)); }
+
+  /**
+   * The object stored on the diagram node.
+   *
+   * Carries the normalised part *and* the catalogue-shaped fields the canvas,
+   * properties panel and saved diagrams have always read
+   * ({@code arwPartNum.name}, {@code invOrgs[0].desc}, …). Adapting once here
+   * keeps the persisted diagram format unchanged — so diagrams saved before and
+   * after this change stay interchangeable — instead of rewriting a dozen
+   * readers and breaking existing files.
+   */
+  private forCanvas(p: CatalogPart): any {
+    const best = p.locations[0];
+    return {
+      ...p,
+      __bomQty: this.qtyOf(p),
+      arwPartNum: { name: p.partNumber },
+      suppPartNum: { name: p.supplierPartNumber || p.partNumber },
+      mfr: { name: p.manufacturer },
+      supp: { name: p.supplier },
+      icc: { name: p.category, tree: p.categoryPath.join('|') },
+      leadTime: { arwLT: p.leadTime.arrowWeeks, suppLT: p.leadTime.supplierWeeks },
+      invOrgs: [{
+        desc: p.description,
+        status: p.status,
+        minOrdQty: p.packaging.minOrderQty,
+        pkg: p.packaging.packageType,
+        avail: { totohQty: p.stock.totalOnHand, nextDelivery: p.stock.nextDelivery },
+        webPrice: { currency: p.pricing.currency, resalelist: p.pricing.breaks },
+        coo: p.compliance.countryOfOrigin,
+        ...(best ? { IODesc: best.description } : {}),
+      }],
+      EnvData: { complianceList: p.compliance.standards.map((type) => ({ type })) },
+      paramData: [],
+    };
   }
 }

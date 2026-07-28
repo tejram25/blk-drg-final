@@ -1,0 +1,3756 @@
+{
+    "partserviceresult": {
+        "response": {
+            "success": true,
+            "errorCode": "200",
+            "message": "ok"
+        },
+        "nextStart": 25,
+        "nextLimit": 25,
+        "exactMatchFound": "Y",
+        "numItems": 25,
+        "totalItems": 2222,
+        "matchReason": {
+            "code": "1",
+            "description": "Srchtxt Match"
+        },
+        "parts": [
+            {
+                "docid": "3489_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "Y",
+                "minordqtyovrd": "Y",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "3489",
+                        "cd": "E21",
+                        "type": "PDC",
+                        "ou": "GER_02_OU",
+                        "IODesc": "EU-PDC-BTR-Euro-Venlo NL",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Active",
+                        "minOrdQty": 3000,
+                        "multOrdQty": 3000,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextDelivery": "22-APR-2026",
+                            "nextQty": 3190,
+                            "totohQty": 799,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "refBussCost": ".00532",
+                        "refBussCostCur": "EUR",
+                        "primaryUOM": "EACH",
+                        "webPrice": {
+                            "currency": "EUR",
+                            "resalelist": [
+                                {
+                                    "price": ".0266",
+                                    "minQty": "0",
+                                    "maxQty": "3000"
+                                },
+                                {
+                                    "price": ".0133",
+                                    "minQty": "3000",
+                                    "maxQty": "30000"
+                                },
+                                {
+                                    "price": ".01064",
+                                    "minQty": "30000",
+                                    "maxQty": "1500000"
+                                }
+                            ]
+                        },
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "bestBussCost": ".00703",
+                        "bestBussCostCurr": "EUR",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No",
+                        "alcCost": ".007",
+                        "alcCurr": "EUR"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "1076_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "Y",
+                "minordqtyovrd": "Y",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "1076",
+                        "cd": "E32",
+                        "type": "BRK",
+                        "ou": "GER_02_OU",
+                        "IODesc": "EU-PDC-BRK-Euro-Venlo NL",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextDelivery": "24-APR-2026",
+                            "nextQty": 9552,
+                            "totohQty": 652,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "refBussCost": ".00532",
+                        "refBussCostCur": "EUR",
+                        "primaryUOM": "EACH",
+                        "webPrice": {
+                            "currency": "EUR",
+                            "resalelist": [
+                                {
+                                    "price": ".0266",
+                                    "minQty": "0",
+                                    "maxQty": "3000"
+                                },
+                                {
+                                    "price": ".0133",
+                                    "minQty": "3000",
+                                    "maxQty": "30000"
+                                },
+                                {
+                                    "price": ".01064",
+                                    "minQty": "30000",
+                                    "maxQty": "1500000"
+                                }
+                            ]
+                        },
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "1",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "bestBussCost": ".00703",
+                        "bestBussCostCurr": "EUR",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No",
+                        "alcCost": ".007",
+                        "alcCurr": "EUR"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "0323_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "323",
+                        "cd": "E02",
+                        "type": "PDC",
+                        "ou": "GER_02_OU",
+                        "IODesc": "EU-PDC-Euro-Venlo NL",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Active",
+                        "minOrdQty": 3000,
+                        "multOrdQty": 3000,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextDelivery": "21-APR-2026",
+                            "nextQty": 9552,
+                            "totohQty": 270000,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "refBussCost": ".00532",
+                        "refBussCostCur": "EUR",
+                        "primaryUOM": "EACH",
+                        "webPrice": {
+                            "currency": "EUR",
+                            "resalelist": [
+                                {
+                                    "price": ".0266",
+                                    "minQty": "0",
+                                    "maxQty": "3000"
+                                },
+                                {
+                                    "price": ".0133",
+                                    "minQty": "3000",
+                                    "maxQty": "30000"
+                                },
+                                {
+                                    "price": ".01064",
+                                    "minQty": "30000",
+                                    "maxQty": "1500000"
+                                }
+                            ]
+                        },
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "bestBussCost": ".00703",
+                        "bestBussCostCurr": "EUR",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No",
+                        "alcCost": ".00697",
+                        "alcCurr": "EUR"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "1761_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "1761",
+                        "cd": "3S5",
+                        "type": "PIVO",
+                        "ou": "GER_09_OU",
+                        "IODesc": "ARROW GERMANY USD PIVO",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 3000,
+                        "multOrdQty": 3000,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "4373_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "4373",
+                        "cd": "GE1",
+                        "type": "PDC",
+                        "ou": "GER_02_OU",
+                        "IODesc": "EU-AIM-Euro-PDC-Venlo NL",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "refBussCost": ".00532",
+                        "refBussCostCur": "EUR",
+                        "primaryUOM": "EACH",
+                        "webPrice": {
+                            "currency": "EUR",
+                            "resalelist": [
+                                {
+                                    "price": ".0266",
+                                    "minQty": "0",
+                                    "maxQty": "3000"
+                                },
+                                {
+                                    "price": ".0133",
+                                    "minQty": "3000",
+                                    "maxQty": "30000"
+                                },
+                                {
+                                    "price": ".01064",
+                                    "minQty": "30000",
+                                    "maxQty": "1500000"
+                                }
+                            ]
+                        },
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "bestBussCost": ".00703",
+                        "bestBussCostCurr": "EUR",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "4794_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "19",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "4794",
+                        "cd": "M67",
+                        "type": "VAT",
+                        "ou": "ITA_01_OU",
+                        "IODesc": "EU-VAT-Arrow Italy HU",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "bestBussCost": ".00601",
+                        "bestBussCostCurr": "EUR",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "5295_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "5295",
+                        "cd": "3PX",
+                        "type": "PIVO",
+                        "ou": "PRT_01_OU",
+                        "IODesc": "Arrow Portugal PIVO",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "4759_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "4",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "4759",
+                        "cd": "M65",
+                        "type": "VAT",
+                        "ou": "GER_15_OU",
+                        "IODesc": "EU-VAT-Arrow Alliance GERMANY GB",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "4758_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "6",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "4758",
+                        "cd": "M63",
+                        "type": "VAT",
+                        "ou": "GER_15_OU",
+                        "IODesc": "EU-VAT-Arrow Alliance GERMANY NL",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "4757_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "4",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "4757",
+                        "cd": "M61",
+                        "type": "VAT",
+                        "ou": "GER_15_OU",
+                        "IODesc": "EU-VAT-Arrow Alliance GERMANY PL",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "4756_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "19",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "4756",
+                        "cd": "I60",
+                        "type": "VAT",
+                        "ou": "GER_15_OU",
+                        "IODesc": "EU-VAT-Arrow Alliance GERMANY HU",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "4510_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "4",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "4510",
+                        "cd": "M39",
+                        "type": "VAT",
+                        "ou": "EST_03_OU",
+                        "IODesc": "EU-VAT-Arrow Estonia NL",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "4329_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "4",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "4329",
+                        "cd": "M38",
+                        "type": "VAT",
+                        "ou": "AUT_01_OU",
+                        "IODesc": "EU-VAT-Arrow Austria-NL",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "bestBussCost": ".00601",
+                        "bestBussCostCurr": "EUR",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "4029_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "4",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "4029",
+                        "cd": "T78",
+                        "type": "VAT",
+                        "ou": "GER_02_OU",
+                        "IODesc": "MC-VAT-Arrow Germany IT",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "refBussCost": ".00532",
+                        "refBussCostCur": "EUR",
+                        "primaryUOM": "EACH",
+                        "webPrice": {
+                            "currency": "EUR",
+                            "resalelist": [
+                                {
+                                    "price": ".0266",
+                                    "minQty": "0",
+                                    "maxQty": "3000"
+                                },
+                                {
+                                    "price": ".0133",
+                                    "minQty": "3000",
+                                    "maxQty": "30000"
+                                },
+                                {
+                                    "price": ".01064",
+                                    "minQty": "30000",
+                                    "maxQty": "1500000"
+                                }
+                            ]
+                        },
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "bestBussCost": ".00703",
+                        "bestBussCostCurr": "EUR",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "2913_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "6",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "2913",
+                        "cd": "M34",
+                        "type": "VAT",
+                        "ou": "DEN_01_OU",
+                        "IODesc": "EU-VAT-Arrow Denmark NL",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "2492_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "6",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "2492",
+                        "cd": "M30",
+                        "type": "VAT",
+                        "ou": "SWE_03_OU",
+                        "IODesc": "EU-VAT-Arrow Sweden NL",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "1579_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "1579",
+                        "cd": "4P5",
+                        "type": "PIVO",
+                        "ou": "FRA_01_OU",
+                        "IODesc": "ARROW FRANCE  PIVO",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "1578_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "1578",
+                        "cd": "4P2",
+                        "type": "PIVO",
+                        "ou": "ISR_01_OU",
+                        "IODesc": "ARROW ISRAEL PIVO",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "1577_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "1577",
+                        "cd": "4P1",
+                        "type": "PIVO",
+                        "ou": "ITA_01_OU",
+                        "IODesc": "ARROW ITALY PIVO",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "bestBussCost": ".00601",
+                        "bestBussCostCurr": "EUR",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "1386_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "1386",
+                        "cd": "3PO",
+                        "type": "PIVO",
+                        "ou": "GER_08_OU",
+                        "IODesc": "DNU Arrow Electronics GmbH and Co. KG PIVO",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "1006_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "4",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "1006",
+                        "cd": "L01",
+                        "type": "RMA",
+                        "ou": "GER_02_OU",
+                        "IODesc": "EU-RMA-EURO-VENLO NL",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "refBussCost": ".00532",
+                        "refBussCostCur": "EUR",
+                        "primaryUOM": "EACH",
+                        "webPrice": {
+                            "currency": "EUR",
+                            "resalelist": [
+                                {
+                                    "price": ".0266",
+                                    "minQty": "0",
+                                    "maxQty": "3000"
+                                },
+                                {
+                                    "price": ".0133",
+                                    "minQty": "3000",
+                                    "maxQty": "30000"
+                                },
+                                {
+                                    "price": ".01064",
+                                    "minQty": "30000",
+                                    "maxQty": "1500000"
+                                }
+                            ]
+                        },
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "bestBussCost": ".00703",
+                        "bestBussCostCurr": "EUR",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "1047_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "1047",
+                        "cd": "3PI",
+                        "type": "PIVO",
+                        "ou": "SVK_01_OU",
+                        "IODesc": "Arrow Slovakia PIVO",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "0906_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "906",
+                        "cd": "2PB",
+                        "type": "PIVO",
+                        "ou": "EST_03_OU",
+                        "IODesc": "ARROW ESTONIA EUR PIVO",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "0352_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "352",
+                        "cd": "3P9",
+                        "type": "PIVO",
+                        "ou": "POL_01_OU",
+                        "IODesc": "ARROW POLAND PIVO",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            },
+            {
+                "docid": "0347_06675236",
+                "itemId": 6675236,
+                "partKey": "139663827",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "BAV99"
+                },
+                "supp": {
+                    "cd": "Diotec Semiconductor|DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "mfr": {
+                    "cd": "DIOTEC",
+                    "name": "Diotec Semiconductor"
+                },
+                "icc": {
+                    "id": "2015|13290|2021",
+                    "tree": "Semiconductor - Discrete|Diodes|Rectifier",
+                    "name": "Rectifier"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/54/2/415244/dtc_/manual/sot-23.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2021/8/3/15/44/22/640168/dtc_/manual/sot-23.jpg",
+                        "type": "Image Large"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs2/2024/2/22/23/37/53/786920/dtc_/manual/bav99.pdf",
+                        "type": "Datasheet"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "7",
+                    "suppLT": "6",
+                    "suppLTDt": "10-Mar-2026",
+                    "suppAvail": 0
+                },
+                "seg2": "DIOTEC",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Marketing Equivalent"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "347",
+                        "cd": "3P7",
+                        "type": "PIVO",
+                        "ou": "NLD_01_OU",
+                        "IODesc": "Arrow Netherlands PIVO",
+                        "confCert": "1",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "Y"
+                        },
+                        "partClass": "SP1",
+                        "desc": "Diode Small Signal Switching 85V 0.215A 3-Pin SOT-23 T/R",
+                        "status": "Nvr.Active",
+                        "minOrdQty": 1,
+                        "multOrdQty": 1,
+                        "ncnr": {},
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [
+                                {
+                                    "name": "AC",
+                                    "qty": "31"
+                                }
+                            ],
+                            "digitalQty": "AC_31~V72-31^AP_0~"
+                        },
+                        "primaryUOM": "EACH",
+                        "pkg": "TAPE/REEL",
+                        "pkgQty": "3000",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "dropShip": "No",
+                        "bomInd": "Y",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "8",
+                        "shipDebit": "Yes",
+                        "cmdty": "Yes",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "85411000",
+                        "htsFlag": "N",
+                        "htsImportCode": "85411000",
+                        "coo": "CN",
+                        "bestBussCost": ".00601",
+                        "bestBussCostCurr": "EUR",
+                        "salesCanWin": "10",
+                        "costs": [],
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "YES",
+                    "svhcThreshold": "YES"
+                },
+                "aimTariffFlag": "AC:N",
+                "webEnabled": "Y",
+                "score": "225004.0"
+            }
+        ]
+    }
+}

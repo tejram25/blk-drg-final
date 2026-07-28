@@ -131,6 +131,34 @@
               <ng-template [cdkPortalOutlet]="editorChrome.palette()"></ng-template>
             </div>
           }
+          @case ('parts') {
+            <div class="tool-head">
+              <span class="tool-title">Parts</span>
+              <span class="tool-count">{{ linkedParts().length }} linked</span>
+              <button type="button" class="tool-add" (click)="goPartSearch()"
+                matTooltip="Search the catalogue" aria-label="Search the catalogue">
+                <mat-icon>search</mat-icon>
+              </button>
+            </div>
+            <div class="tree">
+              @for (l of linkedParts(); track l.part.id) {
+                <div class="linked">
+                  <mat-icon class="fi">memory</mat-icon>
+                  <span class="fn">
+                    {{ l.part.partNumber }}
+                    <i>{{ l.part.manufacturer }} · qty {{ l.qty }}</i>
+                  </span>
+                  <button type="button" class="unlink" (click)="unlinkPart(l.part.id)"
+                    matTooltip="Unlink" aria-label="Unlink part"><mat-icon>close</mat-icon></button>
+                </div>
+              } @empty {
+                <p class="tool-empty sub">No parts linked to this project yet.</p>
+                <button type="button" class="add-first" (click)="goPartSearch()">
+                  <mat-icon>search</mat-icon> Search the catalogue</button>
+              }
+            </div>
+          }
+
           @case ('explorer') {
             <div class="tool-head">
               <span class="tool-title">Project</span>

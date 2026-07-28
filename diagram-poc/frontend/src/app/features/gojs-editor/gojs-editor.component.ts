@@ -5,6 +5,7 @@ import {
 } from '@angular/core';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { EditorChromeService } from '../../core/services/editor-chrome.service';
+import { PartLinkService } from '../workspace/services/part-link.service';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -231,6 +232,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private location: Location,
     private themeSvc: ThemeService,
     private chromeHost: EditorChromeService,
+    private partLinks: PartLinkService,
     private vcr: ViewContainerRef,
   ) {
     // Hand the toolbar + palette to the shell after the first render pass (so
@@ -282,6 +284,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       next: (i) => { this.aiEnabled = i.aiEnabled !== false; this.cdr.detectChanges(); },
       error: () => {},
     });
+    // A part chosen in the Parts tab is staged for the diagram; pick it up so
+    // "Use in diagram" finishes here rather than making the user search again.
+    if (this.partLinks.hasStaged()) {
+      this.partSearchOpen = true;
+      const staged = this.partLinks.stagedPart();
+      if (staged) this.partSearchSeed = staged.part.partNumber;
+    }
     this.chatSub = this.collab.chatNew$.subscribe((m) => this.onChatArrived(m));
     this.modelReplacedSub = this.collab.modelReplaced$.subscribe(() => { this.retheme(); this.syncSelection(); });
   }
