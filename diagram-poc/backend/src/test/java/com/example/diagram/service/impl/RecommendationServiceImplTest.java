@@ -17,18 +17,32 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.example.diagram.service.PartSearchNormalizer;
+import com.example.diagram.web.dto.PartSearchResponse;
+
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class RecommendationServiceImplTest {
 
+    /** Turn a raw upstream fixture into the typed response the service consumes. */
+    private static PartSearchResponse normalize(String json) {
+        try {
+            return new PartSearchNormalizer()
+                    .normalize(new com.fasterxml.jackson.databind.ObjectMapper().readTree(json), "test");
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     @Mock private TemplateRepository templates;
 
     /** Part search that returns nothing, so the rule-based path is exercised in isolation. */
     private static final PartSearchService NO_PARTS = new PartSearchService() {
-        @Override public String search(String q, String supplier, boolean dw) {
-            return "{\"partserviceresult\":{\"parts\":[]}}";
+        @Override public PartSearchResponse search(String q, String manufacturer,
+                    boolean inStockOnly, boolean activeOnly, int start, int limit) {
+            return normalize("{\"partserviceresult\":{\"parts\":[]}}");
         }
         @Override public Map<String, Object> health() { return Map.of(); }
     };
@@ -96,13 +110,14 @@ class RecommendationServiceImplTest {
     void groundsRecommendationsInLiveCatalogue() {
         // A catalogue that returns a real, in-stock part for any search.
         PartSearchService live = new PartSearchService() {
-            @Override public String search(String q, String supplier, boolean dw) {
-                return "{\"partserviceresult\":{\"parts\":[{"
+            @Override public PartSearchResponse search(String q, String manufacturer,
+                        boolean inStockOnly, boolean activeOnly, int start, int limit) {
+                return normalize("{\"partserviceresult\":{\"parts\":[{"
                         + "\"arwPartNum\":{\"name\":\"LM317T\"},"
                         + "\"mfr\":{\"name\":\"STMicroelectronics\"},"
                         + "\"leadTime\":{\"arwLT\":\"8\"},"
                         + "\"invOrgs\":[{\"status\":\"Active\",\"desc\":\"Adjustable regulator\","
-                        + "\"avail\":{\"totohQty\":1200}}]}]}}";
+                        + "\"avail\":{\"totohQty\":1200}}]}]}}");
             }
             @Override public Map<String, Object> health() { return Map.of(); }
         };
@@ -122,13 +137,14 @@ class RecommendationServiceImplTest {
     void picksInStockActivePartOverDeadFirstResult() {
         // First result is dead (Nvr.Active, 0 stock); second is Active and in stock.
         PartSearchService live = new PartSearchService() {
-            @Override public String search(String q, String supplier, boolean dw) {
-                return "{\"partserviceresult\":{\"parts\":["
+            @Override public PartSearchResponse search(String q, String manufacturer,
+                        boolean inStockOnly, boolean activeOnly, int start, int limit) {
+                return normalize("{\"partserviceresult\":{\"parts\":["
                         + "{\"arwPartNum\":{\"name\":\"DEADPART\"},"
                         + " \"invOrgs\":[{\"status\":\"Nvr.Active\",\"avail\":{\"totohQty\":0}}]},"
                         + "{\"arwPartNum\":{\"name\":\"GOODPART\"},"
                         + " \"invOrgs\":[{\"status\":\"Active\",\"avail\":{\"totohQty\":500}}]}"
-                        + "]}}";
+                        + "]}}");
             }
             @Override public Map<String, Object> health() { return Map.of(); }
         };
@@ -143,11 +159,12 @@ class RecommendationServiceImplTest {
     @Test
     void flagsFieldProvenPartsFromPos() {
         PartSearchService live = new PartSearchService() {
-            @Override public String search(String q, String supplier, boolean dw) {
-                return "{\"partserviceresult\":{\"parts\":[{"
+            @Override public PartSearchResponse search(String q, String manufacturer,
+                        boolean inStockOnly, boolean activeOnly, int start, int limit) {
+                return normalize("{\"partserviceresult\":{\"parts\":[{"
                         + "\"arwPartNum\":{\"name\":\"LM317T\"},"
                         + "\"mfr\":{\"name\":\"STMicroelectronics\"},"
-                        + "\"invOrgs\":[{\"status\":\"Active\",\"avail\":{\"totohQty\":1200}}]}]}}";
+                        + "\"invOrgs\":[{\"status\":\"Active\",\"avail\":{\"totohQty\":1200}}]}]}}");
             }
             @Override public Map<String, Object> health() { return Map.of(); }
         };

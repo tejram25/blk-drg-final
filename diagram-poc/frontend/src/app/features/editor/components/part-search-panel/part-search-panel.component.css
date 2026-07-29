@@ -156,6 +156,7 @@
   color: var(--accent-ink); background: var(--accent-soft); border-radius: 999px; padding: 2px 7px;
 }
 .ps-risk { flex: none; font-size: 15px; width: 15px; height: 15px; color: var(--danger); }
+.ps-risk.warn { color: var(--warn); }
 .ps-supp { font-size: 11.5px; color: var(--muted); }
 .ps-desc {
   font-size: 11.5px; color: var(--faint); line-height: 1.35;
@@ -174,6 +175,7 @@
 .ps-chip mat-icon { font-size: 12px; width: 12px; height: 12px; opacity: .8; }
 .ps-chip.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 15%, transparent); font-weight: 600; }
 .ps-chip.bad { color: var(--danger); background: color-mix(in srgb, var(--danger) 16%, transparent); font-weight: 600; }
+.ps-chip.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 18%, transparent); font-weight: 600; }
 .ps-chip.neutral { color: var(--muted); }
 .ps-chip.stock { color: var(--accent-ink); background: var(--accent-soft); }
 .ps-chip.stock.zero { color: var(--muted); background: var(--panel-2); }
@@ -259,6 +261,8 @@
 .pd-stat .v em { font-style: normal; font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 1px; }
 .pd-stat .v.zero { color: var(--muted); }
 .pd-stat .s { font-size: 11px; color: var(--muted); }
+/* Supplier-side figure standing in for absent Arrow stock. */
+.pd-stat .s.alt { color: var(--accent-ink); font-weight: 600; }
 
 /* sections */
 .pd-sec { margin-top: 26px; }

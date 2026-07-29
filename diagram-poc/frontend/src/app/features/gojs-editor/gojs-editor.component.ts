@@ -2177,6 +2177,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (/nrnd|not recommended|eol|end of life|obsolete|discontinued|last time buy|last-time-buy|inactive/.test(status)) {
       return 'risk';
     }
+    // Constrained supply is a schedule risk even when the lifecycle is Active.
+    const alloc = String(part?.sourcing?.allocation ?? part?.invOrgs?.[0]?.suppAlloc ?? '').trim().toUpperCase();
+    if (alloc && alloc !== 'NONE') return 'risk';
+
+    const pcn = part?.sourcing?.changeNotice ?? /^(y|yes)$/i.test(String(part?.invOrgs?.[0]?.pcn?.ind ?? ''));
+    if (pcn) return 'warn';
     const leadRaw = part?.leadTime?.arwLT ?? part?.leadTime;
     const weeks = Number(String(leadRaw ?? '').replace(/[^\d.]/g, ''));
     if (Number.isFinite(weeks) && weeks >= 12) return 'warn';
@@ -2201,9 +2207,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       if (/EOL|END OF LIFE/.test(status)) return 'EOL';
       if (/OBSOLETE/.test(status)) return 'OBSOLETE';
       if (/LAST TIME BUY|LAST-TIME-BUY/.test(status)) return 'LTB';
+      const alloc = String(part?.sourcing?.allocation ?? part?.invOrgs?.[0]?.suppAlloc ?? '').trim().toUpperCase();
+      if (alloc && alloc !== 'NONE') return 'ALLOCATED';
       return 'EOL';
     }
     if (lvl === 'warn') {
+      const pcn = part?.sourcing?.changeNotice ?? /^(y|yes)$/i.test(String(part?.invOrgs?.[0]?.pcn?.ind ?? ''));
+      if (pcn) return 'PCN';
       const leadRaw = part?.leadTime?.arwLT ?? part?.leadTime;
       const weeks = Number(String(leadRaw ?? '').replace(/[^\d.]/g, ''));
       return Number.isFinite(weeks) && weeks > 0 ? `${weeks} wk lead` : 'Long lead';

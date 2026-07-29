@@ -8,6 +8,7 @@ import com.example.diagram.web.dto.PartPackaging;
 import com.example.diagram.web.dto.PartPriceBreak;
 import com.example.diagram.web.dto.PartPricing;
 import com.example.diagram.web.dto.PartSearchResponse;
+import com.example.diagram.web.dto.PartSourcing;
 import com.example.diagram.web.dto.PartStock;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Component;
@@ -49,10 +50,18 @@ public class PartSearchNormalizer {
 
         // Preserve upstream relevance order while grouping.
         Map<String, List<JsonNode>> byItem = new LinkedHashMap<>();
+        int row1 = 0;
         for (JsonNode row : rows) {
-            String key = text(row, "itemId");
-            if (key.isEmpty()) key = text(row, "partKey");
-            if (key.isEmpty()) key = text(row, "docid");
+            // Grouping identity. The part number is part of the chain because a
+            // row missing every id must not be merged with another one that is
+            // also missing them — that would silently collapse unrelated parts
+            // into one. The positional key is the last resort for the same reason.
+            String key = firstNonBlank(
+                    text(row, "itemId"), text(row, "partKey"), text(row, "docid"),
+                    row.path("arwPartNum").path("name").asText(""),
+                    row.path("suppPartNum").path("name").asText(""),
+                    "row-" + row1);
+            row1++;
             byItem.computeIfAbsent(key, k -> new ArrayList<>()).add(row);
         }
 
@@ -81,6 +90,7 @@ public class PartSearchNormalizer {
 
         List<PartLocation> locations = new ArrayList<>();
         long totalOnHand = 0;
+        long freeOnHand = 0;
         long soonestQty = 0;
         String soonestDate = "";
         int inStock = 0;
@@ -91,6 +101,7 @@ public class PartSearchNormalizer {
                 JsonNode avail = org.path("avail");
                 long onHand = avail.path("totohQty").asLong(0);
                 totalOnHand += onHand;
+                freeOnHand += avail.path("FOHQty").asLong(0);
                 if (onHand > 0) inStock++;
 
                 String nextDate = text(avail, "nextDelivery");
@@ -134,14 +145,16 @@ public class PartSearchNormalizer {
                 url(first, "Image Large", "Image Small"),
                 url(first, "Datasheet"),
                 leadTime(first.path("leadTime")),
-                new PartStock(totalOnHand, soonestQty, soonestDate, locations.size(), inStock),
+                new PartStock(totalOnHand, soonestQty, soonestDate, locations.size(), inStock, freeOnHand),
                 pricing(bestOrg),
                 packaging(bestOrg),
                 compliance(first, bestOrg),
                 locations,
+                sourcing(bestOrg),
                 locations.stream().anyMatch(PartLocation::designWinEligible),
                 "Y".equalsIgnoreCase(text(first, "xrefInd")),
                 strings(first.path("xrefTypes")),
+                strings(first.path("relationshipTypes")),
                 first.path("score").asDouble(0));
     }
 
@@ -166,7 +179,34 @@ public class PartSearchNormalizer {
     }
 
     private PartLeadTime leadTime(JsonNode lt) {
-        return new PartLeadTime(text(lt, "arwLT"), text(lt, "suppLT"), text(lt, "suppLTDt"));
+        return new PartLeadTime(text(lt, "arwLT"), text(lt, "suppLT"), text(lt, "suppLTDt"),
+                lt.path("suppAvail").asLong(0), text(lt, "factStkDate"));
+    }
+
+    /**
+     * Sourcing signals from the best-ranked organisation.
+     *
+     * <p>Only flags an engineer or buyer acts on. The upstream also returns
+     * Arrow's cost basis and internal win scores in the same object; those are
+     * deliberately not read here so they cannot reach the browser.
+     */
+    private PartSourcing sourcing(JsonNode org) {
+        return new PartSourcing(
+                text(org, "suppAlloc"),
+                yes(org, "franchised"),
+                yes(org.path("pcn"), "ind"),
+                yes(org.path("ncnr"), "custContractReq"),
+                yes(org, "soleSrc"),
+                yes(org, "bkordind"),
+                yes(org, "militarySpec"),
+                yes(org, "ftzEnabled"),
+                text(org, "partClass"));
+    }
+
+    /** The upstream spells booleans "Y"/"N" in some fields and "Yes"/"No" in others. */
+    private static boolean yes(JsonNode node, String field) {
+        String v = text(node, field);
+        return "Y".equalsIgnoreCase(v) || "YES".equalsIgnoreCase(v);
     }
 
     private PartPricing pricing(JsonNode org) {
@@ -183,7 +223,7 @@ public class PartSearchNormalizer {
         return new PartPackaging(
                 text(org, "pkg"), text(org, "pkgQty"),
                 org.path("minOrdQty").asInt(0), org.path("multOrdQty").asInt(0),
-                text(org, "primaryUOM"));
+                text(org, "primaryUOM"), text(org, "pkgStyle"));
     }
 
     private PartCompliance compliance(JsonNode part, JsonNode org) {

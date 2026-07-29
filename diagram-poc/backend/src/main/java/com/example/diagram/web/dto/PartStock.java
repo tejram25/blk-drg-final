@@ -8,10 +8,12 @@ package com.example.diagram.web.dto;
  * @param nextDelivery     date of the soonest incoming delivery
  * @param locationCount    how many locations carry the part
  * @param inStockLocations how many of those currently have stock
+ * @param freeOnHand       stock free to commit (totalOnHand includes reserved)
  */
 public record PartStock(
         long totalOnHand,
         long nextQty,
         String nextDelivery,
         int locationCount,
-        int inStockLocations) {}
+        int inStockLocations,
+        long freeOnHand) {}

@@ -24,9 +24,11 @@ import java.util.List;
  * @param status             best lifecycle status across locations (Active wins)
  * @param imageUrl           product image, when the catalogue has one
  * @param datasheetUrl       datasheet PDF, when the catalogue has one
+ * @param sourcing           supply-risk signals (allocation, PCN, franchised, NCNR …)
  * @param designWinEligible  true when any location is design-win eligible
  * @param crossReferenced    true when alternates/equivalents exist
  * @param crossRefTypes      the kinds of alternate available
+ * @param relatedTypes       related-part relationships, e.g. "Marketing Equivalent"
  * @param score              upstream relevance score
  */
 public record CatalogPart(
@@ -49,7 +51,9 @@ public record CatalogPart(
         PartPackaging packaging,
         PartCompliance compliance,
         List<PartLocation> locations,
+        PartSourcing sourcing,
         boolean designWinEligible,
         boolean crossReferenced,
         List<String> crossRefTypes,
+        List<String> relatedTypes,
         double score) {}

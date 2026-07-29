@@ -4,7 +4,15 @@ import { Observable } from 'rxjs';
 import { apiBaseUrl } from '../app-config';
 
 /** Lead times as the catalogue reports them, in weeks. */
-export interface PartLeadTime { arrowWeeks: string; supplierWeeks: string; supplierDate: string; }
+export interface PartLeadTime {
+  arrowWeeks: string;
+  supplierWeeks: string;
+  supplierDate: string;
+  /** Stock the supplier holds — the answer when Arrow's own on-hand is zero. */
+  supplierAvailable: number;
+  /** Date the factory expects stock. */
+  factoryStockDate: string;
+}
 
 /** Availability rolled up across every stocking location. */
 export interface PartStock {
@@ -13,6 +21,28 @@ export interface PartStock {
   nextDelivery: string;
   locationCount: number;
   inStockLocations: number;
+  /** Stock free to commit; totalOnHand includes reserved quantity. */
+  freeOnHand: number;
+}
+
+/**
+ * Supply-risk signals. A part can be Active with stock and still be a schedule
+ * risk — on allocation, or carrying an open change notice.
+ *
+ * The upstream returns Arrow's cost basis and internal win scores alongside
+ * these; the backend deliberately does not forward them.
+ */
+export interface PartSourcing {
+  /** "NONE" when unconstrained; anything else means allocated supply. */
+  allocation: string;
+  franchised: boolean;
+  changeNotice: boolean;
+  ncnr: boolean;
+  soleSource: boolean;
+  backorderable: boolean;
+  militarySpec: boolean;
+  ftzEnabled: boolean;
+  partClass: string;
 }
 
 export interface PartPriceBreak { price: string; minQty: string; maxQty: string; }
@@ -21,6 +51,8 @@ export interface PartPricing { currency: string; breaks: PartPriceBreak[]; unitP
 export interface PartPackaging {
   packageType: string; packageQty: string;
   minOrderQty: number; multipleQty: number; uom: string;
+  /** Physical carrier ("TUBE"), distinct from the pack code ("RAIL"). */
+  packageStyle: string;
 }
 
 /** Regulatory and trade attributes — the late-stage design blockers. */
@@ -68,9 +100,12 @@ export interface CatalogPart {
   packaging: PartPackaging;
   compliance: PartCompliance;
   locations: PartLocation[];
+  sourcing: PartSourcing;
   designWinEligible: boolean;
   crossReferenced: boolean;
   crossRefTypes: string[];
+  /** Related-part relationships, e.g. "Marketing Equivalent". */
+  relatedTypes: string[];
   score: number;
 }
 
@@ -135,13 +170,19 @@ export function mergeParts(existing: CatalogPart[], incoming: CatalogPart[]): Ca
     }
     const known = new Set(seen.locations.map((l) => l.id));
     const locations = [...seen.locations, ...part.locations.filter((l) => !known.has(l.id))];
-    byId.set(part.id, { ...seen, locations, stock: rollUp(locations) });
+    byId.set(part.id, { ...seen, locations, stock: rollUp(seen.stock, locations) });
   }
   return [...byId.values()];
 }
 
-/** Recompute the stock roll-up from a part's locations. */
-function rollUp(locations: PartLocation[]): PartStock {
+/**
+ * Recompute the stock roll-up from a part's locations.
+ *
+ * `freeOnHand` is carried over rather than recomputed: it is summed server-side
+ * from a per-location field this model does not carry, so recomputing here
+ * would zero it.
+ */
+function rollUp(previous: PartStock, locations: PartLocation[]): PartStock {
   let totalOnHand = 0;
   let inStockLocations = 0;
   let nextQty = 0;
@@ -154,7 +195,11 @@ function rollUp(locations: PartLocation[]): PartStock {
       nextQty = l.nextQty;
     }
   }
-  return { totalOnHand, nextQty, nextDelivery, locationCount: locations.length, inStockLocations };
+  return {
+    totalOnHand, nextQty, nextDelivery,
+    locationCount: locations.length, inStockLocations,
+    freeOnHand: previous.freeOnHand,
+  };
 }
 
 /** Compare "22-APR-2026" dates by value; lexical order would be wrong. */

@@ -114,6 +114,11 @@
               <span class="ps-pn">{{ hit.partNumber }}</span>
               @if (hit.exactMatch) { <span class="ps-exact">exact</span> }
               @if (atRisk(hit)) { <mat-icon class="ps-risk" matTooltip="Lifecycle risk">warning</mat-icon> }
+              @if (supplyRisk(hit)) {
+                <mat-icon class="ps-risk warn" matTooltip="Supply risk — allocation, PCN or sole source">
+                  inventory
+                </mat-icon>
+              }
             </span>
             <span class="ps-supp">{{ hit.manufacturer || hit.supplier }}</span>
             @if (hit.description) { <span class="ps-desc">{{ hit.description }}</span> }
@@ -162,9 +167,29 @@
               @if (selected.status) {
                 <span class="ps-chip" [class]="statusClass(selected.status)">{{ selected.status }}</span>
               }
+              @if (allocated(selected)) {
+                <span class="ps-chip bad" matTooltip="Supplier supply is constrained">
+                  <mat-icon>warning</mat-icon>On allocation: {{ selected.sourcing.allocation }}
+                </span>
+              }
+              @if (selected.sourcing.changeNotice) {
+                <span class="ps-chip warn" matTooltip="An open product change notice exists">
+                  <mat-icon>campaign</mat-icon>Change notice
+                </span>
+              }
+              @if (selected.sourcing.ncnr) {
+                <span class="ps-chip warn" matTooltip="Non-cancellable, non-returnable once ordered">NCNR</span>
+              }
+              @if (selected.sourcing.soleSource) { <span class="ps-chip warn">Sole source</span> }
+              @if (selected.sourcing.franchised) {
+                <span class="ps-chip ok" matTooltip="Arrow is an authorised distributor for this part">
+                  <mat-icon>verified</mat-icon>Franchised
+                </span>
+              }
               @if (selected.designWinEligible) { <span class="ps-chip ok">Design-win eligible</span> }
               @if (selected.crossReferenced) { <span class="ps-chip">Cross-referenced</span> }
               @if (selected.compliance.svhc) { <span class="ps-chip bad">SVHC flagged</span> }
+              @if (selected.sourcing.militarySpec) { <span class="ps-chip">Mil-spec</span> }
             </div>
           </div>
         </div>
@@ -200,7 +225,13 @@
           <div class="pd-stat">
             <span class="k">In stock</span>
             <span class="v" [class.zero]="!selected.stock.totalOnHand">{{ selected.stock.totalOnHand | number }}</span>
-            <span class="s">{{ selected.stock.inStockLocations }}/{{ selected.stock.locationCount }} sites</span>
+            <!-- On-hand alone reads as "unobtainable" when Arrow holds none but
+                 the supplier does, which is the common case for a long-lead part. -->
+            @if (!selected.stock.totalOnHand && selected.leadTime.supplierAvailable) {
+              <span class="s alt">{{ selected.leadTime.supplierAvailable | number }} at supplier</span>
+            } @else {
+              <span class="s">{{ selected.stock.inStockLocations }}/{{ selected.stock.locationCount }} sites</span>
+            }
           </div>
           <div class="pd-stat">
             <span class="k">Unit price</span>
@@ -242,6 +273,19 @@
             <p class="pd-note">
               <mat-icon>local_shipping</mat-icon>
               Next delivery {{ selected.stock.nextQty | number }} on {{ selected.stock.nextDelivery }}
+            </p>
+          }
+          @if (selected.leadTime.supplierAvailable) {
+            <p class="pd-note">
+              <mat-icon>factory</mat-icon>
+              {{ selected.leadTime.supplierAvailable | number }} available at the supplier
+              @if (selected.leadTime.factoryStockDate) { · factory stock {{ selected.leadTime.factoryStockDate }} }
+            </p>
+          }
+          @if (selected.stock.freeOnHand && selected.stock.freeOnHand !== selected.stock.totalOnHand) {
+            <p class="pd-note">
+              <mat-icon>lock_open</mat-icon>
+              {{ selected.stock.freeOnHand | number }} free to commit of {{ selected.stock.totalOnHand | number }} on hand
             </p>
           }
           @if (selected.locations.length) {
@@ -298,10 +342,28 @@
             <h4>Packaging</h4>
             <dl class="pd-dl">
               <dt>Package</dt><dd>{{ selected.packaging.packageType || '—' }}</dd>
+              <dt>Carrier</dt><dd>{{ selected.packaging.packageStyle || '—' }}</dd>
               <dt>Package qty</dt><dd>{{ selected.packaging.packageQty || '—' }}</dd>
               <dt>Min order</dt><dd>{{ selected.packaging.minOrderQty | number }}</dd>
               <dt>Multiple</dt><dd>{{ selected.packaging.multipleQty | number }}</dd>
               <dt>UOM</dt><dd>{{ selected.packaging.uom || '—' }}</dd>
+            </dl>
+          </section>
+
+          <section class="pd-sec">
+            <h4>Sourcing &amp; risk</h4>
+            <dl class="pd-dl">
+              <dt>Allocation</dt>
+              <dd [class.risk]="allocated(selected)">{{ selected.sourcing.allocation || '—' }}</dd>
+              <dt>Franchised</dt><dd>{{ selected.sourcing.franchised ? 'Yes — authorised' : 'No' }}</dd>
+              <dt>Change notice</dt>
+              <dd [class.risk]="selected.sourcing.changeNotice">{{ selected.sourcing.changeNotice ? 'Open PCN' : 'None' }}</dd>
+              <dt>NCNR</dt><dd>{{ selected.sourcing.ncnr ? 'Yes' : 'No' }}</dd>
+              <dt>Sole source</dt><dd>{{ selected.sourcing.soleSource ? 'Yes' : 'No' }}</dd>
+              <dt>Backorderable</dt><dd>{{ selected.sourcing.backorderable ? 'Yes' : 'No' }}</dd>
+              @if (selected.relatedTypes.length) {
+                <dt>Related</dt><dd>{{ selected.relatedTypes.join(', ') }}</dd>
+              }
             </dl>
           </section>
 

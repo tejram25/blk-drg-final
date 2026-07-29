@@ -1,6 +1,7 @@
 package com.example.diagram.service.impl;
 
 import com.example.diagram.config.ArrowProperties;
+import com.example.diagram.service.PartSearchNormalizer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,18 +23,19 @@ class ArrowPartSearchServiceTest {
             props.setClientId("id");
             props.setClientSecret("secret");
         }
-        return new ArrowPartSearchService(props, new ArrowApiClient(props, new ObjectMapper()));
+        return new ArrowPartSearchService(props, new ArrowApiClient(props, new ObjectMapper()),
+                new PartSearchNormalizer(), new ObjectMapper());
     }
 
     @Test
     void search_rejectsBlankQuery() {
-        assertThrows(IllegalArgumentException.class, () -> service(true).search("  ", null, false));
+        assertThrows(IllegalArgumentException.class, () -> service(true).search("  ", null, false, false, 0, 25));
     }
 
     @Test
     void search_returns503WhenNotConfigured() {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> service(false).search("INA250", null, false));
+                () -> service(false).search("INA250", null, false, false, 0, 25));
         assertThat(ex.getStatusCode().value()).isEqualTo(503);
     }
 

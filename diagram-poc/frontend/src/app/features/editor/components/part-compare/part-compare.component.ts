@@ -51,9 +51,28 @@ export class PartCompareComponent {
     { label: 'In stock', value: (p) => this.num(p.stock.totalOnHand),
       score: (p) => p.stock.totalOnHand },
     { label: 'Stocking sites', value: (p) => `${p.stock.inStockLocations}/${p.stock.locationCount}` },
+    { label: 'At supplier', value: (p) => p.leadTime.supplierAvailable
+        ? this.num(p.leadTime.supplierAvailable) + (p.leadTime.factoryStockDate ? ` · ${p.leadTime.factoryStockDate}` : '')
+        : '—',
+      score: (p) => p.leadTime.supplierAvailable || null },
     { label: 'Lead time', value: (p) => p.leadTime.arrowWeeks ? `${p.leadTime.arrowWeeks} wk` : '—',
       // shorter lead is better → negate; blank never wins
       score: (p) => p.leadTime.arrowWeeks ? -Number(p.leadTime.arrowWeeks) : null },
+    { label: 'Allocation', value: (p) => p.sourcing?.allocation || '—',
+      tone: (p) => this.allocated(p) ? 'risk' : 'ok',
+      score: (p) => this.allocated(p) ? 0 : 1 },
+    { label: 'Change notice', value: (p) => p.sourcing?.changeNotice ? 'Open PCN' : 'None',
+      tone: (p) => p.sourcing?.changeNotice ? 'warn' : 'ok',
+      score: (p) => p.sourcing?.changeNotice ? 0 : 1 },
+    { label: 'Sole source', value: (p) => p.sourcing?.soleSource ? 'Yes' : 'No',
+      tone: (p) => p.sourcing?.soleSource ? 'warn' : 'ok',
+      score: (p) => p.sourcing?.soleSource ? 0 : 1 },
+    { label: 'NCNR', value: (p) => p.sourcing?.ncnr ? 'Yes' : 'No',
+      tone: (p) => p.sourcing?.ncnr ? 'warn' : 'ok',
+      score: (p) => p.sourcing?.ncnr ? 0 : 1 },
+    { label: 'Franchised', value: (p) => p.sourcing?.franchised ? 'Authorised' : 'No',
+      tone: (p) => p.sourcing?.franchised ? 'ok' : 'warn',
+      score: (p) => p.sourcing?.franchised ? 1 : 0 },
     { label: 'Unit price', value: (p) => formatPrice(p.pricing.unitPrice, p.pricing.currency),
       score: (p) => { const n = Number(p.pricing.unitPrice); return n > 0 ? -n : null; } },
     { label: 'Price breaks', value: (p) => p.pricing.breaks.length ? `${p.pricing.breaks.length}` : '—' },
@@ -84,6 +103,12 @@ export class PartCompareComponent {
   }
 
   tone(p: CatalogPart, row: CompareRow): string { return row.tone ? row.tone(p) : ''; }
+
+  /** "NONE" means unconstrained, so only a different non-empty value is allocation. */
+  private allocated(p: CatalogPart): boolean {
+    const a = (p.sourcing?.allocation || '').trim().toUpperCase();
+    return !!a && a !== 'NONE';
+  }
   private num(n: number): string {
     return n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : `${n}`;
   }

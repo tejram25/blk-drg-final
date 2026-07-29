@@ -252,6 +252,19 @@ export class PartSearchPanelComponent implements AfterViewInit {
   /** True when a part carries a lifecycle risk worth flagging in the list. */
   atRisk(p: CatalogPart): boolean { return statusTone(p.status) === 'risk'; }
 
+  /**
+   * Supply is constrained. The upstream writes "NONE" for unconstrained, so an
+   * absent value is treated as unconstrained rather than as allocation.
+   */
+  allocated(p: CatalogPart): boolean {
+    const a = (p.sourcing?.allocation || '').trim().toUpperCase();
+    return !!a && a !== 'NONE';
+  }
+  /** Any supply-risk signal, for the one-glance flag on a result row. */
+  supplyRisk(p: CatalogPart): boolean {
+    return this.allocated(p) || !!p.sourcing?.changeNotice || !!p.sourcing?.soleSource;
+  }
+
   price(p: CatalogPart): string { return formatPrice(p.pricing.unitPrice, p.pricing.currency); }
   priceOf(value: string, currency: string): string { return formatPrice(value, currency); }
 
@@ -278,12 +291,20 @@ export class PartSearchPanelComponent implements AfterViewInit {
       mfr: { name: p.manufacturer },
       supp: { name: p.supplier },
       icc: { name: p.category, tree: p.categoryPath.join('|') },
-      leadTime: { arwLT: p.leadTime.arrowWeeks, suppLT: p.leadTime.supplierWeeks },
+      leadTime: {
+        arwLT: p.leadTime.arrowWeeks, suppLT: p.leadTime.supplierWeeks,
+        suppAvail: p.leadTime.supplierAvailable, factStkDate: p.leadTime.factoryStockDate,
+      },
       invOrgs: [{
         desc: p.description,
         status: p.status,
         minOrdQty: p.packaging.minOrderQty,
         pkg: p.packaging.packageType,
+        // Mirrored into the catalogue shape too, so a saved diagram carries the
+        // supply signals in the same place every other reader expects them.
+        suppAlloc: p.sourcing?.allocation ?? '',
+        pcn: { ind: p.sourcing?.changeNotice ? 'Yes' : 'No' },
+        soleSrc: p.sourcing?.soleSource ? 'Yes' : 'No',
         avail: { totohQty: p.stock.totalOnHand, nextDelivery: p.stock.nextDelivery },
         webPrice: { currency: p.pricing.currency, resalelist: p.pricing.breaks },
         coo: p.compliance.countryOfOrigin,

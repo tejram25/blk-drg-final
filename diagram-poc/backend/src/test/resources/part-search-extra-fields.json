@@ -1,0 +1,186 @@
+{
+    "partserviceresult": {
+        "response": {
+            "success": true,
+            "errorCode": "200",
+            "message": "ok"
+        },
+        "nextStart": 0,
+        "nextLimit": 25,
+        "exactMatchFound": "Y",
+        "numItems": 1,
+        "totalItems": 1,
+        "matchReason": {
+            "code": "1",
+            "description": "Srchtxt Match"
+        },
+        "parts": [
+            {
+                "docid": "1790_06442402",
+                "itemId": 6442402,
+                "partKey": "140565732",
+                "arwPartNum": {
+                    "isExactMatch": true,
+                    "name": "LTC1732EMS-4.2#PBF"
+                },
+                "dualPartNum": {
+                    "isExactMatch": false
+                },
+                "suppPartNum": {
+                    "isExactMatch": true,
+                    "name": "LTC1732EMS-4.2#PBF"
+                },
+                "supp": {
+                    "cd": "Analog Devices|ADI",
+                    "name": "Analog Devices"
+                },
+                "mfr": {
+                    "cd": "ADI",
+                    "name": "Analog Devices"
+                },
+                "icc": {
+                    "id": "2039|2121|2122",
+                    "tree": "Semiconductor - IC|Power Management|Battery Management",
+                    "name": "Battery Management"
+                },
+                "urls": [
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs/2017/5/3/8/20/1/634/adi_/manual/msop-10.jpg",
+                        "type": "Image Small"
+                    },
+                    {
+                        "URL": "https://download.siliconexpert.com/pdfs/2017/5/3/7/51/45/809/adi_/manual/msop-10.jpg",
+                        "type": "Image Large"
+                    }
+                ],
+                "leadTime": {
+                    "arwLT": "10",
+                    "suppLT": "10",
+                    "suppLTDt": "24-Jul-2026",
+                    "suppAvail": 20050,
+                    "factStkDate": "23-Jul-2026"
+                },
+                "seg2": "ADI",
+                "sspOU": "ALL",
+                "datasrc": "EBS",
+                "eccnus": "EAR99",
+                "eccnwass": "NLR",
+                "billToId": "ALL",
+                "specialCond": "ALL",
+                "spqoverride": "N",
+                "minordqtyovrd": "N",
+                "EnvData": {
+                    "complianceList": [
+                        {
+                            "type": "CHINA ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        },
+                        {
+                            "type": "EU ROHS",
+                            "desc": "",
+                            "cd": "RHC"
+                        }
+                    ]
+                },
+                "relationshipInd": "Y",
+                "relationshipTypes": [
+                    "Same Supplier Packaging",
+                    "Marketing Equivalent"
+                ],
+                "xrefInd": "Y",
+                "xrefTypes": [
+                    "Part Rename",
+                    "Same Supplier Packaging"
+                ],
+                "itemType": "COMPONENTS",
+                "invOrgs": [
+                    {
+                        "id": "1790",
+                        "cd": "V36",
+                        "type": "PDC",
+                        "ou": "USA_09_OU",
+                        "IODesc": "AC-PDC-AEI-USD-ALLIANCE-RENO-US",
+                        "confCert": "0",
+                        "pref": "Yes",
+                        "dwData": {
+                            "dwEligible": "N"
+                        },
+                        "partClass": "D",
+                        "desc": "Linear Battery Charger Controller Li-Ion/Li-Pol/NiCd/NiMH 2000mA 4.2V 10-Pin MSOP Tube",
+                        "status": "Active",
+                        "minOrdQty": 150,
+                        "multOrdQty": 50,
+                        "ncnr": {
+                            "custContractReq": "No"
+                        },
+                        "avail": {
+                            "ACFOHQty": 0,
+                            "FOHQty": 0,
+                            "nextQty": 0,
+                            "totohQty": 0,
+                            "aimQty": [],
+                            "digitalQty": "EU_0~"
+                        },
+                        "refBussCost": "3.16224",
+                        "refBussCostCur": "USD",
+                        "primaryUOM": "EACH",
+                        "webPrice": {
+                            "currency": "USD",
+                            "resalelist": [
+                                {
+                                    "price": "5.279199",
+                                    "minQty": "0",
+                                    "maxQty": "50"
+                                },
+                                {
+                                    "price": "4.511041",
+                                    "minQty": "50",
+                                    "maxQty": "250"
+                                },
+                                {
+                                    "price": "3.967679",
+                                    "minQty": "250",
+                                    "maxQty": "5000"
+                                }
+                            ]
+                        },
+                        "pkg": "RAIL",
+                        "pkgStyle": "TUBE",
+                        "pkgQty": "50",
+                        "pcn": {
+                            "ind": "Yes"
+                        },
+                        "suppAlloc": "NONE",
+                        "dropShip": "No",
+                        "bomInd": "N",
+                        "priceProt": "Yes",
+                        "soleSrc": "No",
+                        "suppCanWin": "7",
+                        "ftzEnabled": "N",
+                        "shipDebit": "Yes",
+                        "cmdty": "No",
+                        "franchised": "Y",
+                        "bkordind": "Y",
+                        "monoprc": "Yes",
+                        "hts": "8542.31.00.30",
+                        "htsFlag": "N",
+                        "htsImportCode": "8542.31.00.30",
+                        "bestBussCost": "2.74802",
+                        "bestBussCostCurr": "USD",
+                        "salesCanWin": "8",
+                        "costs": [],
+                        "militarySpec": "N",
+                        "nbi": "No"
+                    }
+                ],
+                "svhc": {
+                    "svhcInclude": "NO",
+                    "svhcThreshold": "NO"
+                },
+                "webEnabled": "Y",
+                "score": "207009.0"
+            }
+        ]
+    }
+}

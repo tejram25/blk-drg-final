@@ -46,7 +46,7 @@
             "multOrdQty": 1,
             "avail": {
               "ACFOHQty": 0,
-              "FOHQty": 0,
+              "FOHQty": 9600,
               "nextDelivery": "22-APR-2026",
               "nextQty": 3000,
               "totohQty": 12000
@@ -71,7 +71,20 @@
             "pkgQty": "1",
             "coo": "CN",
             "bomInd": "Y",
-            "hts": "85411000"
+            "hts": "85411000",
+            "suppAlloc": "CONSTRAINED",
+            "pcn": {
+              "ind": "Yes"
+            },
+            "ncnr": {
+              "custContractReq": "Yes"
+            },
+            "soleSrc": "Yes",
+            "franchised": "Y",
+            "bkordind": "Y",
+            "militarySpec": "N",
+            "ftzEnabled": "N",
+            "pkgStyle": "TUBE"
           }
         ],
         "paramData": [
@@ -199,7 +212,7 @@
             "multOrdQty": 1,
             "avail": {
               "ACFOHQty": 0,
-              "FOHQty": 0,
+              "FOHQty": 2720,
               "nextDelivery": "22-APR-2026",
               "nextQty": 850,
               "totohQty": 3400
@@ -224,7 +237,20 @@
             "pkgQty": "1",
             "coo": "CN",
             "bomInd": "Y",
-            "hts": "85411000"
+            "hts": "85411000",
+            "suppAlloc": "NONE",
+            "pcn": {
+              "ind": "Yes"
+            },
+            "ncnr": {
+              "custContractReq": "No"
+            },
+            "soleSrc": "No",
+            "franchised": "Y",
+            "bkordind": "Y",
+            "militarySpec": "N",
+            "ftzEnabled": "N",
+            "pkgStyle": "TUBE"
           }
         ],
         "paramData": [
@@ -342,7 +368,7 @@
             "multOrdQty": 1,
             "avail": {
               "ACFOHQty": 0,
-              "FOHQty": 0,
+              "FOHQty": 68000,
               "nextDelivery": "22-APR-2026",
               "nextQty": 21250,
               "totohQty": 85000
@@ -367,7 +393,20 @@
             "pkgQty": "1",
             "coo": "MY",
             "bomInd": "Y",
-            "hts": "85411000"
+            "hts": "85411000",
+            "suppAlloc": "NONE",
+            "pcn": {
+              "ind": "No"
+            },
+            "ncnr": {
+              "custContractReq": "No"
+            },
+            "soleSrc": "No",
+            "franchised": "Y",
+            "bkordind": "Y",
+            "militarySpec": "N",
+            "ftzEnabled": "N",
+            "pkgStyle": "TUBE"
           }
         ],
         "paramData": [
@@ -486,9 +525,8 @@
             "avail": {
               "ACFOHQty": 0,
               "FOHQty": 0,
-              "nextDelivery": "22-APR-2026",
-              "nextQty": 6000,
-              "totohQty": 24000
+              "nextQty": 0,
+              "totohQty": 0
             },
             "primaryUOM": "EACH",
             "webPrice": {
@@ -510,7 +548,20 @@
             "pkgQty": "1",
             "coo": "CN",
             "bomInd": "Y",
-            "hts": "85411000"
+            "hts": "85411000",
+            "suppAlloc": "NONE",
+            "pcn": {
+              "ind": "No"
+            },
+            "ncnr": {
+              "custContractReq": "No"
+            },
+            "soleSrc": "No",
+            "franchised": "Y",
+            "bkordind": "Y",
+            "militarySpec": "N",
+            "ftzEnabled": "N",
+            "pkgStyle": "TUBE"
           }
         ],
         "paramData": [
@@ -544,7 +595,8 @@
           "arwLT": "16",
           "suppLT": "18",
           "suppLTDt": "10-Mar-2026",
-          "suppAvail": 0
+          "suppAvail": 18400,
+          "factStkDate": "23-Jul-2026"
         },
         "eccnus": "5A992",
         "eccnwass": "NLR",
@@ -624,7 +676,7 @@
             "multOrdQty": 4000,
             "avail": {
               "ACFOHQty": 0,
-              "FOHQty": 0,
+              "FOHQty": 400000,
               "nextDelivery": "22-APR-2026",
               "nextQty": 125000,
               "totohQty": 500000
@@ -649,7 +701,20 @@
             "pkgQty": "4000",
             "coo": "JP",
             "bomInd": "Y",
-            "hts": "85411000"
+            "hts": "85411000",
+            "suppAlloc": "NONE",
+            "pcn": {
+              "ind": "No"
+            },
+            "ncnr": {
+              "custContractReq": "No"
+            },
+            "soleSrc": "No",
+            "franchised": "Y",
+            "bkordind": "Y",
+            "militarySpec": "N",
+            "ftzEnabled": "N",
+            "pkgStyle": "TUBE"
           }
         ],
         "paramData": [
@@ -752,7 +817,7 @@
             "multOrdQty": 3000,
             "avail": {
               "ACFOHQty": 0,
-              "FOHQty": 0,
+              "FOHQty": 33600,
               "nextDelivery": "22-APR-2026",
               "nextQty": 10500,
               "totohQty": 42000
@@ -777,7 +842,20 @@
             "pkgQty": "3000",
             "coo": "CN",
             "bomInd": "Y",
-            "hts": "85411000"
+            "hts": "85411000",
+            "suppAlloc": "NONE",
+            "pcn": {
+              "ind": "No"
+            },
+            "ncnr": {
+              "custContractReq": "No"
+            },
+            "soleSrc": "No",
+            "franchised": "Y",
+            "bkordind": "Y",
+            "militarySpec": "N",
+            "ftzEnabled": "N",
+            "pkgStyle": "TUBE"
           }
         ],
         "paramData": [
