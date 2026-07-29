@@ -46,9 +46,58 @@ Everything else already defaults to the working configuration:
 | `arrow.search-path` | `ARROW_SEARCH_PATH` | `/eupartservice/search` |
 | `arrow.app-id` | `ARROW_APP_ID` | `gen` |
 | `arrow.search-limit` | `ARROW_SEARCH_LIMIT` | `25` |
+| `arrow.search-api` | `ARROW_SEARCH_API` | `PARTSERVICE` |
 
 So the minimum to go live is `ARROW_MOCK=false` plus the two credentials. Point
 `ARROW_SEARCH_PATH` at a different region's endpoint if needed.
+
+## Which search endpoint
+
+Two request contracts are supported. Both return the same
+`partserviceresult` body, so only the request differs — the normaliser and
+everything above it are unchanged either way.
+
+`PARTSERVICE` (default) is `/eupartservice/search`:
+
+```
+?srchtxt=…&render=json&appid=gen&start=0&limit=25
+```
+
+`ACPARTSERVICE` is the newer Workbench endpoint, `/acpartservice/search`. It
+drops `render`/`appid`, takes a warehouse list and sourcing switches, and pages
+by `page` as well as `start`:
+
+```
+?srchtxt=…&ioebs=V36,V72,…&source=Workbench&srchmode=EBS&whsetype=2
+&retWhseFilter=Y&ftzBoostFlag=Y&enableStcFlagFilter=N&limit=25&start=0&page=1
+```
+
+To use it:
+
+```bash
+export ARROW_SEARCH_API=ACPARTSERVICE
+export ARROW_SEARCH_PATH=/acpartservice/search
+export ARROW_INV_ORGS=V36,V72,V99,VM5,VM7,VM8,VN1,VN2,VN3,VN4,VN5,VN6,VN7,VN8,VS2,VS3,VS4,VS5,VS7,Z98,X10,VAG
+```
+
+| Property | Env var | Default | Sent as |
+|---|---|---|---|
+| `arrow.inv-orgs` | `ARROW_INV_ORGS` | *(empty)* | `ioebs` |
+| `arrow.source` | `ARROW_SOURCE` | `Workbench` | `source` |
+| `arrow.search-mode` | `ARROW_SEARCH_MODE` | `EBS` | `srchmode` |
+| `arrow.warehouse-type` | `ARROW_WAREHOUSE_TYPE` | `2` | `whsetype` |
+| `arrow.return-warehouse-filter` | `ARROW_RETURN_WAREHOUSE_FILTER` | `true` | `retWhseFilter` |
+| `arrow.ftz-boost` | `ARROW_FTZ_BOOST` | `true` | `ftzBoostFlag` |
+| `arrow.stc-flag-filter` | `ARROW_STC_FLAG_FILTER` | `false` | `enableStcFlagFilter` |
+
+The sample URL from the part-search team also carries ~25 empty parameters
+(`billto=`, `shipto=`, `custnum=`, `kanban=`, …). They are omitted rather than
+sent blank; if the endpoint turns out to require any of them present, add it to
+the builder in `ArrowPartSearchService.searchUrl`.
+
+Part numbers containing `#` (`LTC1732EMS-4.2#PBF`) are percent-encoded — left
+raw, the `#` would open a URI fragment and drop every parameter after it. Both
+contracts are covered by tests.
 
 ## Verifying
 

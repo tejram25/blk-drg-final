@@ -37,6 +37,35 @@ public class ArrowProperties {
     private String clientId;
     private String clientSecret;
 
+    /**
+     * Which search endpoint contract to speak.
+     *
+     * <p>{@code partservice} is the original {@code /eupartservice/search}
+     * ({@code srchtxt}, {@code render}, {@code appid}). {@code acpartservice} is
+     * the newer Workbench endpoint, which drops those and takes a warehouse
+     * filter and a set of sourcing switches instead. Both return the same
+     * {@code partserviceresult} body, so only the request differs.
+     */
+    private SearchApi searchApi = SearchApi.PARTSERVICE;
+
+    public enum SearchApi { PARTSERVICE, ACPARTSERVICE }
+
+    // ---- acpartservice request parameters -------------------------------
+    /** Inventory organisations to search, as the {@code ioebs} CSV. */
+    private String invOrgs = "";
+    /** Calling application, sent as {@code source}. */
+    private String source = "Workbench";
+    /** Search mode, sent as {@code srchmode}. */
+    private String searchMode = "EBS";
+    /** Warehouse type, sent as {@code whsetype}. */
+    private String warehouseType = "2";
+    /** Return the warehouse filter, sent as {@code retWhseFilter}. */
+    private boolean returnWarehouseFilter = true;
+    /** Boost foreign-trade-zone stock, sent as {@code ftzBoostFlag}. */
+    private boolean ftzBoost = true;
+    /** Sent as {@code enableStcFlagFilter}. */
+    private boolean stcFlagFilter = false;
+
     /** True only when both credentials are present, so we can fail fast otherwise. */
     public boolean isConfigured() {
         return clientId != null && !clientId.isBlank()
@@ -92,4 +121,28 @@ public class ArrowProperties {
 
     public String getClientSecret() { return clientSecret; }
     public void setClientSecret(String clientSecret) { this.clientSecret = clientSecret; }
+
+    public SearchApi getSearchApi() { return searchApi; }
+    public void setSearchApi(SearchApi searchApi) { this.searchApi = searchApi; }
+
+    public String getInvOrgs() { return invOrgs; }
+    public void setInvOrgs(String invOrgs) { this.invOrgs = invOrgs; }
+
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
+
+    public String getSearchMode() { return searchMode; }
+    public void setSearchMode(String searchMode) { this.searchMode = searchMode; }
+
+    public String getWarehouseType() { return warehouseType; }
+    public void setWarehouseType(String warehouseType) { this.warehouseType = warehouseType; }
+
+    public boolean isReturnWarehouseFilter() { return returnWarehouseFilter; }
+    public void setReturnWarehouseFilter(boolean returnWarehouseFilter) { this.returnWarehouseFilter = returnWarehouseFilter; }
+
+    public boolean isFtzBoost() { return ftzBoost; }
+    public void setFtzBoost(boolean ftzBoost) { this.ftzBoost = ftzBoost; }
+
+    public boolean isStcFlagFilter() { return stcFlagFilter; }
+    public void setStcFlagFilter(boolean stcFlagFilter) { this.stcFlagFilter = stcFlagFilter; }
 }

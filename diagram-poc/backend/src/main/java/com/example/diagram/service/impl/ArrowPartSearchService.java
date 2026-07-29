@@ -56,16 +56,10 @@ public class ArrowPartSearchService implements PartSearchService {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Parts search is currently unavailable. Please try again later.");
         }
-        UriComponentsBuilder url = UriComponentsBuilder.fromHttpUrl(props.searchUrl())
-                .queryParam("srchtxt", query)
-                .queryParam("render", "json")
-                .queryParam("appid", props.getAppId() == null || props.getAppId().isBlank()
-                        ? "gen" : props.getAppId())
-                .queryParam("start", Math.max(start, 0))
-                .queryParam("limit", limit > 0 ? limit : props.getSearchLimit());
         // The upstream filters by supplier, not manufacturer; manufacturer is
         // applied below against the normalised result.
-        String json = client.getJson(url.encode().build().toUriString());
+        String json = client.getJson(searchUrl(query, Math.max(start, 0),
+                limit > 0 ? limit : props.getSearchLimit()));
 
         PartSearchResponse response;
         try {
@@ -75,6 +69,43 @@ public class ArrowPartSearchService implements PartSearchService {
                     "Could not read the parts catalogue response.", ex);
         }
         return filter(response, manufacturer, inStockOnly, activeOnly);
+    }
+
+    /**
+     * Build the upstream search URL for the configured endpoint contract.
+     *
+     * <p>Package-private so the shape of the request can be asserted without a
+     * live catalogue — the parameter sets differ enough between the two
+     * endpoints that a typo silently returns the wrong page rather than failing.
+     */
+    String searchUrl(String query, int start, int limit) {
+        UriComponentsBuilder url = UriComponentsBuilder.fromHttpUrl(props.searchUrl())
+                .queryParam("srchtxt", query);
+
+        if (props.getSearchApi() == ArrowProperties.SearchApi.ACPARTSERVICE) {
+            // Workbench endpoint. It pages by page *and* offset, so both are
+            // sent and kept consistent — page is 1-based.
+            url.queryParam("ioebs", props.getInvOrgs())
+                    .queryParam("source", props.getSource())
+                    .queryParam("srchmode", props.getSearchMode())
+                    .queryParam("whsetype", props.getWarehouseType())
+                    .queryParam("retWhseFilter", props.isReturnWarehouseFilter() ? "Y" : "N")
+                    .queryParam("ftzBoostFlag", props.isFtzBoost() ? "Y" : "N")
+                    .queryParam("enableStcFlagFilter", props.isStcFlagFilter() ? "Y" : "N")
+                    .queryParam("limit", limit)
+                    .queryParam("start", start)
+                    .queryParam("page", start / Math.max(limit, 1) + 1);
+        } else {
+            url.queryParam("render", "json")
+                    .queryParam("appid", props.getAppId() == null || props.getAppId().isBlank()
+                            ? "gen" : props.getAppId())
+                    .queryParam("start", start)
+                    .queryParam("limit", limit);
+        }
+        // encode() percent-escapes the query values. Part numbers legitimately
+        // contain '#' (LTC1732EMS-4.2#PBF); unescaped it would start a URI
+        // fragment and silently truncate the query.
+        return url.encode().build().toUriString();
     }
 
     private PartSearchResponse filter(PartSearchResponse r, String manufacturer,
@@ -95,6 +126,10 @@ public class ArrowPartSearchService implements PartSearchService {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("mock", false);
         out.put("searchUrl", props.searchUrl());
+        out.put("searchApi", props.getSearchApi());
+        // The exact request shape, so a misconfigured contract is visible here
+        // rather than only in an empty result set.
+        out.put("sampleQuery", searchUrl("BAV99", 0, props.getSearchLimit()));
         out.putAll(client.authHealth());
         return out;
     }
