@@ -1,0 +1,58 @@
+<div class="cmp-backdrop" (click)="close.emit()">
+  <div class="cmp" (click)="$event.stopPropagation()" role="dialog" aria-label="Compare parts">
+    <div class="cmp-head">
+      <span class="cmp-title"><mat-icon>compare_arrows</mat-icon> Compare parts
+        <b>({{ parts.length }})</b></span>
+      <button type="button" class="cmp-x" (click)="close.emit()" aria-label="Close"><mat-icon>close</mat-icon></button>
+    </div>
+
+    @if (!parts.length) {
+      <p class="cmp-empty">Tick parts in the search results to compare them side by side.</p>
+    } @else {
+      <div class="cmp-scroll">
+        <table class="cmp-tbl">
+          <thead>
+            <tr>
+              <th class="rowlbl"></th>
+              @for (p of parts; track p.id) {
+                <th class="parthead">
+                  <div class="ph-pn">{{ p.partNumber }}</div>
+                  <div class="ph-mfr">{{ p.manufacturer }}</div>
+                  <div class="ph-actions">
+                    <button type="button" matTooltip="Add to canvas" (click)="addPart.emit(p)">
+                      <mat-icon>add</mat-icon></button>
+                    @if (p.crossReferenced) {
+                      <button type="button" matTooltip="Find alternates" (click)="findAlternates.emit(p)">
+                        <mat-icon>alt_route</mat-icon></button>
+                    }
+                    @if (p.datasheetUrl) {
+                      <a [href]="p.datasheetUrl" target="_blank" rel="noopener" matTooltip="Datasheet">
+                        <mat-icon>description</mat-icon></a>
+                    }
+                    <button type="button" matTooltip="Remove" (click)="remove.emit(p)">
+                      <mat-icon>close</mat-icon></button>
+                  </div>
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows; track row.label) {
+              <tr>
+                <th class="rowlbl">{{ row.label }}</th>
+                @for (p of parts; track p.id) {
+                  <td [class.best]="bestIdFor(row) === p.id" [attr.data-tone]="tone(p, row)">
+                    <span class="cell">{{ row.value(p) }}</span>
+                    @if (bestIdFor(row) === p.id) { <mat-icon class="win">star</mat-icon> }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="cmp-note"><mat-icon>star</mat-icon> marks the best value in a row — most stock,
+        shortest lead time, lowest price, active lifecycle.</p>
+    }
+  </div>
+</div>

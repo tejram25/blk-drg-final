@@ -83,6 +83,15 @@
           <input class="ps-qty" type="number" min="1"
             [ngModel]="qtyOf(hit)" (ngModelChange)="setQty(hit, $event)"
             title="Order quantity" />
+          <button type="button" class="ps-cmp" [class.on]="inCompare(hit)"
+            (click)="toggleCompare(hit, $event)"
+            [matTooltip]="inCompare(hit) ? 'In comparison' : 'Add to comparison'">
+            <mat-icon>{{ inCompare(hit) ? 'check_box' : 'add_box' }}</mat-icon>
+          </button>
+          <button type="button" class="ps-alt" (click)="alternates(hit.partNumber)"
+            matTooltip="Lifecycle & alternates">
+            <mat-icon>alt_route</mat-icon>
+          </button>
           @if (hasSelection) {
             <button type="button" class="ps-attach" (click)="attach(hit)" title="Attach to selected block">
               <mat-icon>link</mat-icon>
@@ -95,4 +104,23 @@
       </div>
     }
   </div>
+
+  <!-- Comparison tray: appears once two or more parts are ticked. -->
+  @if (compareCount) {
+    <div class="ps-comparebar">
+      <span><b>{{ compareCount }}</b> to compare</span>
+      <button type="button" class="ps-comparego" [disabled]="compareCount < 2" (click)="openCompare()">
+        <mat-icon>compare_arrows</mat-icon> Compare
+      </button>
+    </div>
+  }
 </aside>
+
+@if (compareOpen) {
+  <app-part-compare [parts]="compareList"
+    (close)="compareOpen = false"
+    (remove)="removeFromCompare($event)"
+    (addPart)="addFromCompare($event)"
+    (findAlternates)="alternates($event.partNumber)">
+  </app-part-compare>
+}

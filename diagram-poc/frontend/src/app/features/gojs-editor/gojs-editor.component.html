@@ -737,7 +737,7 @@
 
                                         <!-- Dialogs / panels -->
                                         @if (partSearchOpen) {
-                                          <app-part-search-panel [seedQuery]="partSearchSeed" [hasSelection]="canAttachPart" (addPart)="addPartToCanvas($event)" (attachPart)="attachPartToSelected($event)" (close)="partSearchOpen = false"></app-part-search-panel>
+                                          <app-part-search-panel [seedQuery]="partSearchSeed" [hasSelection]="canAttachPart" (addPart)="addPartToCanvas($event)" (attachPart)="attachPartToSelected($event)" (checkAlternates)="checkLifecycle($event)" (close)="partSearchOpen = false"></app-part-search-panel>
                                         }
                                         @if (designWinOpen) {
                                           <app-designwin-panel [seedPart]="designWinSeed" [hasSelection]="canAttachPart" (close)="designWinOpen = false" (addPart)="onDesignWinAddPart($event)" (attachPart)="onDesignWinAttachPart($event)" (attach)="onAttachDesignWin($event)"></app-designwin-panel>

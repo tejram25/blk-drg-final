@@ -106,3 +106,38 @@
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   box-shadow: -14px 0 40px rgba(0, 0, 0, .45);
 }
+
+/* Compare toggle (mirrors the add/attach buttons). */
+.ps-cmp {
+  flex: none; width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 7px;
+  background: transparent; color: var(--muted); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.ps-cmp:hover { background: var(--panel-2); color: var(--accent-ink); }
+.ps-cmp.on { color: var(--accent-ink); border-color: var(--accent); background: var(--accent-soft); }
+.ps-cmp mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+/* Comparison tray pinned to the bottom of the dock. */
+.ps-comparebar {
+  flex: none; display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 92%, transparent); font-size: 12.5px; color: var(--muted);
+}
+.ps-comparebar b { color: var(--text); }
+.ps-comparego {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border: 1px solid var(--accent); border-radius: 7px;
+  background: transparent; color: var(--accent-ink); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.ps-comparego:hover:not(:disabled) { background: var(--accent-soft); }
+.ps-comparego:disabled { opacity: .5; cursor: not-allowed; }
+.ps-comparego mat-icon { font-size: 16px; width: 16px; height: 16px; }
+
+/* Alternates / lifecycle button (mirrors compare/add). */
+.ps-alt {
+  flex: none; width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 7px;
+  background: transparent; color: var(--muted); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.ps-alt:hover { background: var(--panel-2); color: var(--accent-ink); }
+.ps-alt mat-icon { font-size: 18px; width: 18px; height: 18px; }
