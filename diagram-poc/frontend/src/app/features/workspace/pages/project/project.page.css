@@ -1,5 +1,0 @@
-/* Host padding comes from pages.css; these are the artefact-view specifics. */
-.art-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
-.art-head h1 { margin: 0; font-size: 18px; font-weight: 600; color: var(--text); }
-.art-ico { font-size: 26px; width: 26px; height: 26px; color: var(--accent-ink); margin-top: 2px; }
-.art-head ws-pill { margin-left: auto; }

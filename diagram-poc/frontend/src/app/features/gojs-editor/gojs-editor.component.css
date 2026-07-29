@@ -76,14 +76,10 @@
       position: relative; z-index: 20;
     }
     .brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .brand-mark {
-      width: 28px; height: 28px; border-radius: 7px;
-      display: inline-flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, var(--accent), var(--accent));
-      box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent);
-    }
-    .brand-mark mat-icon { color: #ffffff; font-size: 18px; width: 18px; height: 18px; }
-    .brand-name { font-size: 14px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
+    /* Arrow wordmark, theme-aware (white on dark, black on light). */
+    .logo { width: 78px; height: 18px; flex: none; background: left center / contain no-repeat; }
+    :host-context(:root:not([data-theme='light'])) .logo { background-image: url('/assets/brand/arrow-wordmark-white.png'); }
+    :host-context(:root[data-theme='light']) .logo { background-image: url('/assets/brand/arrow-wordmark-black.png'); }
     .vsep { width: 1px; height: 18px; background: var(--border-soft); flex-shrink: 0; margin: 0 2px; }
     .spacer { flex: 1; }
 
@@ -386,13 +382,13 @@
     /* ---- Layout ---- */
     .body { display: flex; flex: 1; min-height: 0; position: relative; }
 
-    /* ---- Palette ----
-       Renders inside the shell's tool window (see EditorChromeService), which
-       supplies the column width and border — so it fills, no own chrome. */
+    /* ---- Palette ---- */
     .palette {
-      width: 100%; height: 100%; box-sizing: border-box; padding: 11px;
-      background: transparent;
-      overflow-y: auto;
+      width: clamp(190px, 16vw, 240px); padding: 11px;
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border-right: 1px solid var(--border); overflow-y: auto;
+      box-shadow: 10px 0 30px rgba(0,0,0,.28);
       display: flex; flex-direction: column; position: relative; z-index: 10;
     }
     .panel-title {
@@ -726,7 +722,7 @@
       .topbar .chat-toggle, .topbar .lang-wrap,
       .topbar .badge-host, .topbar > .panel-toggle,
       .topbar button[mattooltip="Comments"] { display: none !important; }
-      /* Brand stays hidden on phones too — the shell header brands the app. */
+      /* On phones the brand mark stays but the wordmark text is dropped to save room. */
       .brand-name { display: none; }
       .doc-name { flex: 1; width: auto; min-width: 60px; }
       .mobile-keep { display: inline-flex !important; }
@@ -1290,53 +1286,3 @@
 
 /* Palette symbol previews use currentColor so they follow the canvas theme. */
 .symbol-item svg { color: var(--sym); }
-
-/* The workspace shell header owns the account menu, so the editor must not show
-   a second one. The language switcher stays: the shell has no equivalent. */
-.user-wrap { display: none; }
-
-/* The toolbar renders INSIDE the shell's single header row (see
-   EditorChromeService), so it must not look or behave like a bar of its own:
-   no background, border, shadow, height or padding — just an inline group of
-   controls. The shell already carries the Arrow brand and owns palette
-   visibility via the activity bar, so the brand mark and palette toggle go. */
-.brand { display: none; }
-.topbar > .panel-toggle:first-child { display: none; }
-.topbar {
-  min-height: 0; height: 100%; padding: 0; gap: 2px;
-  background: none; border: 0; box-shadow: none;
-  backdrop-filter: none; -webkit-backdrop-filter: none;
-  flex-wrap: nowrap; min-width: 0;
-  /* As a standalone bar this was flex-shrink:0; sharing the header row it must
-     yield, or it overflows onto the account cluster instead of compacting. */
-  flex: 1 1 auto;
-}
-/* The shell's own `.sp` is the single flexible spacer in the header, so the
-   toolbar's internal one becomes a fixed gap between the left and right
-   control clusters instead of fighting it for space. */
-.topbar > .spacer { flex: 0 0 6px; }
-
-/* Sharing one row means yielding space gracefully rather than overflowing.
-   The name field shrinks (down to a still-usable 62px) instead of vanishing,
-   so renaming stays available at every width; the menus and action clusters
-   hold their size because they cannot shrink usefully. */
-.topbar .doc-name { flex: 0 1 168px; min-width: 62px; }
-.topbar .open-dd { flex: 0 1 auto; min-width: 0; }
-.topbar .open-dd .dd-trigger { max-width: 150px; }
-.topbar .tool-group.boxed, .topbar .menu-wrap { flex: none; }
-
-/* Progressive disclosure as the header narrows: shed the lowest-value chrome
-   first so the primary actions always fit. The classification pill keeps its
-   icon (and tooltip) after the label goes. */
-@media (max-width: 1600px) {
-  .topbar .cls-pill span { display: none; }
-  .topbar .cls-pill { padding: 0 7px; }
-}
-@media (max-width: 1500px) { .topbar .lang-wrap { display: none; } }
-/* Presence and Chat duplicate the dock's Collaboration tab, so they are the
-   right things to drop next — nothing becomes unreachable. */
-@media (max-width: 1400px) {
-  .topbar .chat-toggle,
-  .topbar > .menu-wrap:has(> .presence-btn) { display: none; }
-}
-@media (max-width: 1300px) { .topbar .open-dd { display: none; } }

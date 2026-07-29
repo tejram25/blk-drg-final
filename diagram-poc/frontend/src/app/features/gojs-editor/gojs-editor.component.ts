@@ -1,11 +1,8 @@
 import {
-  AfterViewInit, ChangeDetectorRef, Component, TemplateRef, ViewContainerRef, afterNextRender,
+  AfterViewInit, ChangeDetectorRef, Component,
   effect, ElementRef, HostListener, NgZone, OnDestroy,
   OnInit, ViewChild,
 } from '@angular/core';
-import { TemplatePortal } from '@angular/cdk/portal';
-import { EditorChromeService } from '../../core/services/editor-chrome.service';
-import { PartLinkService } from '../workspace/services/part-link.service';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -93,8 +90,6 @@ import { Command, CommandPaletteComponent } from '../../shared/components/comman
 export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLDivElement>;
   @ViewChild('minimap', { static: true }) minimapRef!: ElementRef<HTMLDivElement>;
-  @ViewChild('editorToolbarTpl', { static: true }) toolbarTpl!: TemplateRef<unknown>;
-  @ViewChild('editorPaletteTpl', { static: true }) paletteTpl!: TemplateRef<unknown>;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('jsonInput') jsonInput!: ElementRef<HTMLInputElement>;
   @ViewChild('drawioInput') drawioInput!: ElementRef<HTMLInputElement>;
@@ -231,16 +226,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private location: Location,
     private themeSvc: ThemeService,
-    private chromeHost: EditorChromeService,
-    private partLinks: PartLinkService,
-    private vcr: ViewContainerRef,
   ) {
-    // Hand the toolbar + palette to the shell after the first render pass (so
-    // the shell — an ancestor already checked this cycle — updates in its own).
-    afterNextRender(() => {
-      this.chromeHost.attachToolbar(new TemplatePortal(this.toolbarTpl, this.vcr));
-      this.chromeHost.attachPalette(new TemplatePortal(this.paletteTpl, this.vcr));
-    });
     this.lightCanvas = this.themeSvc.theme() === 'light';
     // GoJS paints to a canvas and cannot read CSS variables, so re-resolve the
     // palette and repaint whenever the app theme flips.
@@ -262,8 +248,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Keep the URL in sync with the open diagram so a refresh reopens it. */
   private syncUrl(): void {
     this.location.replaceState(this.diagramId != null
-      ? `/workspace/block-diagram/${this.diagramId}`
-      : '/workspace/block-diagram/new');
+      ? `/editor/${this.diagramId}`
+      : '/editor/new');
   }
 
   ngOnInit(): void {
@@ -284,13 +270,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       next: (i) => { this.aiEnabled = i.aiEnabled !== false; this.cdr.detectChanges(); },
       error: () => {},
     });
-    // A part chosen in the Parts tab is staged for the diagram; pick it up so
-    // "Use in diagram" finishes here rather than making the user search again.
-    if (this.partLinks.hasStaged()) {
-      this.partSearchOpen = true;
-      const staged = this.partLinks.stagedPart();
-      if (staged) this.partSearchSeed = staged.part.partNumber;
-    }
     this.chatSub = this.collab.chatNew$.subscribe((m) => this.onChatArrived(m));
     this.modelReplacedSub = this.collab.modelReplaced$.subscribe(() => { this.retheme(); this.syncSelection(); });
   }
@@ -313,8 +292,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Leaving the editor: take the toolbar + palette out of the shell chrome.
-    this.chromeHost.clear();
     if (this.mobileMq && this.mobileMqListener) this.mobileMq.removeEventListener('change', this.mobileMqListener);
     this.chatSub?.unsubscribe();
     this.modelReplacedSub?.unsubscribe();

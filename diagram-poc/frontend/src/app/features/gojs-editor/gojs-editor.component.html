@@ -1,12 +1,6 @@
 <div class="layout" [class.mobile]="isMobile">
-  <!-- Top bar. Not rendered here: the shell hosts it in the workspace header via
-       EditorChromeService (TemplatePortal), so it shows only while a diagram is
-       open. Bindings still resolve against this component. -->
-  <ng-template #editorToolbarTpl>
-  <!-- A div, not a <header>: this is a control group inside the shell's single
-       header, and nesting a second <header> would be the same duplication in
-       the accessibility tree that we just removed visually. -->
-  <div class="topbar" role="toolbar" aria-label="Diagram tools">
+  <!-- Standalone block-diagram toolbar. -->
+  <header class="topbar" role="toolbar" aria-label="Diagram tools">
     <span class="panel-toggle">
       <button mat-icon-button [class.on]="paletteOpen" (click)="paletteOpen = !paletteOpen"
         [matTooltip]="'palette.components' | translate"><mat-icon>widgets</mat-icon></button>
@@ -14,8 +8,7 @@
 
       <!-- LEFT: brand · File menu · document -->
       <div class="brand">
-        <span class="brand-mark"><mat-icon>schema</mat-icon></span>
-        <span class="brand-name">{{ 'app.brand' | translate }}</span>
+        <span class="logo" role="img" aria-label="Arrow"></span>
       </div>
 
       <span class="menu-wrap">
@@ -220,11 +213,9 @@
                                               }
                                             </div>
                                           }
-                                        </div>
-                                        </ng-template>
+                                        </header>
 
-                                        <!-- Hidden pickers stay in the always-rendered view so their
-                                             ViewChild refs resolve even before the toolbar portal mounts. -->
+                                        <!-- Hidden file pickers. -->
                                         <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
                                         <input #imageGenInput type="file" accept="image/*" hidden (change)="onGenerateImageSelected($event)" />
                                         <input #jsonInput type="file" accept=".json,application/json" hidden (change)="onJsonSelected($event)" />
@@ -249,11 +240,7 @@
                                         }
 
                                         <div class="body">
-                                          <!-- Palette -->
-                                          <!-- Components palette. Like the toolbar, it renders in the shell —
-                                               as a tool window behind the activity bar's "Components" icon —
-                                               so only one left panel shows at a time. -->
-                                          <ng-template #editorPaletteTpl>
+                                          <!-- Components palette -->
                                           <aside class="palette" [class.open]="paletteOpen">
                                             <div class="panel-title">{{ 'palette.components' | translate }}</div>
                                             <div class="search-wrap">
@@ -324,7 +311,6 @@
                                             </div>
                                             <p class="hint">{{ 'palette.hint' | translate }}</p>
                                           </aside>
-                                          </ng-template>
 
                                           <!-- Canvas -->
                                           <main class="canvas-wrap">
@@ -339,7 +325,7 @@
                                                   <li><mat-icon>widgets</mat-icon> Drag a block or shape from the left palette</li>
                                                   <li><mat-icon>dashboard_customize</mat-icon> Or open the <b>Template repository</b> to start from a proven layout</li>
                                                   <li><mat-icon>travel_explore</mat-icon> <b>Search parts</b> to drop real components and build a BOM</li>
-                                                  <li><mat-icon>keyboard_command_key</mat-icon> Press <b>Ctrl/Cmd&nbsp;+&nbsp;Shift&nbsp;+&nbsp;P</b> for diagram actions, <b>Ctrl/Cmd&nbsp;+&nbsp;K</b> to search the workspace</li>
+                                                  <li><mat-icon>keyboard_command_key</mat-icon> Press <b>Ctrl/Cmd&nbsp;+&nbsp;Shift&nbsp;+&nbsp;P</b> for the command palette</li>
                                                 </ul>
                                               </div>
                                             }

@@ -4,13 +4,10 @@ import { authGuard } from './core/guards/auth.guard';
 /**
  * Application routes.
  *
- * Everything signed-in lives under `/workspace`, which renders the IDE shell
- * (activity bar + project tree + editor tabs) around an outlet. `project` is the
- * default: you open a Salesforce-synced project and work inside its artefacts.
- * The block-diagram editor is one artefact type, so the shell stays put while a
- * diagram is open.
- *
- * `/editor/...` is kept as a deep-link alias so existing links keep working.
+ * This is the standalone Block Diagram app: after login, everything is the
+ * editor. It carries its own toolbar, palette, part search and dialogs — there
+ * is no workspace shell. (The dc-workspace shell lives on a separate branch;
+ * this app is meant to be embedded there later as a micro-frontend.)
  */
 const editor = () =>
   import('./features/gojs-editor/gojs-editor.component').then((m) => m.GojsEditorComponent);
@@ -20,76 +17,19 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
   },
-  {
-    path: 'workspace',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/workspace/shell/ide-shell.component').then((m) => m.IdeShellComponent),
-    children: [
-      { path: '', pathMatch: 'full', redirectTo: 'project' },
-      {
-        path: 'project',
-        loadComponent: () => import('./features/workspace/pages/project/project.page').then((m) => m.ProjectPage),
-      },
-      {
-        path: 'dashboard',
-        loadComponent: () => import('./features/workspace/pages/dashboard/dashboard.page').then((m) => m.DashboardPage),
-      },
-      {
-        path: 'projects',
-        loadComponent: () => import('./features/workspace/pages/projects/projects.page').then((m) => m.ProjectsPage),
-      },
-      {
-        path: 'campaign',
-        loadComponent: () => import('./features/workspace/pages/campaign/campaign.page').then((m) => m.CampaignPage),
-      },
-      {
-        path: 'suppliers',
-        loadComponent: () => import('./features/workspace/pages/suppliers/suppliers.page').then((m) => m.SuppliersPage),
-      },
-      {
-        path: 'support',
-        loadComponent: () => import('./features/workspace/pages/support/support.page').then((m) => m.SupportPage),
-      },
-      {
-        path: 'block-diagram',
-        loadComponent: () =>
-          import('./features/workspace/pages/block-diagram/block-diagram.page').then((m) => m.BlockDiagramPage),
-      },
-      // The editor, embedded in the shell. `new` starts a blank diagram.
-      { path: 'block-diagram/:id', loadComponent: editor },
-      {
-        path: 'parts',
-        loadComponent: () => import('./features/workspace/pages/parts/parts.page').then((m) => m.PartsPage),
-      },
-      {
-        path: 'part-intelligence',
-        loadComponent: () =>
-          import('./features/workspace/pages/part-intelligence/part-intelligence.page').then((m) => m.PartIntelligencePage),
-      },
-      {
-        path: 'fast-repository',
-        loadComponent: () =>
-          import('./features/workspace/pages/fast-repository/fast-repository.page').then((m) => m.FastRepositoryPage),
-      },
-      {
-        path: 'inspection',
-        loadComponent: () => import('./features/workspace/pages/inspection/inspection.page').then((m) => m.InspectionPage),
-      },
-      {
-        path: 'analytics',
-        loadComponent: () => import('./features/workspace/pages/analytics/analytics.page').then((m) => m.AnalyticsPage),
-      },
-    ],
-  },
 
-  // Deep-link aliases so existing bookmarks keep working.
-  { path: 'editor', pathMatch: 'full', redirectTo: 'workspace/block-diagram' },
-  { path: 'editor/:id', redirectTo: 'workspace/block-diagram/:id' },
-  { path: 'gojs', pathMatch: 'full', redirectTo: 'workspace/block-diagram' },
-  { path: 'gojs/:id', redirectTo: 'workspace/block-diagram/:id' },
+  // The editor is the app. `new` (or no id) starts a blank diagram; the Open
+  // menu inside the editor lists saved diagrams.
+  { path: 'editor/:id', canActivate: [authGuard], loadComponent: editor },
+  { path: 'editor', canActivate: [authGuard], loadComponent: editor },
 
-  { path: '', pathMatch: 'full', redirectTo: 'workspace/project' },
+  // Legacy links keep working.
+  { path: 'gojs/:id', redirectTo: 'editor/:id' },
+  { path: 'gojs', pathMatch: 'full', redirectTo: 'editor' },
+  { path: 'workspace/block-diagram/:id', redirectTo: 'editor/:id' },
+  { path: 'workspace', pathMatch: 'full', redirectTo: 'editor' },
+
+  { path: '', pathMatch: 'full', redirectTo: 'editor' },
   {
     path: '**',
     loadComponent: () => import('./features/errors/not-found.component').then((m) => m.NotFoundComponent),
