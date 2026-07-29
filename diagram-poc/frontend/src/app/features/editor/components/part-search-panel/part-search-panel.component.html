@@ -64,15 +64,23 @@
         </select>
       </label>
 
-      <label class="ps-toggle" matTooltip="Only parts with stock on hand">
-        <input type="checkbox" [(ngModel)]="inStockOnly" (ngModelChange)="reSearch()" /> In stock
-      </label>
-      <label class="ps-toggle" matTooltip="Only parts with an Active lifecycle status">
-        <input type="checkbox" [(ngModel)]="activeOnly" (ngModelChange)="reSearch()" /> Active only
-      </label>
-      <label class="ps-toggle" matTooltip="Hide NRND / EOL / obsolete parts">
-        <input type="checkbox" [(ngModel)]="hideRisk" /> Hide EOL
-      </label>
+      <span class="ps-sep" aria-hidden="true"></span>
+
+      <button type="button" class="ps-tog" [class.on]="inStockOnly"
+        [attr.aria-pressed]="inStockOnly" (click)="toggleInStock()"
+        matTooltip="Only parts with stock on hand">
+        <mat-icon>inventory_2</mat-icon> In stock
+      </button>
+      <button type="button" class="ps-tog" [class.on]="activeOnly"
+        [attr.aria-pressed]="activeOnly" (click)="toggleActive()"
+        matTooltip="Only parts with an Active lifecycle status">
+        <mat-icon>check_circle</mat-icon> Active only
+      </button>
+      <button type="button" class="ps-tog" [class.on]="hideRisk"
+        [attr.aria-pressed]="hideRisk" (click)="hideRisk = !hideRisk"
+        matTooltip="Hide NRND / EOL / obsolete parts">
+        <mat-icon>block</mat-icon> Hide EOL
+      </button>
 
       @if (filtered) {
         <button type="button" class="ps-clear" (click)="clearFilters()">

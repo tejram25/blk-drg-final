@@ -142,6 +142,10 @@ export class PartSearchPanelComponent implements AfterViewInit {
   /** Re-run the search when a filter the backend applies changes. */
   reSearch(): void { if (this.searched) this.search(); }
 
+  // In-stock and Active are applied upstream, so flipping them re-queries.
+  toggleInStock(): void { this.inStockOnly = !this.inStockOnly; this.reSearch(); }
+  toggleActive(): void { this.activeOnly = !this.activeOnly; this.reSearch(); }
+
   /** Distinct manufacturers in the current results, for the filter dropdown. */
   get suppliers(): string[] {
     const set = new Set<string>();

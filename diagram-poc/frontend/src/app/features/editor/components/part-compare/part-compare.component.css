@@ -25,7 +25,7 @@
 .cmp-empty { padding: 40px 16px; text-align: center; color: var(--muted); font-size: 13px; }
 .cmp-scroll { overflow: auto; flex: 1; }
 
-.cmp-tbl { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.cmp-tbl { border-collapse: collapse; width: 100%; font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .cmp-tbl th, .cmp-tbl td { border-bottom: 1px solid var(--border-soft); padding: 8px 12px; vertical-align: top; }
 .cmp-tbl .rowlbl {
   position: sticky; left: 0; z-index: 2; background: var(--panel);
@@ -35,7 +35,7 @@
 .cmp-tbl thead th { position: sticky; top: 0; z-index: 3; background: var(--panel); }
 .cmp-tbl thead .rowlbl { z-index: 4; }
 .parthead { text-align: left; min-width: 168px; border-left: 1px solid var(--border-soft); }
-.ph-pn { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-weight: 600; font-size: 13px; }
+.ph-pn { font-weight: 700; font-size: 13px; letter-spacing: -.005em; font-variant-numeric: tabular-nums; }
 .ph-mfr { color: var(--muted); font-size: 11.5px; margin: 1px 0 6px; }
 .ph-actions { display: flex; gap: 2px; }
 .ph-actions button, .ph-actions a {
