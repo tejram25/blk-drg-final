@@ -170,7 +170,9 @@ function isEarlier(a: string, b: string): boolean {
 export function statusTone(status: string): 'ok' | 'warn' | 'risk' | '' {
   const s = (status || '').toLowerCase();
   if (!s) return '';
-  if (s.includes('obsolete') || s.includes('eol')) return 'risk';
+  if (s.includes('obsolete') || s.includes('eol') || s.includes('end of life')
+      || s.includes('nrnd') || s.includes('not recommended')
+      || s.includes('discontinued') || s.includes('last time buy')) return 'risk';
   if (s.includes('nvr') || s.includes('never')) return 'warn';
   if (s.includes('active') || s.includes('new')) return 'ok';
   return 'warn';

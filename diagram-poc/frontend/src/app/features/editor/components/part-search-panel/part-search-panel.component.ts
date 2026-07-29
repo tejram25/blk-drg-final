@@ -4,20 +4,25 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
-  CatalogPart, PartSearchService, formatPrice, statusTone,
+  CatalogPart, PartSearchService, formatPrice, mergeParts, statusTone,
 } from '../../../../core/services/part-search.service';
 import { PartCompareComponent } from '../part-compare/part-compare.component';
 
+/** How the result list is ordered. */
+type SortKey = 'relevance' | 'stock' | 'price' | 'lead' | 'moq' | 'part';
+
 /**
- * Side dock to search the parts catalogue. Results arrive already grouped per
- * part (the catalogue returns one row per stocking location — see
- * PartSearchNormalizer), so this shows one row per part with its aggregated
- * stock, lead time and price, and adds the chosen part to the canvas or
- * attaches it to the selected block.
+ * Full-screen catalogue search.
  *
- * Parts can also be ticked into a comparison set and opened side by side, so an
- * engineer weighs alternatives (stock, lead, price, lifecycle) in one place
- * instead of jumping between supplier sites.
+ * Results arrive already grouped per part (the catalogue returns one row per
+ * stocking location — see PartSearchNormalizer), so the list shows one row per
+ * part and the detail pane opens everything the catalogue knows about the
+ * selected one: every stocking site, the whole price-break ladder, packaging,
+ * lead times and compliance. That is the point of the centre-stage layout —
+ * an engineer should not have to leave for SiliconExpert / Oracle / a supplier
+ * site to answer "can I design this in?".
+ *
+ * Parts can also be ticked into a comparison set and opened side by side.
  */
 @Component({
     selector: 'app-part-search-panel',
@@ -42,11 +47,32 @@ export class PartSearchPanelComponent implements AfterViewInit {
   query = '';
   results: CatalogPart[] = [];
   loading = false;
+  loadingMore = false;
   searched = false;
+  /** Total parts upstream matched, and whether another page exists. */
+  total = 0;
+  hasMore = false;
+  private nextStart = 0;
+
+  // ---- filters / sort ----
   /** Manufacturer filter ('' = all). */
   supplierFilter = '';
+  /** Category filter ('' = all). */
+  categoryFilter = '';
+  /** Only parts with stock on hand somewhere. */
+  inStockOnly = false;
+  /** Only parts with an Active lifecycle status. */
+  activeOnly = false;
+  /** Hide parts flagged NRND / EOL / obsolete. */
+  hideRisk = false;
+  /** Only parts whose Arrow lead time is at or under this many weeks (0 = any). */
+  maxLeadWeeks = 0;
+  sort: SortKey = 'relevance';
+
   /** Chosen order quantity per part id. */
   qtyById: Record<string, number> = {};
+  /** The part shown in the detail pane. */
+  selected: CatalogPart | null = null;
 
   ngAfterViewInit(): void {
     if (this.seedQuery && this.seedQuery.trim()) {
@@ -62,18 +88,59 @@ export class PartSearchPanelComponent implements AfterViewInit {
     if (!q || this.loading) return;
     this.loading = true;
     this.searched = true;
-    this.supplierFilter = '';
-    this.api.search(q).subscribe({
+    this.resetFilters();
+    this.selected = null;
+    this.api.search(q, { inStock: this.inStockOnly, active: this.activeOnly }, 0).subscribe({
       next: (res) => {
         this.results = res.parts;
-        for (const p of res.parts) {
-          this.qtyById[p.id] = Math.max(1, p.packaging.minOrderQty || 1);
-        }
+        this.total = res.total;
+        this.hasMore = res.hasMore;
+        this.nextStart = res.nextStart;
+        this.seedQuantities(res.parts);
+        this.loading = false;
+        // Open the best match straight away — the detail pane is the point.
+        this.selected = this.visibleResults[0] ?? null;
+      },
+      error: () => {
+        this.results = []; this.total = 0; this.hasMore = false;
         this.loading = false;
       },
-      error: () => { this.results = []; this.loading = false; },
     });
   }
+
+  /**
+   * Fetch the next upstream page and fold it in. Paging is over upstream rows,
+   * so a later page often carries more *locations* for parts already listed
+   * rather than new parts — mergeParts handles that.
+   */
+  loadMore(): void {
+    if (!this.hasMore || this.loading || this.loadingMore) return;
+    this.loadingMore = true;
+    this.api.search(this.query.trim(), { inStock: this.inStockOnly, active: this.activeOnly }, this.nextStart)
+      .subscribe({
+        next: (res) => {
+          this.results = mergeParts(this.results, res.parts);
+          this.hasMore = res.hasMore;
+          this.nextStart = res.nextStart;
+          this.total = res.total;
+          this.seedQuantities(res.parts);
+          this.loadingMore = false;
+        },
+        error: () => { this.loadingMore = false; this.hasMore = false; },
+      });
+  }
+
+  private seedQuantities(parts: CatalogPart[]): void {
+    for (const p of parts) {
+      if (this.qtyById[p.id] == null) this.qtyById[p.id] = Math.max(1, p.packaging.minOrderQty || 1);
+    }
+  }
+  private resetFilters(): void {
+    this.supplierFilter = ''; this.categoryFilter = '';
+    this.hideRisk = false; this.maxLeadWeeks = 0; this.sort = 'relevance';
+  }
+  /** Re-run the search when a filter the backend applies changes. */
+  reSearch(): void { if (this.searched) this.search(); }
 
   /** Distinct manufacturers in the current results, for the filter dropdown. */
   get suppliers(): string[] {
@@ -85,10 +152,60 @@ export class PartSearchPanelComponent implements AfterViewInit {
     return [...set].sort((a, b) => a.localeCompare(b));
   }
 
-  get visibleResults(): CatalogPart[] {
-    if (!this.supplierFilter) return this.results;
-    return this.results.filter((r) => (r.manufacturer || r.supplier) === this.supplierFilter);
+  /** Distinct categories in the current results. */
+  get categories(): string[] {
+    const set = new Set<string>();
+    for (const r of this.results) if (r.category) set.add(r.category);
+    return [...set].sort((a, b) => a.localeCompare(b));
   }
+
+  get visibleResults(): CatalogPart[] {
+    const out = this.results.filter((r) => {
+      if (this.supplierFilter && (r.manufacturer || r.supplier) !== this.supplierFilter) return false;
+      if (this.categoryFilter && r.category !== this.categoryFilter) return false;
+      if (this.inStockOnly && !r.stock.totalOnHand) return false;
+      if (this.activeOnly && statusTone(r.status) !== 'ok') return false;
+      if (this.hideRisk && statusTone(r.status) === 'risk') return false;
+      if (this.maxLeadWeeks > 0) {
+        const wk = Number(r.leadTime.arrowWeeks);
+        if (!Number.isFinite(wk) || wk <= 0 || wk > this.maxLeadWeeks) return false;
+      }
+      return true;
+    });
+    return this.sortResults(out);
+  }
+
+  /** Ties keep the upstream (relevance) order, so sorting is stable. */
+  private sortResults(list: CatalogPart[]): CatalogPart[] {
+    if (this.sort === 'relevance') return list;
+    const rank = (p: CatalogPart): number => {
+      switch (this.sort) {
+        case 'stock': return -p.stock.totalOnHand;               // most first
+        case 'price': return this.numOr(p.pricing.unitPrice, Infinity);
+        case 'lead': return this.numOr(p.leadTime.arrowWeeks, Infinity);
+        case 'moq': return p.packaging.minOrderQty || Infinity;
+        default: return 0;
+      }
+    };
+    return [...list].sort((a, b) =>
+      this.sort === 'part' ? a.partNumber.localeCompare(b.partNumber) : rank(a) - rank(b));
+  }
+  private numOr(v: string | number, fallback: number): number {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+  }
+
+  /** True when any client-side filter is narrowing the list. */
+  get filtered(): boolean {
+    return !!(this.supplierFilter || this.categoryFilter || this.hideRisk || this.maxLeadWeeks);
+  }
+  clearFilters(): void {
+    this.supplierFilter = ''; this.categoryFilter = '';
+    this.hideRisk = false; this.maxLeadWeeks = 0;
+  }
+
+  select(p: CatalogPart): void { this.selected = p; }
+  isSelected(p: CatalogPart): boolean { return this.selected?.id === p.id; }
 
   qtyOf(p: CatalogPart): number { return this.qtyById[p.id] ?? 1; }
   setQty(p: CatalogPart, value: number): void {
@@ -117,7 +234,8 @@ export class PartSearchPanelComponent implements AfterViewInit {
   addFromCompare(p: CatalogPart): void { this.add(p); }
 
   /** Show real alternates (and EOL/lifecycle risk) for a part, via the editor. */
-  alternates(partNumber: string): void {
+  alternates(partNumber: string, event?: Event): void {
+    event?.stopPropagation();
     this.compareOpen = false;
     this.checkAlternates.emit(partNumber);
   }
@@ -127,11 +245,14 @@ export class PartSearchPanelComponent implements AfterViewInit {
     const tone = statusTone(status);
     return tone === 'ok' ? 'ok' : tone === 'risk' ? 'bad' : 'neutral';
   }
+  /** True when a part carries a lifecycle risk worth flagging in the list. */
+  atRisk(p: CatalogPart): boolean { return statusTone(p.status) === 'risk'; }
 
   price(p: CatalogPart): string { return formatPrice(p.pricing.unitPrice, p.pricing.currency); }
+  priceOf(value: string, currency: string): string { return formatPrice(value, currency); }
 
-  add(p: CatalogPart): void { this.addPart.emit(this.forCanvas(p)); }
-  attach(p: CatalogPart): void { this.attachPart.emit(this.forCanvas(p)); }
+  add(p: CatalogPart, event?: Event): void { event?.stopPropagation(); this.addPart.emit(this.forCanvas(p)); }
+  attach(p: CatalogPart, event?: Event): void { event?.stopPropagation(); this.attachPart.emit(this.forCanvas(p)); }
 
   /**
    * The object stored on the diagram node.

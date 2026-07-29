@@ -745,6 +745,22 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         new go.Binding('text', '', (d: any) => this.tooltipFor(d)))) as go.Adornment;
   }
 
+  /** Tooltip for the on-canvas lifecycle badge — explains the flag and the click. */
+  private badgeTip($: typeof go.GraphObject.make): go.Adornment {
+    return $('ToolTip',
+      { 'Border.fill': this.canvasTheme.panel, 'Border.stroke': this.canvasTheme.border } as any,
+      $(go.TextBlock,
+        { margin: 7, font: `11px ${CANVAS_FONT}`, stroke: this.canvasTheme.text, maxSize: new go.Size(240, NaN) },
+        new go.Binding('text', '', (d: any) => this.badgeTooltipFor(d?.part)))) as go.Adornment;
+  }
+  private badgeTooltipFor(part: any): string {
+    const lvl = this.partRiskLevel(part);
+    const label = this.partRiskLabel(part);
+    if (lvl === 'risk') return `Lifecycle risk: ${label}\nClick to see alternates.`;
+    if (lvl === 'warn') return `Supply watch: ${label}\nClick to review lifecycle & alternates.`;
+    return '';
+  }
+
   /** Tooltip body for any node's data. */
   private tooltipFor(d: any): string {
     const lines: string[] = [];
@@ -858,6 +874,20 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
             { itemTemplate: $(go.Panel, 'Auto', { alignment: go.Spot.Left },
                 $(go.TextBlock, { font: `10.5px ${CANVAS_FONT}`, stroke: '#374151', alignment: go.Spot.Left },
                   new go.Binding('text', ''))) }))),
+      // On-canvas lifecycle/supply badge. Only shows for NRND/EOL parts or long
+      // lead times; click opens the lifecycle + alternates dialog for that part.
+      $(go.Panel, 'Auto',
+        { alignment: go.Spot.TopRight, alignmentFocus: go.Spot.Center, cursor: 'pointer', visible: false,
+          click: (_e: go.InputEvent, o: go.GraphObject) => this.onPartBadgeClick((o.part as go.Node)?.data?.part),
+          toolTip: this.badgeTip($) },
+        new go.Binding('visible', 'part', (p) => this.partRiskLevel(p) !== ''),
+        $(go.Shape, 'RoundedRectangle', { parameter1: 7, strokeWidth: 0, spot1: go.Spot.TopLeft, spot2: go.Spot.BottomRight },
+          new go.Binding('fill', 'part', (p) => this.partRiskColor(p))),
+        $(go.Panel, 'Horizontal', { margin: new go.Margin(2, 8, 2, 7) },
+          $(go.TextBlock, { font: '13px Material Icons', stroke: '#1a1303', margin: new go.Margin(0, 4, 0, 0) },
+            new go.Binding('text', 'part', (p) => this.partRiskIcon(p))),
+          $(go.TextBlock, { font: `700 9.5px ${CANVAS_FONT}`, stroke: '#1a1303' },
+            new go.Binding('text', 'part', (p) => this.partRiskLabel(p))))),
       ...sidePorts(),
     );
     this.diagram.nodeTemplateMap.set('part', part);
@@ -2132,6 +2162,59 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   checkSelectedLifecycle(): void {
     const pn = this.selectedNode ? this.partNumberOfData(this.selectedNode.data) : null;
     if (pn) this.checkLifecycle(pn); else this.notify.info('Select a part card or block with attached part first.');
+  }
+
+  /**
+   * Lifecycle/supply risk for an on-canvas part, read straight from the stored
+   * `part` object so it works on already-saved diagrams without migration.
+   *   'risk' — NRND / EOL / obsolete / discontinued / last-time-buy
+   *   'warn' — long lead time (>= 12 weeks)
+   *   ''     — healthy
+   */
+  partRiskLevel(part: any): 'risk' | 'warn' | '' {
+    if (!part) return '';
+    const status = String(part?.invOrgs?.[0]?.status ?? part?.status ?? '').toLowerCase();
+    if (/nrnd|not recommended|eol|end of life|obsolete|discontinued|last time buy|last-time-buy|inactive/.test(status)) {
+      return 'risk';
+    }
+    const leadRaw = part?.leadTime?.arwLT ?? part?.leadTime;
+    const weeks = Number(String(leadRaw ?? '').replace(/[^\d.]/g, ''));
+    if (Number.isFinite(weeks) && weeks >= 12) return 'warn';
+    return '';
+  }
+  /** Badge colour for a risk level — Solar Orange for risk, Copper Yellow for warn. */
+  partRiskColor(part: any): string {
+    const lvl = this.partRiskLevel(part);
+    return lvl === 'risk' ? '#FF8674' : lvl === 'warn' ? '#FFC845' : 'transparent';
+  }
+  /** Material Icons ligature for the badge: alert for a risk, timer for long-lead. */
+  private partRiskIcon(part: any): string {
+    const lvl = this.partRiskLevel(part);
+    return lvl === 'risk' ? 'priority_high' : lvl === 'warn' ? 'schedule' : '';
+  }
+  /** Short caption shown on the badge next to the glyph. */
+  private partRiskLabel(part: any): string {
+    const lvl = this.partRiskLevel(part);
+    if (lvl === 'risk') {
+      const status = String(part?.invOrgs?.[0]?.status ?? part?.status ?? '').toUpperCase();
+      if (/NRND|NOT RECOMMENDED/.test(status)) return 'NRND';
+      if (/EOL|END OF LIFE/.test(status)) return 'EOL';
+      if (/OBSOLETE/.test(status)) return 'OBSOLETE';
+      if (/LAST TIME BUY|LAST-TIME-BUY/.test(status)) return 'LTB';
+      return 'EOL';
+    }
+    if (lvl === 'warn') {
+      const leadRaw = part?.leadTime?.arwLT ?? part?.leadTime;
+      const weeks = Number(String(leadRaw ?? '').replace(/[^\d.]/g, ''));
+      return Number.isFinite(weeks) && weeks > 0 ? `${weeks} wk lead` : 'Long lead';
+    }
+    return '';
+  }
+  /** One-click from a badge: open the lifecycle/alternates dialog for that part. */
+  onPartBadgeClick(part: any): void {
+    const pn = part?.arwPartNum?.name || part?.suppPartNum?.name || null;
+    if (pn) this.checkLifecycle(pn);
+    else this.notify.info('No part number available to check lifecycle.');
   }
 
   /** Open the Design Win explorer, optionally seeding the POS tab with a part.

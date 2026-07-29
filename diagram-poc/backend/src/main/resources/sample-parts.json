@@ -145,7 +145,21 @@
             }
           ]
         },
-        "score": "100.0"
+        "score": "100.0",
+        "urls": [
+          {
+            "URL": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2090%22%3E%3Crect%20width%3D%22120%22%20height%3D%2290%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2226%22%20y%3D%2232%22%20width%3D%2268%22%20height%3D%2226%22%20rx%3D%223%22%20fill%3D%22%232b3038%22%2F%3E%3Crect%20x%3D%2232.3%22%20y%3D%2225%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2232.3%22%20y%3D%2258%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2249.3%22%20y%3D%2225%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2249.3%22%20y%3D%2258%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2266.3%22%20y%3D%2225%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2266.3%22%20y%3D%2258%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2283.3%22%20y%3D%2225%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2283.3%22%20y%3D%2258%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Ccircle%20cx%3D%2233%22%20cy%3D%2251%22%20r%3D%222.6%22%20fill%3D%22%238d949c%22%2F%3E%3C%2Fsvg%3E",
+            "type": "Image Small"
+          },
+          {
+            "URL": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2090%22%3E%3Crect%20width%3D%22120%22%20height%3D%2290%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2226%22%20y%3D%2232%22%20width%3D%2268%22%20height%3D%2226%22%20rx%3D%223%22%20fill%3D%22%232b3038%22%2F%3E%3Crect%20x%3D%2232.3%22%20y%3D%2225%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2232.3%22%20y%3D%2258%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2249.3%22%20y%3D%2225%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2249.3%22%20y%3D%2258%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2266.3%22%20y%3D%2225%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2266.3%22%20y%3D%2258%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2283.3%22%20y%3D%2225%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2283.3%22%20y%3D%2258%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Ccircle%20cx%3D%2233%22%20cy%3D%2251%22%20r%3D%222.6%22%20fill%3D%22%238d949c%22%2F%3E%3C%2Fsvg%3E",
+            "type": "Image Large"
+          },
+          {
+            "URL": "https://www.ti.com/lit/ds/symlink/ina250.pdf",
+            "type": "Datasheet"
+          }
+        ]
       },
       {
         "partKey": "200110045",
@@ -274,7 +288,21 @@
             }
           ]
         },
-        "score": "100.0"
+        "score": "100.0",
+        "urls": [
+          {
+            "URL": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2090%22%3E%3Crect%20width%3D%22120%22%20height%3D%2290%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%2230%22%20width%3D%2272%22%20height%3D%2230%22%20rx%3D%223%22%20fill%3D%22%232b3038%22%2F%3E%3Crect%20x%3D%2230.8%22%20y%3D%2223%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2230.8%22%20y%3D%2260%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2248.8%22%20y%3D%2223%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2248.8%22%20y%3D%2260%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2266.8%22%20y%3D%2223%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2266.8%22%20y%3D%2260%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2284.8%22%20y%3D%2223%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2284.8%22%20y%3D%2260%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Ccircle%20cx%3D%2231%22%20cy%3D%2253%22%20r%3D%222.6%22%20fill%3D%22%238d949c%22%2F%3E%3C%2Fsvg%3E",
+            "type": "Image Small"
+          },
+          {
+            "URL": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2090%22%3E%3Crect%20width%3D%22120%22%20height%3D%2290%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2224%22%20y%3D%2230%22%20width%3D%2272%22%20height%3D%2230%22%20rx%3D%223%22%20fill%3D%22%232b3038%22%2F%3E%3Crect%20x%3D%2230.8%22%20y%3D%2223%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2230.8%22%20y%3D%2260%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2248.8%22%20y%3D%2223%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2248.8%22%20y%3D%2260%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2266.8%22%20y%3D%2223%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2266.8%22%20y%3D%2260%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2284.8%22%20y%3D%2223%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2284.8%22%20y%3D%2260%22%20width%3D%224.4%22%20height%3D%227%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Ccircle%20cx%3D%2231%22%20cy%3D%2253%22%20r%3D%222.6%22%20fill%3D%22%238d949c%22%2F%3E%3C%2Fsvg%3E",
+            "type": "Image Large"
+          },
+          {
+            "URL": "https://www.ti.com/lit/ds/symlink/ds91c176.pdf",
+            "type": "Datasheet"
+          }
+        ]
       },
       {
         "partKey": "300220088",
@@ -403,7 +431,21 @@
             }
           ]
         },
-        "score": "100.0"
+        "score": "100.0",
+        "urls": [
+          {
+            "URL": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2090%22%3E%3Crect%20width%3D%22120%22%20height%3D%2290%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2240%22%20y%3D%2214%22%20width%3D%2240%22%20height%3D%2244%22%20rx%3D%222%22%20fill%3D%22%232b3038%22%2F%3E%3Crect%20x%3D%2240%22%20y%3D%2214%22%20width%3D%2240%22%20height%3D%2212%22%20fill%3D%22%239aa2ab%22%2F%3E%3Ccircle%20cx%3D%2260%22%20cy%3D%2220%22%20r%3D%224%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2246%22%20y%3D%2258%22%20width%3D%225%22%20height%3D%2220%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2257.5%22%20y%3D%2258%22%20width%3D%225%22%20height%3D%2220%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2269%22%20y%3D%2258%22%20width%3D%225%22%20height%3D%2220%22%20fill%3D%22%23b9c0c8%22%2F%3E%3C%2Fsvg%3E",
+            "type": "Image Small"
+          },
+          {
+            "URL": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2090%22%3E%3Crect%20width%3D%22120%22%20height%3D%2290%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2240%22%20y%3D%2214%22%20width%3D%2240%22%20height%3D%2244%22%20rx%3D%222%22%20fill%3D%22%232b3038%22%2F%3E%3Crect%20x%3D%2240%22%20y%3D%2214%22%20width%3D%2240%22%20height%3D%2212%22%20fill%3D%22%239aa2ab%22%2F%3E%3Ccircle%20cx%3D%2260%22%20cy%3D%2220%22%20r%3D%224%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2246%22%20y%3D%2258%22%20width%3D%225%22%20height%3D%2220%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2257.5%22%20y%3D%2258%22%20width%3D%225%22%20height%3D%2220%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2269%22%20y%3D%2258%22%20width%3D%225%22%20height%3D%2220%22%20fill%3D%22%23b9c0c8%22%2F%3E%3C%2Fsvg%3E",
+            "type": "Image Large"
+          },
+          {
+            "URL": "https://www.ti.com/lit/ds/symlink/lm317.pdf",
+            "type": "Datasheet"
+          }
+        ]
       },
       {
         "partKey": "400330011",
@@ -528,7 +570,21 @@
             }
           ]
         },
-        "score": "100.0"
+        "score": "100.0",
+        "urls": [
+          {
+            "URL": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2090%22%3E%3Crect%20width%3D%22120%22%20height%3D%2290%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2216%22%20y%3D%2216%22%20width%3D%2288%22%20height%3D%2258%22%20rx%3D%223%22%20fill%3D%22%231e5b3a%22%2F%3E%3Crect%20x%3D%2222%22%20y%3D%2230%22%20width%3D%2264%22%20height%3D%2238%22%20rx%3D%222%22%20fill%3D%22%23a9b2bb%22%2F%3E%3Cpath%20d%3D%22M90%2022h12v6H96v5h6v6h-6v5h6v6H90z%22%20fill%3D%22%23c8d0d8%22%2F%3E%3Crect%20x%3D%2218%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2227%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2236%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2245%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2254%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2263%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2272%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2281%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2290%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3C%2Fsvg%3E",
+            "type": "Image Small"
+          },
+          {
+            "URL": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2090%22%3E%3Crect%20width%3D%22120%22%20height%3D%2290%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2216%22%20y%3D%2216%22%20width%3D%2288%22%20height%3D%2258%22%20rx%3D%223%22%20fill%3D%22%231e5b3a%22%2F%3E%3Crect%20x%3D%2222%22%20y%3D%2230%22%20width%3D%2264%22%20height%3D%2238%22%20rx%3D%222%22%20fill%3D%22%23a9b2bb%22%2F%3E%3Cpath%20d%3D%22M90%2022h12v6H96v5h6v6h-6v5h6v6H90z%22%20fill%3D%22%23c8d0d8%22%2F%3E%3Crect%20x%3D%2218%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2227%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2236%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2245%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2254%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2263%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2272%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2281%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2290%22%20y%3D%2274%22%20width%3D%226%22%20height%3D%225%22%20fill%3D%22%23d8dde3%22%2F%3E%3C%2Fsvg%3E",
+            "type": "Image Large"
+          },
+          {
+            "URL": "https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32_datasheet_en.pdf",
+            "type": "Datasheet"
+          }
+        ]
       },
       {
         "partKey": "500440022",
@@ -642,7 +698,21 @@
             }
           ]
         },
-        "score": "100.0"
+        "score": "100.0",
+        "urls": [
+          {
+            "URL": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2090%22%3E%3Crect%20width%3D%22120%22%20height%3D%2290%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2234%22%20y%3D%2234%22%20width%3D%2252%22%20height%3D%2224%22%20rx%3D%221.5%22%20fill%3D%22%238b6f4e%22%2F%3E%3Crect%20x%3D%2234%22%20y%3D%2234%22%20width%3D%2211%22%20height%3D%2224%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%2234%22%20width%3D%2211%22%20height%3D%2224%22%20fill%3D%22%23d8dde3%22%2F%3E%3C%2Fsvg%3E",
+            "type": "Image Small"
+          },
+          {
+            "URL": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2090%22%3E%3Crect%20width%3D%22120%22%20height%3D%2290%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2234%22%20y%3D%2234%22%20width%3D%2252%22%20height%3D%2224%22%20rx%3D%221.5%22%20fill%3D%22%238b6f4e%22%2F%3E%3Crect%20x%3D%2234%22%20y%3D%2234%22%20width%3D%2211%22%20height%3D%2224%22%20fill%3D%22%23d8dde3%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%2234%22%20width%3D%2211%22%20height%3D%2224%22%20fill%3D%22%23d8dde3%22%2F%3E%3C%2Fsvg%3E",
+            "type": "Image Large"
+          },
+          {
+            "URL": "https://search.murata.co.jp/Ceramy/image/img/A01X/G101/ENG/GRM188R71H104KA93-01.pdf",
+            "type": "Datasheet"
+          }
+        ]
       },
       {
         "partKey": "600550033",
@@ -761,7 +831,21 @@
             }
           ]
         },
-        "score": "100.0"
+        "score": "100.0",
+        "urls": [
+          {
+            "URL": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2090%22%3E%3Crect%20width%3D%22120%22%20height%3D%2290%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2240%22%20y%3D%2234%22%20width%3D%2240%22%20height%3D%2224%22%20rx%3D%222%22%20fill%3D%22%232b3038%22%2F%3E%3Crect%20x%3D%2246%22%20y%3D%2226%22%20width%3D%225%22%20height%3D%228%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2269%22%20y%3D%2226%22%20width%3D%225%22%20height%3D%228%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2257.5%22%20y%3D%2258%22%20width%3D%225%22%20height%3D%228%22%20fill%3D%22%23b9c0c8%22%2F%3E%3C%2Fsvg%3E",
+            "type": "Image Small"
+          },
+          {
+            "URL": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%2090%22%3E%3Crect%20width%3D%22120%22%20height%3D%2290%22%20fill%3D%22%23fff%22%2F%3E%3Crect%20x%3D%2240%22%20y%3D%2234%22%20width%3D%2240%22%20height%3D%2224%22%20rx%3D%222%22%20fill%3D%22%232b3038%22%2F%3E%3Crect%20x%3D%2246%22%20y%3D%2226%22%20width%3D%225%22%20height%3D%228%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2269%22%20y%3D%2226%22%20width%3D%225%22%20height%3D%228%22%20fill%3D%22%23b9c0c8%22%2F%3E%3Crect%20x%3D%2257.5%22%20y%3D%2258%22%20width%3D%225%22%20height%3D%228%22%20fill%3D%22%23b9c0c8%22%2F%3E%3C%2Fsvg%3E",
+            "type": "Image Large"
+          },
+          {
+            "URL": "https://www.diodes.com/assets/Datasheets/ds30326.pdf",
+            "type": "Datasheet"
+          }
+        ]
       }
     ]
   }

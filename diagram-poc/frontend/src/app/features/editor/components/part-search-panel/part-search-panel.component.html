@@ -1,120 +1,329 @@
-<aside class="ps-dock">
-  <div class="ps-head">
-    <span class="ps-title"><mat-icon>travel_explore</mat-icon> Search parts</span>
-    <button type="button" class="ps-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
-  </div>
+<div class="ps-backdrop" (click)="close.emit()"></div>
 
+<section class="ps-modal" role="dialog" aria-label="Search parts">
+  <header class="ps-head">
+    <span class="ps-title"><mat-icon>travel_explore</mat-icon> Search parts</span>
+    @if (searched && !loading) {
+      <span class="ps-total">
+        {{ visibleResults.length | number }} shown
+        @if (total > results.length) { <em>of {{ total | number }} matches</em> }
+      </span>
+    }
+    <button type="button" class="ps-x" (click)="close.emit()" aria-label="Close"><mat-icon>close</mat-icon></button>
+  </header>
+
+  <!-- Query -->
   <div class="ps-search">
+    <mat-icon class="ps-searchicon">search</mat-icon>
     <input #box type="text" [(ngModel)]="query" (keyup.enter)="search()"
-      placeholder="Part number or keyword…" />
+      placeholder="Part number, manufacturer or keyword — e.g. BAV99, LM317T, ESP32…" />
     <button type="button" class="ps-go" [disabled]="!query.trim() || loading" (click)="search()">
-      <mat-icon>search</mat-icon>
+      {{ loading ? 'Searching…' : 'Search' }}
     </button>
   </div>
 
-  <!-- Manufacturer filter + result count -->
-  @if (!loading && results.length) {
-    <div class="ps-filter">
-      <span class="ps-count">{{ visibleResults.length }} of {{ results.length }}</span>
-      <label class="ps-supplabel">
-        <mat-icon>filter_list</mat-icon>
+  <!-- Refine -->
+  @if (searched && !loading && results.length) {
+    <div class="ps-filters">
+      <label class="ps-f">
+        <span>Manufacturer</span>
         <select [(ngModel)]="supplierFilter">
-          <option value="">All manufacturers</option>
-          @for (s of suppliers; track s) {
-            <option [value]="s">{{ s }}</option>
-          }
+          <option value="">All</option>
+          @for (s of suppliers; track s) { <option [value]="s">{{ s }}</option> }
         </select>
       </label>
+
+      <label class="ps-f">
+        <span>Category</span>
+        <select [(ngModel)]="categoryFilter">
+          <option value="">All</option>
+          @for (c of categories; track c) { <option [value]="c">{{ c }}</option> }
+        </select>
+      </label>
+
+      <label class="ps-f">
+        <span>Max lead</span>
+        <select [(ngModel)]="maxLeadWeeks">
+          <option [ngValue]="0">Any</option>
+          <option [ngValue]="4">≤ 4 wk</option>
+          <option [ngValue]="8">≤ 8 wk</option>
+          <option [ngValue]="12">≤ 12 wk</option>
+          <option [ngValue]="26">≤ 26 wk</option>
+        </select>
+      </label>
+
+      <label class="ps-f">
+        <span>Sort by</span>
+        <select [(ngModel)]="sort">
+          <option value="relevance">Relevance</option>
+          <option value="stock">Most stock</option>
+          <option value="price">Lowest price</option>
+          <option value="lead">Shortest lead</option>
+          <option value="moq">Lowest MOQ</option>
+          <option value="part">Part number</option>
+        </select>
+      </label>
+
+      <label class="ps-toggle" matTooltip="Only parts with stock on hand">
+        <input type="checkbox" [(ngModel)]="inStockOnly" (ngModelChange)="reSearch()" /> In stock
+      </label>
+      <label class="ps-toggle" matTooltip="Only parts with an Active lifecycle status">
+        <input type="checkbox" [(ngModel)]="activeOnly" (ngModelChange)="reSearch()" /> Active only
+      </label>
+      <label class="ps-toggle" matTooltip="Hide NRND / EOL / obsolete parts">
+        <input type="checkbox" [(ngModel)]="hideRisk" /> Hide EOL
+      </label>
+
+      @if (filtered) {
+        <button type="button" class="ps-clear" (click)="clearFilters()">
+          <mat-icon>filter_alt_off</mat-icon> Clear
+        </button>
+      }
     </div>
   }
 
-  <div class="ps-results">
-    @if (loading) {
-      <p class="ps-msg">Searching…</p>
-    }
-    @if (!loading && searched && !results.length) {
-      <p class="ps-msg">No matching parts.</p>
-    }
-    @if (!loading && !searched) {
-      <p class="ps-msg">Search the catalogue, then add a part to the canvas.</p>
-    }
+  <!-- Body: result list + detail -->
+  <div class="ps-body">
+    <div class="ps-list">
+      @if (loading) { <p class="ps-msg">Searching the catalogue…</p> }
+      @if (!loading && searched && !results.length) { <p class="ps-msg">No matching parts.</p> }
+      @if (!loading && searched && results.length && !visibleResults.length) {
+        <p class="ps-msg">No parts match these filters.</p>
+      }
+      @if (!loading && !searched) {
+        <p class="ps-msg">Search the catalogue to see stock, pricing, lead times and lifecycle.</p>
+      }
 
-    @for (hit of visibleResults; track hit.id) {
-      <div class="ps-item">
-        <div class="ps-info">
-          <span class="ps-pn">{{ hit.partNumber }}</span>
-          <span class="ps-supp">{{ hit.manufacturer || hit.supplier }}</span>
-          @if (hit.description) {
-            <span class="ps-desc">{{ hit.description }}</span>
+      @for (hit of visibleResults; track hit.id) {
+        <button type="button" class="ps-item" [class.on]="isSelected(hit)" (click)="select(hit)">
+          @if (hit.imageUrl) {
+            <img class="ps-thumb" [src]="hit.imageUrl" [alt]="hit.partNumber" loading="lazy" />
+          } @else {
+            <span class="ps-thumb ps-thumb-none"><mat-icon>memory</mat-icon></span>
           }
-          <!-- Inventory / lifecycle -->
-          <div class="ps-meta">
-            @if (hit.status) {
-              <span class="ps-chip" [class]="statusClass(hit.status)">{{ hit.status }}</span>
-            }
-            <span class="ps-chip stock" [class.zero]="!hit.stock.totalOnHand">
-              <mat-icon>inventory_2</mat-icon>{{ hit.stock.totalOnHand | number }} in stock
+          <span class="ps-info">
+            <span class="ps-pnrow">
+              <span class="ps-pn">{{ hit.partNumber }}</span>
+              @if (hit.exactMatch) { <span class="ps-exact">exact</span> }
+              @if (atRisk(hit)) { <mat-icon class="ps-risk" matTooltip="Lifecycle risk">warning</mat-icon> }
             </span>
-            @if (hit.stock.locationCount > 1) {
-              <span class="ps-chip">{{ hit.stock.inStockLocations }}/{{ hit.stock.locationCount }} sites</span>
-            }
-            @if (hit.leadTime.arrowWeeks) {
-              <span class="ps-chip">
-                <mat-icon>schedule</mat-icon>LT {{ hit.leadTime.arrowWeeks }} wk
+            <span class="ps-supp">{{ hit.manufacturer || hit.supplier }}</span>
+            @if (hit.description) { <span class="ps-desc">{{ hit.description }}</span> }
+            <span class="ps-meta">
+              @if (hit.status) { <span class="ps-chip" [class]="statusClass(hit.status)">{{ hit.status }}</span> }
+              <span class="ps-chip stock" [class.zero]="!hit.stock.totalOnHand">
+                <mat-icon>inventory_2</mat-icon>{{ hit.stock.totalOnHand | number }}
               </span>
-            }
-            @if (hit.pricing.unitPrice) {
-              <span class="ps-chip">{{ price(hit) }}</span>
-            }
-            @if (hit.packaging.minOrderQty) {
-              <span class="ps-chip">MOQ {{ hit.packaging.minOrderQty | number }}</span>
-            }
-            @for (c of hit.compliance.standards; track c) {
-              <span class="ps-chip">{{ c }}</span>
-            }
-            @if (hit.datasheetUrl) {
-              <a class="ps-chip link" [href]="hit.datasheetUrl" target="_blank" rel="noopener">
-                <mat-icon>description</mat-icon>Datasheet
-              </a>
-            }
-          </div>
-        </div>
-        <div class="ps-actions">
-          <input class="ps-qty" type="number" min="1"
-            [ngModel]="qtyOf(hit)" (ngModelChange)="setQty(hit, $event)"
-            title="Order quantity" />
-          <button type="button" class="ps-cmp" [class.on]="inCompare(hit)"
+              @if (hit.leadTime.arrowWeeks) {
+                <span class="ps-chip"><mat-icon>schedule</mat-icon>{{ hit.leadTime.arrowWeeks }} wk</span>
+              }
+              @if (hit.pricing.unitPrice) { <span class="ps-chip">{{ price(hit) }}</span> }
+            </span>
+          </span>
+          <span class="ps-tick" [class.on]="inCompare(hit)"
             (click)="toggleCompare(hit, $event)"
             [matTooltip]="inCompare(hit) ? 'In comparison' : 'Add to comparison'">
             <mat-icon>{{ inCompare(hit) ? 'check_box' : 'add_box' }}</mat-icon>
-          </button>
-          <button type="button" class="ps-alt" (click)="alternates(hit.partNumber)"
-            matTooltip="Lifecycle & alternates">
-            <mat-icon>alt_route</mat-icon>
+          </span>
+        </button>
+      }
+
+      @if (hasMore && !loading) {
+        <button type="button" class="ps-more" [disabled]="loadingMore" (click)="loadMore()">
+          {{ loadingMore ? 'Loading…' : 'Load more results' }}
+        </button>
+      }
+    </div>
+
+    <!-- Detail -->
+    <div class="ps-detail">
+      @if (!selected) {
+        <p class="ps-msg">Select a part to see its full catalogue record.</p>
+      } @else {
+        <div class="pd-head">
+          @if (selected.imageUrl) {
+            <img class="pd-img" [src]="selected.imageUrl" [alt]="selected.partNumber" />
+          } @else {
+            <div class="pd-img ph"><mat-icon>memory</mat-icon></div>
+          }
+          <div class="pd-id">
+            <h3>{{ selected.partNumber }}</h3>
+            <p class="pd-mfr">{{ selected.manufacturer || selected.supplier }}</p>
+            <p class="pd-desc">{{ selected.description }}</p>
+            <div class="pd-pills">
+              @if (selected.status) {
+                <span class="ps-chip" [class]="statusClass(selected.status)">{{ selected.status }}</span>
+              }
+              @if (selected.designWinEligible) { <span class="ps-chip ok">Design-win eligible</span> }
+              @if (selected.crossReferenced) { <span class="ps-chip">Cross-referenced</span> }
+              @if (selected.compliance.svhc) { <span class="ps-chip bad">SVHC flagged</span> }
+            </div>
+          </div>
+        </div>
+
+        <div class="pd-actions">
+          <label class="pd-qty">
+            Qty
+            <input type="number" min="1" [ngModel]="qtyOf(selected)" (ngModelChange)="setQty(selected, $event)" />
+          </label>
+          <button type="button" class="pd-btn primary" (click)="add(selected)">
+            <mat-icon>add</mat-icon> Add to canvas
           </button>
           @if (hasSelection) {
-            <button type="button" class="ps-attach" (click)="attach(hit)" title="Attach to selected block">
-              <mat-icon>link</mat-icon>
+            <button type="button" class="pd-btn" (click)="attach(selected)">
+              <mat-icon>link</mat-icon> Attach to block
             </button>
           }
-          <button type="button" class="ps-add" (click)="add(hit)" title="Add to canvas">
-            <mat-icon>add</mat-icon>
+          <button type="button" class="pd-btn" (click)="alternates(selected.partNumber)">
+            <mat-icon>alt_route</mat-icon> Lifecycle &amp; alternates
           </button>
+          <button type="button" class="pd-btn" [class.on]="inCompare(selected)" (click)="toggleCompare(selected)">
+            <mat-icon>{{ inCompare(selected) ? 'check_box' : 'add_box' }}</mat-icon> Compare
+          </button>
+          @if (selected.datasheetUrl) {
+            <a class="pd-btn" [href]="selected.datasheetUrl" target="_blank" rel="noopener">
+              <mat-icon>description</mat-icon> Datasheet
+            </a>
+          }
         </div>
-      </div>
-    }
+
+        <!-- Key figures -->
+        <div class="pd-stats">
+          <div class="pd-stat">
+            <span class="k">In stock</span>
+            <span class="v" [class.zero]="!selected.stock.totalOnHand">{{ selected.stock.totalOnHand | number }}</span>
+            <span class="s">{{ selected.stock.inStockLocations }}/{{ selected.stock.locationCount }} sites</span>
+          </div>
+          <div class="pd-stat">
+            <span class="k">Unit price</span>
+            <span class="v">{{ price(selected) }}</span>
+            <span class="s">{{ selected.pricing.breaks.length }} price breaks</span>
+          </div>
+          <div class="pd-stat">
+            <span class="k">Arrow lead</span>
+            <span class="v">{{ selected.leadTime.arrowWeeks || '—' }}@if (selected.leadTime.arrowWeeks) {<em> wk</em>}</span>
+            <span class="s">Supplier {{ selected.leadTime.supplierWeeks || '—' }} wk</span>
+          </div>
+          <div class="pd-stat">
+            <span class="k">MOQ</span>
+            <span class="v">{{ selected.packaging.minOrderQty | number }}</span>
+            <span class="s">×{{ selected.packaging.multipleQty | number }} multiple</span>
+          </div>
+        </div>
+
+        <!-- Identification -->
+        <section class="pd-sec">
+          <h4>Identification</h4>
+          <dl class="pd-dl">
+            <dt>Arrow part</dt><dd>{{ selected.partNumber }}</dd>
+            <dt>Supplier part</dt><dd>{{ selected.supplierPartNumber || '—' }}</dd>
+            <dt>Manufacturer</dt><dd>{{ selected.manufacturer || '—' }}</dd>
+            <dt>Supplier</dt><dd>{{ selected.supplier || '—' }}</dd>
+            <dt>Category</dt><dd>{{ selected.categoryPath.join(' › ') || selected.category || '—' }}</dd>
+            <dt>Part key</dt><dd>{{ selected.partKey || '—' }}</dd>
+            @if (selected.crossRefTypes.length) {
+              <dt>Cross-ref</dt><dd>{{ selected.crossRefTypes.join(', ') }}</dd>
+            }
+          </dl>
+        </section>
+
+        <!-- Availability by site -->
+        <section class="pd-sec">
+          <h4>Availability <span class="pd-sub">{{ selected.locations.length }} stocking site(s)</span></h4>
+          @if (selected.stock.nextDelivery) {
+            <p class="pd-note">
+              <mat-icon>local_shipping</mat-icon>
+              Next delivery {{ selected.stock.nextQty | number }} on {{ selected.stock.nextDelivery }}
+            </p>
+          }
+          @if (selected.locations.length) {
+            <div class="pd-tblwrap">
+              <table class="pd-tbl">
+                <thead>
+                  <tr><th>Site</th><th>Type</th><th>Status</th><th class="n">On hand</th><th class="n">Incoming</th><th>Next</th><th class="n">MOQ</th></tr>
+                </thead>
+                <tbody>
+                  @for (l of selected.locations; track l.id) {
+                    <tr>
+                      <td>
+                        {{ l.description || l.code }}
+                        @if (l.preferred) { <mat-icon class="pd-star" matTooltip="Preferred site">star</mat-icon> }
+                      </td>
+                      <td>{{ l.type || '—' }}</td>
+                      <td [attr.data-tone]="statusClass(l.status)">{{ l.status || '—' }}</td>
+                      <td class="n">{{ l.onHand | number }}</td>
+                      <td class="n">{{ l.nextQty | number }}</td>
+                      <td>{{ l.nextDelivery || '—' }}</td>
+                      <td class="n">{{ l.minOrderQty | number }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="pd-empty">No stocking sites reported.</p> }
+        </section>
+
+        <!-- Pricing ladder -->
+        <section class="pd-sec">
+          <h4>Price breaks <span class="pd-sub">{{ selected.pricing.currency }}</span></h4>
+          @if (selected.pricing.breaks.length) {
+            <div class="pd-tblwrap">
+              <table class="pd-tbl">
+                <thead><tr><th class="n">Min qty</th><th class="n">Max qty</th><th class="n">Unit price</th></tr></thead>
+                <tbody>
+                  @for (b of selected.pricing.breaks; track $index) {
+                    <tr>
+                      <td class="n">{{ b.minQty | number }}</td>
+                      <td class="n">{{ b.maxQty ? (b.maxQty | number) : '—' }}</td>
+                      <td class="n">{{ priceOf(b.price, selected.pricing.currency) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="pd-empty">No published price breaks.</p> }
+        </section>
+
+        <!-- Packaging + compliance side by side -->
+        <div class="pd-cols">
+          <section class="pd-sec">
+            <h4>Packaging</h4>
+            <dl class="pd-dl">
+              <dt>Package</dt><dd>{{ selected.packaging.packageType || '—' }}</dd>
+              <dt>Package qty</dt><dd>{{ selected.packaging.packageQty || '—' }}</dd>
+              <dt>Min order</dt><dd>{{ selected.packaging.minOrderQty | number }}</dd>
+              <dt>Multiple</dt><dd>{{ selected.packaging.multipleQty | number }}</dd>
+              <dt>UOM</dt><dd>{{ selected.packaging.uom || '—' }}</dd>
+            </dl>
+          </section>
+
+          <section class="pd-sec">
+            <h4>Compliance &amp; trade</h4>
+            <dl class="pd-dl">
+              <dt>Standards</dt><dd>{{ selected.compliance.standards.join(', ') || '—' }}</dd>
+              <dt>SVHC</dt>
+              <dd [class.risk]="selected.compliance.svhc">{{ selected.compliance.svhc ? 'Flagged' : 'Clear' }}</dd>
+              <dt>ECCN (US)</dt><dd>{{ selected.compliance.eccnUs || '—' }}</dd>
+              <dt>ECCN (Wass.)</dt><dd>{{ selected.compliance.eccnWassenaar || '—' }}</dd>
+              <dt>HTS</dt><dd>{{ selected.compliance.hts || '—' }}</dd>
+              <dt>Origin</dt><dd>{{ selected.compliance.countryOfOrigin || '—' }}</dd>
+            </dl>
+          </section>
+        </div>
+      }
+    </div>
   </div>
 
   <!-- Comparison tray: appears once two or more parts are ticked. -->
   @if (compareCount) {
-    <div class="ps-comparebar">
+    <footer class="ps-comparebar">
       <span><b>{{ compareCount }}</b> to compare</span>
       <button type="button" class="ps-comparego" [disabled]="compareCount < 2" (click)="openCompare()">
-        <mat-icon>compare_arrows</mat-icon> Compare
+        <mat-icon>compare_arrows</mat-icon> Compare side by side
       </button>
-    </div>
+    </footer>
   }
-</aside>
+</section>
 
 @if (compareOpen) {
   <app-part-compare [parts]="compareList"
