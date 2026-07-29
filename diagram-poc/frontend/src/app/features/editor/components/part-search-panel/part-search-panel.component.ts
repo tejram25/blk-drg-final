@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
-  CatalogPart, PartSearchService, formatPrice, mergeParts, statusTone,
+  CatalogPart, PartSearchService, RegionOption, formatPrice, mergeParts, statusTone,
 } from '../../../../core/services/part-search.service';
 import { PartCompareComponent } from '../part-compare/part-compare.component';
 
@@ -30,7 +30,7 @@ type SortKey = 'relevance' | 'stock' | 'price' | 'lead' | 'moq' | 'part';
     templateUrl: './part-search-panel.component.html',
     styleUrls: ['./part-search-panel.component.css']
 })
-export class PartSearchPanelComponent implements AfterViewInit {
+export class PartSearchPanelComponent implements OnInit, AfterViewInit {
   private readonly api = inject(PartSearchService);
 
   @Output() close = new EventEmitter<void>();
@@ -74,6 +74,32 @@ export class PartSearchPanelComponent implements AfterViewInit {
   /** The part shown in the detail pane. */
   selected: CatalogPart | null = null;
 
+  // ---- region ------------------------------------------------------------
+  /**
+   * Which region's catalogue to search. Stock, lead time, price and lifecycle
+   * are all regional, so this changes the answers, not just the endpoint.
+   */
+  region = '';
+  regions: RegionOption[] = [];
+
+  /** Per-region availability for the selected part. */
+  regionRows: Array<{ code: string; label: string; part: CatalogPart }> = [];
+  regionsLoading = false;
+  regionsOpen = false;
+
+  ngOnInit(): void {
+    this.api.regions().subscribe({
+      next: (regions) => {
+        this.regions = regions;
+        if (!this.region) {
+          this.region = (regions.find((r) => r.default === 'true') ?? regions[0])?.code ?? '';
+        }
+      },
+      // A missing region list is not fatal: the backend applies its default.
+      error: () => { this.regions = []; },
+    });
+  }
+
   ngAfterViewInit(): void {
     if (this.seedQuery && this.seedQuery.trim()) {
       this.query = this.seedQuery.trim();
@@ -90,7 +116,7 @@ export class PartSearchPanelComponent implements AfterViewInit {
     this.searched = true;
     this.resetFilters();
     this.selected = null;
-    this.api.search(q, { inStock: this.inStockOnly, active: this.activeOnly }, 0).subscribe({
+    this.api.search(q, { inStock: this.inStockOnly, active: this.activeOnly }, 0, 25, this.region).subscribe({
       next: (res) => {
         this.results = res.parts;
         this.total = res.total;
@@ -116,7 +142,8 @@ export class PartSearchPanelComponent implements AfterViewInit {
   loadMore(): void {
     if (!this.hasMore || this.loading || this.loadingMore) return;
     this.loadingMore = true;
-    this.api.search(this.query.trim(), { inStock: this.inStockOnly, active: this.activeOnly }, this.nextStart)
+    this.api.search(this.query.trim(), { inStock: this.inStockOnly, active: this.activeOnly },
+                   this.nextStart, 25, this.region)
       .subscribe({
         next: (res) => {
           this.results = mergeParts(this.results, res.parts);
@@ -208,7 +235,55 @@ export class PartSearchPanelComponent implements AfterViewInit {
     this.hideRisk = false; this.maxLeadWeeks = 0;
   }
 
-  select(p: CatalogPart): void { this.selected = p; }
+  select(p: CatalogPart): void {
+    this.selected = p;
+    // Region rows belong to the previously-selected part.
+    this.regionRows = [];
+    this.regionsOpen = false;
+  }
+
+  /** Switching region re-runs the search — the results themselves differ. */
+  onRegionChange(): void { this.regionsOpen = false; this.reSearch(); }
+
+  /** Label for a region code, for headings and the comparison table. */
+  regionLabel(code: string): string {
+    return this.regions.find((r) => r.code === code)?.label ?? code.toUpperCase();
+  }
+
+  /**
+   * Look the selected part up in every region.
+   *
+   * This is the question a block diagram raises that a single search cannot
+   * answer: the part is fine for the plant I am designing for, but the board is
+   * also built elsewhere — can that site get it, and at what lead time?
+   */
+  compareRegions(): void {
+    const pn = this.selected?.partNumber;
+    if (!pn || this.regionsLoading) return;
+    this.regionsLoading = true;
+    this.regionsOpen = true;
+    this.api.availability(pn).subscribe({
+      next: (res) => {
+        this.regionRows = Object.entries(res.regions ?? {})
+          .map(([code, part]) => ({ code, label: this.regionLabel(code), part }));
+        this.regionsLoading = false;
+      },
+      error: () => { this.regionRows = []; this.regionsLoading = false; this.regionsOpen = false; },
+    });
+  }
+
+  /** Shortest lead time across the regions, to mark the best row. */
+  get bestRegionCode(): string {
+    let best = '', bestWeeks = Number.POSITIVE_INFINITY;
+    for (const r of this.regionRows) {
+      const w = Number(r.part.leadTime.arrowWeeks);
+      const weeks = Number.isFinite(w) && w > 0 ? w : Number.POSITIVE_INFINITY;
+      // Prefer stock in hand, then the shorter lead.
+      const rank = r.part.stock.totalOnHand > 0 ? weeks - 1000 : weeks;
+      if (rank < bestWeeks) { bestWeeks = rank; best = r.code; }
+    }
+    return best;
+  }
   isSelected(p: CatalogPart): boolean { return this.selected?.id === p.id; }
 
   qtyOf(p: CatalogPart): number { return this.qtyById[p.id] ?? 1; }

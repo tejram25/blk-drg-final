@@ -41,7 +41,8 @@ class RecommendationServiceImplTest {
     /** Part search that returns nothing, so the rule-based path is exercised in isolation. */
     private static final PartSearchService NO_PARTS = new PartSearchService() {
         @Override public PartSearchResponse search(String q, String manufacturer,
-                    boolean inStockOnly, boolean activeOnly, int start, int limit) {
+                    boolean inStockOnly, boolean activeOnly, int start, int limit,
+                    com.example.diagram.config.Region region) {
             return normalize("{\"partserviceresult\":{\"parts\":[]}}");
         }
         @Override public Map<String, Object> health() { return Map.of(); }
@@ -111,7 +112,8 @@ class RecommendationServiceImplTest {
         // A catalogue that returns a real, in-stock part for any search.
         PartSearchService live = new PartSearchService() {
             @Override public PartSearchResponse search(String q, String manufacturer,
-                        boolean inStockOnly, boolean activeOnly, int start, int limit) {
+                        boolean inStockOnly, boolean activeOnly, int start, int limit,
+                        com.example.diagram.config.Region region) {
                 return normalize("{\"partserviceresult\":{\"parts\":[{"
                         + "\"arwPartNum\":{\"name\":\"LM317T\"},"
                         + "\"mfr\":{\"name\":\"STMicroelectronics\"},"
@@ -138,7 +140,8 @@ class RecommendationServiceImplTest {
         // First result is dead (Nvr.Active, 0 stock); second is Active and in stock.
         PartSearchService live = new PartSearchService() {
             @Override public PartSearchResponse search(String q, String manufacturer,
-                        boolean inStockOnly, boolean activeOnly, int start, int limit) {
+                        boolean inStockOnly, boolean activeOnly, int start, int limit,
+                        com.example.diagram.config.Region region) {
                 return normalize("{\"partserviceresult\":{\"parts\":["
                         + "{\"arwPartNum\":{\"name\":\"DEADPART\"},"
                         + " \"invOrgs\":[{\"status\":\"Nvr.Active\",\"avail\":{\"totohQty\":0}}]},"
@@ -160,7 +163,8 @@ class RecommendationServiceImplTest {
     void flagsFieldProvenPartsFromPos() {
         PartSearchService live = new PartSearchService() {
             @Override public PartSearchResponse search(String q, String manufacturer,
-                        boolean inStockOnly, boolean activeOnly, int start, int limit) {
+                        boolean inStockOnly, boolean activeOnly, int start, int limit,
+                        com.example.diagram.config.Region region) {
                 return normalize("{\"partserviceresult\":{\"parts\":[{"
                         + "\"arwPartNum\":{\"name\":\"LM317T\"},"
                         + "\"mfr\":{\"name\":\"STMicroelectronics\"},"

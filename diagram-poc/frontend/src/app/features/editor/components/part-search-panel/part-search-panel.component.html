@@ -3,6 +3,20 @@
 <section class="ps-modal" role="dialog" aria-label="Search parts">
   <header class="ps-head">
     <span class="ps-title"><mat-icon>travel_explore</mat-icon> Search parts</span>
+
+    <!-- Region is part of the question: stock, lead, price and lifecycle all
+         come from the selected region's warehouses. -->
+    @if (regions.length) {
+      <label class="ps-region" matTooltip="Stock, lead time and price are regional">
+        <mat-icon>public</mat-icon>
+        <select [(ngModel)]="region" (ngModelChange)="onRegionChange()" aria-label="Catalogue region">
+          @for (r of regions; track r.code) {
+            <option [value]="r.code">{{ r.label }}</option>
+          }
+        </select>
+      </label>
+    }
+
     @if (searched && !loading) {
       <span class="ps-total">
         {{ visibleResults.length | number }} shown
@@ -210,6 +224,10 @@
           <button type="button" class="pd-btn" (click)="alternates(selected.partNumber)">
             <mat-icon>alt_route</mat-icon> Lifecycle &amp; alternates
           </button>
+          <button type="button" class="pd-btn" [class.on]="regionsOpen" (click)="compareRegions()"
+            matTooltip="Look this part up in every region">
+            <mat-icon>public</mat-icon> All regions
+          </button>
           <button type="button" class="pd-btn" [class.on]="inCompare(selected)" (click)="toggleCompare(selected)">
             <mat-icon>{{ inCompare(selected) ? 'check_box' : 'add_box' }}</mat-icon> Compare
           </button>
@@ -249,6 +267,54 @@
             <span class="s">×{{ selected.packaging.multipleQty | number }} multiple</span>
           </div>
         </div>
+
+        <!-- Availability across regions -->
+        @if (regionsOpen) {
+          <section class="pd-sec">
+            <h4>
+              Availability by region
+              <span class="pd-sub">same part number, different catalogues</span>
+            </h4>
+            @if (regionsLoading) {
+              <p class="pd-empty">Checking every region…</p>
+            } @else if (!regionRows.length) {
+              <p class="pd-empty">No regional data for this part.</p>
+            } @else {
+              <div class="pd-tblwrap">
+                <table class="pd-tbl">
+                  <thead>
+                    <tr>
+                      <th>Region</th><th>Status</th><th class="n">In stock</th>
+                      <th class="n">Lead</th><th class="n">Unit price</th><th>Sites</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (r of regionRows; track r.code) {
+                      <tr [class.best]="r.code === bestRegionCode" [class.current]="r.code === region">
+                        <td>
+                          {{ r.label }}
+                          @if (r.code === region) { <span class="pd-tag">searching</span> }
+                          @if (r.code === bestRegionCode) {
+                            <mat-icon class="pd-star" matTooltip="Best availability">star</mat-icon>
+                          }
+                        </td>
+                        <td [attr.data-tone]="statusClass(r.part.status)">{{ r.part.status || '—' }}</td>
+                        <td class="n">{{ r.part.stock.totalOnHand | number }}</td>
+                        <td class="n">{{ r.part.leadTime.arrowWeeks ? r.part.leadTime.arrowWeeks + ' wk' : '—' }}</td>
+                        <td class="n">{{ price(r.part) }}</td>
+                        <td>{{ r.part.stock.inStockLocations }}/{{ r.part.stock.locationCount }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <p class="pd-note">
+                <mat-icon>info</mat-icon>
+                Build region decides which of these you get — the part number is the same everywhere.
+              </p>
+            }
+          </section>
+        }
 
         <!-- Identification -->
         <section class="pd-sec">

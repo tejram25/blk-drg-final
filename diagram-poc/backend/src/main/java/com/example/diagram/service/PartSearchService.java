@@ -1,5 +1,6 @@
 package com.example.diagram.service;
 
+import com.example.diagram.config.Region;
 import com.example.diagram.web.dto.PartSearchResponse;
 
 import java.util.Map;
@@ -25,9 +26,11 @@ public interface PartSearchService {
      * @param activeOnly   keep only parts Active at some location
      * @param start        first upstream row to return
      * @param limit        maximum upstream rows to return
+     * @param region       catalogue region to search; stock, lead time, pricing
+     *                     and lifecycle all differ by region
      */
     PartSearchResponse search(String query, String manufacturer, boolean inStockOnly,
-                              boolean activeOnly, int start, int limit);
+                              boolean activeOnly, int start, int limit, Region region);
 
     /**
      * Diagnostic for {@code GET /api/parts/health}: reports whether the service

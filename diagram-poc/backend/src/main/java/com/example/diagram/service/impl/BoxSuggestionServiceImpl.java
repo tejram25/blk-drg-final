@@ -79,7 +79,7 @@ public class BoxSuggestionServiceImpl implements BoxSuggestionService {
         String query = queryFor(label, sub, kind);
         List<CatalogPart> found;
         try {
-            found = parts.search(query, null, false, false, 0, 50).parts();
+            found = parts.search(query, null, false, false, 0, 50, null).parts();
         } catch (ResponseStatusException ex) {
             throw ex;
         } catch (Exception ex) {

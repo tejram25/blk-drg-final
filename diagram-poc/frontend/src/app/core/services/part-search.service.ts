@@ -127,6 +127,19 @@ export interface PartSearchResponse {
 
 export interface PartSearchFilters { manufacturer?: string; inStock?: boolean; active?: boolean; }
 
+/**
+ * A catalogue region.
+ *
+ * The part service is deployed per region and the region is the path prefix
+ * (/eupartservice, /appartservice, /acpartservice). Same contract, different
+ * answers: stock, lead time, price and lifecycle all come from that region's
+ * warehouses, so the region is part of the question, not a setting.
+ */
+export interface RegionOption { code: string; label: string; default: string; }
+
+/** One part as a region sees it, for the side-by-side availability view. */
+export interface RegionalAvailability { region: string; label: string; part: CatalogPart; }
+
 const API = apiBaseUrl();
 
 /**
@@ -139,7 +152,7 @@ export class PartSearchService {
   private readonly http = inject(HttpClient);
 
   search(query: string, filters: PartSearchFilters = {},
-         start = 0, limit = 25): Observable<PartSearchResponse> {
+         start = 0, limit = 25, region = ''): Observable<PartSearchResponse> {
     let params = new HttpParams()
       .set('q', query)
       .set('start', String(start))
@@ -147,7 +160,22 @@ export class PartSearchService {
     if (filters.manufacturer) params = params.set('manufacturer', filters.manufacturer);
     if (filters.inStock) params = params.set('inStock', 'true');
     if (filters.active) params = params.set('active', 'true');
+    if (region) params = params.set('region', region);
     return this.http.get<PartSearchResponse>(`${API}/parts/search`, { params });
+  }
+
+  /** Regions this deployment can search. */
+  regions(): Observable<RegionOption[]> {
+    return this.http.get<RegionOption[]>(`${API}/parts/regions`);
+  }
+
+  /**
+   * The same part in every region. Regions that have no match are absent from
+   * the map rather than present-and-empty, so callers show only real answers.
+   */
+  availability(partNumber: string): Observable<{ partNumber: string; regions: Record<string, CatalogPart> }> {
+    return this.http.get<{ partNumber: string; regions: Record<string, CatalogPart> }>(
+      `${API}/parts/availability`, { params: new HttpParams().set('part', partNumber) });
   }
 }
 

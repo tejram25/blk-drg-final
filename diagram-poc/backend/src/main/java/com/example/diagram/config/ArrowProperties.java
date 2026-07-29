@@ -3,6 +3,9 @@ package com.example.diagram.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 /**
  * Configuration for the Arrow APIM Design Win APIs (part search + Design Win
  * data: customers, projects, boards, registrations, POS).
@@ -38,21 +41,20 @@ public class ArrowProperties {
     private String clientSecret;
 
     /**
-     * Which search endpoint contract to speak.
-     *
-     * <p>{@code partservice} is the original {@code /eupartservice/search}
-     * ({@code srchtxt}, {@code render}, {@code appid}). {@code acpartservice} is
-     * the newer Workbench endpoint, which drops those and takes a warehouse
-     * filter and a set of sourcing switches instead. Both return the same
-     * {@code partserviceresult} body, so only the request differs.
+     * Region used when a request does not name one. The region selects the
+     * regional deployment of the part service — see {@link Region}.
      */
-    private SearchApi searchApi = SearchApi.PARTSERVICE;
+    private Region region = Region.EU;
 
-    public enum SearchApi { PARTSERVICE, ACPARTSERVICE }
-
-    // ---- acpartservice request parameters -------------------------------
-    /** Inventory organisations to search, as the {@code ioebs} CSV. */
-    private String invOrgs = "";
+    // ---- request parameters ---------------------------------------------
+    /**
+     * Inventory organisations to search per region, as the {@code ioebs} CSV.
+     *
+     * <p>Keyed by region because warehouse codes are regional — the Americas
+     * list (V36, V72, VAG …) means nothing to the EU deployment. Configured as
+     * {@code arrow.inv-orgs.ac=V36,V72,…}.
+     */
+    private Map<Region, String> invOrgs = new EnumMap<>(Region.class);
     /** Calling application, sent as {@code source}. */
     private String source = "Workbench";
     /** Search mode, sent as {@code srchmode}. */
@@ -77,9 +79,24 @@ public class ArrowProperties {
         return trimTrailingSlash(authBaseUrl) + tokenPath;
     }
 
-    /** Full search endpoint, e.g. https://host/arrowapi/dw/partservice/search. */
+    /** Full search endpoint for the default region. */
     public String searchUrl() {
-        return trimTrailingSlash(searchBaseUrl) + searchPath;
+        return searchUrl(region);
+    }
+
+    /**
+     * Full search endpoint for a region, e.g.
+     * https://host/appartservice/search.
+     *
+     * <p>{@code arrow.search-path}, when set, overrides the derived path for
+     * every region — an escape hatch for a deployment that does not follow the
+     * {@code /{region}partservice/search} convention.
+     */
+    public String searchUrl(Region r) {
+        String path = searchPath == null || searchPath.isBlank()
+                ? (r == null ? region : r).searchPath()
+                : searchPath;
+        return trimTrailingSlash(searchBaseUrl) + path;
     }
 
     /** A Design Win endpoint URL, e.g. designwinUrl("/customers"). */
@@ -122,11 +139,16 @@ public class ArrowProperties {
     public String getClientSecret() { return clientSecret; }
     public void setClientSecret(String clientSecret) { this.clientSecret = clientSecret; }
 
-    public SearchApi getSearchApi() { return searchApi; }
-    public void setSearchApi(SearchApi searchApi) { this.searchApi = searchApi; }
+    public Region getRegion() { return region; }
+    public void setRegion(Region region) { this.region = region; }
 
-    public String getInvOrgs() { return invOrgs; }
-    public void setInvOrgs(String invOrgs) { this.invOrgs = invOrgs; }
+    public Map<Region, String> getInvOrgs() { return invOrgs; }
+    public void setInvOrgs(Map<Region, String> invOrgs) { this.invOrgs = invOrgs; }
+
+    /** The {@code ioebs} CSV for a region, or empty when none is configured. */
+    public String invOrgsFor(Region r) {
+        return invOrgs == null ? "" : invOrgs.getOrDefault(r == null ? region : r, "");
+    }
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }

@@ -1,5 +1,6 @@
 package com.example.diagram.service.impl;
 
+import com.example.diagram.config.Region;
 import com.example.diagram.service.PartSearchNormalizer;
 import com.example.diagram.service.PartSearchService;
 import com.example.diagram.web.dto.CatalogPart;
@@ -65,7 +66,7 @@ public class MockPartSearchService implements PartSearchService {
 
     @Override
     public PartSearchResponse search(String query, String manufacturer, boolean inStockOnly,
-                                     boolean activeOnly, int start, int limit) {
+                                     boolean activeOnly, int start, int limit, Region region) {
         if (query == null || query.isBlank()) {
             throw new IllegalArgumentException("Search text is required.");
         }
@@ -79,7 +80,7 @@ public class MockPartSearchService implements PartSearchService {
         int from = Math.min(Math.max(start, 0), all.size());
         int to = Math.min(from + Math.max(limit, 1), all.size());
         ArrayNode matched = objectMapper.createArrayNode();
-        for (int i = from; i < to; i++) matched.add(all.get(i));
+        for (int i = from; i < to; i++) matched.add(regionalise(all.get(i), region));
 
         // Re-wrap as a partserviceresult so the same normaliser handles mock and
         // live responses — there is no second code path to keep in step.
@@ -95,6 +96,65 @@ public class MockPartSearchService implements PartSearchService {
 
         PartSearchResponse response = normalizer.normalize(root, query, from);
         return filter(response, manufacturer, inStockOnly, activeOnly);
+    }
+
+    /**
+     * Apply a deterministic regional skew to a catalogue row.
+     *
+     * <p>The bundled sample is a single region's data, but the real catalogue is
+     * deployed per region and gives materially different answers — different
+     * warehouses, stock, lead times and prices for the same part number. Without
+     * this the region selector would look like it does nothing, and the
+     * multi-region comparison would be a column of identical figures.
+     *
+     * <p>The skew is a fixed multiplier per region, not random, so repeated
+     * searches and the comparison view stay consistent with each other.
+     */
+    private JsonNode regionalise(JsonNode row, Region region) {
+        Region r = region == null ? Region.EU : region;
+        if (r == Region.EU) return row;                  // sample data is EU as-is
+
+        // AP: long ocean lead times, thinner local stock.
+        // AC: mid lead times, deeper stock, slightly higher price.
+        double stockFactor = r == Region.AP ? 0.35 : 1.6;
+        int leadDelta     = r == Region.AP ? 6 : 2;
+        double priceFactor = r == Region.AP ? 0.95 : 1.08;
+
+        ObjectNode copy = row.deepCopy();
+        JsonNode lead = copy.path("leadTime");
+        if (lead.isObject()) {
+            ObjectNode lt = (ObjectNode) lead;
+            int weeks = (int) Math.round(asDouble(lt.path("arwLT")) + leadDelta);
+            if (weeks > 0) lt.put("arwLT", String.valueOf(weeks));
+            long suppAvail = Math.round(lt.path("suppAvail").asLong(0) * stockFactor);
+            if (lt.has("suppAvail")) lt.put("suppAvail", suppAvail);
+        }
+        for (JsonNode orgNode : copy.path("invOrgs")) {
+            ObjectNode org = (ObjectNode) orgNode;
+            org.put("cd", r.code().toUpperCase() + org.path("cd").asText(""));
+            org.put("IODesc", r.label() + " — " + org.path("IODesc").asText(""));
+            JsonNode availNode = org.path("avail");
+            if (availNode.isObject()) {
+                ObjectNode avail = (ObjectNode) availNode;
+                avail.put("totohQty", Math.round(avail.path("totohQty").asLong(0) * stockFactor));
+                avail.put("FOHQty", Math.round(avail.path("FOHQty").asLong(0) * stockFactor));
+                avail.put("nextQty", Math.round(avail.path("nextQty").asLong(0) * stockFactor));
+            }
+            for (JsonNode breakNode : org.path("webPrice").path("resalelist")) {
+                ObjectNode b = (ObjectNode) breakNode;
+                b.put("price", String.format(java.util.Locale.ROOT, "%.6f",
+                        asDouble(b.path("price")) * priceFactor));
+            }
+        }
+        return copy;
+    }
+
+    private static double asDouble(JsonNode n) {
+        try {
+            return Double.parseDouble(n.asText("0").trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     /** Post-normalisation filters, applied to the grouped parts. */

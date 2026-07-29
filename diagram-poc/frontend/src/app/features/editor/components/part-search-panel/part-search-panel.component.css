@@ -39,6 +39,19 @@
 }
 .ps-title { display: inline-flex; align-items: center; gap: 9px; font-size: 16px; font-weight: 600; }
 .ps-title mat-icon { font-size: 20px; width: 20px; height: 20px; color: var(--accent); }
+/* Region picker — sits with the title because it changes what a search means. */
+.ps-region { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.ps-region mat-icon { font-size: 17px; width: 17px; height: 17px; color: var(--accent-ink); }
+.ps-region select {
+  appearance: none; -webkit-appearance: none;
+  background-color: var(--panel-2); color: var(--text);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M3 4.5 6 8l3-3.5' fill='none' stroke='%23888' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat; background-position: right 8px center; background-size: 12px;
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 5px 26px 5px 11px; font-size: 12px; font-family: inherit; font-weight: 600; cursor: pointer;
+}
+.ps-region select:hover { border-color: var(--accent); }
+
 .ps-total { margin-left: auto; font-size: 12px; color: var(--muted); }
 .ps-total em { font-style: normal; color: var(--faint); }
 .ps-x {
@@ -305,6 +318,15 @@
 .pd-tbl td[data-tone='ok'] { color: var(--ok); font-weight: 600; }
 .pd-tbl td[data-tone='bad'] { color: var(--danger); font-weight: 600; }
 .pd-star { font-size: 13px; width: 13px; height: 13px; color: var(--warn); vertical-align: -2px; }
+
+/* Region comparison rows. */
+.pd-tbl tr.best td { background: color-mix(in srgb, var(--ok) 10%, transparent); }
+.pd-tbl tr.current td:first-child { font-weight: 700; }
+.pd-tag {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent-ink);
+  font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+}
 
 /* ---- comparison tray ---- */
 .ps-comparebar {

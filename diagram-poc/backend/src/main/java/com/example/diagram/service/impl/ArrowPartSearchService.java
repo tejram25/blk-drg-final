@@ -1,6 +1,7 @@
 package com.example.diagram.service.impl;
 
 import com.example.diagram.config.ArrowProperties;
+import com.example.diagram.config.Region;
 import com.example.diagram.service.PartSearchNormalizer;
 import com.example.diagram.service.PartSearchService;
 import com.example.diagram.web.dto.CatalogPart;
@@ -48,7 +49,7 @@ public class ArrowPartSearchService implements PartSearchService {
     @Override
     public PartSearchResponse search(String query, String manufacturer,
                                      boolean inStockOnly, boolean activeOnly,
-                                     int start, int limit) {
+                                     int start, int limit, Region region) {
         if (query == null || query.isBlank()) {
             throw new IllegalArgumentException("Search text is required.");
         }
@@ -58,8 +59,9 @@ public class ArrowPartSearchService implements PartSearchService {
         }
         // The upstream filters by supplier, not manufacturer; manufacturer is
         // applied below against the normalised result.
+        Region r = region == null ? props.getRegion() : region;
         String json = client.getJson(searchUrl(query, Math.max(start, 0),
-                limit > 0 ? limit : props.getSearchLimit()));
+                limit > 0 ? limit : props.getSearchLimit(), r));
 
         PartSearchResponse response;
         try {
@@ -72,40 +74,37 @@ public class ArrowPartSearchService implements PartSearchService {
     }
 
     /**
-     * Build the upstream search URL for the configured endpoint contract.
+     * Build the upstream search URL for a region.
      *
-     * <p>Package-private so the shape of the request can be asserted without a
-     * live catalogue — the parameter sets differ enough between the two
-     * endpoints that a typo silently returns the wrong page rather than failing.
+     * <p>The region is the path prefix — {@code /eupartservice/search},
+     * {@code /appartservice/search}, {@code /acpartservice/search} — and also
+     * selects the warehouse list, since inventory-organisation codes are
+     * regional.
+     *
+     * <p>Package-private so the request shape can be asserted without a live
+     * catalogue: a wrong region or warehouse list returns a perfectly valid
+     * response with the wrong stock figures rather than an error.
      */
-    String searchUrl(String query, int start, int limit) {
-        UriComponentsBuilder url = UriComponentsBuilder.fromHttpUrl(props.searchUrl())
-                .queryParam("srchtxt", query);
-
-        if (props.getSearchApi() == ArrowProperties.SearchApi.ACPARTSERVICE) {
-            // Workbench endpoint. It pages by page *and* offset, so both are
-            // sent and kept consistent — page is 1-based.
-            url.queryParam("ioebs", props.getInvOrgs())
-                    .queryParam("source", props.getSource())
-                    .queryParam("srchmode", props.getSearchMode())
-                    .queryParam("whsetype", props.getWarehouseType())
-                    .queryParam("retWhseFilter", props.isReturnWarehouseFilter() ? "Y" : "N")
-                    .queryParam("ftzBoostFlag", props.isFtzBoost() ? "Y" : "N")
-                    .queryParam("enableStcFlagFilter", props.isStcFlagFilter() ? "Y" : "N")
-                    .queryParam("limit", limit)
-                    .queryParam("start", start)
-                    .queryParam("page", start / Math.max(limit, 1) + 1);
-        } else {
-            url.queryParam("render", "json")
-                    .queryParam("appid", props.getAppId() == null || props.getAppId().isBlank()
-                            ? "gen" : props.getAppId())
-                    .queryParam("start", start)
-                    .queryParam("limit", limit);
-        }
-        // encode() percent-escapes the query values. Part numbers legitimately
-        // contain '#' (LTC1732EMS-4.2#PBF); unescaped it would start a URI
-        // fragment and silently truncate the query.
-        return url.encode().build().toUriString();
+    String searchUrl(String query, int start, int limit, Region region) {
+        int size = Math.max(limit, 1);
+        return UriComponentsBuilder.fromHttpUrl(props.searchUrl(region))
+                .queryParam("srchtxt", query)
+                .queryParam("ioebs", props.invOrgsFor(region))
+                .queryParam("source", props.getSource())
+                .queryParam("srchmode", props.getSearchMode())
+                .queryParam("whsetype", props.getWarehouseType())
+                .queryParam("retWhseFilter", props.isReturnWarehouseFilter() ? "Y" : "N")
+                .queryParam("ftzBoostFlag", props.isFtzBoost() ? "Y" : "N")
+                .queryParam("enableStcFlagFilter", props.isStcFlagFilter() ? "Y" : "N")
+                .queryParam("limit", size)
+                .queryParam("start", start)
+                // The service pages by page as well as offset; derived so the
+                // two cannot disagree. Page is 1-based.
+                .queryParam("page", start / size + 1)
+                // encode() percent-escapes the query values. Part numbers
+                // legitimately contain '#' (LTC1732EMS-4.2#PBF); unescaped it
+                // would start a URI fragment and truncate the query.
+                .encode().build().toUriString();
     }
 
     private PartSearchResponse filter(PartSearchResponse r, String manufacturer,
@@ -125,11 +124,15 @@ public class ArrowPartSearchService implements PartSearchService {
     public Map<String, Object> health() {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("mock", false);
-        out.put("searchUrl", props.searchUrl());
-        out.put("searchApi", props.getSearchApi());
-        // The exact request shape, so a misconfigured contract is visible here
-        // rather than only in an empty result set.
-        out.put("sampleQuery", searchUrl("BAV99", 0, props.getSearchLimit()));
+        out.put("region", props.getRegion().code());
+        out.put("regions", java.util.Arrays.stream(Region.values()).map(Region::code).toList());
+        // The exact request per region, so a wrong warehouse list or a bad
+        // region path is visible here rather than only as odd stock figures.
+        Map<String, String> queries = new LinkedHashMap<>();
+        for (Region r : Region.values()) {
+            queries.put(r.code(), searchUrl("BAV99", 0, props.getSearchLimit(), r));
+        }
+        out.put("sampleQueries", queries);
         out.putAll(client.authHealth());
         return out;
     }
