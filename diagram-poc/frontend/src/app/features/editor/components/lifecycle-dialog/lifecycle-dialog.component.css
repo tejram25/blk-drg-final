@@ -1,6 +1,9 @@
 .lc-backdrop {
-  position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
+  /* Above the part-search modal (201) and the compare dialog (300): the
+     lifecycle/alternates dialog is opened *from* those, so it must sit on top
+     of whichever one launched it rather than behind it. */
+  position: fixed; inset: 0; z-index: 320; display: flex; align-items: center; justify-content: center;
+  background: var(--scrim);
 }
 .lc-card {
   width: 440px; max-width: calc(100vw - 32px); max-height: calc(100vh - 64px);
