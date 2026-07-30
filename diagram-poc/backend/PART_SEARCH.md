@@ -82,14 +82,8 @@ returns another region's stock figures, which looks like a valid answer.
 `arrow.region` is only the default for requests that do not name one.
 
 ```bash
-export ARROW_REGION=eu
-export ARROW_INV_ORGS_EU=E21,E22,…
-export ARROW_INV_ORGS_AP=…
-export ARROW_INV_ORGS_AC=V36,V72,V99,VM5,VM7,VM8,VN1,VN2,VN3,VN4,VN5,VN6,VN7,VN8,VS2,VS3,VS4,VS5,VS7,Z98,X10,VAG
+export ARROW_REGION=ap        # default region for requests that omit one
 ```
-
-Warehouse codes are regional, hence one list per region — the Americas codes
-mean nothing to the EU deployment.
 
 `arrow.search-path` is normally left blank so the path derives from the region.
 Set it only for a deployment that does not follow the
@@ -154,9 +148,9 @@ implying that many more parts remain.
 - **Auth host unreachable / 401 on the token call** — check `ARROW_AUTH_BASE_URL`
   and that the client id/secret are valid for that host; the token error surfaces
   the upstream cause.
-- **Empty results but HTTP 200** — the search text matched nothing, or the
-  region has no warehouse list: check `arrow.inv-orgs.{region}`, since an empty
-  `ioebs` may scope the search to no warehouses at all.
+- **Empty results but HTTP 200** — the search text matched nothing in that
+  region. Try another region: a part stocked in the Americas may be absent from
+  the EU catalogue entirely.
 - **Plausible results but wrong figures** — likely the wrong region. Stock, lead
   and price are all regional; `/api/parts/health` reports the active region and
   the exact query built for each one.
