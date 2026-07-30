@@ -322,10 +322,13 @@
                                                 <mat-icon class="ob-icon">schema</mat-icon>
                                                 <h3>Start your diagram</h3>
                                                 <ul>
-                                                  <li><mat-icon>widgets</mat-icon> Drag a block or shape from the left palette</li>
-                                                  <li><mat-icon>dashboard_customize</mat-icon> Or open the <b>Template repository</b> to start from a proven layout</li>
-                                                  <li><mat-icon>travel_explore</mat-icon> <b>Search parts</b> to drop real components and build a BOM</li>
-                                                  <li><mat-icon>keyboard_command_key</mat-icon> Press <b>Ctrl/Cmd&nbsp;+&nbsp;Shift&nbsp;+&nbsp;P</b> for the command palette</li>
+                                                  <!-- The text is one span per row: the row is a flex container, so a
+                                                       bare <b> among text nodes becomes its own flex item and the
+                                                       sentence breaks into columns. -->
+                                                  <li><mat-icon>widgets</mat-icon><span>Drag a block or shape from the left palette</span></li>
+                                                  <li><mat-icon>dashboard_customize</mat-icon><span>Or open the <b>Template repository</b> to start from a proven layout</span></li>
+                                                  <li><mat-icon>travel_explore</mat-icon><span><b>Search parts</b> to drop real components and build a BOM</span></li>
+                                                  <li><mat-icon>keyboard_command_key</mat-icon><span>Press <b>Ctrl/Cmd&nbsp;+&nbsp;Shift&nbsp;+&nbsp;P</b> for the command palette</span></li>
                                                 </ul>
                                               </div>
                                             }

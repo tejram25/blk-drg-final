@@ -24,14 +24,15 @@
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       z-index: 4; pointer-events: none; text-align: left; max-width: 420px;
       color: var(--muted);
-      background: color-mix(in srgb, var(--panel) 70%, transparent);
+      background: var(--panel);
       border: 1px solid var(--border-soft); border-radius: 14px; padding: 22px 26px;
     }
     .onboarding .ob-icon { font-size: 34px; width: 34px; height: 34px; color: var(--accent); }
     .onboarding h3 { margin: 6px 0 12px; font-size: 17px; color: var(--text); font-weight: 600; }
     .onboarding ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
-    .onboarding li { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-    .onboarding li mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--muted); flex: none; }
+    .onboarding li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.5; }
+    .onboarding li mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--muted); flex: none; margin-top: 1px; }
+    .onboarding li > span { min-width: 0; }
     .onboarding b { color: var(--text); font-weight: 600; }
 
     /* ---- Right-click context menu ---- */
@@ -69,10 +70,8 @@
       display: flex; align-items: center; flex-wrap: wrap;
       gap: 4px; row-gap: 4px;
       min-height: 42px; flex-shrink: 0; padding: 4px 10px;
-      background: color-mix(in srgb, var(--panel) 88%, transparent);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      background: var(--panel);
       border-bottom: 1px solid var(--border);
-      box-shadow: 0 6px 22px rgba(0,0,0,.28);
       position: relative; z-index: 20;
     }
     .brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
@@ -307,7 +306,7 @@
     .lang-menu {
       position: absolute; top: calc(100% + 6px); right: 0; z-index: 50; min-width: 168px;
       background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-      padding: 6px; box-shadow: 0 12px 34px rgba(0,0,0,.5);
+      padding: 6px; box-shadow: var(--elev-3);
     }
     .lang-item {
       display: flex; align-items: center; justify-content: space-between; gap: 8px;
@@ -323,7 +322,7 @@
     .dropdown-menu {
       position: absolute; top: calc(100% + 6px); right: 0; z-index: 50; min-width: 188px;
       background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-      padding: 6px; box-shadow: 0 12px 34px rgba(0,0,0,.5);
+      padding: 6px; box-shadow: var(--elev-3);
     }
     .dropdown-menu.account-menu { min-width: 220px; }
 
@@ -385,10 +384,8 @@
     /* ---- Palette ---- */
     .palette {
       width: clamp(190px, 16vw, 240px); padding: 11px;
-      background: color-mix(in srgb, var(--panel) 88%, transparent);
-      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      background: var(--panel);
       border-right: 1px solid var(--border); overflow-y: auto;
-      box-shadow: 10px 0 30px rgba(0,0,0,.28);
       display: flex; flex-direction: column; position: relative; z-index: 10;
     }
     .panel-title {
@@ -421,7 +418,7 @@
     .dd-menu {
       position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 60;
       background: var(--bg-deep); border: 1px solid var(--border); border-radius: 10px;
-      padding: 5px; box-shadow: 0 16px 38px rgba(0,0,0,.6);
+      padding: 5px; box-shadow: var(--elev-3);
       max-height: 300px; overflow-y: auto;
       transform-origin: top center; animation: dd-in .15s ease;
     }
@@ -461,14 +458,14 @@
     .block-chip {
       grid-column: 1 / -1; display: flex; align-items: center; gap: 9px;
       padding: 6px 9px; border-radius: 9px;
-      background: color-mix(in srgb, var(--panel-2) 55%, transparent); border: 1px solid var(--border-soft);
+      background: var(--panel-2); border: 1px solid var(--border-soft);
       cursor: grab; user-select: none;
       transition: border-color .15s, transform .12s, box-shadow .15s, background .15s;
     }
     .block-chip:hover {
       border-color: var(--accent); transform: translateY(-1px);
-      background: color-mix(in srgb, var(--panel-2) 78%, transparent);
-      box-shadow: 0 6px 16px rgba(0,0,0,.28);
+      background: var(--accent-soft);
+      box-shadow: var(--elev-2);
     }
     .chip-badge {
       width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0;
@@ -477,7 +474,7 @@
     .chip-badge .material-icons { font-size: 15px; color: #fff; }
     .chip-label { font-size: 11.5px; font-weight: 500; color: var(--text); line-height: 1.25; }
     .symbol-item {
-      background: color-mix(in srgb, var(--panel-2) 55%, transparent);
+      background: var(--panel-2);
       border: 1px solid var(--border-soft); border-radius: 9px;
       display: flex; flex-direction: column; align-items: center; gap: 3px;
       padding: 7px 4px 6px; cursor: grab; user-select: none;
@@ -485,8 +482,8 @@
     }
     .symbol-item:hover {
       border-color: var(--accent); transform: translateY(-1px);
-      background: color-mix(in srgb, var(--panel-2) 78%, transparent);
-      box-shadow: 0 6px 16px rgba(0,0,0,.28);
+      background: var(--accent-soft);
+      box-shadow: var(--elev-2);
     }
     .symbol-item:active, .block-chip:active { cursor: grabbing; }
     .symbol-item span {
@@ -599,8 +596,7 @@
     .dock-del { --mat-icon-button-icon-color: var(--danger); }
     .props {
       width: clamp(190px, 17vw, 230px); padding: 10px 11px;
-      background: color-mix(in srgb, var(--panel) 88%, transparent);
-      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      background: var(--panel);
       border-left: 1px solid var(--border); overflow-y: auto;
       box-shadow: -10px 0 30px rgba(0,0,0,.28);
       position: relative; z-index: 10;
@@ -625,7 +621,7 @@
     .prop-type {
       display: flex; align-items: center; gap: 6px;
       font-size: 11px; color: var(--muted);
-      background: color-mix(in srgb, var(--panel-2) 55%, transparent); border: 1px solid var(--border-soft);
+      background: var(--panel-2); border: 1px solid var(--border-soft);
       border-radius: 8px; padding: 6px 8px; margin-bottom: 11px;
     }
     .prop-type mat-icon { font-size: 15px; width: 15px; height: 15px; color: var(--accent); }
@@ -752,8 +748,7 @@
         display: flex; flex-shrink: 0; z-index: 45;
         height: calc(56px + env(safe-area-inset-bottom));
         padding-bottom: env(safe-area-inset-bottom);
-        background: color-mix(in srgb, var(--panel) 92%, transparent);
-        backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+        background: var(--panel);
         border-top: 1px solid var(--border);
       }
       .mobile-bar > button {
@@ -861,9 +856,8 @@
         position: absolute; z-index: 46; top: 12px; right: 12px;
         width: 46px; height: 46px; border: 1px solid var(--border); border-radius: 14px;
         display: inline-flex; align-items: center; justify-content: center;
-        background: color-mix(in srgb, var(--panel) 88%, transparent); color: var(--text);
-        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        box-shadow: 0 6px 18px rgba(0,0,0,.4); cursor: pointer;
+        background: var(--panel); color: var(--text);
+        box-shadow: var(--elev-2); cursor: pointer;
       }
       .session-fab mat-icon { font-size: 23px; width: 23px; height: 23px; }
       .session-fab.on { border-color: var(--accent); color: var(--accent); }
@@ -881,18 +875,17 @@
         height: 44px; padding: 0 16px; border: 1px solid color-mix(in srgb, var(--danger) 50%, transparent); border-radius: 22px;
         background: color-mix(in srgb, var(--danger) 18%, var(--panel)); color: var(--danger);
         font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-        box-shadow: 0 8px 22px rgba(0,0,0,.4); backdrop-filter: blur(10px);
+        box-shadow: var(--elev-2);
       }
       .sel-del-fab mat-icon { font-size: 20px; width: 20px; height: 20px; color: var(--danger); }
       .sel-del-fab:active { transform: translateX(-50%) scale(.96); }
       .connect-hint {
         position: absolute; z-index: 46; left: 8px; right: 76px; bottom: 22px;
         display: flex; align-items: center; gap: 8px;
-        background: color-mix(in srgb, var(--panel) 90%, transparent);
+        background: var(--panel);
         border: 1px solid var(--border); border-radius: 12px; padding: 9px 12px;
         color: var(--text); font-size: 12.5px; line-height: 1.3;
-        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        box-shadow: 0 8px 22px rgba(0,0,0,.4);
+        box-shadow: var(--elev-2);
       }
       .connect-hint mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--accent); flex: none; }
     }
@@ -970,26 +963,82 @@
 .del-btn:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
 .del-btn mat-icon { font-size: 16px; width: 16px; height: 16px; }
 
-/* ================= Modern polish pass =================
-   Glass surfaces, softer depth and micro-interactions layered over the
-   established chrome (kept as overrides so the base design stays intact). */
+/* ================= Surfaces & rhythm =================
+   Replaces an earlier glass pass. Menus, the header and the palette are opaque:
+   they carry text, and a translucent surface puts the canvas and the palette
+   labels behind it in competition with it — legibility beats the effect.
+   Elevation is carried by shadow + hairline border instead. */
 
-/* Header: subtle vertical gradient + hairline highlight */
-.topbar {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, #ffffff 4%), var(--panel));
-  box-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 1px 0 rgba(0,0,0,.3);
+/* Elevation, tuned per theme. Component-scoped names, so no theme token is
+   shadowed — a light theme needs a fraction of the shadow a dark one does. */
+:host {
+  --elev-1: 0 1px 2px rgba(0, 0, 0, .05), 0 1px 3px rgba(0, 0, 0, .08);
+  --elev-2: 0 6px 18px rgba(0, 0, 0, .10), 0 1px 3px rgba(0, 0, 0, .06);
+  --elev-3: 0 16px 42px rgba(0, 0, 0, .16), 0 2px 8px rgba(0, 0, 0, .08);
+}
+:host-context(:root:not([data-theme='light'])) {
+  --elev-1: 0 1px 2px rgba(0, 0, 0, .45);
+  --elev-2: 0 8px 24px rgba(0, 0, 0, .45);
+  --elev-3: 0 20px 52px rgba(0, 0, 0, .58);
 }
 
-/* All floating menus: glass + entrance motion */
+/* ---- Header ---- */
+.topbar {
+  /* Opaque: the canvas used to show through the bar. */
+  background: var(--panel);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  min-height: 48px; padding: 7px 14px; gap: 6px; row-gap: 6px;
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--elev-1);
+}
+
+/* One icon scale for the whole bar. Sizes had drifted between 14 and 24px —
+   Material's 24px default applied to every text button's icon, so File/Insert/
+   View sat noticeably larger than the icon-only buttons beside them. */
+.topbar mat-icon,
+.topbar .mat-mdc-icon-button mat-icon,
+.topbar .mdc-button mat-icon,
+.hb-menu > mat-icon, .hb-menu .caret,
+.user-chip > mat-icon {
+  font-size: 18px; width: 18px; height: 18px; line-height: 18px;
+}
+/* The SVG caret: its 2px stroke on a 12x8 box read much heavier than the
+   Material chevrons next to it. */
+.dd-caret { width: 11px; height: 7px; }
+.dd-caret path { stroke-width: 1.6; }
+/* The classification pill is small by design, so its shield tracks the text. */
+.topbar .cls-pill mat-icon { font-size: 15px; width: 15px; height: 15px; line-height: 15px; }
+
+/* Control heights on one 32px baseline so nothing sits half a step off. */
+.topbar .mat-mdc-icon-button {
+  width: 32px; height: 32px; padding: 0; line-height: 32px;
+  --mat-icon-button-state-layer-size: 32px;
+  border-radius: 9px;
+}
+.topbar .mdc-button, .topbar .dd-trigger, .hb-menu, .user-chip { height: 32px; }
+.doc-name { height: 32px; }
+.cls-pill { height: 28px; }
+.vsep { height: 20px; margin: 0 4px; }
+.tool-group { gap: 3px; }
+.tool-group.boxed { padding: 2px; border-radius: 9px; }
+
+/* ---- Floating menus: opaque, one elevation, one radius ---- */
 .dropdown-menu, .dd-menu, .lang-menu, .ctx-menu {
-  background: color-mix(in srgb, var(--panel) 82%, transparent);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  background: var(--panel);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 18px 44px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.04) inset;
-  animation: menu-in .14s cubic-bezier(.2,.8,.25,1);
+  box-shadow: var(--elev-3);
+  animation: menu-in .14s cubic-bezier(.2, .8, .25, 1);
 }
 @keyframes menu-in { from { opacity: 0; transform: translateY(-5px) scale(.98); } to { opacity: 1; transform: none; } }
 .menu-item, .dd-item { transition: background .12s, color .12s; border-radius: 8px; }
+/* Menu rows on a consistent rhythm, and every glyph the same size. */
+.menu-item { padding: 9px 11px; gap: 11px; }
+.menu-item mat-icon, .lang-item mat-icon, .ctx-item mat-icon {
+  font-size: 18px; width: 18px; height: 18px; line-height: 18px; flex: none;
+}
+.dd-item { padding: 8px 11px; }
 
 /* AI action with the server's AI turned off: dimmed, with a small "AI off" tag.
    Still clickable — clicking shows the "how to enable" hint rather than hanging. */
@@ -1006,41 +1055,61 @@
 }
 .topbar .mat-mdc-icon-button:active, .hb-menu:active { transform: scale(.94); }
 
-/* Palette: glass panel + chip lift */
+/* ---- Left palette ---- */
+.palette {
+  /* Opaque for the same reason as the header. */
+  background: var(--panel);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  width: clamp(200px, 16vw, 248px);
+  padding: 14px 12px;
+  border-right: 1px solid var(--border);
+  box-shadow: none;
+}
+.panel-title { margin-bottom: 10px; }
+.search-wrap { margin-bottom: 10px; }
+.palette input.search, .palette select, .palette .dd-trigger { height: 34px; }
+.palette-grid { gap: 8px; }
+
+/* Palette chips: solid fill so the grid does not shimmer over the canvas. */
 .palette .block-chip, .palette .symbol-item {
-  transition: border-color .13s, transform .13s, box-shadow .13s;
+  background: var(--panel-2);
+  border: 1px solid var(--border-soft);
+  transition: border-color .13s, transform .13s, box-shadow .13s, background .13s;
 }
+.palette .block-chip { padding: 7px 10px; border-radius: 10px; }
+.palette .symbol-item { border-radius: 10px; }
 .palette .block-chip:hover, .palette .symbol-item:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0,0,0,.35);
+  box-shadow: var(--elev-2);
 }
+.chip-label { font-size: 12px; }
+.hint { margin-top: 14px; }
 
-/* Wire dock + chat: glass */
-.wire-dock, .chat {
-  background: color-mix(in srgb, var(--panel) 84%, transparent);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+/* ---- Docks floating over the canvas ---- */
+.wire-dock, .chat, .minimap {
+  background: var(--panel);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border: 1px solid var(--border);
+  box-shadow: var(--elev-3);
 }
-.wire-dock { border-radius: 13px; }
+.wire-dock { border-radius: 12px; }
+.minimap { border-radius: 12px; }
 
-/* Onboarding: glass + soft entrance */
+/* Onboarding card */
 .onboarding {
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  animation: ob-in .35s cubic-bezier(.2,.8,.25,1);
-  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  background: var(--panel);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  animation: ob-in .35s cubic-bezier(.2, .8, .25, 1);
+  box-shadow: var(--elev-3);
 }
 @keyframes ob-in { from { opacity: 0; transform: translate(-50%, -46%); } to { opacity: 1; transform: translate(-50%, -50%); } }
 
 /* Properties panel rows breathe a little more */
 .props label { transition: color .12s; }
 .part-details .pd-row { transition: background .12s; border-radius: 6px; }
-.part-details .pd-row:hover { background: color-mix(in srgb, var(--panel-2) 70%, transparent); }
-
-/* Minimap: glass card */
-.minimap {
-  background: color-mix(in srgb, var(--bg-deep) 82%, transparent);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  border-radius: 12px;
-}
+.part-details .pd-row:hover { background: var(--panel-2); }
 
 /* Focus visibility for keyboard users */
 .hb-menu:focus-visible, .dd-trigger:focus-visible, .menu-item:focus-visible,
@@ -1064,8 +1133,8 @@
 .imggen-card {
   display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
   padding: 26px 34px; border-radius: 16px; max-width: 340px;
-  background: color-mix(in srgb, var(--panel) 92%, transparent);
-  border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,.5);
+  background: var(--panel);
+  border: 1px solid var(--border); box-shadow: var(--elev-3);
 }
 .imggen-spin {
   width: 34px; height: 34px; border-radius: 50%;
@@ -1092,7 +1161,7 @@
 .bs-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .bs-item {
   border: 1px solid var(--border-soft); border-radius: 10px; padding: 9px 10px;
-  background: color-mix(in srgb, var(--panel-2) 55%, transparent);
+  background: var(--panel-2);
 }
 .bs-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .bs-head b { font-size: 12.5px; color: var(--text); margin-right: auto; }
