@@ -6,16 +6,16 @@
 
     <!-- Region is part of the question: stock, lead, price and lifecycle all
          come from the selected region's warehouses. -->
-    @if (regions.length) {
-      <label class="ps-region" matTooltip="Stock, lead time and price are regional">
-        <mat-icon>public</mat-icon>
-        <select [(ngModel)]="region" (ngModelChange)="onRegionChange()" aria-label="Catalogue region">
-          @for (r of regions; track r.code) {
-            <option [value]="r.code">{{ r.label }}</option>
-          }
-        </select>
-      </label>
-    }
+    <label class="ps-region"
+      matTooltip="Stock, lead time, price and lifecycle all differ by region">
+      <mat-icon>public</mat-icon>
+      <span class="ps-region-k">Region</span>
+      <select [(ngModel)]="region" (ngModelChange)="onRegionChange()" aria-label="Catalogue region">
+        @for (r of regions; track r.code) {
+          <option [value]="r.code">{{ r.label }}</option>
+        }
+      </select>
+    </label>
 
     @if (searched && !loading) {
       <span class="ps-total">

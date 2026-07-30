@@ -137,6 +137,19 @@ export interface PartSearchFilters { manufacturer?: string; inStock?: boolean; a
  */
 export interface RegionOption { code: string; label: string; default: string; }
 
+/**
+ * The regions the catalogue is deployed in.
+ *
+ * Held here as well as server-side because the set is fixed, not data: it lets
+ * the region picker render even when /api/parts/regions is unavailable (an older
+ * backend, say), instead of silently disappearing.
+ */
+export const REGIONS: RegionOption[] = [
+  { code: 'eu', label: 'Europe', default: 'true' },
+  { code: 'ap', label: 'Asia Pacific', default: 'false' },
+  { code: 'ac', label: 'Americas', default: 'false' },
+];
+
 /** One part as a region sees it, for the side-by-side availability view. */
 export interface RegionalAvailability { region: string; label: string; part: CatalogPart; }
 

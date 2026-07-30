@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
-  CatalogPart, PartSearchService, RegionOption, formatPrice, mergeParts, statusTone,
+  CatalogPart, PartSearchService, REGIONS, RegionOption, formatPrice, mergeParts, statusTone,
 } from '../../../../core/services/part-search.service';
 import { PartCompareComponent } from '../part-compare/part-compare.component';
 
@@ -80,7 +80,8 @@ export class PartSearchPanelComponent implements OnInit, AfterViewInit {
    * are all regional, so this changes the answers, not just the endpoint.
    */
   region = '';
-  regions: RegionOption[] = [];
+  /** Seeded from the built-in list so the picker is present immediately. */
+  regions: RegionOption[] = REGIONS;
 
   /** Per-region availability for the selected part. */
   regionRows: Array<{ code: string; label: string; part: CatalogPart }> = [];
@@ -88,16 +89,22 @@ export class PartSearchPanelComponent implements OnInit, AfterViewInit {
   regionsOpen = false;
 
   ngOnInit(): void {
+    this.applyRegions(REGIONS);
+    // Confirm against the backend, which knows its own default region.
     this.api.regions().subscribe({
-      next: (regions) => {
-        this.regions = regions;
-        if (!this.region) {
-          this.region = (regions.find((r) => r.default === 'true') ?? regions[0])?.code ?? '';
-        }
-      },
-      // A missing region list is not fatal: the backend applies its default.
-      error: () => { this.regions = []; },
+      next: (regions) => { if (regions?.length) this.applyRegions(regions); },
+      // Keep the built-in list: the picker still works and the backend falls
+      // back to its configured default for any region it does not recognise.
+      error: () => { /* built-in list stands */ },
     });
+  }
+
+  private applyRegions(regions: RegionOption[]): void {
+    this.regions = regions;
+    const known = regions.some((r) => r.code === this.region);
+    if (!known) {
+      this.region = (regions.find((r) => r.default === 'true') ?? regions[0])?.code ?? '';
+    }
   }
 
   ngAfterViewInit(): void {

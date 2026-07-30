@@ -77,30 +77,21 @@ public class ArrowPartSearchService implements PartSearchService {
      * Build the upstream search URL for a region.
      *
      * <p>The region is the path prefix — {@code /eupartservice/search},
-     * {@code /appartservice/search}, {@code /acpartservice/search} — and also
-     * selects the warehouse list, since inventory-organisation codes are
-     * regional.
+     * {@code /appartservice/search}, {@code /acpartservice/search}. Everything
+     * else is the plain search: text, paging, response format.
      *
      * <p>Package-private so the request shape can be asserted without a live
-     * catalogue: a wrong region or warehouse list returns a perfectly valid
-     * response with the wrong stock figures rather than an error.
+     * catalogue: a wrong region returns a perfectly valid response with another
+     * region's stock figures rather than an error.
      */
     String searchUrl(String query, int start, int limit, Region region) {
-        int size = Math.max(limit, 1);
         return UriComponentsBuilder.fromHttpUrl(props.searchUrl(region))
                 .queryParam("srchtxt", query)
-                .queryParam("ioebs", props.invOrgsFor(region))
-                .queryParam("source", props.getSource())
-                .queryParam("srchmode", props.getSearchMode())
-                .queryParam("whsetype", props.getWarehouseType())
-                .queryParam("retWhseFilter", props.isReturnWarehouseFilter() ? "Y" : "N")
-                .queryParam("ftzBoostFlag", props.isFtzBoost() ? "Y" : "N")
-                .queryParam("enableStcFlagFilter", props.isStcFlagFilter() ? "Y" : "N")
-                .queryParam("limit", size)
+                .queryParam("render", "json")
+                .queryParam("appid", props.getAppId() == null || props.getAppId().isBlank()
+                        ? "gen" : props.getAppId())
                 .queryParam("start", start)
-                // The service pages by page as well as offset; derived so the
-                // two cannot disagree. Page is 1-based.
-                .queryParam("page", start / size + 1)
+                .queryParam("limit", Math.max(limit, 1))
                 // encode() percent-escapes the query values. Part numbers
                 // legitimately contain '#' (LTC1732EMS-4.2#PBF); unescaped it
                 // would start a URI fragment and truncate the query.

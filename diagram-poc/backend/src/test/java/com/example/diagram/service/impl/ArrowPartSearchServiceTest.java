@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -43,44 +42,34 @@ class ArrowPartSearchServiceTest {
     }
 
     /**
-     * The region is the path prefix and also selects the warehouse list, so a
-     * wrong region returns another region's stock rather than an error.
+     * The region is the path prefix, and that is the only thing it changes about
+     * the request — a wrong region returns another region's stock rather than an
+     * error, so the mapping is asserted rather than assumed.
      */
     @Test
     void buildsPerRegionUrls() {
-        ArrowProperties props = configured();
-        props.setInvOrgs(Map.of(
-                Region.EU, "E21,E22",
-                Region.AP, "P41,P42",
-                Region.AC, "V36,V72,VAG"));
-        ArrowPartSearchService svc = service(props);
-
-        assertThat(svc.searchUrl("BAV99", 0, 25, Region.EU))
-                .contains("/eupartservice/search").containsPattern("ioebs=E21(,|%2C)E22");
-        assertThat(svc.searchUrl("BAV99", 0, 25, Region.AP))
-                .contains("/appartservice/search").containsPattern("ioebs=P41(,|%2C)P42");
-        assertThat(svc.searchUrl("BAV99", 0, 25, Region.AC))
-                .contains("/acpartservice/search").containsPattern("ioebs=V36(,|%2C)V72(,|%2C)VAG");
+        ArrowPartSearchService svc = service(configured());
+        assertThat(svc.searchUrl("BAV99", 0, 25, Region.EU)).contains("/eupartservice/search");
+        assertThat(svc.searchUrl("BAV99", 0, 25, Region.AP)).contains("/appartservice/search");
+        assertThat(svc.searchUrl("BAV99", 0, 25, Region.AC)).contains("/acpartservice/search");
     }
 
-    /** Reproduces the URL the part-search team supplied. */
+    /** The plain search: text, response format, app id and paging. Nothing else. */
     @Test
-    void buildsDocumentedAcQuery() {
-        ArrowProperties props = configured();
-        props.setInvOrgs(Map.of(Region.AC, "V36,V72,VAG"));
-        String url = service(props).searchUrl("BAV99", 50, 25, Region.AC);
-
+    void buildsPlainSearchQuery() {
+        String url = service(configured()).searchUrl("BAV99", 50, 25, Region.AC);
         assertThat(url).contains("srchtxt=BAV99")
-                .contains("source=Workbench")
-                .contains("srchmode=EBS")
-                .contains("whsetype=2")
-                .contains("retWhseFilter=Y")
-                .contains("ftzBoostFlag=Y")
-                .contains("enableStcFlagFilter=N")
-                .contains("limit=25")
+                .contains("render=json")
+                .contains("appid=gen")
                 .contains("start=50")
-                // 1-based page, derived from the offset so the two agree
-                .contains("page=3");
+                .contains("limit=25")
+                // Workbench's customer/order context is not ours to send.
+                .doesNotContain("ioebs")
+                .doesNotContain("source=")
+                .doesNotContain("srchmode")
+                .doesNotContain("whsetype")
+                .doesNotContain("ftzBoostFlag")
+                .doesNotContain("page=");
     }
 
     @Test

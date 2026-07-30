@@ -3,8 +3,6 @@ package com.example.diagram.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import java.util.EnumMap;
-import java.util.Map;
 
 /**
  * Configuration for the Arrow APIM Design Win APIs (part search + Design Win
@@ -45,28 +43,6 @@ public class ArrowProperties {
      * regional deployment of the part service — see {@link Region}.
      */
     private Region region = Region.EU;
-
-    // ---- request parameters ---------------------------------------------
-    /**
-     * Inventory organisations to search per region, as the {@code ioebs} CSV.
-     *
-     * <p>Keyed by region because warehouse codes are regional — the Americas
-     * list (V36, V72, VAG …) means nothing to the EU deployment. Configured as
-     * {@code arrow.inv-orgs.ac=V36,V72,…}.
-     */
-    private Map<Region, String> invOrgs = new EnumMap<>(Region.class);
-    /** Calling application, sent as {@code source}. */
-    private String source = "Workbench";
-    /** Search mode, sent as {@code srchmode}. */
-    private String searchMode = "EBS";
-    /** Warehouse type, sent as {@code whsetype}. */
-    private String warehouseType = "2";
-    /** Return the warehouse filter, sent as {@code retWhseFilter}. */
-    private boolean returnWarehouseFilter = true;
-    /** Boost foreign-trade-zone stock, sent as {@code ftzBoostFlag}. */
-    private boolean ftzBoost = true;
-    /** Sent as {@code enableStcFlagFilter}. */
-    private boolean stcFlagFilter = false;
 
     /** True only when both credentials are present, so we can fail fast otherwise. */
     public boolean isConfigured() {
@@ -142,29 +118,4 @@ public class ArrowProperties {
     public Region getRegion() { return region; }
     public void setRegion(Region region) { this.region = region; }
 
-    public Map<Region, String> getInvOrgs() { return invOrgs; }
-    public void setInvOrgs(Map<Region, String> invOrgs) { this.invOrgs = invOrgs; }
-
-    /** The {@code ioebs} CSV for a region, or empty when none is configured. */
-    public String invOrgsFor(Region r) {
-        return invOrgs == null ? "" : invOrgs.getOrDefault(r == null ? region : r, "");
-    }
-
-    public String getSource() { return source; }
-    public void setSource(String source) { this.source = source; }
-
-    public String getSearchMode() { return searchMode; }
-    public void setSearchMode(String searchMode) { this.searchMode = searchMode; }
-
-    public String getWarehouseType() { return warehouseType; }
-    public void setWarehouseType(String warehouseType) { this.warehouseType = warehouseType; }
-
-    public boolean isReturnWarehouseFilter() { return returnWarehouseFilter; }
-    public void setReturnWarehouseFilter(boolean returnWarehouseFilter) { this.returnWarehouseFilter = returnWarehouseFilter; }
-
-    public boolean isFtzBoost() { return ftzBoost; }
-    public void setFtzBoost(boolean ftzBoost) { this.ftzBoost = ftzBoost; }
-
-    public boolean isStcFlagFilter() { return stcFlagFilter; }
-    public void setStcFlagFilter(boolean stcFlagFilter) { this.stcFlagFilter = stcFlagFilter; }
 }

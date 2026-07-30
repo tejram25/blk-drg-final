@@ -97,24 +97,15 @@ Set it only for a deployment that does not follow the
 
 ### Request parameters
 
-| Property | Env var | Default | Sent as |
-|---|---|---|---|
-| `arrow.inv-orgs.{region}` | `ARROW_INV_ORGS_{REGION}` | *(empty)* | `ioebs` |
-| `arrow.source` | `ARROW_SOURCE` | `Workbench` | `source` |
-| `arrow.search-mode` | `ARROW_SEARCH_MODE` | `EBS` | `srchmode` |
-| `arrow.warehouse-type` | `ARROW_WAREHOUSE_TYPE` | `2` | `whsetype` |
-| `arrow.return-warehouse-filter` | `ARROW_RETURN_WAREHOUSE_FILTER` | `true` | `retWhseFilter` |
-| `arrow.ftz-boost` | `ARROW_FTZ_BOOST` | `true` | `ftzBoostFlag` |
-| `arrow.stc-flag-filter` | `ARROW_STC_FLAG_FILTER` | `false` | `enableStcFlagFilter` |
+The search itself is plain: `srchtxt`, `render=json`, `appid`, `start`, `limit`.
+The region only changes the path.
 
-`limit`, `start` and `page` come from the request; `page` is derived as
-`start / limit + 1` so the offset and the page number cannot disagree.
-
-The sample URL from the part-search team also carries ~25 empty parameters
-(`billto=`, `shipto=`, `custnum=`, `kanban=`, …). Those are Workbench's customer
-and order context; a design tool has none, so they are omitted rather than sent
-blank. If the endpoint turns out to require any of them present, add it in
-`ArrowPartSearchService.searchUrl`.
+The sample URL from the part-search team carries ~35 further parameters —
+`ioebs`, `source=Workbench`, `srchmode`, `whsetype`, `retWhseFilter`,
+`ftzBoostFlag`, plus customer and order context (`billto`, `shipto`, `custnum`,
+`headerId`, `lineId`, …). Those belong to Workbench, an order-entry tool that
+knows which customer it is quoting for and where the goods ship. A block diagram
+has no customer and no order line, so none of them are sent.
 
 Part numbers containing `#` (`LTC1732EMS-4.2#PBF`) are percent-encoded — left
 raw, the `#` would open a URI fragment and drop every parameter after it.
