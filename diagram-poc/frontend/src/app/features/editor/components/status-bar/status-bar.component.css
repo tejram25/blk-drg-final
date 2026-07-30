@@ -40,6 +40,5 @@
 
 /* ---- Modern polish ---- */
 .statusbar {
-  background: color-mix(in srgb, var(--panel) 88%, transparent);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  background: var(--panel);
 }

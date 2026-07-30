@@ -70,7 +70,6 @@
 
 /* ---- Modern polish: glass dock ---- */
 .cm-dock {
-  background: color-mix(in srgb, var(--panel) 86%, transparent);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  box-shadow: -14px 0 40px rgba(0, 0, 0, .45);
+  background: var(--panel);
+  box-shadow: var(--elev-3);
 }

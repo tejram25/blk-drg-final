@@ -5,7 +5,7 @@
 
 .ps-backdrop {
   position: fixed; inset: 0; z-index: 200;
-  background: rgba(8, 9, 12, .55);
+  background: var(--scrim);
   backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
 }
 
@@ -17,7 +17,7 @@
   display: flex; flex-direction: column; overflow: hidden;
   background: var(--panel); color: var(--text);
   border: 1px solid var(--border); border-radius: 14px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, .55);
+  box-shadow: var(--elev-3);
   font-family: var(--font);
   animation: ps-in .16s ease;
 }
@@ -193,7 +193,7 @@
   padding: 2px 8px; border-radius: 999px;
   background: var(--panel-2); color: var(--muted);
 }
-.ps-item.on .ps-chip { background: color-mix(in srgb, var(--panel) 65%, transparent); }
+.ps-item.on .ps-chip { background: var(--panel); }
 .ps-chip mat-icon { font-size: 12px; width: 12px; height: 12px; opacity: .8; }
 .ps-chip.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 15%, transparent); font-weight: 600; }
 .ps-chip.bad { color: var(--danger); background: color-mix(in srgb, var(--danger) 16%, transparent); font-weight: 600; }

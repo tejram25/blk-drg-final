@@ -25,7 +25,7 @@
   border: 1px solid var(--border);
   /* Same elevation as the header popovers; the negative spread keeps it soft
      in light theme, where the old flat 50% black read as a grey halo. */
-  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .55);
+  box-shadow: var(--elev-3);
   font-family: var(--font);
   font-size: 12.5px;
   line-height: 1.45;

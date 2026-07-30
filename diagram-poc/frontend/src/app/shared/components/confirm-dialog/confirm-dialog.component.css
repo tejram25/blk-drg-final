@@ -57,15 +57,14 @@
 
 /* ---- Modern polish: glass dialog ---- */
 .confirm-backdrop {
-  background: rgba(8, 9, 12, .55);
+  background: var(--scrim);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   animation: pol-fade .15s ease;
 }
 .confirm-card {
-  background: color-mix(in srgb, var(--panel) 90%, transparent);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  background: var(--panel);
   border-radius: 14px;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .04) inset;
+  box-shadow: var(--elev-3);
   animation: pol-pop .16s cubic-bezier(.2, .8, .25, 1);
 }
 @keyframes pol-fade { from { opacity: 0; } to { opacity: 1; } }

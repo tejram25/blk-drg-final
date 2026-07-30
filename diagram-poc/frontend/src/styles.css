@@ -131,9 +131,24 @@ html, body {
 
   --font: 'Arrow Display', 'Segoe UI', system-ui, sans-serif;
   --radius: 10px;
+
+  /* Elevation. Dark surfaces need a much stronger shadow than light ones to
+     separate from the background, so the two themes carry different values
+     under the same names — dialogs and popups reference these rather than
+     hardcoding rgba(0,0,0,.5), which reads as a bruise on a white theme. */
+  --elev-1: 0 1px 2px rgba(0, 0, 0, .45);
+  --elev-2: 0 8px 24px rgba(0, 0, 0, .45);
+  --elev-3: 0 20px 52px rgba(0, 0, 0, .58);
+  /* Scrim behind centred modals. */
+  --scrim: rgba(8, 9, 12, .55);
 }
 
 :root[data-theme="light"] {
+  --elev-1: 0 1px 2px rgba(0, 0, 0, .05), 0 1px 3px rgba(0, 0, 0, .08);
+  --elev-2: 0 6px 18px rgba(0, 0, 0, .10), 0 1px 3px rgba(0, 0, 0, .06);
+  --elev-3: 0 16px 42px rgba(0, 0, 0, .16), 0 2px 8px rgba(0, 0, 0, .08);
+  --scrim: rgba(15, 18, 22, .38);
+
   --bg: #f2f2f2; --bg-deep: #ffffff;
   --panel: #ffffff; --panel-2: #f7f7f7;
   --border: #dcdcdc; --border-soft: #ebebeb;

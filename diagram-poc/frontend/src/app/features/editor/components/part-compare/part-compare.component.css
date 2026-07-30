@@ -1,14 +1,14 @@
 /* Overlay comparison grid. Tokens only. */
 .cmp-backdrop {
   position: fixed; inset: 0; z-index: 300; display: grid; place-items: center;
-  background: color-mix(in srgb, #000 52%, transparent);
+  background: var(--scrim);
 }
 .cmp {
   width: min(1080px, calc(100vw - 40px)); max-height: calc(100vh - 60px);
   display: flex; flex-direction: column;
   background: var(--panel); color: var(--text);
-  border: 1px solid var(--border); border-radius: var(--radius);
-  box-shadow: 0 40px 100px -30px rgba(0, 0, 0, .7);
+  border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: var(--elev-3);
   font-family: var(--font);
 }
 .cmp-head {
