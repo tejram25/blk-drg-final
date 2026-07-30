@@ -491,6 +491,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       const link = e.subject as go.Link;
       if (link?.data?.wire) this.straightenWire(link);
     });
+    // Dragging a part into line should make its wires straight, not merely
+    // nearly straight — grid snap fixes the node's position but not where its
+    // pins fall inside it.
+    this.diagram.addDiagramListener('SelectionMoved', () => {
+      const moved = this.diagram.selection.toArray()
+        .filter((pt): pt is go.Node => pt instanceof go.Node);
+      if (moved.length === 1) this.alignWiresAfterMove(moved[0]);
+    });
     this.diagram.addDiagramListener('ObjectSingleClicked', (e) => {
       if (!this.connectMode) return;
       const node = e.subject?.part;
@@ -573,27 +581,68 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Magnetic pin alignment: if a freshly drawn wire connects two pins that are
-   * ALMOST collinear (within {@link ALIGN_SNAP}px), nudge the newly connected
-   * part so the pins line up exactly — the wire then renders as one straight
-   * run instead of a tiny Z-bend.
+   * Magnetic pin alignment: when a wire connects two pins that are ALMOST
+   * collinear (within {@link ALIGN_SNAP}px), nudge one part so the pins line up
+   * exactly — the wire then renders as one straight run instead of a tiny
+   * Z-bend.
+   *
+   * Pin offsets inside a symbol are fractions of its box, so two different
+   * symbols almost never put their pins on the same absolute axis: eyeballing a
+   * component into place typically leaves a 2–4px residual, and orthogonal
+   * routing turns that into a visible step. Snapping the residual to zero is
+   * what makes an aligned-looking layout actually align.
+   *
+   * @param move which end to nudge; defaults to the link's target node.
    */
   private static readonly ALIGN_SNAP = 14;
-  private straightenWire(link: go.Link): void {
-    const fp = link.fromPort, tp = link.toPort, tn = link.toNode;
-    if (!fp || !tp || !tn || link.fromNode === tn) return;
-    const a = fp.getDocumentPoint(go.Spot.Center);
-    const b = tp.getDocumentPoint(go.Spot.Center);
+  private straightenWire(link: go.Link, move?: go.Node | null): boolean {
+    const fp = link.fromPort, tp = link.toPort;
+    const fn = link.fromNode, tn = link.toNode;
+    if (!fp || !tp || !fn || !tn || fn === tn) return false;
+    // Nudging the moved node keeps the drag feeling like the user's action;
+    // falling back to the target preserves the original draw-time behaviour.
+    const target = move === fn ? fn : move === tn ? tn : tn;
+    const self = target === fn ? fp : tp;
+    const other = target === fn ? tp : fp;
+    const a = other.getDocumentPoint(go.Spot.Center);
+    const b = self.getDocumentPoint(go.Spot.Center);
     const dx = b.x - a.x, dy = b.y - a.y;
     const T = GojsEditorComponent.ALIGN_SNAP;
     let moveX = 0, moveY = 0;
     if (Math.abs(dy) > 0 && Math.abs(dy) <= T && Math.abs(dx) > T) moveY = -dy;
     else if (Math.abs(dx) > 0 && Math.abs(dx) <= T && Math.abs(dy) > T) moveX = -dx;
-    if (!moveX && !moveY) return;
-    const loc = tn.location.copy();
+    if (!moveX && !moveY) return false;
+    const loc = target.location.copy();
     loc.x += moveX; loc.y += moveY;
     this.zone.runOutsideAngular(() => this.diagram.model.commit((m) =>
-      m.set(tn.data, 'loc', go.Point.stringify(loc)), 'align wire'));
+      m.set(target.data, 'loc', go.Point.stringify(loc)), 'align wire'));
+    return true;
+  }
+
+  /**
+   * After a drag, straighten the moved part's wires.
+   *
+   * Only for a single moved part: in a multi-select drag the parts keep their
+   * relative positions, and nudging one of them to suit a wire would break the
+   * arrangement the user just dragged.
+   *
+   * At most one nudge is applied — the node can only satisfy one axis, and
+   * moving it again for a second wire would undo the first.
+   */
+  private alignWiresAfterMove(moved: go.Node): void {
+    const links: go.Link[] = [];
+    moved.linksConnected.each((l) => { if (l.fromNode !== l.toNode) links.push(l); });
+    // Prefer the shortest wire: it is the one the user was most likely lining up.
+    links.sort((l1, l2) => this.linkSpan(l1) - this.linkSpan(l2));
+    for (const l of links) if (this.straightenWire(l, moved)) return;
+  }
+
+  /** Straight-line distance between a link's two port centres. */
+  private linkSpan(l: go.Link): number {
+    const fp = l.fromPort, tp = l.toPort;
+    if (!fp || !tp) return Number.POSITIVE_INFINITY;
+    return fp.getDocumentPoint(go.Spot.Center)
+      .distanceSquaredPoint(tp.getDocumentPoint(go.Spot.Center));
   }
 
   /** Brighten a node's link ports on hover (the body itself stays movable). */
@@ -1258,6 +1307,15 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         if (!info) return;
         d.model.set(data, 'source', info.source);
         d.model.set(data, 'labelColor', theme.labelColor);
+        // Pin fractions have to be re-derived alongside the artwork: the SVG
+        // bakes in the padding, so a diagram saved under a different PAD would
+        // otherwise keep spots that no longer match the picture it is showing.
+        // Fractions are size-independent, so this is safe on resized nodes.
+        if (Array.isArray(data.ports) && data.ports.length === info.pins.length) {
+          d.model.set(data, 'ports', info.pins.map((pin, i) => ({
+            ...data.ports[i], spot: `${pin.fx} ${pin.fy}`,
+          })));
+        }
       });
     }, 'retheme'));
   }

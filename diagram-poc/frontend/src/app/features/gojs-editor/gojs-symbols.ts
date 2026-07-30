@@ -41,8 +41,14 @@ export interface SymbolInfo {
  * Padding around the drawing so strokes on the geometry boundary (stroke-width 2
  * + round caps) aren't clipped by the viewBox — without it, shapes lose their
  * right/bottom edges and wire-end caps get cut off.
+ *
+ * It also has to clear the port circle. Pins sit exactly on the drawing's
+ * boundary (an IC's right pins are at x === width), and the port marker is an
+ * 11px circle with a 1.5px stroke centred on the pin — so it needs ~6.25px of
+ * margin on every side. At the old value of 3 the right-hand and bottom port
+ * circles were drawn past the node's edge and came out visibly sliced in half.
  */
-const PAD = 3;
+const PAD = 7;
 
 function encodeSvg(inner: string, w: number, h: number): string {
   const svg =
