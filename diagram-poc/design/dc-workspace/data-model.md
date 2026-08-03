@@ -440,12 +440,81 @@ FAE manager publishes it
        writes artifact_publication + outbox_event
 
 Salesforce "View Design"
-  SFDC GET /api/sfdc/opportunities/0064x.../designs        → v_published_artifact_v1
-  SFDC GET /api/sfdc/designs/DSN-4788/artifacts            → same view
+  SFDC GET /api/sfdc/opportunities/0064x.../designs        → design (all linked)
+  SFDC GET /api/sfdc/designs/DSN-4788/artifacts            → v_published_artifact_v1
   SFDC GET /api/sfdc/artifacts/900/content                 → streams the file
 ```
 
 Three calls, each only on a click — stakeholder points 1 and 2.
+
+Note the first call is **not** artifact-filtered: point 2 says list every design
+linked to the opportunity. The filter applies one level down, to the artifacts
+inside a design. A design with nothing published still appears, just empty.
+
+---
+
+## Two surfaces, one application
+
+DWS renders two different views of the same design, and the difference is a
+security boundary rather than a display preference.
+
+| | SFDC-embedded | DWS workspace |
+|---|---|---|
+| Audience | Sales rep, inside the opportunity | FAE, doing the design work |
+| Artifacts | Published **and** externally eligible only | Everything — drafts, notes, sketches, diagram JSON |
+| Block diagram | PNG/PDF preview and download | Opens the BLK editor, editable |
+| Actions | Download | Create, edit, upload, publish |
+| Route | `/embed/opportunity/{oppId}` | `/designs/{publicId}` |
+| API namespace | `/api/sfdc/**` | `/api/**` |
+
+```
+SALESFORCE (sales rep)                    DWS WORKSPACE (FAE, own tab)
+┌────────────────────────────┐            ┌────────────────────────────┐
+│ Opportunity 0064x…         │            │ Design DSN-4788            │
+│ [View Design]              │            │                            │
+│   ↓                        │            │ Block diagrams   ▸ 3       │
+│ ┌── iframe: DWS embed ───┐ │            │ Presentations    ▸ 1       │
+│ │ Designs (3)            │ │            │ Notes            ▸ 5  ←────┼─ drafts,
+│ │  DSN-4788 ▸            │ │            │ Sketches         ▸ 2       │  internal,
+│ │   ├ [PNG] Power stage  │ │            │ Recommendations  ▸ 4       │  everything
+│ │   ├ [PDF] Proposal     │ │            │                            │
+│ │   └ [CSV] BOM          │ │            │ click a diagram →          │
+│ │                        │ │            │  ┌── iframe: BLK ────────┐ │
+│ │ published only         │ │            │  │  editable canvas      │ │
+│ └────────────────────────┘ │            │  └───────────────────────┘ │
+└────────────────────────────┘            └────────────────────────────┘
+```
+
+**Clicking a diagram in Salesforce previews or downloads the image. It does not
+open the editor** — the JSON is exactly what point 5 keeps internal.
+
+### The filter is server-side, not a UI flag
+
+The embedded view reads `v_published_artifact_v1` and nothing else. It is
+physically unable to return a draft, whatever the frontend asks for.
+
+If "embedded mode" were a flag that hid drafts in the template, anyone could
+open devtools and call the full endpoint. Hence the separate namespace: the
+`/api/sfdc/**` handlers never touch `design_artifact` directly.
+
+### Editing from Salesforce: a link, not a mode
+
+An FAE viewing the opportunity will want to jump in and edit. Rather than making
+the embedded view do double duty, it carries an **Open in Design Workspace**
+link that opens DWS at top level, in a new tab:
+
+```
+https://dws.arrow.com/designs/DSN-4788
+```
+
+Three things follow, all of them simplifications:
+
+- the embedded view stays small and provably read-only;
+- editing happens outside the iframe, so the framed-session problems
+  (third-party cookies, an IdP that refuses to render in a frame) never apply to
+  the editing path;
+- access control needs no special case — the link works for a `design_member`
+  and shows an ordinary login for anyone else.
 
 ---
 
@@ -478,3 +547,7 @@ keeps that shape so existing URLs survive.
    the export orphaned but intact? (The soft reference allows the latter.)
 5. **One design, many opportunities?** The model says no. Confirm a reference
    design reused across opportunities is a *copy*, not a shared row.
+6. **Does an FAE ever need to edit from inside Salesforce**, or is "Open in
+   Design Workspace" in a new tab acceptable? A new tab removes a meaningful
+   amount of integration risk — it keeps every editing path out of the iframe —
+   so this is worth settling early rather than discovering late.
