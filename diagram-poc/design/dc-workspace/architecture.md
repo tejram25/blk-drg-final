@@ -31,7 +31,7 @@ flowchart LR
 
   subgraph data[Data]
     ORA[(Oracle<br/>DWS schema · BLK schema)]
-    DBX[(Databricks<br/>opportunity + design context)]
+    DBX[(Databricks<br/>context layer — metadata,<br/>linkage, semantics)]
   end
 
   subgraph ext[Shared services]
@@ -76,10 +76,21 @@ Solid arrows are calls. Dotted arrows are embeds or sockets.
 | Part catalogue lookups | **Arrow catalogue** | Per region: eu / ap / ac |
 | Live collaboration | **Collab relay** | Off in the SFDC embed |
 | AI context + recommendations | **Databricks + agent** | Points 3 and 4 |
+| Design metadata, linkage, AI summaries/tags | **Databricks** | Copies, for retrieval — not the record |
 | Identity | **Arrow IdP** | Both apps, same SSO |
 
 The rule from the data model, restated: **each service writes only its own
 schema.** BLK registers artifacts by calling the DWS API, never by INSERT.
+
+**Databricks is not the artifact store.** The stakeholder review corrected this
+explicitly: diagram JSON, canvas objects, versions and attachment bytes stay in
+Oracle. What flows to Databricks is *linkage* (design ↔ opportunity ↔ artifact
+ids), *design metadata* (name, brief, customer, region, stage) and *derived
+semantics* (AI summaries, tags, embeddings). Databricks is the unified business
+context layer the agent retrieves from — aggregating Salesforce, FAST,
+SiliconExpert and the engineering knowledge base alongside this feed. `dws.design`
+and `dws.design_artifact` remain the system of record; if Databricks were
+rebuilt from scratch tomorrow, no design would be lost.
 
 ---
 
@@ -203,7 +214,16 @@ sequenceDiagram
 
 If the rep is an FAE who wants to edit, the embed offers **Open in Design
 Workspace**, which opens `dws.arrow.com/designs/DSN-4788` in a new top-level
-tab — outside the iframe entirely.
+tab — outside the iframe entirely. The stakeholder review confirmed this:
+embedded = read-only summary, editing happens undocked. Salesforce has no
+floating-dock concept, so "undock" means a full-page Lightning tab or a new
+browser tab, not a draggable panel.
+
+**Freshness is not a problem here.** Because every call above is lazy — nothing
+fires until the rep clicks — the embed always reads `v_published_artifact_v1`
+live. There is no cached copy in Salesforce to go stale, so an artifact
+published thirty seconds ago is visible on the next click. That is a property
+of the lazy design, not something we have to build.
 
 ---
 
@@ -276,7 +296,7 @@ three, so they cannot leak a draft even if asked to.
 | Server-side PDF/PNG render | BLK | Largest hidden item |
 | Artifact registration endpoint | DWS API | BLK calls it; never INSERTs |
 | Opportunity validate-on-link | DWS API | The one proactive SFDC call |
-| Outbox → Databricks | DWS API | Points 3 and 4 |
+| Outbox → Databricks | DWS API | Metadata + linkage only, never bytes |
 | Collab auth (room-scoped token) | Relay | Or disable when `embed=1` |
 | GoJS production licence | BLK | Domain-locked; procurement lead time |
 | Salesforce LWC + Trusted Sites | SFDC | Per org, incl. sandboxes |

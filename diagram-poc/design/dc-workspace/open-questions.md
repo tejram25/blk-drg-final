@@ -3,23 +3,33 @@
 Companion to [architecture.md](./architecture.md) and
 [data-model.md](./data-model.md).
 
-Grouped by who can answer. The seven marked **[BLOCKER]** change the
+Grouped by who can answer. The ones marked **[BLOCKER]** change the
 architecture depending on the answer — get those first, because the rest is
 detail that can be decided while building.
 
+A first stakeholder round has already answered four of these. See
+[stakeholder-qa.md](./stakeholder-qa.md) for what was asked, what came back,
+and what each answer changed. Answered items are struck through below rather
+than deleted, so the trail stays readable.
+
 ---
 
-## Ask first — the seven that change the design
+## Ask first — the ones that change the design
 
 | # | Question | Ask | If the answer is… |
 |---|---|---|---|
 | 1 | May DWS be embedded in Salesforce at all? | Security | No → the whole tab approach dies; fall back to a deep link that opens DWS in a new tab |
 | 2 | Must EU customer design data stay in the EU? | Legal | Yes → one Oracle instance is not enough; the data model assumes one |
 | 3 | Two schemas in one Oracle instance — acceptable? | DBA | No → we need the fallback (one schema, one owner, read-only views) |
-| 4 | Does an FAE ever need to **edit** from inside Salesforce? | Product | No → editing leaves the iframe entirely; large risk reduction |
+| ~~4~~ | ~~Does an FAE ever need to **edit** from inside Salesforce?~~ | ~~Product~~ | **Answered: no.** Embedded is a read-only summary; editing undocks to a full page. Model unchanged, risk down |
 | 5 | GoJS production licence — tier, domains, lead time, budget? | Procurement | Slow → this is the long pole, start now |
 | 6 | Do DWS and BLK teams need independent Angular versions? | Eng leads | No → use module federation for DWS→BLK instead of a nested iframe |
 | 7 | Artifact bytes in Oracle, or object storage? | DBA / Arch | Changes `artifact_file` — it currently carries both columns |
+| 8 | **Where on the Opportunity page does the embed live?** | Salesforce / Product | Right rail (~300 px) is unusable for a canvas → it has to be a full-width tab |
+
+Question 8 is new, and it is a direct consequence of answer 2. "Embedded view"
+was agreed without anyone naming a location, and the location decides whether
+the embed is viable at all.
 
 ---
 
@@ -37,7 +47,12 @@ detail that can be decided while building.
 
 **Design lifecycle**
 
-- Can a design exist **without** an opportunity? (The model allows it — confirm.)
+- ~~Can a design exist **without** an opportunity?~~ **Answered: yes.** Ad-hoc /
+  standalone design sessions are in scope. `design.opportunity_id` stays
+  nullable, and `design.brief` was added so an unlinked design still carries a
+  statement of intent the agent can work from. Follow-up: can an ad-hoc design
+  be **linked to an opportunity later**, and does anything need to happen at
+  that moment beyond setting the id (re-run the agent, re-index in Databricks)?
 - Can one design be linked to **several** opportunities? (The model says no; a
   reference design reused elsewhere is a copy.)
 - What happens when the opportunity is Closed Won / Closed Lost — does the
@@ -58,6 +73,16 @@ detail that can be decided while building.
 
 ## Salesforce team
 
+- **[BLOCKER]** **Where on the Opportunity page does the embed go?** A related
+  list, a right-rail component, or a full-width custom tab? A canvas needs
+  roughly 900 px; the right rail gives about 300. This was left unstated when
+  "embedded view" was agreed.
+- Is the read-only summary a **Lightning tab** on the record page, or a
+  separate app page? The former keeps the opportunity context visible.
+- "Undock to a new tab" — should that be a plain `target="_blank"` link, or is
+  a Salesforce-native pattern expected (utility bar, subtab)? Note that
+  Salesforce has **no floating-dock concept**; a draggable panel is not on the
+  menu.
 - Which orgs will embed this, and what are their **exact domains**? Production,
   each sandbox, My Domain variants — all of them need to be in
   `frame-ancestors`.
@@ -85,6 +110,13 @@ detail that can be decided while building.
   which is why session expiry inside the frame needs a popup, not a redirect.)
 - Is the Salesforce user ↔ DWS user mapping **1:1 through the same IdP**, or do
   we need an explicit mapping table?
+- The review said **no user personalization** is needed. Confirm that this means
+  "don't tailor the UI per user", not "don't store user identity" — the model
+  still needs `design.owner_email`, `design_member.user_email` and
+  `artifact_publication.actor_email` for entitlement and the publish audit
+  trail, and those cannot be dropped without losing both.
+- If identity is not carried into the embed, **who is the audit subject** when
+  an artifact is downloaded from Salesforce? The org, or the person?
 - What is the **session timeout** policy, and what should the user see when it
   expires mid-edit inside an iframe?
 - Does a customer-facing surface trigger a **penetration test or security
@@ -112,14 +144,31 @@ detail that can be decided while building.
 
 ## Data / Databricks
 
-- What is the **ingest latency** for opportunity context? The agent's answers
-  are only as fresh as that pipeline.
+Scope is now settled: Databricks holds **linkage, design metadata and derived
+semantics**; artifacts and diagram JSON stay in Oracle. These are the questions
+that remain inside that scope.
+
+- Do **AI summaries and tags get written back** to DWS, or do they live only in
+  Databricks? This decides whether `design` grows a summary column and whether
+  the DWS UI can show a tag without a round trip to the agent. It also decides
+  who owns regeneration when a design changes.
+- Databricks aggregates Salesforce **plus** FAST, SiliconExpert and the
+  engineering KB. **Whose entitlement rules win** when those sources disagree?
+  A user entitled to the design but not to the SiliconExpert record must not
+  see the latter leak through an agent answer. (Point 3 had no entitlement
+  story; the model adds `design_member` on our side, but that only covers ours.)
 - Can Databricks enforce **row-level security** by user, or must the agent
-  filter? (Point 3 has no entitlement story; the model adds `design_member`.)
-- Who **owns the ingestion pipeline** for designs and artifacts (point 4)?
-- What is the **retention and PII policy** for customer design data in
-  Databricks?
+  filter after retrieval?
+- What is the **ingest latency** for opportunity context? The agent's answers
+  are only as fresh as that pipeline. (Note this does *not* affect the
+  Salesforce embed — that reads Oracle live.)
+- Who **owns the ingestion pipeline** for design metadata (point 4, as
+  corrected by answer 3)?
+- What is the **retention and PII policy** for customer design metadata in
+  Databricks? Erasure now has to be satisfied in two places, not one.
 - Is the outbox pattern acceptable, or is there a standard CDC tool to use?
+- If Databricks is unavailable, does DWS **degrade gracefully** — no
+  recommendations, everything else works — or is it a hard dependency?
 
 ---
 
@@ -164,8 +213,8 @@ detail that can be decided while building.
 
 ## Suggested order
 
-1. **Week 1** — the seven blockers, in parallel. Most are other people's
-   decisions and have lead times.
+1. **Week 1** — the open blockers, in parallel (1, 2, 3, 5, 6, 7 and the new 8).
+   Most are other people's decisions and have lead times.
 2. **Week 1** — run the embed spike. It answers questions 1 and several
    security items empirically rather than by opinion.
 3. **Week 2** — the FAE workshop on artifact kinds (point 5), since that seeds
