@@ -1,13 +1,16 @@
 /**
  * Generates the two stakeholder diagrams as GoJS model JSON that the block-diagram
- * editor loads directly (Import ▸ JSON).
+ * editor loads directly (File ▸ Import ▸ Import JSON).
  *
- * Node shapes match the editor's own templates:
- *   category 'block' — icon card with title + subtitle, ports T/R/B/L
- *   category 'shape' — native GoJS figure with an editable label and a caption
+ * These are FUNCTIONAL diagrams: they name capabilities and business steps, not
+ * tables, columns, views or endpoints. The implementation detail lives in
+ * data-model.md — keep it there, so this pair stays readable to people who do
+ * not work on the schema. `check()` below fails the build if schema or endpoint
+ * names creep back in.
  *
- * `fixedColor: true` is required on every 'shape' node: retheme() overwrites
- * fill/stroke/labelColor on load unless it is set.
+ * Nodes use category 'shape' — a native GoJS figure with an editable label and a
+ * caption. `fixedColor: true` is required on every one: the editor's retheme()
+ * pass overwrites fill/stroke/labelColor on load unless it is set.
  *
  * Run: node build.js
  */
@@ -21,8 +24,6 @@ const SKY = '#0084D5';
 const GREEN = '#47D7AC';
 const ORANGE = '#FF8674';
 const COPPER = '#FFC845';
-
-const WIRE = '#94a3b8'; // the editor's default link colour
 
 let linkSeq = 0;
 const link = (from, to, fromPort, toPort, text, opts = {}) => ({
@@ -39,7 +40,7 @@ const dashed = { dash: [6, 4] };
 //   terminator (stadium) — a person
 //   display               — a screen a user looks at
 //   predefined process    — a service / deployable component
-//   cylinder              — stored data (an Oracle schema, a table, the lakehouse)
+//   cylinder              — stored data
 //   cloud                 — a system outside Arrow's control
 //   parallelogram         — a data feed arriving from elsewhere
 // ---------------------------------------------------------------------------
@@ -60,6 +61,11 @@ const node = (key, kind, x, y, text, sub, stroke, grp, extra = {}) => ({
   ...(grp ? { group: grp } : {}), ...extra,
 });
 const group = (key, text) => ({ key, isGroup: true, text, expanded: true });
+const legend = (key, kind, y, text, size) => ({
+  key, category: 'shape', ...AFIG[kind], ...(size ? { size } : {}), text,
+  loc: `2100 ${y}`, fill: WHITE, stroke: BLACK, labelColor: BLACK,
+  fixedColor: true, group: 'g-legend',
+});
 
 const arch = {
   class: 'GraphLinksModel',
@@ -68,96 +74,94 @@ const arch = {
   linkKeyProperty: 'key',
   nodeDataArray: [
     group('g-internal', 'Internal — design and build'),
-    group('g-oracle', 'Oracle — one instance, two schemas, one writer each'),
+    group('g-oracle', 'Stored data — one database, one owner per area'),
     group('g-feed', 'Analytics and AI context'),
-    group('g-shared', 'Shared services — called by both apps'),
-    group('g-customer', 'Customer-facing surface — everything here is visible outside Arrow'),
-
-    // Tier 1 — people and the screens they use
+    group('g-shared', 'Shared services — used by both apps'),
+    group('g-customer', 'Customer-facing surface — two levels of micro-frontend, everything here is visible outside Arrow'),
     group('g-legend', 'Legend'),
 
     // Title block
     { key: 'n-title', category: 'shape', shape: 'fc-process', figure: 'Rectangle', size: '280 58',
-      text: 'System architecture', sub: 'DWS · BLK · Salesforce · Oracle · Databricks',
+      text: 'System architecture', sub: 'Design Workspace · Block Diagram · Salesforce',
       loc: '180 -90', fill: BLACK, stroke: BLACK, labelColor: WHITE, fixedColor: true },
 
     // Legend — one sample of every figure the diagram uses
-    { key: 'lg-actor', category: 'shape', shape: 'fc-terminator', figure: 'FcTerminator', size: '180 54',
-      text: 'Person', loc: '2100 760', fill: WHITE, stroke: BLACK, labelColor: BLACK, fixedColor: true, group: 'g-legend' },
-    { key: 'lg-screen', category: 'shape', shape: 'fc-display', figure: 'FcDisplay', size: '180 60',
-      text: 'Screen', loc: '2100 880', fill: WHITE, stroke: BLACK, labelColor: BLACK, fixedColor: true, group: 'g-legend' },
-    { key: 'lg-svc', category: 'shape', shape: 'fc-predefined', figure: 'FcPredefined', size: '180 60',
-      text: 'Service', loc: '2100 1000', fill: WHITE, stroke: BLACK, labelColor: BLACK, fixedColor: true, group: 'g-legend' },
-    { key: 'lg-store', category: 'shape', shape: 'fc-database', figure: 'FcCylinder', size: '155 80',
-      text: 'Data store', loc: '2100 1130', fill: WHITE, stroke: BLACK, labelColor: BLACK, fixedColor: true, group: 'g-legend' },
-    { key: 'lg-cloud', category: 'shape', shape: 'sh-cloud', figure: 'FcCloud', size: '180 80',
-      text: 'External system', loc: '2100 1270', fill: WHITE, stroke: BLACK, labelColor: BLACK, fixedColor: true, group: 'g-legend' },
-    { key: 'lg-feed', category: 'shape', shape: 'fc-data', figure: 'FcParallelogram', size: '180 58',
-      text: 'External feed', loc: '2100 1390', fill: WHITE, stroke: BLACK, labelColor: BLACK, fixedColor: true, group: 'g-legend' },
+    legend('lg-actor', 'actor', 760, 'Person', '180 54'),
+    legend('lg-screen', 'screen', 880, 'Screen', '180 60'),
+    legend('lg-svc', 'service', 1000, 'Service', '180 60'),
+    legend('lg-store', 'store', 1130, 'Stored data', '155 80'),
+    legend('lg-cloud', 'cloud', 1270, 'External system', '180 80'),
+    legend('lg-feed', 'feed', 1390, 'External data feed', '180 58'),
 
+    // Tier 1 — people and the screens they use.
+    // Level-1 nesting also exists internally: the editor runs inside the workspace.
     node('n-fae', 'actor', 180, 140, 'FAE', 'designs the solution', BLACK, 'g-internal'),
-    node('n-dwsui', 'screen', 560, 140, 'DWS workspace', 'designs · artifacts · members', SKY, 'g-internal'),
-    node('n-blkui', 'screen', 940, 140, 'BLK editor', 'GoJS canvas · parts · wiring', GREEN, 'g-internal'),
-    node('n-render', 'service', 1320, 140, 'Render service', 'PDF and PNG artifact bytes', GREEN, 'g-internal'),
+    node('n-dwsui', 'screen', 560, 140, 'Design Workspace', 'projects · designs · documents', SKY, 'g-internal'),
+    node('n-blkui', 'screen', 940, 140, 'Block diagram editor', 'canvas · parts · wiring', GREEN, 'g-internal'),
+    node('n-render', 'service', 1320, 140, 'Export service', 'turns a diagram into a PDF or image', GREEN, 'g-internal'),
 
     // Tier 2 — services
-    node('n-mgr', 'actor', 180, 360, 'FAE manager', 'approves publishing', BLACK, 'g-internal'),
-    node('n-dwsapi', 'service', 560, 360, 'DWS API', 'designs · artifacts · publish', SKY, 'g-internal'),
-    node('n-blkapi', 'service', 940, 360, 'BLK API', 'diagrams · versions · export', GREEN, 'g-internal'),
+    node('n-mgr', 'actor', 180, 360, 'FAE manager', 'approves what customers see', BLACK, 'g-internal'),
+    node('n-dwsapi', 'service', 560, 360, 'Workspace services', 'designs · documents · approval', SKY, 'g-internal'),
+    node('n-blkapi', 'service', 940, 360, 'Diagram services', 'diagrams · history · export', GREEN, 'g-internal'),
 
-    // Tier 3 — Oracle, one cylinder per schema
-    node('n-oradws', 'store', 560, 560, 'Oracle — DWS schema', 'design · artifact · member', COPPER, 'g-oracle'),
-    node('n-orablk', 'store', 940, 560, 'Oracle — BLK schema', 'diagram · content · version', COPPER, 'g-oracle'),
+    // Tier 3 — stored data, one cylinder per area of ownership
+    node('n-oradws', 'store', 560, 560, 'Workspace data', 'designs · documents · who may see them', COPPER, 'g-oracle'),
+    node('n-orablk', 'store', 940, 560, 'Diagram data', 'diagrams and their history', COPPER, 'g-oracle'),
 
     // Tier 4 — the feed and the lakehouse
-    node('n-outbox', 'store', 940, 780, 'dws.outbox_event', 'metadata only · never artifact bytes', COPPER, 'g-feed',
+    node('n-outbox', 'store', 940, 780, 'Change feed', 'says what changed · never the files themselves', COPPER, 'g-feed',
       { fill: COPPER }),
     node('n-dbx', 'lakehouse', 1320, 780, 'Databricks lakehouse', 'unified business context layer', COPPER, 'g-feed',
       { fill: COPPER }),
-    node('n-agent', 'service', 1700, 780, 'AI agent', 'called by the DWS API · reads context', BLACK, 'g-feed'),
+    node('n-agent', 'service', 1700, 780, 'AI assistant', 'suggests reference designs and parts', BLACK, 'g-feed'),
 
     // Tier 5 — platform feeds we neither own nor operate
     node('n-sffeed', 'feed', 1150, 990, 'Salesforce → Databricks', 'existing platform pipeline · not ours', BLACK, 'g-feed'),
     node('n-srcs', 'feed', 1530, 990, 'FAST · SiliconExpert · Eng KB', 'existing platform sources · not ours', BLACK, 'g-feed'),
 
     // Shared services
-    node('n-idp', 'service', 2100, 140, 'Arrow IdP', 'SSO — DWS and BLK', BLACK, 'g-shared'),
-    node('n-cat', 'service', 2100, 360, 'Part catalogue', 'called by BLK API · eu · ap · ac', BLACK, 'g-shared'),
-    node('n-relay', 'service', 2100, 560, 'Collab relay', 'y-websocket · off in the embed', BLACK, 'g-shared'),
+    node('n-idp', 'service', 2100, 140, 'Single sign-on', 'one Arrow login for both apps', BLACK, 'g-shared'),
+    node('n-cat', 'service', 2100, 360, 'Part catalogue', 'regional — eu · ap · ac', BLACK, 'g-shared'),
+    node('n-relay', 'service', 2100, 560, 'Live collaboration', 'off in the Salesforce view', BLACK, 'g-shared'),
 
-    // Customer-facing band — flows right to left, back into our data
+    // Customer-facing band. Reads right to left, and the nesting goes downward:
+    // Salesforce page → workspace view → block diagram canvas.
     node('n-rep', 'actor', 1700, 1240, 'Sales rep', 'shares with the customer', BLACK, 'g-customer'),
-    node('n-opp', 'cloud', 1320, 1240, 'Salesforce', 'Opportunity record page · Design tab', ORANGE, 'g-customer'),
-    node('n-embed', 'screen', 940, 1240, 'DWS embed view', 'read-only · published artifacts only', SKY, 'g-customer'),
-    node('n-sfdcapi', 'service', 560, 1240, '/api/sfdc/**', 'server-filtered, never a UI flag', SKY, 'g-customer'),
+    node('n-opp', 'cloud', 1320, 1240, 'Salesforce', 'opportunity page · Design tab', ORANGE, 'g-customer'),
+    node('n-embed', 'screen', 940, 1240, 'Workspace view', 'image preview per approved design', SKY, 'g-customer'),
+    node('n-sfdcapi', 'service', 560, 1240, 'Published-content service', 'filters on the server, not in the UI', SKY, 'g-customer'),
+    node('n-blkview', 'screen', 940, 1450, 'Block diagram canvas', 'opens on clicking a preview · read-only', GREEN, 'g-customer'),
   ],
   linkDataArray: [
-    // internal build path
+    // internal build path — the editor is itself a micro-frontend inside the workspace
     link('n-fae', 'n-dwsui', 'R', 'L', 'designs'),
-    link('n-mgr', 'n-dwsapi', 'R', 'L', 'approves and publishes'),
+    link('n-mgr', 'n-dwsapi', 'R', 'L', 'approves'),
     link('n-dwsui', 'n-dwsapi', 'B', 'T'),
-    link('n-dwsui', 'n-blkui', 'R', 'L', 'iframe /editor/118?embed=1', dashed),
+    link('n-dwsui', 'n-blkui', 'R', 'L', 'micro-frontend', dashed),
     link('n-blkui', 'n-blkapi', 'B', 'T'),
     link('n-blkui', 'n-render', 'R', 'L', 'export'),
-    link('n-render', 'n-dwsapi', 'B', 'T', 'POST /designs/42/artifacts'),
+    link('n-render', 'n-dwsapi', 'B', 'T', 'hands the file over'),
 
-    // writes — each service writes only its own schema
-    link('n-dwsapi', 'n-oradws', 'B', 'T', 'writes'),
-    link('n-blkapi', 'n-orablk', 'B', 'T', 'writes'),
-    link('n-orablk', 'n-oradws', 'L', 'R', 'V_DIAGRAM_V1 — read-only view', dashed),
+    // writes — each side owns its own data
+    link('n-dwsapi', 'n-oradws', 'B', 'T', 'saves'),
+    link('n-blkapi', 'n-orablk', 'B', 'T', 'saves'),
+    link('n-orablk', 'n-oradws', 'L', 'R', 'read-only, never written across', dashed),
 
     // Databricks feed
-    link('n-oradws', 'n-outbox', 'B', 'L', 'same transaction', { color: COPPER, width: 2.5 }),
-    link('n-outbox', 'n-dbx', 'R', 'L', 'ingest reads unshipped rows', { color: COPPER, width: 2.5 }),
-    link('n-dbx', 'n-agent', 'R', 'L', 'context for recommendations'),
+    link('n-oradws', 'n-outbox', 'B', 'L', 'in the same step as the change', { color: COPPER, width: 2.5 }),
+    link('n-outbox', 'n-dbx', 'R', 'L', 'platform ingest job picks it up', { color: COPPER, width: 2.5 }),
+    link('n-dbx', 'n-agent', 'R', 'L', 'context'),
     link('n-sffeed', 'n-dbx', 'T', 'B', '', dashed),
     link('n-srcs', 'n-dbx', 'T', 'B', '', dashed),
 
-    // customer-facing path
+    // customer-facing path, and the two levels of nesting
     link('n-rep', 'n-opp', 'L', 'R', 'opens the opportunity', { color: ORANGE, width: 2.5 }),
-    link('n-opp', 'n-embed', 'L', 'R', 'iframe /embed/opportunity/0064x…', { color: ORANGE, width: 2.5, dash: [6, 4] }),
-    link('n-embed', 'n-sfdcapi', 'L', 'R', 'designs, then artifacts', { color: ORANGE, width: 2.5 }),
-    link('n-sfdcapi', 'n-oradws', 'L', 'L', 'v_published_artifact_v1 only', { color: ORANGE, width: 2.5 }),
+    link('n-opp', 'n-embed', 'L', 'R', 'micro-frontend · level 1', { color: ORANGE, width: 2.5, dash: [6, 4] }),
+    link('n-embed', 'n-blkview', 'B', 'T', 'micro-frontend · level 2', { color: ORANGE, width: 2.5, dash: [6, 4] }),
+    link('n-embed', 'n-sfdcapi', 'L', 'R', 'asks for this design’s content', { color: ORANGE, width: 2.5 }),
+    link('n-blkview', 'n-sfdcapi', 'L', 'B', 'approved designs only', { color: ORANGE, width: 2.5 }),
+    link('n-sfdcapi', 'n-oradws', 'L', 'L', 'approved and customer-visible only', { color: ORANGE, width: 2.5 }),
   ],
 };
 
@@ -197,86 +201,101 @@ const flow = {
   linkKeyProperty: 'key',
   nodeDataArray: [
     { key: 'f-title', category: 'shape', shape: 'fc-process', figure: 'Rectangle', size: '280 58',
-      text: 'End-to-end flow', sub: 'create · build · export · publish · customer sees it',
+      text: 'End-to-end flow', sub: 'create · build · export · approve · customer sees it',
       loc: '180 -60', fill: BLACK, stroke: BLACK, labelColor: WHITE, fixedColor: true },
 
     header('h-fae', 'fae', 'FAE / approver'),
-    header('h-blk', 'blk', 'Block Diagram (BLK)'),
-    header('h-dws', 'dws', 'Design Workspace (DWS)'),
-    header('h-ora', 'ora', 'Oracle'),
+    header('h-blk', 'blk', 'Block Diagram'),
+    header('h-dws', 'dws', 'Design Workspace'),
+    header('h-ora', 'ora', 'Stored data'),
     header('h-sf', 'sf', 'Salesforce'),
 
     step('s1', 'fae', 180, 'terminator', 'FAE opens Design Workspace', 'start'),
-    step('s2', 'dws', 180, 'process', 'Create design', 'POST /api/designs'),
-    step('s3', 'ora', 180, 'data', 'INSERT dws.design', 'stage DRAFT, no opportunity yet'),
+    step('s2', 'dws', 180, 'process', 'Create a design', 'name, customer, region'),
+    step('s3', 'ora', 180, 'data', 'Design is saved', 'a draft, with no opportunity yet'),
 
     step('s4', 'fae', 320, 'decision', 'Linked to a Salesforce opportunity?', 'ad-hoc designs are allowed'),
-    step('s5', 'dws', 320, 'process', 'Validate the opportunity', 'the only proactive call into Salesforce'),
-    step('s6', 'ora', 460, 'process', 'UPDATE opportunity_id, INSERT outbox_event', 'one transaction, so the feed cannot miss it'),
+    step('s5', 'dws', 320, 'process', 'Check the opportunity exists', 'the only time we call Salesforce'),
+    step('s6', 'ora', 460, 'process', 'Link recorded, change feed notified', 'both in one step, so the feed cannot miss it'),
 
-    step('s7', 'fae', 600, 'process', 'Open a block diagram', 'Design ▸ Block diagrams'),
-    step('s8', 'blk', 600, 'process', 'Load the diagram', 'iframe /editor/118?embed=1'),
-    step('s9', 'ora', 600, 'data', 'BLK schema: diagram + content', ''),
-    step('s10', 'blk', 740, 'process', 'Place blocks, search parts, wire', 'part search by region: eu · ap · ac'),
-    step('s11', 'blk', 880, 'process', 'Autosave', 'UPDATE diagram_content'),
+    step('s7', 'fae', 600, 'process', 'Open a block diagram', ''),
+    step('s8', 'blk', 600, 'process', 'Editor opens inside the workspace', 'micro-frontend, not a separate app'),
+    step('s9', 'ora', 600, 'data', 'Diagram is loaded', ''),
+    step('s10', 'blk', 740, 'process', 'Place blocks, search parts, wire', 'part search follows the design’s region'),
+    step('s11', 'blk', 880, 'process', 'Work is saved automatically', ''),
 
     step('s12', 'fae', 1020, 'process', 'Export to PDF', ''),
-    step('s13', 'blk', 1020, 'process', 'Server-side render', 'PDF / PNG bytes'),
-    step('s14', 'dws', 1020, 'process', 'Register the artifact', 'BLK posts to the DWS API — it never INSERTs'),
-    step('s15', 'ora', 1020, 'data', 'design_artifact + artifact_file', "DRAFT, external_visible = 'N'"),
+    step('s13', 'blk', 1020, 'process', 'File and preview image produced', ''),
+    step('s14', 'dws', 1020, 'process', 'Filed against the design', 'the editor hands it over, it never files it itself'),
+    step('s15', 'ora', 1020, 'data', 'Saved as a draft', 'internal only until someone approves it'),
 
-    step('s16', 'fae', 1160, 'decision', 'Approver publishes it?', 'design_member.role must be APPROVER'),
-    step('s17', 'dws', 1160, 'process', 'Check the membership role', '403 if the caller is not an approver'),
-    step('s21', 'dws', 1300, 'document', 'Stays DRAFT — internal only', 'never reaches Salesforce'),
+    step('s16', 'fae', 1160, 'decision', 'Approver publishes it?', 'only an approver on this design can'),
+    step('s17', 'dws', 1160, 'process', 'Check the approver’s role', 'refused if the caller is not an approver'),
+    step('s21', 'dws', 1300, 'document', 'Stays a draft — internal only', 'never reaches Salesforce'),
 
-    step('s18', 'ora', 1300, 'process', "PUBLISHED, external_visible = 'Y'", 'the trigger rejects kinds that are not externally eligible'),
-    step('s19', 'ora', 1440, 'data', 'artifact_publication + outbox_event', 'who published it, when, which file'),
-    step('s20', 'ora', 1580, 'process', 'Databricks ingest job', 'reads unshipped outbox rows · owned by the data platform team',
+    step('s18', 'ora', 1300, 'process', 'Marked approved and customer-visible', 'refused for anything that may never leave Arrow'),
+    step('s19', 'ora', 1440, 'data', 'Who approved it, and when, is recorded', ''),
+    step('s20', 'ora', 1580, 'process', 'Platform ingest job', 'picks up the change · owned by the data platform team',
       { fill: COPPER, stroke: BLACK }),
-    step('s20b', 'ora', 1720, 'data', 'Databricks lakehouse', 'linkage, metadata and semantics — never artifact bytes',
+    step('s20b', 'ora', 1720, 'data', 'Databricks lakehouse', 'linkage, metadata and meaning — never the files',
       { fill: COPPER, stroke: BLACK }),
 
-    step('s22', 'sf', 1440, 'process', 'Sales rep opens the Opportunity', 'no call yet — the button is only rendered'),
-    step('s23', 'sf', 1860, 'process', 'Clicks View Design', 'iframe /embed/opportunity/0064x…'),
-    step('s24', 'dws', 1860, 'process', 'GET /api/sfdc/**', 'server-filtered, never a UI flag'),
-    step('s25', 'ora', 2000, 'process', 'SELECT v_published_artifact_v1', 'PUBLISHED + external_visible + eligible kind'),
-    step('s26', 'sf', 2140, 'terminator', 'Customer-safe PDF is shown', 'end'),
+    step('s22', 'sf', 1440, 'process', 'Sales rep opens the opportunity', 'nothing loads yet'),
+    step('s23', 'sf', 1860, 'process', 'Clicks View Design', 'workspace view opens in the page · micro-frontend level 1'),
+    step('s24', 'dws', 1860, 'process', 'Ask for this design’s content', 'filtered on the server, not in the UI'),
+    step('s25', 'ora', 2000, 'process', 'Approved, customer-visible only', 'everything else is invisible to this request'),
+    step('s26', 'dws', 2140, 'process', 'Designs shown as preview images', 'one image per approved design'),
+    step('s27', 'blk', 2280, 'process', 'Canvas opens on clicking a preview', 'inside the workspace view · micro-frontend level 2 · read-only'),
+    step('s28', 'sf', 2420, 'terminator', 'Rep shares the PDF with the customer', 'end'),
   ],
   linkDataArray: [
     link('s1', 's2', 'R', 'L'),
-    link('s2', 's3', 'R', 'L', 'writes'),
+    link('s2', 's3', 'R', 'L', 'saves'),
     link('s1', 's4', 'B', 'T'),
     link('s4', 's5', 'R', 'L', 'yes'),
-    link('s5', 's6', 'R', 'L', 'link and emit'),
+    link('s5', 's6', 'R', 'L', 'record the link'),
     link('s4', 's7', 'B', 'T', 'no — ad-hoc design'),
     link('s6', 's7', 'L', 'R', 'continue'),
     link('s7', 's8', 'R', 'L'),
     link('s8', 's9', 'R', 'L', 'reads'),
     link('s8', 's10', 'B', 'T'),
     link('s10', 's11', 'B', 'T'),
-    link('s11', 's9', 'R', 'B', 'writes'),
+    link('s11', 's9', 'R', 'B', 'saves'),
     link('s11', 's12', 'L', 'T'),
     link('s12', 's13', 'R', 'L'),
-    link('s13', 's14', 'R', 'L', 'POST /designs/42/artifacts'),
-    link('s14', 's15', 'R', 'L', 'writes'),
+    link('s13', 's14', 'R', 'L', 'hands them over'),
+    link('s14', 's15', 'R', 'L', 'saves'),
     link('s14', 's16', 'B', 'T'),
     link('s16', 's17', 'R', 'L', 'yes'),
     link('s16', 's21', 'B', 'L', 'no'),
-    link('s17', 's18', 'R', 'L', 'writes'),
+    link('s17', 's18', 'R', 'L', 'saves'),
     link('s18', 's19', 'B', 'T'),
     link('s19', 's20', 'B', 'T', '', { color: COPPER, width: 2.5 }),
     link('s20', 's20b', 'B', 'T', '', { color: COPPER, width: 2.5 }),
     link('s19', 's22', 'R', 'L', 'now visible to the rep', { color: ORANGE, width: 2.5 }),
     link('s22', 's23', 'B', 'T'),
-    link('s23', 's24', 'L', 'R', 'lazy — only on click', { color: ORANGE, width: 2.5 }),
-    link('s24', 's25', 'R', 'L', 'reads the view, not the table', { color: ORANGE, width: 2.5 }),
-    link('s25', 's26', 'R', 'L', 'stream the file', { color: ORANGE, width: 2.5 }),
+    link('s23', 's24', 'L', 'R', 'only on click', { color: ORANGE, width: 2.5 }),
+    link('s24', 's25', 'R', 'L', 'server-side filter', { color: ORANGE, width: 2.5 }),
+    link('s25', 's26', 'L', 'R', '', { color: ORANGE, width: 2.5 }),
+    link('s26', 's27', 'L', 'R', 'click a preview', { color: ORANGE, width: 2.5 }),
+    link('s27', 's28', 'R', 'L', 'download', { color: ORANGE, width: 2.5 }),
   ],
 };
 
 // ---------------------------------------------------------------------------
-// Geometry check — catch overlapping cards before a stakeholder does
+// Checks — catch overlapping cards, dangling links, and implementation detail
+// leaking onto a functional diagram
 // ---------------------------------------------------------------------------
+
+const TOO_LOW_LEVEL = [
+  /\b(SELECT|INSERT|UPDATE|DELETE)\b/,          // SQL
+  /\b(dws|blk)\.[a-z_]+/i,                      // schema-qualified names
+  /\bv_[a-z_]+/i,                               // view names
+  /_(event|artifact|member|content|file|publication)\b/i,
+  /\/(api|editor|embed)\b/,                     // URL paths
+  /\?[a-z]+=/i,                                 // query strings
+  /\b(GET|POST|PUT|PATCH) /,                    // HTTP verbs
+];
 
 function boxes(model) {
   return model.nodeDataArray
@@ -287,22 +306,35 @@ function boxes(model) {
       return { key: n.key, l: x - w / 2, r: x + w / 2, t: y - h / 2, b: y + h / 2 };
     });
 }
+
 function check(name, model) {
   const bs = boxes(model);
-  const hits = [];
+  const overlaps = [];
   for (let i = 0; i < bs.length; i++)
     for (let j = i + 1; j < bs.length; j++) {
       const a = bs[i], b = bs[j];
-      if (a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b) hits.push(`${a.key} ↔ ${b.key}`);
+      if (a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b) overlaps.push(`${a.key} ↔ ${b.key}`);
     }
+
   const keys = new Set(model.nodeDataArray.map((n) => n.key));
-  const bad = model.linkDataArray.filter((l) => !keys.has(l.from) || !keys.has(l.to));
+  const dangling = model.linkDataArray.filter((l) => !keys.has(l.from) || !keys.has(l.to));
+
+  const leaks = [];
+  const scan = (owner, s) => {
+    if (typeof s === 'string' && TOO_LOW_LEVEL.some((re) => re.test(s))) leaks.push(`${owner}: "${s}"`);
+  };
+  model.nodeDataArray.forEach((n) => { scan(n.key, n.text); scan(n.key, n.sub); });
+  model.linkDataArray.forEach((l) => scan(`${l.from}→${l.to}`, l.text));
+
+  const ok = !overlaps.length && !dangling.length && !leaks.length;
   console.log(
-    `${name}: ${model.nodeDataArray.length} nodes, ${model.linkDataArray.length} links, ` +
-    `${hits.length} overlaps${hits.length ? ' → ' + hits.join(', ') : ''}` +
-    `${bad.length ? ', DANGLING ' + bad.map((l) => l.from + '→' + l.to).join(', ') : ''}`,
+    `${name}: ${model.nodeDataArray.length} nodes, ${model.linkDataArray.length} links` +
+    (ok ? ' — clean' : '') +
+    (overlaps.length ? `\n  OVERLAP ${overlaps.join(', ')}` : '') +
+    (dangling.length ? `\n  DANGLING ${dangling.map((l) => l.from + '→' + l.to).join(', ')}` : '') +
+    (leaks.length ? `\n  TOO LOW-LEVEL ${leaks.join('; ')}` : ''),
   );
-  return hits.length === 0 && bad.length === 0;
+  return ok;
 }
 
 const ok1 = check('architecture', arch);

@@ -13,7 +13,7 @@
     {
       "key": "g-oracle",
       "isGroup": true,
-      "text": "Oracle — one instance, two schemas, one writer each",
+      "text": "Stored data — one database, one owner per area",
       "expanded": true
     },
     {
@@ -25,13 +25,13 @@
     {
       "key": "g-shared",
       "isGroup": true,
-      "text": "Shared services — called by both apps",
+      "text": "Shared services — used by both apps",
       "expanded": true
     },
     {
       "key": "g-customer",
       "isGroup": true,
-      "text": "Customer-facing surface — everything here is visible outside Arrow",
+      "text": "Customer-facing surface — two levels of micro-frontend, everything here is visible outside Arrow",
       "expanded": true
     },
     {
@@ -47,7 +47,7 @@
       "figure": "Rectangle",
       "size": "280 58",
       "text": "System architecture",
-      "sub": "DWS · BLK · Salesforce · Oracle · Databricks",
+      "sub": "Design Workspace · Block Diagram · Salesforce",
       "loc": "180 -90",
       "fill": "#000000",
       "stroke": "#000000",
@@ -102,7 +102,7 @@
       "shape": "fc-database",
       "figure": "FcCylinder",
       "size": "155 80",
-      "text": "Data store",
+      "text": "Stored data",
       "loc": "2100 1130",
       "fill": "#FFFFFF",
       "stroke": "#000000",
@@ -130,7 +130,7 @@
       "shape": "fc-data",
       "figure": "FcParallelogram",
       "size": "180 58",
-      "text": "External feed",
+      "text": "External data feed",
       "loc": "2100 1390",
       "fill": "#FFFFFF",
       "stroke": "#000000",
@@ -159,8 +159,8 @@
       "shape": "fc-display",
       "figure": "FcDisplay",
       "size": "260 96",
-      "text": "DWS workspace",
-      "sub": "designs · artifacts · members",
+      "text": "Design Workspace",
+      "sub": "projects · designs · documents",
       "loc": "560 140",
       "fill": "#FFFFFF",
       "stroke": "#0084D5",
@@ -174,8 +174,8 @@
       "shape": "fc-display",
       "figure": "FcDisplay",
       "size": "260 96",
-      "text": "BLK editor",
-      "sub": "GoJS canvas · parts · wiring",
+      "text": "Block diagram editor",
+      "sub": "canvas · parts · wiring",
       "loc": "940 140",
       "fill": "#FFFFFF",
       "stroke": "#47D7AC",
@@ -189,8 +189,8 @@
       "shape": "fc-predefined",
       "figure": "FcPredefined",
       "size": "260 96",
-      "text": "Render service",
-      "sub": "PDF and PNG artifact bytes",
+      "text": "Export service",
+      "sub": "turns a diagram into a PDF or image",
       "loc": "1320 140",
       "fill": "#FFFFFF",
       "stroke": "#47D7AC",
@@ -205,7 +205,7 @@
       "figure": "FcTerminator",
       "size": "230 74",
       "text": "FAE manager",
-      "sub": "approves publishing",
+      "sub": "approves what customers see",
       "loc": "180 360",
       "fill": "#FFFFFF",
       "stroke": "#000000",
@@ -219,8 +219,8 @@
       "shape": "fc-predefined",
       "figure": "FcPredefined",
       "size": "260 96",
-      "text": "DWS API",
-      "sub": "designs · artifacts · publish",
+      "text": "Workspace services",
+      "sub": "designs · documents · approval",
       "loc": "560 360",
       "fill": "#FFFFFF",
       "stroke": "#0084D5",
@@ -234,8 +234,8 @@
       "shape": "fc-predefined",
       "figure": "FcPredefined",
       "size": "260 96",
-      "text": "BLK API",
-      "sub": "diagrams · versions · export",
+      "text": "Diagram services",
+      "sub": "diagrams · history · export",
       "loc": "940 360",
       "fill": "#FFFFFF",
       "stroke": "#47D7AC",
@@ -249,8 +249,8 @@
       "shape": "fc-database",
       "figure": "FcCylinder",
       "size": "215 120",
-      "text": "Oracle — DWS schema",
-      "sub": "design · artifact · member",
+      "text": "Workspace data",
+      "sub": "designs · documents · who may see them",
       "loc": "560 560",
       "fill": "#FFFFFF",
       "stroke": "#FFC845",
@@ -264,8 +264,8 @@
       "shape": "fc-database",
       "figure": "FcCylinder",
       "size": "215 120",
-      "text": "Oracle — BLK schema",
-      "sub": "diagram · content · version",
+      "text": "Diagram data",
+      "sub": "diagrams and their history",
       "loc": "940 560",
       "fill": "#FFFFFF",
       "stroke": "#FFC845",
@@ -279,8 +279,8 @@
       "shape": "fc-database",
       "figure": "FcCylinder",
       "size": "215 120",
-      "text": "dws.outbox_event",
-      "sub": "metadata only · never artifact bytes",
+      "text": "Change feed",
+      "sub": "says what changed · never the files themselves",
       "loc": "940 780",
       "fill": "#FFC845",
       "stroke": "#FFC845",
@@ -309,8 +309,8 @@
       "shape": "fc-predefined",
       "figure": "FcPredefined",
       "size": "260 96",
-      "text": "AI agent",
-      "sub": "called by the DWS API · reads context",
+      "text": "AI assistant",
+      "sub": "suggests reference designs and parts",
       "loc": "1700 780",
       "fill": "#FFFFFF",
       "stroke": "#000000",
@@ -354,8 +354,8 @@
       "shape": "fc-predefined",
       "figure": "FcPredefined",
       "size": "260 96",
-      "text": "Arrow IdP",
-      "sub": "SSO — DWS and BLK",
+      "text": "Single sign-on",
+      "sub": "one Arrow login for both apps",
       "loc": "2100 140",
       "fill": "#FFFFFF",
       "stroke": "#000000",
@@ -370,7 +370,7 @@
       "figure": "FcPredefined",
       "size": "260 96",
       "text": "Part catalogue",
-      "sub": "called by BLK API · eu · ap · ac",
+      "sub": "regional — eu · ap · ac",
       "loc": "2100 360",
       "fill": "#FFFFFF",
       "stroke": "#000000",
@@ -384,8 +384,8 @@
       "shape": "fc-predefined",
       "figure": "FcPredefined",
       "size": "260 96",
-      "text": "Collab relay",
-      "sub": "y-websocket · off in the embed",
+      "text": "Live collaboration",
+      "sub": "off in the Salesforce view",
       "loc": "2100 560",
       "fill": "#FFFFFF",
       "stroke": "#000000",
@@ -415,7 +415,7 @@
       "figure": "FcCloud",
       "size": "265 132",
       "text": "Salesforce",
-      "sub": "Opportunity record page · Design tab",
+      "sub": "opportunity page · Design tab",
       "loc": "1320 1240",
       "fill": "#FFFFFF",
       "stroke": "#FF8674",
@@ -429,8 +429,8 @@
       "shape": "fc-display",
       "figure": "FcDisplay",
       "size": "260 96",
-      "text": "DWS embed view",
-      "sub": "read-only · published artifacts only",
+      "text": "Workspace view",
+      "sub": "image preview per approved design",
       "loc": "940 1240",
       "fill": "#FFFFFF",
       "stroke": "#0084D5",
@@ -444,11 +444,26 @@
       "shape": "fc-predefined",
       "figure": "FcPredefined",
       "size": "260 96",
-      "text": "/api/sfdc/**",
-      "sub": "server-filtered, never a UI flag",
+      "text": "Published-content service",
+      "sub": "filters on the server, not in the UI",
       "loc": "560 1240",
       "fill": "#FFFFFF",
       "stroke": "#0084D5",
+      "labelColor": "#000000",
+      "fixedColor": true,
+      "group": "g-customer"
+    },
+    {
+      "key": "n-blkview",
+      "category": "shape",
+      "shape": "fc-display",
+      "figure": "FcDisplay",
+      "size": "260 96",
+      "text": "Block diagram canvas",
+      "sub": "opens on clicking a preview · read-only",
+      "loc": "940 1450",
+      "fill": "#FFFFFF",
+      "stroke": "#47D7AC",
       "labelColor": "#000000",
       "fixedColor": true,
       "group": "g-customer"
@@ -469,7 +484,7 @@
       "to": "n-dwsapi",
       "fromPort": "R",
       "toPort": "L",
-      "text": "approves and publishes"
+      "text": "approves"
     },
     {
       "key": "l3",
@@ -484,7 +499,7 @@
       "to": "n-blkui",
       "fromPort": "R",
       "toPort": "L",
-      "text": "iframe /editor/118?embed=1",
+      "text": "micro-frontend",
       "dash": [
         6,
         4
@@ -511,7 +526,7 @@
       "to": "n-dwsapi",
       "fromPort": "B",
       "toPort": "T",
-      "text": "POST /designs/42/artifacts"
+      "text": "hands the file over"
     },
     {
       "key": "l8",
@@ -519,7 +534,7 @@
       "to": "n-oradws",
       "fromPort": "B",
       "toPort": "T",
-      "text": "writes"
+      "text": "saves"
     },
     {
       "key": "l9",
@@ -527,7 +542,7 @@
       "to": "n-orablk",
       "fromPort": "B",
       "toPort": "T",
-      "text": "writes"
+      "text": "saves"
     },
     {
       "key": "l10",
@@ -535,7 +550,7 @@
       "to": "n-oradws",
       "fromPort": "L",
       "toPort": "R",
-      "text": "V_DIAGRAM_V1 — read-only view",
+      "text": "read-only, never written across",
       "dash": [
         6,
         4
@@ -547,7 +562,7 @@
       "to": "n-outbox",
       "fromPort": "B",
       "toPort": "L",
-      "text": "same transaction",
+      "text": "in the same step as the change",
       "color": "#FFC845",
       "width": 2.5
     },
@@ -557,7 +572,7 @@
       "to": "n-dbx",
       "fromPort": "R",
       "toPort": "L",
-      "text": "ingest reads unshipped rows",
+      "text": "platform ingest job picks it up",
       "color": "#FFC845",
       "width": 2.5
     },
@@ -567,7 +582,7 @@
       "to": "n-agent",
       "fromPort": "R",
       "toPort": "L",
-      "text": "context for recommendations"
+      "text": "context"
     },
     {
       "key": "l14",
@@ -607,7 +622,7 @@
       "to": "n-embed",
       "fromPort": "L",
       "toPort": "R",
-      "text": "iframe /embed/opportunity/0064x…",
+      "text": "micro-frontend · level 1",
       "color": "#FF8674",
       "width": 2.5,
       "dash": [
@@ -618,20 +633,44 @@
     {
       "key": "l18",
       "from": "n-embed",
+      "to": "n-blkview",
+      "fromPort": "B",
+      "toPort": "T",
+      "text": "micro-frontend · level 2",
+      "color": "#FF8674",
+      "width": 2.5,
+      "dash": [
+        6,
+        4
+      ]
+    },
+    {
+      "key": "l19",
+      "from": "n-embed",
       "to": "n-sfdcapi",
       "fromPort": "L",
       "toPort": "R",
-      "text": "designs, then artifacts",
+      "text": "asks for this design’s content",
       "color": "#FF8674",
       "width": 2.5
     },
     {
-      "key": "l19",
+      "key": "l20",
+      "from": "n-blkview",
+      "to": "n-sfdcapi",
+      "fromPort": "L",
+      "toPort": "B",
+      "text": "approved designs only",
+      "color": "#FF8674",
+      "width": 2.5
+    },
+    {
+      "key": "l21",
       "from": "n-sfdcapi",
       "to": "n-oradws",
       "fromPort": "L",
       "toPort": "L",
-      "text": "v_published_artifact_v1 only",
+      "text": "approved and customer-visible only",
       "color": "#FF8674",
       "width": 2.5
     }
