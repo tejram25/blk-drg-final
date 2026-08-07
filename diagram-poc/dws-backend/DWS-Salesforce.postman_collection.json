@@ -1,0 +1,203 @@
+{
+  "info": {
+    "_postman_id": "b7e2c1a4-0d3f-4e21-9c88-dws0salesforce01",
+    "name": "DWS – Salesforce Embed API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Design Workspace (DWS) backend — the two endpoints Salesforce calls to embed a design on the Opportunity screen. No authentication (POC). Every call is the **embedded** variant: read-only, with internal-only content left out of the response.\n\n## Set this first\nOpen the collection **Variables** tab and set `baseUrl` to the deployed host, e.g. `http://usdendrh5070:8091`. Everything else uses variables, so nothing else needs editing.\n\n| Variable | Default | Meaning |\n|---|---|---|\n| `baseUrl` | `http://localhost:8091` | protocol + host + port of the DWS backend |\n| `opportunityId` | `0061t00000TuVwXyZaBc` | which opportunity the parameterized requests hit |\n| `artifactId` | `summary` | which file the download request fetches |\n\n## The two endpoints\n| Endpoint | Returns |\n|---|---|\n| `GET …/opportunities/{id}/tabs?embed=true` | every tab of the workspace, as data (client renders it) |\n| `GET …/opportunities/{id}/artifacts?embed=true` | list of downloadable files; each has a `downloadUrl` |\n| `GET …/opportunities/{id}/artifacts/{artifactId}?embed=true` | the file itself — PNG, PDF or XLSX |\n\n`embed=true` is the default on the server, but we send it explicitly on every request so intent is obvious.\n\n## Sample opportunities (mock data)\nThree opportunities exist in the POC fixture. Anything else returns **404**.\n\n| Opportunity Id | Design | Project | Customer | Value | Stage |\n|---|---|---|---|---|---|\n| `0061t00000AbCdEfGhI` | PRJ-001 | EV Battery Management System | Tesla Motors | $2.4M | Design Phase |\n| `0061t00000JkLmNoPqRs` | PRJ-003 | Smart Grid Controller | ABB Ltd | $1.5M | Pre-production |\n| `0061t00000TuVwXyZaBc` | PRJ-008 | Railway Signaling System | Hitachi Rail | $4.5M | Validation/Testing |\n\nThe **Sample opportunities** folder has ready-to-send Tabs + Artifacts requests for each of the three, with the ids already filled in.\n\n## Downloading a file\nSend an **artifact download** request, then use Postman's **Save Response → Save to a file** — the body is the raw PNG/PDF/XLSX bytes."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8091", "type": "string" },
+    { "key": "opportunityId", "value": "0061t00000TuVwXyZaBc", "type": "string" },
+    { "key": "artifactId", "value": "summary", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Accept", "value": "application/json" } ],
+        "url": {
+          "raw": "{{baseUrl}}/actuator/health",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "actuator", "health" ]
+        },
+        "description": "Liveness. Expect 200 and {\"status\":\"UP\"}."
+      }
+    },
+    {
+      "name": "Tabs (parameterized)",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Accept", "value": "application/json" } ],
+        "url": {
+          "raw": "{{baseUrl}}/api/sfdc/opportunities/{{opportunityId}}/tabs?embed=true",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "sfdc", "opportunities", "{{opportunityId}}", "tabs" ],
+          "query": [ { "key": "embed", "value": "true" } ]
+        },
+        "description": "All seven tabs for the opportunity in {{opportunityId}}: overview, block-diagrams, part-intel, fast-repo, support, ai-assistant, supplier-collab. Every tab has the same shape — tab-level `fields`, then `items`, each its own set of key/value `fields` with a `tone`."
+      }
+    },
+    {
+      "name": "Artifacts – list (parameterized)",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Accept", "value": "application/json" } ],
+        "url": {
+          "raw": "{{baseUrl}}/api/sfdc/opportunities/{{opportunityId}}/artifacts?embed=true",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "sfdc", "opportunities", "{{opportunityId}}", "artifacts" ],
+          "query": [ { "key": "embed", "value": "true" } ]
+        },
+        "description": "Downloadable files for the opportunity — metadata only (name, format, size, `downloadUrl`). Copy any `id` from the response into the `artifactId` variable to fetch it with the download request."
+      }
+    },
+    {
+      "name": "Artifact – download (parameterized)",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Accept", "value": "*/*" } ],
+        "url": {
+          "raw": "{{baseUrl}}/api/sfdc/opportunities/{{opportunityId}}/artifacts/{{artifactId}}?embed=true",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "sfdc", "opportunities", "{{opportunityId}}", "artifacts", "{{artifactId}}" ],
+          "query": [ { "key": "embed", "value": "true" } ]
+        },
+        "description": "The file bytes for `artifactId`. PNGs and PDFs come back inline (a PNG can go straight into an <img src>); spreadsheets download. Use Save Response → Save to a file to keep it.\n\nDefault `artifactId` is `summary`, which exists for all three opportunities."
+      }
+    },
+    {
+      "name": "Sample opportunities",
+      "description": "Ready-to-send requests for each of the three mock opportunities, ids pre-filled — no variables needed.",
+      "item": [
+        {
+          "name": "PRJ-001 EV Battery Management System (Tesla Motors)",
+          "item": [
+            {
+              "name": "Tabs — PRJ-001",
+              "request": {
+                "method": "GET",
+                "header": [ { "key": "Accept", "value": "application/json" } ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=true",
+                  "host": [ "{{baseUrl}}" ],
+                  "path": [ "api", "sfdc", "opportunities", "0061t00000AbCdEfGhI", "tabs" ],
+                  "query": [ { "key": "embed", "value": "true" } ]
+                },
+                "description": "$2.4M · Design Phase. Note an NRND part in Part Intelligence."
+              }
+            },
+            {
+              "name": "Artifacts — PRJ-001",
+              "request": {
+                "method": "GET",
+                "header": [ { "key": "Accept", "value": "application/json" } ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/sfdc/opportunities/0061t00000AbCdEfGhI/artifacts?embed=true",
+                  "host": [ "{{baseUrl}}" ],
+                  "path": [ "api", "sfdc", "opportunities", "0061t00000AbCdEfGhI", "artifacts" ],
+                  "query": [ { "key": "embed", "value": "true" } ]
+                },
+                "description": "Embedded artifacts: summary (pdf), diagram-BD-1180 (png), bill-of-materials (xlsx), document-power-architecture-rev-c-pdf (pdf), document-preliminary-bom-xlsx (pdf)."
+              }
+            }
+          ]
+        },
+        {
+          "name": "PRJ-003 Smart Grid Controller (ABB Ltd)",
+          "item": [
+            {
+              "name": "Tabs — PRJ-003",
+              "request": {
+                "method": "GET",
+                "header": [ { "key": "Accept", "value": "application/json" } ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/sfdc/opportunities/0061t00000JkLmNoPqRs/tabs?embed=true",
+                  "host": [ "{{baseUrl}}" ],
+                  "path": [ "api", "sfdc", "opportunities", "0061t00000JkLmNoPqRs", "tabs" ],
+                  "query": [ { "key": "embed", "value": "true" } ]
+                },
+                "description": "$1.5M · Pre-production. Design frozen, no open queries."
+              }
+            },
+            {
+              "name": "Artifacts — PRJ-003",
+              "request": {
+                "method": "GET",
+                "header": [ { "key": "Accept", "value": "application/json" } ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/sfdc/opportunities/0061t00000JkLmNoPqRs/artifacts?embed=true",
+                  "host": [ "{{baseUrl}}" ],
+                  "path": [ "api", "sfdc", "opportunities", "0061t00000JkLmNoPqRs", "artifacts" ],
+                  "query": [ { "key": "embed", "value": "true" } ]
+                },
+                "description": "Embedded artifacts: summary (pdf), diagram-BD-0902 (png), diagram-BD-0915 (png), bill-of-materials (xlsx), document-controller-architecture-rev-d-pdf (pdf), document-qualification-plan-pdf (pdf), document-production-bom-xlsx (pdf)."
+              }
+            }
+          ]
+        },
+        {
+          "name": "PRJ-008 Railway Signaling System (Hitachi Rail)",
+          "item": [
+            {
+              "name": "Tabs — PRJ-008",
+              "request": {
+                "method": "GET",
+                "header": [ { "key": "Accept", "value": "application/json" } ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/sfdc/opportunities/0061t00000TuVwXyZaBc/tabs?embed=true",
+                  "host": [ "{{baseUrl}}" ],
+                  "path": [ "api", "sfdc", "opportunities", "0061t00000TuVwXyZaBc", "tabs" ],
+                  "query": [ { "key": "embed", "value": "true" } ]
+                },
+                "description": "$4.5M · Validation/Testing. Two open queries, a last-time-buy part, a diagram needing rework."
+              }
+            },
+            {
+              "name": "Artifacts — PRJ-008",
+              "request": {
+                "method": "GET",
+                "header": [ { "key": "Accept", "value": "application/json" } ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/sfdc/opportunities/0061t00000TuVwXyZaBc/artifacts?embed=true",
+                  "host": [ "{{baseUrl}}" ],
+                  "path": [ "api", "sfdc", "opportunities", "0061t00000TuVwXyZaBc", "artifacts" ],
+                  "query": [ { "key": "embed", "value": "true" } ]
+                },
+                "description": "Embedded artifacts: summary (pdf), bill-of-materials (xlsx), document-sil-4-evidence-pack-pdf (pdf)."
+              }
+            },
+            {
+              "name": "Artifact download — PRJ-008 summary (pdf)",
+              "request": {
+                "method": "GET",
+                "header": [ { "key": "Accept", "value": "*/*" } ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/sfdc/opportunities/0061t00000TuVwXyZaBc/artifacts/summary?embed=true",
+                  "host": [ "{{baseUrl}}" ],
+                  "path": [ "api", "sfdc", "opportunities", "0061t00000TuVwXyZaBc", "artifacts", "summary" ],
+                  "query": [ { "key": "embed", "value": "true" } ]
+                },
+                "description": "A real PDF. Send, then Save Response → Save to a file to open it."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "404 — unknown opportunity (expected)",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Accept", "value": "application/json" } ],
+        "url": {
+          "raw": "{{baseUrl}}/api/sfdc/opportunities/0061t00000NoSuchId/tabs?embed=true",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "sfdc", "opportunities", "0061t00000NoSuchId", "tabs" ],
+          "query": [ { "key": "embed", "value": "true" } ]
+        },
+        "description": "Any id that is not one of the three sample opportunities returns 404 with a message naming the id. This is the expected 'no design linked' response, not an error to debug."
+      }
+    }
+  ]
+}
