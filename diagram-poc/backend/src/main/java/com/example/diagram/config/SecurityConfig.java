@@ -62,6 +62,11 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(reg -> {
                 reg.requestMatchers(antMatcher("/api/auth/**")).permitAll();
+                // POC: the Salesforce embed endpoint is unauthenticated. It is
+                // read-only and serves a fixture. Before this carries real
+                // project data it needs a caller identity and the entitlement
+                // check that decides which designs that caller may see.
+                reg.requestMatchers(antMatcher("/api/sfdc/**")).permitAll();
                 reg.requestMatchers(antMatcher("/actuator/health"), antMatcher("/actuator/info")).permitAll();
                 if (h2ConsoleEnabled) {
                     reg.requestMatchers(PathRequest.toH2Console()).permitAll();
@@ -93,7 +98,7 @@ public class SecurityConfig {
      * where the browser sends that Origin header even on same-origin POSTs and the
      * backend can't detect same-origin behind the proxy) works out of the box.
      * Override with APP_CORS_ALLOWED_ORIGINS for other hosts. */
-    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:4300,http://localhost:8081,http://localhost:19006,https://*.arrow.com}")
+    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:4300,http://localhost:8081,http://localhost:19006,https://*.arrow.com,https://*.lightning.force.com,https://*.my.salesforce.com,https://*.visualforce.com,https://*.builder.salesforce-experience.com}")
     private String allowedOrigins;
 
     /**

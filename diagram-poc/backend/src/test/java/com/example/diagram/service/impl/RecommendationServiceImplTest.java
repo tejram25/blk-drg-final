@@ -4,7 +4,9 @@ import com.example.diagram.config.OllamaProperties;
 import com.example.diagram.domain.Template;
 import com.example.diagram.repository.TemplateRepository;
 import com.example.diagram.service.DesignWinService;
+import com.example.diagram.service.PartSearchNormalizer;
 import com.example.diagram.service.PartSearchService;
+import com.example.diagram.web.dto.PartSearchResponse;
 import com.example.diagram.web.dto.RecommendationRequest;
 import com.example.diagram.web.dto.RecommendationResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,10 +27,24 @@ class RecommendationServiceImplTest {
 
     @Mock private TemplateRepository templates;
 
+    /**
+     * Turn an upstream-shaped JSON fixture into the typed response the service
+     * now returns. Fixtures stay in catalogue JSON because that is the shape
+     * the real thing sends, and the normaliser is the code under test's own.
+     */
+    private static PartSearchResponse normalise(String upstreamJson, String query) {
+        try {
+            return new PartSearchNormalizer().normalize(new ObjectMapper().readTree(upstreamJson), query);
+        } catch (Exception ex) {
+            throw new IllegalStateException("bad fixture", ex);
+        }
+    }
+
     /** Part search that returns nothing, so the rule-based path is exercised in isolation. */
     private static final PartSearchService NO_PARTS = new PartSearchService() {
-        @Override public String search(String q, String supplier, boolean dw) {
-            return "{\"partserviceresult\":{\"parts\":[]}}";
+        @Override public PartSearchResponse search(String q, String manufacturer, boolean inStockOnly,
+                                                            boolean activeOnly, int start, int limit) {
+            return normalise("{\"partserviceresult\":{\"parts\":[]}}", q);
         }
         @Override public Map<String, Object> health() { return Map.of(); }
     };
@@ -96,13 +112,14 @@ class RecommendationServiceImplTest {
     void groundsRecommendationsInLiveCatalogue() {
         // A catalogue that returns a real, in-stock part for any search.
         PartSearchService live = new PartSearchService() {
-            @Override public String search(String q, String supplier, boolean dw) {
-                return "{\"partserviceresult\":{\"parts\":[{"
+            @Override public PartSearchResponse search(String q, String manufacturer, boolean inStockOnly,
+                                                                boolean activeOnly, int start, int limit) {
+                return normalise("{\"partserviceresult\":{\"parts\":[{"
                         + "\"arwPartNum\":{\"name\":\"LM317T\"},"
                         + "\"mfr\":{\"name\":\"STMicroelectronics\"},"
                         + "\"leadTime\":{\"arwLT\":\"8\"},"
                         + "\"invOrgs\":[{\"status\":\"Active\",\"desc\":\"Adjustable regulator\","
-                        + "\"avail\":{\"totohQty\":1200}}]}]}}";
+                        + "\"avail\":{\"totohQty\":1200}}]}]}}", q);
             }
             @Override public Map<String, Object> health() { return Map.of(); }
         };
@@ -122,13 +139,17 @@ class RecommendationServiceImplTest {
     void picksInStockActivePartOverDeadFirstResult() {
         // First result is dead (Nvr.Active, 0 stock); second is Active and in stock.
         PartSearchService live = new PartSearchService() {
-            @Override public String search(String q, String supplier, boolean dw) {
-                return "{\"partserviceresult\":{\"parts\":["
-                        + "{\"arwPartNum\":{\"name\":\"DEADPART\"},"
+            @Override public PartSearchResponse search(String q, String manufacturer, boolean inStockOnly,
+                                                                boolean activeOnly, int start, int limit) {
+                return normalise("{\"partserviceresult\":{\"parts\":["
+                        // Distinct itemIds, as the real catalogue always sends: the
+                        // normaliser groups by itemId, so two parts without one are a
+                        // single part with merged locations.
+                        + "{\"itemId\":\"1001\",\"arwPartNum\":{\"name\":\"DEADPART\"},"
                         + " \"invOrgs\":[{\"status\":\"Nvr.Active\",\"avail\":{\"totohQty\":0}}]},"
-                        + "{\"arwPartNum\":{\"name\":\"GOODPART\"},"
+                        + "{\"itemId\":\"1002\",\"arwPartNum\":{\"name\":\"GOODPART\"},"
                         + " \"invOrgs\":[{\"status\":\"Active\",\"avail\":{\"totohQty\":500}}]}"
-                        + "]}}";
+                        + "]}}", q);
             }
             @Override public Map<String, Object> health() { return Map.of(); }
         };
@@ -143,11 +164,12 @@ class RecommendationServiceImplTest {
     @Test
     void flagsFieldProvenPartsFromPos() {
         PartSearchService live = new PartSearchService() {
-            @Override public String search(String q, String supplier, boolean dw) {
-                return "{\"partserviceresult\":{\"parts\":[{"
+            @Override public PartSearchResponse search(String q, String manufacturer, boolean inStockOnly,
+                                                                boolean activeOnly, int start, int limit) {
+                return normalise("{\"partserviceresult\":{\"parts\":[{"
                         + "\"arwPartNum\":{\"name\":\"LM317T\"},"
                         + "\"mfr\":{\"name\":\"STMicroelectronics\"},"
-                        + "\"invOrgs\":[{\"status\":\"Active\",\"avail\":{\"totohQty\":1200}}]}]}}";
+                        + "\"invOrgs\":[{\"status\":\"Active\",\"avail\":{\"totohQty\":1200}}]}]}}", q);
             }
             @Override public Map<String, Object> health() { return Map.of(); }
         };
