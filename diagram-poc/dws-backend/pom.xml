@@ -36,6 +36,21 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
+    <!-- Spreadsheet artifacts (.xlsx) -->
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi-ooxml</artifactId>
+      <version>5.2.5</version>
+    </dependency>
+    <!-- PDF artifacts. PDFBox rather than a reporting framework: these are
+         plain documents, and a template engine would be more to learn and
+         more to break than the page-drawing API. -->
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+      <version>2.0.31</version>
+    </dependency>
+
     <!-- JUnit 5, Mockito, AssertJ, Spring Test -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

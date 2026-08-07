@@ -9,14 +9,21 @@ Runs on **8091**, alongside the block diagram backend on 8090.
 
 ```bash
 mvn spring-boot:run
-curl -s localhost:8091/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs | jq
+curl -s localhost:8091/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs      | jq
+curl -s localhost:8091/api/sfdc/opportunities/0061t00000AbCdEfGhI/artifacts | jq
 ```
 
 Deploying it: [DEPLOY.md](./DEPLOY.md) — fat jar on the host, run by systemd,
 same as BLK.
 
-The one endpoint it exposes today is documented in
-[sfdc-embed-api.md](../design/dc-workspace/sfdc-embed-api.md).
+What it exposes today:
+
+| Endpoint | Returns | Documented in |
+|---|---|---|
+| `…/{opportunityId}/tabs` | every tab of the workspace, as data | [sfdc-embed-api.md](../design/dc-workspace/sfdc-embed-api.md) |
+| `…/{opportunityId}/artifacts` | every file the design produces — PNG, PDF, spreadsheet | [sfdc-artifacts-api.md](../design/dc-workspace/sfdc-artifacts-api.md) |
+
+Both take the same `embed` flag and apply the same audience rule.
 
 ---
 
@@ -34,7 +41,8 @@ com.arrow.dws
 │   ├── model      records and enums, no framework
 │   └── port       interfaces the application depends on
 ├── adapter        implementations of those ports           — knows the outside world
-│   └── persistence
+│   ├── persistence
+│   └── render     PNG, PDF and spreadsheet writers
 └── config         wiring
 ```
 
@@ -77,6 +85,16 @@ That is the whole change. Spring injects every `TabContributor` into the use
 case, which sorts by `order()` and calls each. No service, controller, DTO or
 existing tab is touched — and `TabContributorTest` picks the new tab up and
 holds it to the shared invariants automatically.
+
+**`ArtifactRenderer` is the same idea for files.** Each renderer declares the
+`ArtifactKind` it handles; the registry collects them and dispatches. A new
+artifact type is a new enum constant and a new renderer — the controller, the
+service and the catalogue's callers are untouched.
+
+The registry **fails at startup** if a kind has no renderer, or if two claim the
+same one. Left open, the first is an endpoint that lists a file and returns 500
+when you click it, and the second is a coin toss over which renderer wins — both
+are the kind of thing that surfaces in a demo rather than in a build.
 
 ### Liskov substitution
 
@@ -123,7 +141,7 @@ default to be discovered in production.
 ## Tests
 
 ```bash
-mvn test          # 56 tests, no database, no network
+mvn test          # 93 tests, no database, no network
 ```
 
 | Suite | What it holds |
@@ -133,6 +151,10 @@ mvn test          # 56 tests, no database, no network
 | `DefaultOpportunityViewServiceTest` | assembly and ordering, against stub contributors |
 | `InMemoryDesignRepositoryTest` | the port contract, including that collections cannot be mutated by a caller |
 | `OpportunityControllerTest` | the whole app wired as it ships — that Spring finds all seven contributors, and that the endpoint answers without a session |
+| `ArtifactCatalogueTest` | which artifacts exist, and that visibility is inherited from the source rather than restated |
+| `ArtifactRendererTest` | that every file **opens in the library that reads that format** — asserting "the byte array is not empty" would pass for every broken renderer ever written |
+| `ArtifactControllerTest` | media types, `Content-Disposition`, and that an internal artifact is neither listed nor reachable by id |
+| `CorsTest` | that the CORS configuration is actually applied, not merely defined |
 
 Tests build their own designs (`TestDesigns`) rather than asserting against the
 shipped fixture. A test that breaks when someone renames a document for a demo

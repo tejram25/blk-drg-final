@@ -75,6 +75,16 @@ curl -s "http://<host>:8091/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs" | j
 
 curl -s -o /dev/null -w '%{http_code}\n' "http://<host>:8091/api/sfdc/opportunities/0061t00000NoSuchId/tabs"
 # 404
+
+curl -s "http://<host>:8091/api/sfdc/opportunities/0061t00000TuVwXyZaBc/artifacts?embed=false" \
+  | jq '[.artifacts[] | {id, format, sizeBytes}]'
+# 9 artifacts; 3 with embed=true
+
+# the rendering actually works on the host — headless Java2D is the one thing
+# that can differ between a laptop and a server
+curl -s "http://<host>:8091/api/sfdc/opportunities/0061t00000TuVwXyZaBc/artifacts/diagram-BD-1330?embed=false" \
+  -o /tmp/d.png && file /tmp/d.png
+# PNG image data, 1200 x 675
 ```
 
 ## Rollback

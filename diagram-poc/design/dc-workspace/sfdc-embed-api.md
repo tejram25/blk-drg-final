@@ -8,6 +8,10 @@ to draw any of them — **adding a tab here is not a Salesforce release.**
 GET /api/sfdc/opportunities/{opportunityId}/tabs?embed=true
 ```
 
+For the design's **files** — diagrams as PNG, everything else as PDF or
+spreadsheet — see the [artifacts API](./sfdc-artifacts-api.md). Same service,
+same `embed` flag, same audience rule.
+
 Served by the **Design Workspace backend** (`diagram-poc/dws-backend`, port
 8091), not by the block diagram backend. That split is the architecture, not an
 accident: DWS owns designs, documents and approval; BLK owns diagrams. See
