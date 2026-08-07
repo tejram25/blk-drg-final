@@ -1,6 +1,7 @@
 server:
-  # 8081 so this can run alongside the block-diagram backend on 8080.
-  port: ${PORT:8081}
+  # 8091. The block diagram backend runs on 8090 on the same host, so the two
+  # sit next to each other and neither has to move.
+  port: ${PORT:8091}
 
 spring:
   application:

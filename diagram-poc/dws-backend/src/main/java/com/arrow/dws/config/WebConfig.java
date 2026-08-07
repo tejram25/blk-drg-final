@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import java.time.Clock;
 import java.util.List;
@@ -45,5 +46,28 @@ public class WebConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", config);
         return source;
+    }
+
+    /**
+     * The filter that actually applies the configuration above.
+     *
+     * <p>Easy to leave out, and silent when you do. In a Spring Security
+     * application the security filter chain consumes a
+     * {@link CorsConfigurationSource} bean by itself, so the bean alone looks
+     * like enough — and that is the shape most examples show. This application
+     * has no Security on the classpath, so without this filter the
+     * configuration is defined and never consulted, and every cross-origin
+     * call is refused, including the Salesforce one this service exists to
+     * serve. Nothing fails at startup; it only shows up in a browser.
+     *
+     * <p>Takes {@link CorsProperties} and calls the method above rather than
+     * injecting a {@code CorsConfigurationSource}: Spring MVC registers its own
+     * {@code mvcHandlerMappingIntrospector}, which also implements that
+     * interface, so injecting by type is ambiguous. The {@code @Configuration}
+     * proxy makes the direct call return the same singleton.
+     */
+    @Bean
+    public CorsFilter corsFilter(CorsProperties properties) {
+        return new CorsFilter(corsConfigurationSource(properties));
     }
 }

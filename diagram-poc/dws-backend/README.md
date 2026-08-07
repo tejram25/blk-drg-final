@@ -5,12 +5,15 @@ what a customer may see. It does **not** own block diagrams — those belong to
 the block diagram service, which reaches this one over its API and never writes
 its data.
 
-Runs on **8081**, so it sits alongside the block diagram backend on 8080.
+Runs on **8091**, alongside the block diagram backend on 8090.
 
 ```bash
 mvn spring-boot:run
-curl -s localhost:8081/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs | jq
+curl -s localhost:8091/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs | jq
 ```
+
+Deploying it: [DEPLOY.md](./DEPLOY.md) — fat jar on the host, run by systemd,
+same as BLK.
 
 The one endpoint it exposes today is documented in
 [sfdc-embed-api.md](../design/dc-workspace/sfdc-embed-api.md).

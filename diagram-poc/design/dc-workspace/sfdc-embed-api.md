@@ -9,7 +9,7 @@ GET /api/sfdc/opportunities/{opportunityId}/tabs?embed=true
 ```
 
 Served by the **Design Workspace backend** (`diagram-poc/dws-backend`, port
-8081), not by the block diagram backend. That split is the architecture, not an
+8091), not by the block diagram backend. That split is the architecture, not an
 accident: DWS owns designs, documents and approval; BLK owns diagrams. See
 [dws-backend/README.md](../../dws-backend/README.md) for the internals.
 
@@ -162,11 +162,11 @@ different states and only the first exists today.
 ```bash
 cd diagram-poc/dws-backend && mvn spring-boot:run
 
-curl -s "localhost:8081/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=true" | jq '.tabs[] | {order, key, badge}'
+curl -s "localhost:8091/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=true" | jq '.tabs[] | {order, key, badge}'
 
 # the difference the flag makes
 for e in true false; do
-  curl -s "localhost:8081/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=$e" \
+  curl -s "localhost:8091/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=$e" \
     | jq --arg e "$e" '"embed=\($e): \([.tabs[] | select(.key=="fast-repo") | .items[].key] | join(", "))"'
 done
 ```

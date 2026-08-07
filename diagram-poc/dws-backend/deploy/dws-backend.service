@@ -1,0 +1,47 @@
+# Design Workspace backend, run as a systemd service.
+#
+# Install once:
+#   sudo cp dws-backend.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now dws-backend
+#
+# After that a deploy is: copy the new jar, then `sudo systemctl restart dws-backend`.
+
+[Unit]
+Description=Design Workspace backend (DWS)
+Documentation=https://github.com/tejram25/blk-drg-final
+# network-online rather than network: the JVM binds a port at startup, and
+# "network" only means the stack is up, not that an address is assigned.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=oracle
+Group=oracle
+WorkingDirectory=/home/oracle/dws-backend
+
+# JVM flags go inline: systemd runs ExecStart without a shell, so $JAVA_OPTS
+# would be passed to java as a literal string rather than expanded.
+ExecStart=/usr/bin/java -Xms256m -Xmx512m -jar /home/oracle/dws-backend/dws-backend-0.0.1-SNAPSHOT.jar --server.port=8091
+
+# A JVM killed by SIGTERM exits 143. Without this, every clean stop and every
+# restart is recorded as a failure, and `systemctl status` reads red when
+# nothing is wrong.
+SuccessExitStatus=143
+
+Restart=on-failure
+RestartSec=5
+
+# Give the JVM time to shut down its own way before systemd escalates to KILL.
+TimeoutStopSec=30
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dws-backend
+
+# Add environment overrides here, e.g. a CORS allowlist for a new Salesforce org:
+# Environment="DWS_CORS_ALLOWEDORIGINPATTERNS=https://arrow.my.salesforce.com,https://arrow.lightning.force.com"
+
+[Install]
+WantedBy=multi-user.target
