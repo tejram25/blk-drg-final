@@ -8,6 +8,11 @@ to draw any of them — **adding a tab here is not a Salesforce release.**
 GET /api/sfdc/opportunities/{opportunityId}/tabs?embed=true
 ```
 
+Served by the **Design Workspace backend** (`diagram-poc/dws-backend`, port
+8081), not by the block diagram backend. That split is the architecture, not an
+accident: DWS owns designs, documents and approval; BLK owns diagrams. See
+[dws-backend/README.md](../../dws-backend/README.md) for the internals.
+
 | | |
 |---|---|
 | Auth | **None.** POC only — see [Before this is real](#before-this-is-real) |
@@ -33,6 +38,11 @@ payload, so a client reading the raw JSON cannot recover it:
 - documents carry no `visibility` field, because there is nothing to disclose
 - every tab reports `readOnly: true`
 
+On the wire the flag becomes an `Audience` — `embedded` or `internal` — and the
+response echoes which one it used. It is an enum rather than a boolean inside
+the service so a third audience is a new constant, not a change to every
+signature that carries the flag.
+
 ## Response
 
 Data, not markup — the client renders. Every tab has the **same shape**: some
@@ -43,14 +53,14 @@ field is a server change, not a Salesforce release.
 ```jsonc
 {
   "opportunityId": "0061t00000TuVwXyZaBc",
-  "projectId":     "PRJ-008",
+  "designId":      "PRJ-008",
   "name":          "Railway Signaling System",
   "customer":      "Hitachi Rail",
   "value":         "$4.5M",
   "stage":         "Validation/Testing",
   "region":        "AP",
   "owner":         "Anna Martinez",
-  "embed":         true,
+  "audience":      "embedded",          // or "internal"
   "generatedAt":   "2026-08-07T04:16:58.489663435Z",
 
   "tabs": [
@@ -132,7 +142,8 @@ test holding it to that.
 
 ## Fixture
 
-Three opportunities, held in code (`MockOpportunityCatalog`). The numbers
+Three designs, held in code (`InMemoryDesignRepository`, behind the
+`DesignRepository` port). The numbers
 mirror the Design Workspace prototype so the embed and the workspace tell the
 same story about the same projects.
 
@@ -149,13 +160,13 @@ different states and only the first exists today.
 ## Try it
 
 ```bash
-cd diagram-poc/backend && mvn spring-boot:run
+cd diagram-poc/dws-backend && mvn spring-boot:run
 
-curl -s "localhost:8080/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=true" | jq '.tabs[] | {order, key, badge}'
+curl -s "localhost:8081/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=true" | jq '.tabs[] | {order, key, badge}'
 
 # the difference the flag makes
 for e in true false; do
-  curl -s "localhost:8080/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=$e" \
+  curl -s "localhost:8081/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=$e" \
     | jq --arg e "$e" '"embed=\($e): \([.tabs[] | select(.key=="fast-repo") | .items[].key] | join(", "))"'
 done
 ```
@@ -190,7 +201,7 @@ const TONE = {
 };
 ```
 
-The API's origin must be in `app.cors.allowed-origins`. The defaults already
+The API's origin must be in `dws.cors.allowed-origin-patterns`. The defaults already
 cover `*.lightning.force.com`, `*.my.salesforce.com`, `*.visualforce.com` and
 `*.builder.salesforce-experience.com`.
 
