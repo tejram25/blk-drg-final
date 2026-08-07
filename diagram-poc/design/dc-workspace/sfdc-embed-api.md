@@ -205,9 +205,12 @@ const TONE = {
 };
 ```
 
-The API's origin must be in `dws.cors.allowed-origin-patterns`. The defaults already
-cover `*.lightning.force.com`, `*.my.salesforce.com`, `*.visualforce.com` and
-`*.builder.salesforce-experience.com`.
+CORS is **open by default** (`dws.cors.allowed-origin-patterns: "*"`) because the
+Salesforce org this will be served from is not known yet. That is safe only
+because credentials are off. Narrow it to the real org host once it is known —
+override `DWS_CORS_ALLOWEDORIGINPATTERNS` on the host rather than editing the
+jar — and if authentication is ever added, make it an exact list in the same
+change.
 
 ## Before this is real
 

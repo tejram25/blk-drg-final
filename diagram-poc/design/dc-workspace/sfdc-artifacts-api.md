@@ -200,8 +200,9 @@ const diagrams = artifacts.filter(a => a.format === 'png');
 const files = artifacts.filter(a => a.format !== 'png');
 ```
 
-The API's origin must be in `dws.cors.allowed-origin-patterns`; the defaults
-already cover the Salesforce domains.
+CORS is open by default (`dws.cors.allowed-origin-patterns: "*"`) — the
+Salesforce org is not known yet, and this is safe only because credentials are
+off. Narrow it once the real org host is known.
 
 ## Before this is real
 

@@ -168,6 +168,9 @@ is a test everyone learns to ignore.
    turn into a decision.
 2. **No approval gate.** The fixture sets `Visibility` by hand. In the real
    thing an approver sets it and the database enforces it.
-3. **CORS allows credentials: false**, which is what makes the wildcard origin
-   patterns safe. If authentication is added, that pairing has to be revisited
-   in the same change.
+3. **CORS is open to every origin** (`allowed-origin-patterns: "*"`), because the
+   Salesforce org is not known yet. This is safe **only** because credentials
+   are off — with no session to carry, a matching origin gains nothing a
+   server-side call could not. Narrow it to the real org host once known
+   (override `DWS_CORS_ALLOWEDORIGINPATTERNS` on the host). If authentication is
+   added, the wildcard has to become an exact list in the same change.
