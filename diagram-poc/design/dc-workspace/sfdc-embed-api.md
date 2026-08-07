@@ -24,39 +24,66 @@ GET /api/sfdc/opportunities/{opportunityId}/tabs?embed=true
 `embed` defaults to `true` because the only caller today is the embed —
 forgetting the parameter must not serve the internal variant by accident.
 
-**What `embed=true` actually changes.** Not styling. Internal content is left
-out of the response, so a client reading the raw HTML cannot recover it:
+**What `embed=true` actually changes.** Internal content is left out of the
+payload, so a client reading the raw JSON cannot recover it:
 
-- internal-only documents are not in the list, and the tab badge counts what is
-  actually shown
-- the internal margin figure is absent
-- action controls (*Raise a query*, *Ask the assistant*) are not rendered
+- internal-only documents are not in `items`, and the badge counts what is
+  actually returned
+- the `margin` field is absent from `overview`
+- documents carry no `visibility` field, because there is nothing to disclose
 - every tab reports `readOnly: true`
 
 ## Response
 
+Data, not markup — the client renders. Every tab has the **same shape**: some
+tab-level key/value pairs, then a list of items that are each themselves a set
+of key/value pairs. One renderer covers all seven tabs, and a tab gaining a
+field is a server change, not a Salesforce release.
+
 ```jsonc
 {
-  "opportunityId": "0061t00000AbCdEfGhI",
-  "projectId":     "PRJ-001",
-  "name":          "EV Battery Management System",
-  "customer":      "Tesla Motors",
-  "value":         "$2.4M",
-  "stage":         "Design Phase",
-  "region":        "AC",
-  "owner":         "John Smith",
+  "opportunityId": "0061t00000TuVwXyZaBc",
+  "projectId":     "PRJ-008",
+  "name":          "Railway Signaling System",
+  "customer":      "Hitachi Rail",
+  "value":         "$4.5M",
+  "stage":         "Validation/Testing",
+  "region":        "AP",
+  "owner":         "Anna Martinez",
   "embed":         true,
-  "generatedAt":   "2026-08-07T03:59:06.630896067Z",
+  "generatedAt":   "2026-08-07T04:16:58.489663435Z",
+
   "tabs": [
     {
-      "key":         "overview",        // stable; safe in a URL or a DOM id
-      "label":       "Overview",        // what the user sees
-      "icon":        "layout-list",     // Lucide name, same as the workspace UI
-      "order":       1,                 // ascending
-      "badge":       null,              // short count/status, or null
-      "readOnly":    true,
-      "contentType": "text/html",
-      "html":        "<div style=…>…</div>"
+      "key":      "part-intel",          // stable; safe in a URL or a DOM id
+      "label":    "Part Intelligence",   // what the user sees
+      "icon":     "search",              // Lucide name, same as the workspace UI
+      "order":    3,                     // ascending
+      "badge":    "4",                   // for the tab strip, or null
+      "readOnly": true,
+
+      // tab-level summary
+      "fields": [
+        { "key": "partCount",   "label": "Parts",                  "value": "4", "tone": "neutral" },
+        { "key": "partsAtRisk", "label": "Not in full production", "value": "1", "tone": "warning" }
+      ],
+
+      // the rows — each one its own object of key/value pairs
+      "items": [
+        {
+          "key":      "SN65HVD255",
+          "title":    "SN65HVD255",
+          "subtitle": "Texas Instruments",
+          "fields": [
+            { "key": "function",  "label": "Function",  "value": "CAN transceiver", "tone": "neutral"  },
+            { "key": "lifecycle", "label": "Lifecycle", "value": "Last time buy",   "tone": "critical" },
+            { "key": "leadTime",  "label": "Lead time", "value": "30 weeks",        "tone": "neutral"  },
+            { "key": "stock",     "label": "Stock",     "value": "60",              "tone": "neutral"  }
+          ]
+        }
+      ],
+
+      "note": "1 part is not in full production. See the AI Assistant tab for alternates."
     }
     // …6 more
   ]
@@ -67,29 +94,41 @@ The header fields are a copy of what Salesforce already holds. They are
 returned so the embed can render standalone without a second lookup — not
 because this service owns them.
 
+### Field
+
+| Field | Meaning |
+|---|---|
+| `key` | stable identifier — branch on this, never show it |
+| `label` | the human label |
+| `value` | already formatted for display; always a string |
+| `tone` | `neutral` · `positive` · `warning` · `critical` · `info` |
+
+**`tone` is domain knowledge, not styling.** Knowing that *Last time buy* is
+critical and *NRND* is a warning belongs on the server, not in a switch
+statement inside a Lightning component. The client maps the five tones to
+whatever colours it likes and never has to parse a value.
+
+### Item
+
+`key`, `title`, `subtitle` (may be null), and `fields` — the row's own pairs,
+in display order. `items` is empty for a tab that is only a summary
+(`overview`).
+
 ### The tabs
 
-| # | key | Label | Badge counts |
-|---|---|---|---|
-| 1 | `overview` | Overview | — |
-| 2 | `block-diagrams` | Block Diagrams | diagrams |
-| 3 | `part-intel` | Part Intelligence | parts |
-| 4 | `fast-repo` | FAST Repository | documents **this variant will show** |
-| 5 | `support` | Support / Query | **open** queries only |
-| 6 | `ai-assistant` | AI Assistant | suggestions |
-| 7 | `supplier-collab` | Suppliers | suppliers |
+| # | key | Label | Items are | Badge counts |
+|---|---|---|---|---|
+| 1 | `overview` | Overview | — (fields only) | — |
+| 2 | `block-diagrams` | Block Diagrams | diagrams | diagrams |
+| 3 | `part-intel` | Part Intelligence | parts | parts |
+| 4 | `fast-repo` | FAST Repository | documents | documents **this variant returns** |
+| 5 | `support` | Support / Query | queries | **open** queries only |
+| 6 | `ai-assistant` | AI Assistant | suggestions | suggestions |
+| 7 | `supplier-collab` | Suppliers | suppliers | suppliers |
 
-### About the HTML
-
-Each `html` is a self-contained fragment — a `<div>` and its children. No
-`<html>`/`<body>` wrapper, no `<script>`, and **no stylesheet dependency**:
-every rule is inline. Drop it into a container and it renders, with nothing to
-install and nothing that can collide with Salesforce's own styles.
-
-Every interpolated value is HTML-escaped. That matters more than it looks: the
-fixture is static today, but the moment this reads real project names, notes
-and query subjects, unescaped output is stored XSS on a customer-facing page.
-Escaping from the start makes that change safe by default.
+Counts always describe what the caller actually received — the document badge
+reads `2` on the embedded variant and `4` on the internal one, and there is a
+test holding it to that.
 
 ## Fixture
 
@@ -115,21 +154,40 @@ cd diagram-poc/backend && mvn spring-boot:run
 curl -s "localhost:8080/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=true" | jq '.tabs[] | {order, key, badge}'
 
 # the difference the flag makes
-curl -s "localhost:8080/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=false" | grep -c "Thermal design note"   # 1
-curl -s "localhost:8080/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=true"  | grep -c "Thermal design note"   # 0
+for e in true false; do
+  curl -s "localhost:8080/api/sfdc/opportunities/0061t00000AbCdEfGhI/tabs?embed=$e" \
+    | jq --arg e "$e" '"embed=\($e): \([.tabs[] | select(.key=="fast-repo") | .items[].key] | join(", "))"'
+done
 ```
 
 ## Consuming it from Salesforce
+
+One renderer, because every tab is the same shape:
 
 ```js
 const res  = await fetch(`${base}/api/sfdc/opportunities/${oppId}/tabs?embed=true`);
 const data = await res.json();
 
-data.tabs.forEach(tab => {
-  // tab.label + tab.badge drive the tab strip
-  // tab.html goes into the panel — it needs no CSS of yours
-  panel.innerHTML = tab.html;
-});
+// tab.label + tab.badge drive the tab strip
+function renderTab(tab) {
+  return {
+    summary: tab.fields.map(f => ({ label: f.label, value: f.value, css: TONE[f.tone] })),
+    rows:    tab.items.map(i => ({
+      title:    i.title,
+      subtitle: i.subtitle,
+      cells:    i.fields.map(f => ({ label: f.label, value: f.value, css: TONE[f.tone] })),
+    })),
+    note: tab.note,
+  };
+}
+
+const TONE = {
+  neutral:  'slds-text-color_default',
+  positive: 'slds-text-color_success',
+  warning:  'slds-text-color_warning',
+  critical: 'slds-text-color_error',
+  info:     'slds-text-color_weak',
+};
 ```
 
 The API's origin must be in `app.cors.allowed-origins`. The defaults already
@@ -147,7 +205,8 @@ Three things this POC deliberately does not do:
 2. **No approval gate.** The fixture marks documents customer-visible by hand.
    In the real thing that flag is set by an approver and enforced by the
    database, not by whoever writes the fixture.
-3. **The dark theme is a choice, not a constraint.** The fragments match the
-   Design Workspace so the embed reads as the workspace. If Salesforce wants
-   Lightning's light surface instead, it is the palette constants at the top of
-   `OpportunityTabHtml` and nothing else.
+3. **Values are display-formatted strings, not typed.** `"$4.5M"`, `"24 weeks"`,
+   `"2 days ago"` — deliberate for a POC, because the shape stays uniform and
+   the client never has to format. If Salesforce needs to sort or filter on
+   these, the fields need machine-readable siblings (`valueRaw`, `unit`,
+   `updatedAt`) rather than a parser on the client.

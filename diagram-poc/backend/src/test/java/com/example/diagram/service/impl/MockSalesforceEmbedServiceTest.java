@@ -2,11 +2,14 @@ package com.example.diagram.service.impl;
 
 import com.example.diagram.web.dto.OpportunityTab;
 import com.example.diagram.web.dto.OpportunityTabsResponse;
+import com.example.diagram.web.dto.TabField;
+import com.example.diagram.web.dto.TabItem;
 import com.example.diagram.web.error.NotFoundException;
 
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -14,23 +17,45 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MockSalesforceEmbedServiceTest {
 
     private static final String EV_BMS = "0061t00000AbCdEfGhI";
+    private static final String SMART_GRID = "0061t00000JkLmNoPqRs";
     private static final String RAIL = "0061t00000TuVwXyZaBc";
 
     private final MockSalesforceEmbedService service = new MockSalesforceEmbedService();
 
     @Test
-    void returnsEverySevenTabsInOrder() {
+    void returnsSevenTabsInOrder() {
         OpportunityTabsResponse r = service.getOpportunityTabs(EV_BMS, true);
 
         assertThat(r.tabs()).extracting(OpportunityTab::key).containsExactly(
                 "overview", "block-diagrams", "part-intel", "fast-repo",
                 "support", "ai-assistant", "supplier-collab");
         assertThat(r.tabs()).extracting(OpportunityTab::order).containsExactly(1, 2, 3, 4, 5, 6, 7);
-        assertThat(r.tabs()).allSatisfy(t -> {
-            assertThat(t.html()).isNotBlank();
-            assertThat(t.contentType()).isEqualTo("text/html");
+    }
+
+    /**
+     * The shape is uniform on purpose — one client renderer covers every tab.
+     * If a tab ever ships an empty field list or a field without a key, that
+     * renderer starts producing blanks.
+     */
+    @Test
+    void everyTabHasTheSameShape() {
+        for (OpportunityTab t : service.getOpportunityTabs(RAIL, true).tabs()) {
             assertThat(t.label()).isNotBlank();
-        });
+            assertThat(t.icon()).isNotBlank();
+            assertThat(t.fields()).isNotEmpty();
+            assertThat(t.fields()).allSatisfy(f -> {
+                assertThat(f.key()).isNotBlank();
+                assertThat(f.label()).isNotBlank();
+                assertThat(f.value()).isNotNull();
+                assertThat(f.tone()).isIn(TabField.NEUTRAL, TabField.POSITIVE,
+                        TabField.WARNING, TabField.CRITICAL, TabField.INFO);
+            });
+            assertThat(t.items()).allSatisfy(i -> {
+                assertThat(i.key()).isNotBlank();
+                assertThat(i.title()).isNotBlank();
+                assertThat(i.fields()).isNotEmpty();
+            });
+        }
     }
 
     @Test
@@ -59,63 +84,93 @@ class MockSalesforceEmbedServiceTest {
 
     /**
      * The point of the embed flag: internal content is absent from the payload,
-     * not merely styled out of view. A client that reads the raw HTML must not
-     * be able to recover it.
+     * not merely flagged. A client reading the raw JSON must not recover it.
      */
     @Test
     void embedVariantOmitsInternalContentEntirely() {
-        String embedded = html(service.getOpportunityTabs(EV_BMS, true));
-        String internal = html(service.getOpportunityTabs(EV_BMS, false));
+        OpportunityTabsResponse embedded = service.getOpportunityTabs(EV_BMS, true);
+        OpportunityTabsResponse internal = service.getOpportunityTabs(EV_BMS, false);
 
-        assertThat(internal).contains("31.4%");            // the margin figure
-        assertThat(embedded).doesNotContain("31.4%");
+        assertThat(fieldKeys(internal, "overview")).contains("margin");
+        assertThat(fieldKeys(embedded, "overview")).doesNotContain("margin");
 
-        assertThat(internal).contains("Thermal design note.md");   // an internal document
-        assertThat(embedded).doesNotContain("Thermal design note.md");
-        assertThat(embedded).contains("Preliminary BOM.xlsx");     // a customer-visible one
+        assertThat(itemKeys(internal, "fast-repo")).contains("Thermal design note.md");
+        assertThat(itemKeys(embedded, "fast-repo"))
+                .doesNotContain("Thermal design note.md")
+                .contains("Preliminary BOM.xlsx");
     }
 
     @Test
-    void embedVariantCarriesNoActionControls() {
-        String embedded = html(service.getOpportunityTabs(RAIL, true));
-        String internal = html(service.getOpportunityTabs(RAIL, false));
-
-        assertThat(internal).contains("Raise a query");
-        assertThat(embedded).doesNotContain("Raise a query");
-        assertThat(service.getOpportunityTabs(RAIL, true).tabs())
-                .allMatch(OpportunityTab::readOnly);
+    void everyTabIsReadOnlyInTheEmbeddedVariant() {
+        assertThat(service.getOpportunityTabs(RAIL, true).tabs()).allMatch(OpportunityTab::readOnly);
+        assertThat(service.getOpportunityTabs(RAIL, false).tabs()).noneMatch(OpportunityTab::readOnly);
     }
 
+    /** Counts must describe what the caller actually received. */
     @Test
-    void documentBadgeCountsWhatTheVariantActuallyShows() {
-        String embedded = badge(service.getOpportunityTabs(EV_BMS, true), "fast-repo");
-        String internal = badge(service.getOpportunityTabs(EV_BMS, false), "fast-repo");
-
-        assertThat(internal).isEqualTo("4");
-        assertThat(embedded).isEqualTo("2");
+    void documentCountMatchesTheItemsReturned() {
+        for (boolean embed : List.of(true, false)) {
+            OpportunityTabsResponse r = service.getOpportunityTabs(EV_BMS, embed);
+            OpportunityTab t = tab(r, "fast-repo");
+            String declared = field(t, "documentCount").value();
+            assertThat(declared).isEqualTo(String.valueOf(t.items().size()));
+            assertThat(t.badge()).isEqualTo(declared);
+        }
+        assertThat(tab(service.getOpportunityTabs(EV_BMS, true), "fast-repo").items()).hasSize(2);
+        assertThat(tab(service.getOpportunityTabs(EV_BMS, false), "fast-repo").items()).hasSize(4);
     }
 
     @Test
     void supportBadgeCountsOpenQueriesOnly() {
         // Rail has two open and one answered; Smart Grid has none open.
-        assertThat(badge(service.getOpportunityTabs(RAIL, true), "support")).isEqualTo("2");
-        assertThat(badge(service.getOpportunityTabs("0061t00000JkLmNoPqRs", true), "support")).isNull();
+        OpportunityTab rail = tab(service.getOpportunityTabs(RAIL, true), "support");
+        assertThat(rail.badge()).isEqualTo("2");
+        assertThat(rail.items()).hasSize(3);
+
+        assertThat(tab(service.getOpportunityTabs(SMART_GRID, true), "support").badge()).isNull();
     }
 
-    /** Interpolated values are escaped, so a fragment can never carry markup. */
+    /** Tone is domain knowledge, not styling — the client should not re-derive it. */
     @Test
-    void htmlIsEscaped() {
-        String h = html(service.getOpportunityTabs(RAIL, true));
-        assertThat(h).contains("85 &deg;C".replace("&deg;", "°"));   // sanity: content is present
-        assertThat(h).doesNotContain("<script");
+    void lifecycleRiskCarriesItsOwnTone() {
+        OpportunityTab parts = tab(service.getOpportunityTabs(RAIL, true), "part-intel");
+
+        assertThat(itemField(parts, "SN65HVD255", "lifecycle").tone()).isEqualTo(TabField.CRITICAL);
+        assertThat(itemField(parts, "TMS570LC4357", "lifecycle").tone()).isEqualTo(TabField.POSITIVE);
+        assertThat(field(parts, "partsAtRisk").tone()).isEqualTo(TabField.WARNING);
+        assertThat(parts.note()).contains("1 part is not in full production");
     }
 
-    private static String html(OpportunityTabsResponse r) {
-        return r.tabs().stream().map(OpportunityTab::html).reduce("", String::concat);
+    @Test
+    void tabWithNoRisksHasNoNoteAndAPositiveTone() {
+        OpportunityTab parts = tab(service.getOpportunityTabs(SMART_GRID, true), "part-intel");
+
+        assertThat(field(parts, "partsAtRisk").value()).isEqualTo("0");
+        assertThat(field(parts, "partsAtRisk").tone()).isEqualTo(TabField.POSITIVE);
+        assertThat(parts.note()).isNull();
     }
 
-    private static String badge(OpportunityTabsResponse r, String key) {
-        List<OpportunityTab> tabs = r.tabs();
-        return tabs.stream().filter(t -> t.key().equals(key)).findFirst().orElseThrow().badge();
+    // ------------------------------------------------------------- helpers
+
+    private static OpportunityTab tab(OpportunityTabsResponse r, String key) {
+        return r.tabs().stream().filter(t -> t.key().equals(key)).findFirst().orElseThrow();
+    }
+
+    private static TabField field(OpportunityTab t, String key) {
+        return t.fields().stream().filter(f -> f.key().equals(key)).findFirst().orElseThrow();
+    }
+
+    private static TabField itemField(OpportunityTab t, String itemKey, String fieldKey) {
+        Optional<TabItem> item = t.items().stream().filter(i -> i.key().equals(itemKey)).findFirst();
+        return item.orElseThrow().fields().stream()
+                .filter(f -> f.key().equals(fieldKey)).findFirst().orElseThrow();
+    }
+
+    private static List<String> fieldKeys(OpportunityTabsResponse r, String tabKey) {
+        return tab(r, tabKey).fields().stream().map(TabField::key).toList();
+    }
+
+    private static List<String> itemKeys(OpportunityTabsResponse r, String tabKey) {
+        return tab(r, tabKey).items().stream().map(TabItem::key).toList();
     }
 }

@@ -33,8 +33,11 @@ class SalesforceEmbedControllerTest {
                 .andExpect(jsonPath("$.embed").value(true))
                 .andExpect(jsonPath("$.tabs.length()").value(7))
                 .andExpect(jsonPath("$.tabs[0].key").value("overview"))
-                .andExpect(jsonPath("$.tabs[0].contentType").value("text/html"))
-                .andExpect(jsonPath("$.tabs[0].html").isNotEmpty());
+                .andExpect(jsonPath("$.tabs[0].fields[0].key").value("projectId"))
+                .andExpect(jsonPath("$.tabs[0].fields[0].value").value("PRJ-001"))
+                .andExpect(jsonPath("$.tabs[1].key").value("block-diagrams"))
+                .andExpect(jsonPath("$.tabs[1].items[0].title").value("Power Architecture"))
+                .andExpect(jsonPath("$.tabs[1].items[0].fields[0].key").value("revision"));
     }
 
     /** Omitting the parameter must not accidentally serve the internal variant. */
