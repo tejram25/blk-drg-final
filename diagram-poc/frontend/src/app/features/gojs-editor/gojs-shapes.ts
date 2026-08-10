@@ -48,6 +48,11 @@ const GEO: Record<string, string> = {
   FcDelay: 'M0 6 L68 6 Q100 6 100 50 Q100 94 68 94 L0 94 Z',
   FcDisplay: 'M0 50 L22 6 L82 6 Q100 6 100 50 Q100 94 82 94 L22 94 Z',
   FcCard: 'M22 6 L100 6 L100 94 L0 94 L0 24 Z',
+  // mechanical / RF blocks a drone or robotics diagram needs
+  FcPropMotor:
+    'M6 5 L50 23 L6 41 Z M94 5 L50 23 L94 41 Z M50 23 L50 50 ' +
+    'M30 58 A20 8 0 0 1 70 58 L70 90 A20 8 0 0 1 30 90 Z M30 58 A20 8 0 0 0 70 58',
+  FcAntennaCurl: 'M62 100 L62 34 Q62 8 36 8 Q12 8 12 32',
   // logic gates
   FcAnd: 'M6 6 L48 6 A44 44 0 0 1 48 94 L6 94 Z',
   FcNand: 'M6 6 L44 6 A40 40 0 0 1 44 94 L6 94 Z M84 50 A8 8 0 1 1 100 50 A8 8 0 1 1 84 50',
@@ -103,6 +108,8 @@ export const SHAPE_DEFS: ShapeDef[] = [
   { key: 'fc-display', label: 'Display', category: 'Flowchart', figure: 'FcDisplay', w: 116, h: 60 },
   { key: 'fc-card', label: 'Card', category: 'Flowchart', figure: 'FcCard', w: 110, h: 66 },
   { key: 'fc-connector', label: 'Connector', category: 'Flowchart', figure: 'Circle', w: 56, h: 56 },
+  { key: 'fc-prop-motor', label: 'Motor with Propeller', category: 'Flowchart', figure: 'FcPropMotor', w: 64, h: 88 },
+  { key: 'fc-antenna', label: 'Antenna', category: 'Flowchart', figure: 'FcAntennaCurl', w: 46, h: 52 },
   // Logic gates
   { key: 'lg-and', label: 'AND', category: 'Logic', figure: 'FcAnd', w: 92, h: 66 },
   { key: 'lg-nand', label: 'NAND', category: 'Logic', figure: 'FcNand', w: 100, h: 66 },

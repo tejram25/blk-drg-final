@@ -1,0 +1,185 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><style>
+  html,body{margin:0;padding:0;background:#ffffff}
+  #diag{width:1600px;height:1000px;background:#ffffff}
+</style></head>
+<body>
+<div id="diag"></div>
+<script>
+// Faithful port of the app's GoJS templates (features/gojs-editor).
+// go.js is injected by the render script via addScriptTag before this runs.
+window.buildDiagram = function(modelJson, geo) {
+  const go = window.go;
+  const $ = go.GraphObject.make;
+
+  // --- custom figure generators (verbatim from gojs-shapes.ts GEO) ---
+  for (const name in geo) {
+    (function(d){
+      go.Shape.defineFigureGenerator(name, function(_s, w, h){
+        const g = go.Geometry.parse('F ' + d, true);
+        g.scale(w/100, h/100);
+        return g;
+      });
+    })(geo[name]);
+  }
+
+  const diagram = $(go.Diagram, 'diag', {
+    'undoManager.isEnabled': false,
+    'animationManager.isEnabled': false,
+    contentAlignment: go.Spot.Center,
+    padding: 24,
+  });
+
+  // ---- ports ----
+  const sideSpot = (s) => {
+    const sp = go.Spot.parse(s);
+    const dl = sp.x, dr = 1 - sp.x, dt = sp.y, db = 1 - sp.y;
+    const m = Math.min(dl, dr, dt, db);
+    return m === dl ? go.Spot.Left : m === dr ? go.Spot.Right : m === dt ? go.Spot.Top : go.Spot.Bottom;
+  };
+  const sidePort = (id, spot) => $(go.Shape, 'Circle', {
+    desiredSize: new go.Size(9,9), fill:'#0f172a', stroke:'#22d3ee', strokeWidth:1.5,
+    cursor:'crosshair', opacity:0, alignment:spot, alignmentFocus:go.Spot.Center,
+    portId:id, fromLinkable:true, toLinkable:true, fromSpot:spot, toSpot:spot });
+  const sidePorts = () => [ sidePort('T',go.Spot.Top), sidePort('R',go.Spot.Right),
+    sidePort('B',go.Spot.Bottom), sidePort('L',go.Spot.Left) ];
+  const pinPort = $(go.Panel, 'Spot',
+    new go.Binding('alignment','spot',go.Spot.parse),
+    $(go.Shape,'Circle',{ desiredSize:new go.Size(11,11), fill:'#0f172a', stroke:'#22d3ee',
+      strokeWidth:1.5, cursor:'crosshair', opacity:0, fromLinkable:true, toLinkable:true },
+      new go.Binding('portId','portId'),
+      new go.Binding('fromSpot','spot',sideSpot),
+      new go.Binding('toSpot','spot',sideSpot)));
+  const body = { portId:'', fromLinkable:false, toLinkable:false, cursor:'move' };
+  const sizeBind = () => new go.Binding('desiredSize','size',
+    (s)=> s? go.Size.parse(s): new go.Size(NaN,NaN)).makeTwoWay((sz)=>go.Size.stringify(sz));
+
+  // ---- block ----
+  const block = $(go.Node,'Spot',
+    { locationSpot:go.Spot.Center, resizable:true, resizeObjectName:'BODY' },
+    new go.Binding('location','loc',go.Point.parse),
+    $(go.Panel,'Auto', body, { name:'BODY' }, sizeBind(),
+      $(go.Shape,'RoundedRectangle',
+        { parameter1:10, fill:'#ffffff', stroke:'#d2d6dc', strokeWidth:1.5, minSize:new go.Size(150,52) },
+        new go.Binding('stroke','color')),
+      $(go.Panel,'Horizontal',{ margin:8 },
+        $(go.Panel,'Auto',{ width:36, height:36, margin:new go.Margin(0,8,0,0) },
+          $(go.Shape,'RoundedRectangle',{ parameter1:8, strokeWidth:0 }, new go.Binding('fill','color')),
+          $(go.TextBlock,{ font:'20px Material Icons', stroke:'#ffffff' }, new go.Binding('text','icon'))),
+        $(go.Panel,'Vertical',{ alignment:go.Spot.Left },
+          $(go.TextBlock,{ font:'600 12.5px Roboto, sans-serif', stroke:'#1f2937', alignment:go.Spot.Left },
+            new go.Binding('text')),
+          $(go.TextBlock,{ font:'10px Roboto, sans-serif', stroke:'#9aa0a8', alignment:go.Spot.Left },
+            new go.Binding('text','subtitle'))))),
+    ...sidePorts());
+  diagram.nodeTemplateMap.set('block', block);
+  diagram.nodeTemplate = block;
+
+  // ---- shape ----
+  const shape = $(go.Node,'Spot',
+    { locationSpot:go.Spot.Center, resizable:true, resizeObjectName:'SHAPE' },
+    new go.Binding('location','loc',go.Point.parse),
+    $(go.Panel,'Spot', body,
+      $(go.Shape,'Rectangle',
+        { name:'SHAPE', isPanelMain:true, strokeWidth:2, fill:'#ffffff', stroke:'#334155', minSize:new go.Size(48,40) },
+        new go.Binding('figure','figure'), sizeBind(),
+        new go.Binding('fill','fill'), new go.Binding('stroke','stroke'),
+        new go.Binding('minSize','minSize',go.Size.parse),
+        new go.Binding('strokeWidth','strokeWidth')),
+      $(go.TextBlock,
+        { font:'600 12.5px Roboto, sans-serif', stroke:'#1f2937', textAlign:'center', maxSize:new go.Size(150,NaN), margin:6 },
+        new go.Binding('text'), new go.Binding('stroke','labelColor'), new go.Binding('font','font'),
+        new go.Binding('maxSize','textWidth',(w)=> new go.Size(w,NaN)))),
+    $(go.TextBlock,{ alignment:new go.Spot(0.5,1,0,7), alignmentFocus:go.Spot.Top,
+      font:'10.5px Roboto, sans-serif', stroke:'#94a3b8', textAlign:'center', maxSize:new go.Size(170,NaN) },
+      new go.Binding('text','sub'),
+      new go.Binding('stroke','capColor'),
+      new go.Binding('visible','sub',(s)=>!!s && String(s).length>0)),
+    ...sidePorts());
+  diagram.nodeTemplateMap.set('shape', shape);
+
+  // ---- symbol ----
+  const symbol = $(go.Node,'Spot',
+    { locationSpot:go.Spot.Center, locationObjectName:'BODY', selectionObjectName:'BODY', resizable:true, resizeObjectName:'BODY' },
+    new go.Binding('location','loc',go.Point.parse),
+    $(go.Panel,'Spot',{ name:'BODY', isPanelMain:true, itemTemplate:pinPort, ...body },
+      new go.Binding('desiredSize','size',go.Size.parse),
+      new go.Binding('angle','angle',(a)=> (typeof a==='number' && a%90===0)? a:0),
+      new go.Binding('itemArray','ports'),
+      $(go.Picture,{ isPanelMain:true, stretch:go.GraphObject.Fill, imageStretch:go.GraphObject.Fill, background:'transparent' },
+        new go.Binding('source','source'))),
+    $(go.TextBlock,{ font:'bold 11px Roboto, sans-serif', stroke:'#94a3b8', alignment:new go.Spot(0.5,1,0,6), alignmentFocus:go.Spot.Top },
+      new go.Binding('text'), new go.Binding('stroke','labelColor')),
+    $(go.TextBlock,{ font:'10px Roboto, sans-serif', stroke:'#94a3b8', alignment:new go.Spot(0.5,1,0,20), alignmentFocus:go.Spot.Top },
+      new go.Binding('text','value'), new go.Binding('visible','value',(v)=>!!v), new go.Binding('stroke','labelColor')));
+  diagram.nodeTemplateMap.set('symbol', symbol);
+
+  // ---- basic ----
+  const basicSym = $(go.Node,'Spot',
+    { locationSpot:go.Spot.Center, resizable:true, itemTemplate:pinPort },
+    new go.Binding('location','loc',go.Point.parse),
+    new go.Binding('desiredSize','size',go.Size.parse),
+    new go.Binding('itemArray','ports'),
+    $(go.Panel,'Spot',{ isPanelMain:true, stretch:go.GraphObject.Fill, ...body },
+      $(go.Picture,{ isPanelMain:true, stretch:go.GraphObject.Fill, imageStretch:go.GraphObject.Fill, background:'transparent' },
+        new go.Binding('source','source')),
+      $(go.TextBlock,{ alignment:go.Spot.Center, font:'13px Roboto, sans-serif', stroke:'#1f2937', maxSize:new go.Size(160,NaN), textAlign:'center' },
+        new go.Binding('text'), new go.Binding('stroke','labelColor'))));
+  diagram.nodeTemplateMap.set('basic', basicSym);
+
+  // ---- link ----
+  diagram.linkTemplate = $(go.Link,
+    { routing:go.Link.Orthogonal, corner:8, relinkableFrom:true, relinkableTo:true, reshapable:true, resegmentable:true },
+    new go.Binding('routing','routing',(r)=> r==='normal'||r==='smooth'? go.Link.Normal: go.Link.Orthogonal),
+    new go.Binding('curve','routing',(r)=> r==='smooth'? go.Link.Bezier: go.Link.None),
+    new go.Binding('corner','wire',(w)=> w?0:8),
+    new go.Binding('corner','corner'),
+    $(go.Shape,{ isPanelMain:true, stroke:'transparent', strokeWidth:18 }),
+    $(go.Shape,{ isPanelMain:true, strokeWidth:2, stroke:'#94a3b8' },
+      new go.Binding('stroke','color'), new go.Binding('strokeWidth','width'), new go.Binding('strokeDashArray','dash')),
+    $(go.Shape,{ toArrow:'Triangle', fill:'#94a3b8', stroke:null, scale:1 },
+      new go.Binding('fill','color'), new go.Binding('visible','wire',(w)=>!w),
+      new go.Binding('toArrow','arrow'),
+      new go.Binding('scale','arrowScale')),
+    $(go.Panel,'Auto',{ segmentIndex:NaN, segmentFraction:0.5, visible:false },
+      new go.Binding('visible','text',(t)=>!!t),
+      $(go.Shape,'RoundedRectangle',{ parameter1:4, fill:'rgba(255,255,255,0.9)', stroke:null }),
+      $(go.TextBlock,{ font:'600 10px Roboto, sans-serif', stroke:'#334155', margin:new go.Margin(1.5,5,1.5,5) },
+        new go.Binding('text'), new go.Binding('stroke','textColor'))));
+
+  // ---- group (ENHANCED: data-driven colored container) ----
+  // Backwards compatible: with no styling data it renders the original dashed
+  // container. New optional data: fill, stroke, dashed(bool), titleColor,
+  // titleAlign ("0.5 0.05" spot string), titleFont, corner.
+  const group = $(go.Group,'Spot',
+    { locationSpot:go.Spot.Center, ungroupable:true, computesBoundsAfterDrag:true, handlesDragDropForMembers:true },
+    new go.Binding('location','loc',go.Point.parse),
+    new go.Binding('isSubGraphExpanded','expanded'),
+    $(go.Panel,'Auto',
+      $(go.Shape,'RoundedRectangle',
+        { parameter1:12, fill:'rgba(148,163,184,0.05)', stroke:'#f5a623', strokeWidth:1.4 },
+        new go.Binding('parameter1','corner'),
+        new go.Binding('fill','fill'),
+        new go.Binding('stroke','stroke'),
+        new go.Binding('strokeWidth','borderWidth'),
+        new go.Binding('strokeDashArray','dashed',(v)=> v===false? null : [7,4])),
+      $(go.Placeholder,{ padding:new go.Margin(30,16,16,16) },
+        new go.Binding('padding','pad',(p)=> p? go.Margin.parse(p): new go.Margin(30,16,16,16)))),
+    // title overlay, positioned by data.titleAlign (default top-left)
+    $(go.TextBlock,
+      { font:'bold 12px Roboto, sans-serif', stroke:'#f5a623', alignment:new go.Spot(0,0,10,8), alignmentFocus:go.Spot.TopLeft },
+      new go.Binding('text'),
+      new go.Binding('stroke','titleColor'),
+      new go.Binding('font','titleFont'),
+      new go.Binding('alignment','titleAlign',(s)=> go.Spot.parse(s)),
+      new go.Binding('alignmentFocus','titleFocus',(s)=> go.Spot.parse(s))),
+    ...sidePorts());
+  diagram.groupTemplate = group;
+
+  diagram.model = go.Model.fromJson(modelJson);
+  return diagram;
+};
+</script>
+</body>
+</html>

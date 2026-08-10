@@ -848,12 +848,22 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           new go.Binding('figure', 'figure'),
           sizeBind(),
           new go.Binding('fill', 'fill'),
-          new go.Binding('stroke', 'stroke')),
+          new go.Binding('stroke', 'stroke'),
+          // An imported drawing carries its own measurements. The 48x40 floor
+          // above is right for a shape someone drops from the palette (it stops
+          // a drag producing something too small to click), but it silently
+          // stretches an imported 65x30 block to 65x40 — every small chip in a
+          // reference diagram comes out the wrong height. Let the data opt out.
+          new go.Binding('minSize', 'minSize', go.Size.parse),
+          new go.Binding('strokeWidth', 'strokeWidth')),
         $(go.TextBlock,
           { editable: true, font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937',
             textAlign: 'center', maxSize: new go.Size(150, NaN), margin: 6 },
           new go.Binding('text').makeTwoWay(),
-          new go.Binding('stroke', 'labelColor')),
+          new go.Binding('stroke', 'labelColor'),
+          // Imported artwork specifies its own type and wrap width.
+          new go.Binding('font', 'font'),
+          new go.Binding('maxSize', 'textWidth', (w: number) => new go.Size(w, NaN))),
         $(go.Panel, 'Auto', { alignment: go.Spot.TopRight, alignmentFocus: go.Spot.TopRight, margin: 3, visible: false },
           new go.Binding('visible', 'components', (c) => Array.isArray(c) && c.length > 0),
           $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: '#f5a623', stroke: null }),
@@ -945,6 +955,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       new go.Binding('routing', 'routing', (r) => r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.Orthogonal),
       new go.Binding('curve', 'routing', (r) => r === 'smooth' ? go.Link.Bezier : go.Link.None),
       new go.Binding('corner', 'wire', (w) => (w ? 0 : 8)),
+      new go.Binding('corner', 'corner'),
       $(go.Shape, { isPanelMain: true, stroke: 'transparent', strokeWidth: 18 }),
       $(go.Shape, { isPanelMain: true, strokeWidth: 2, stroke: '#94a3b8' },
         new go.Binding('stroke', 'color'),
@@ -952,7 +963,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         new go.Binding('strokeDashArray', 'dash')),
       $(go.Shape, { toArrow: 'Standard', fill: '#94a3b8', stroke: null },
         new go.Binding('fill', 'color'),
-        new go.Binding('visible', 'wire', (w) => !w)),
+        new go.Binding('visible', 'wire', (w) => !w),
+        // Arrowhead shape and size are part of a drawing's style, not a
+        // constant. Without these an imported diagram gets this template's
+        // arrowhead at whatever size the stroke happens to make it.
+        new go.Binding('toArrow', 'arrow'),
+        new go.Binding('scale', 'arrowScale')),
       $(go.Panel, 'Auto',
         { segmentIndex: NaN, segmentFraction: 0.5, visible: false },
         new go.Binding('visible', 'text', (t) => !!t),
@@ -985,21 +1001,42 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     styleLinking(this.diagram.toolManager.linkingTool);
     styleLinking(this.diagram.toolManager.relinkingTool);
 
+    // A subsystem container. The defaults are the dashed amber box the palette
+    // creates; every visual is overridable from the data so an imported drawing
+    // can carry its own containers (a solid black "Power System", a blue
+    // "Flight Controller"), which one hard-coded style cannot express.
     this.diagram.groupTemplate = $(
-      go.Group, 'Auto',
+      go.Group, 'Spot',
       { locationSpot: go.Spot.Center, ungroupable: true, computesBoundsAfterDrag: true,
         handlesDragDropForMembers: true },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('isSubGraphExpanded', 'expanded').makeTwoWay(),
-      $(go.Shape, 'RoundedRectangle',
-        { parameter1: 12, fill: 'rgba(148,163,184,0.05)', stroke: '#f5a623',
-          strokeWidth: 1.2, strokeDashArray: [7, 4] }),
-      $(go.Panel, 'Vertical', { defaultAlignment: go.Spot.Left },
-        $(go.Panel, 'Horizontal', { margin: new go.Margin(6, 8, 0, 6) },
-          $('SubGraphExpanderButton', { margin: new go.Margin(0, 6, 0, 0) }),
-          $(go.TextBlock, { font: 'bold 12px Roboto, sans-serif', stroke: '#f5a623', editable: true },
-            new go.Binding('text').makeTwoWay())),
-        $(go.Placeholder, { padding: 14 })),
+      $(go.Panel, 'Auto',
+        $(go.Shape, 'RoundedRectangle',
+          { parameter1: 12, fill: 'rgba(148,163,184,0.05)', stroke: '#f5a623',
+            strokeWidth: 1.2, strokeDashArray: [7, 4] },
+          new go.Binding('parameter1', 'corner'),
+          new go.Binding('fill', 'fill'),
+          new go.Binding('stroke', 'stroke'),
+          new go.Binding('strokeWidth', 'borderWidth'),
+          // Only an explicit `dashed: false` makes the border solid, so an
+          // existing group with no styling data keeps its dashed look.
+          new go.Binding('strokeDashArray', 'dashed', (v) => (v === false ? null : [7, 4]))),
+        $(go.Placeholder, { padding: new go.Margin(30, 16, 16, 16) },
+          new go.Binding('padding', 'pad', (p: string) => go.Margin.parse(p)))),
+      $(go.Panel, 'Horizontal',
+        { alignment: new go.Spot(0, 0, 10, 8), alignmentFocus: go.Spot.TopLeft },
+        new go.Binding('alignment', 'titleAlign', (s: string) => go.Spot.parse(s)),
+        new go.Binding('alignmentFocus', 'titleFocus', (s: string) => go.Spot.parse(s)),
+        $('SubGraphExpanderButton', { margin: new go.Margin(0, 6, 0, 0), visible: false },
+          new go.Binding('visible', 'collapsible')),
+        $(go.TextBlock, { font: 'bold 12px Roboto, sans-serif', stroke: '#f5a623', editable: true },
+          new go.Binding('text').makeTwoWay(),
+          new go.Binding('stroke', 'titleColor'),
+          new go.Binding('font', 'titleFont'))),
+      // Containers are wired to in a block diagram ("power in on the left"), so
+      // they need the same four ports every node has.
+      ...sidePorts(),
     );
     this.diagram.commandHandler.archetypeGroupData = { isGroup: true, text: 'Subsystem' };
   }
