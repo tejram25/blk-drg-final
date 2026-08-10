@@ -1313,7 +1313,7 @@
 }
 .props .pin-row {
   display: grid;
-  grid-template-columns: 26px 74px 1fr 34px 24px;
+  grid-template-columns: 30px 1fr 24px;
   align-items: center;
   gap: 6px;
   margin-bottom: 5px;
@@ -1324,12 +1324,6 @@
   opacity: 0.7;
 }
 .props .pin-row select { font-size: 11px; padding: 2px 4px; }
-.props .pin-row input[type='range'] { width: 100%; margin: 0; }
-.props .pin-row .pin-at {
-  font-size: 10px;
-  opacity: 0.62;
-  text-align: right;
-}
 .props .pin-row .pin-x {
   display: inline-flex;
   align-items: center;

@@ -545,7 +545,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const sides = new Set(['T', 'R', 'B', 'L']);
     node.ports.each((p) => {
       if (!p.portId) return;
-      p.opacity = explicit && !sides.has(p.portId) ? 0.55 : rest;
+      // Fully opaque, not a ghost: these mark exact connection points, and a
+      // faded marker is precisely the thing that was hard to read.
+      p.opacity = explicit && !sides.has(p.portId) ? 1 : rest;
     });
   }
 
@@ -765,7 +767,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       go.Shape, 'RoundedRectangle',
       {
         parameter1: 4, fill: 'rgba(34,211,238,0.30)', stroke: '#22d3ee', strokeWidth: 1,
-        desiredSize: vertical ? new go.Size(9, NaN) : new go.Size(NaN, 9),
+        // 14px, not 9: this is the grab target for starting a wire, and a
+        // 9px stripe is a fiddly thing to hit on a first attempt.
+        desiredSize: vertical ? new go.Size(14, NaN) : new go.Size(NaN, 14),
         stretch: vertical ? go.GraphObject.Vertical : go.GraphObject.Horizontal,
         cursor: 'crosshair', opacity: 0, alignment: spot, alignmentFocus: go.Spot.Center,
         portId: id, fromLinkable: true, toLinkable: true, fromSpot: side, toSpot: side,
@@ -785,9 +789,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const pinPort = $(
       go.Panel, 'Spot',
       new go.Binding('alignment', 'spot', go.Spot.parse),
-      $(go.Shape, 'Circle',
-        { desiredSize: new go.Size(11, 11), fill: '#0f172a', stroke: '#22d3ee', strokeWidth: 1.5,
-          cursor: 'crosshair', opacity: 0.45, fromLinkable: true, toLinkable: true },
+      // Shaped like the selection handles, deliberately: a small opaque square
+      // on the outline. The translucent circle this replaces was 11px and drawn
+      // through the border, so a row of them read as a smudge along the edge
+      // rather than as a row of connection points.
+      $(go.Shape, 'Rectangle',
+        { desiredSize: new go.Size(9, 9), fill: '#0084D5', stroke: '#ffffff', strokeWidth: 1,
+          cursor: 'crosshair', opacity: 1, fromLinkable: true, toLinkable: true },
         new go.Binding('portId', 'portId'),
         new go.Binding('fromSpot', 'spot', sideSpot),
         new go.Binding('toSpot', 'spot', sideSpot)),
@@ -799,7 +807,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       mouseEnter: (_e: go.InputEvent, o: go.GraphObject) => { this.hoverPorts(o, true); this.showPartsDock(o.part, true); },
       mouseLeave: (_e: go.InputEvent, o: go.GraphObject) => { this.hoverPorts(o, false); this.showPartsDock(o.part, false); },
     };
-    const body = { portId: '', fromLinkable: false, toLinkable: false, cursor: 'move' };
+    // `toLinkable` so a wire can be dropped anywhere on a block, not only on the
+    // 9px rail at its edge — miss the rail and the drop used to fall back to
+    // gravity-snapping, which is why several wires ended up sharing one point.
+    // The drop is projected onto the nearest edge afterwards (see setWireEnd).
+    //
+    // `fromLinkable` stays false: the body is what you grab to move the block,
+    // and making it a source would start a wire instead of a drag.
+    const body = { portId: '', fromLinkable: false, toLinkable: true, cursor: 'move' };
     const sizeBind = () => new go.Binding('desiredSize', 'size',
       (s: string) => (s ? go.Size.parse(s) : new go.Size(NaN, NaN))).makeTwoWay((sz: go.Size) => go.Size.stringify(sz));
 
@@ -1017,7 +1032,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.diagram.linkTemplate = $(
       go.Link,
-      { routing: go.Link.Orthogonal, corner: 8, relinkableFrom: true, relinkableTo: true, reshapable: true, resegmentable: true },
+      // Wires render beneath blocks, in the layer above the grid. Two reasons:
+      // a wire passing under a block reads better than one drawn across it, and
+      // a link's hit area is an invisible 18px stroke, so a wire sitting on top
+      // of the edge it attaches to swallowed the next drag from that same point
+      // — a second wire from one spot silently did nothing.
+      { layerName: 'Background',
+        routing: go.Link.Orthogonal, corner: 8, relinkableFrom: true, relinkableTo: true, reshapable: true, resegmentable: true },
       new go.Binding('routing', 'routing', (r) => r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.Orthogonal),
       new go.Binding('curve', 'routing', (r) => r === 'smooth' ? go.Link.Bezier : go.Link.None),
       new go.Binding('corner', 'wire', (w) => (w ? 0 : 8)),
@@ -1459,10 +1480,60 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return found;
   }
 
+  /**
+   * The edge a wire should meet when it was dropped on a block's face rather
+   * than on one of its rails: the one facing where the wire comes from.
+   *
+   * Nearest-edge-to-the-drop-point is the obvious rule and it is wrong. On a
+   * tall block, a wire arriving from the left and released a fifth of the way
+   * down is genuinely closer to the top edge, so it wrapped over the top —
+   * geometrically right, visibly silly. Which side the wire approaches from is
+   * what a reader expects, and the drop point then decides where along that
+   * side it lands.
+   */
+  private facingRail(nodeKey: unknown, otherKey: unknown, pt: go.Point): go.GraphObject | null {
+    const node = this.diagram.findNodeForKey(nodeKey as go.Key);
+    const other = this.diagram.findNodeForKey(otherKey as go.Key);
+    if (!node) return null;
+
+    let side: string;
+    if (!other || other === node) {
+      // No other end to face (or both ends on one block): fall back to whichever
+      // edge the drop point is nearest, measured against the block's own size.
+      const b = node.actualBounds;
+      const nx = (pt.x - (b.x + b.width / 2)) / (b.width / 2 || 1);
+      const ny = (pt.y - (b.y + b.height / 2)) / (b.height / 2 || 1);
+      side = Math.abs(nx) >= Math.abs(ny) ? (nx < 0 ? 'L' : 'R') : (ny < 0 ? 'T' : 'B');
+    } else {
+      const nb = node.actualBounds, ob = other.actualBounds;
+      const dx = (ob.x + ob.width / 2) - (nb.x + nb.width / 2);
+      const dy = (ob.y + ob.height / 2) - (nb.y + nb.height / 2);
+      // Scaled by half-extent so a wide, short block does not always prefer its
+      // long edge purely because that distance is larger in absolute terms.
+      const nx = dx / (nb.width / 2 || 1), ny = dy / (nb.height / 2 || 1);
+      side = Math.abs(nx) >= Math.abs(ny) ? (dx < 0 ? 'L' : 'R') : (dy < 0 ? 'T' : 'B');
+    }
+    return this.railOf(nodeKey, side);
+  }
+
   /** Write one end's attachment point, as a fraction along its rail. */
   private setWireEnd(link: go.Link, which: 'from' | 'to', pt: go.Point | null): void {
-    const port = this.railOf(link.data?.[which], link.data?.[which + 'Port']);
-    if (!port || !pt) return;
+    if (!pt) return;
+    const portId = String(link.data?.[which + 'Port'] ?? '');
+    // A named pin owns its position — that is the whole point of naming it — so
+    // leave the wire on it and record nothing. Only a rail or a drop on the
+    // block's face is ours to place.
+    if (portId && !GojsEditorComponent.RAIL_IDS.has(portId)) return;
+    let port = this.railOf(link.data?.[which], portId);
+    if (!port) {
+      // Dropped on the block's face. Attach to the edge facing the other end of
+      // the wire, at the point it was dropped, rather than leaving it on the
+      // body port where every such wire would converge.
+      const other = which === 'to' ? link.data?.['from'] : link.data?.['to'];
+      port = this.facingRail(link.data?.[which], other, pt);
+      if (!port) return;
+      this.diagram.model.set(link.data, which + 'Port', port.portId);
+    }
     const b = port.getDocumentBounds();
     if (!b || !b.width || !b.height) return;
     const fx = Math.min(1, Math.max(0, (pt.x - b.x) / b.width));
@@ -1673,16 +1744,41 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const d: [string, number][] = [['left', sp.x], ['right', 1 - sp.x], ['top', sp.y], ['bottom', 1 - sp.y]];
     return d.sort((a, b) => a[1] - b[1])[0][0] as any;
   }
-  /** How far along that edge, 0..100. */
-  pinAt(spot: string): number {
-    const sp = go.Spot.parse(spot || '0 0');
-    const side = this.pinSide(spot);
-    return Math.round((side === 'left' || side === 'right' ? sp.y : sp.x) * 100);
+  private static readonly PIN_SIDES = ['left', 'right', 'top', 'bottom'] as const;
+
+  /**
+   * Space every pin evenly along the side it is on.
+   *
+   * Placement is not something to hand-tune. Pins carried an explicit
+   * percentage, which meant adding one put it wherever the arithmetic landed and
+   * moving one to another side kept its old percentage — so two pins could sit
+   * on the same point and the move looked like it had done nothing. Spacing is
+   * derived from what is on each side, so it is always right and there is
+   * nothing to set.
+   */
+  private spaced(pins: { portId: string; spot: string; side?: string }[]): { portId: string; spot: string }[] {
+    const out: { portId: string; spot: string }[] = [];
+    for (const side of GojsEditorComponent.PIN_SIDES) {
+      const onSide = pins.filter((p) => (p.side ?? this.pinSide(p.spot)) === side);
+      onSide.forEach((p, i) => {
+        const along = (i + 1) / (onSide.length + 1);
+        out.push({
+          portId: p.portId,
+          spot: side === 'left' ? `0 ${along}` : side === 'right' ? `1 ${along}`
+            : side === 'top' ? `${along} 0` : `${along} 1`,
+        });
+      });
+    }
+    // Keep the panel's order stable so rows do not jump around as you edit.
+    const order = new Map(pins.map((p, i) => [p.portId, i]));
+    return out.sort((a, b) => (order.get(a.portId) ?? 0) - (order.get(b.portId) ?? 0));
   }
+
   private writePins(next: { portId: string; spot: string }[]): void {
     this.setField('ports', next);
     this.cdr.detectChanges();
   }
+
   addPin(side: 'left' | 'right' | 'top' | 'bottom' = 'right'): void {
     if (!this.selectedNode) return;
     const pins = this.pins.map((p) => ({ ...p }));
@@ -1693,34 +1789,20 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       const m = /^p(\d+)$/.exec(String(p.portId));
       return m ? Math.max(max, Number(m[1])) : max;
     }, 0);
-    // Spread down the chosen side rather than stacking: 1/5, 2/5 … and then
-    // halfway between the existing ones once the fifths are used up.
-    const used = pins.filter((p) => this.pinSide(p.spot) === side).length;
-    const along = used < 4 ? (used + 1) / 5 : Math.min(0.95, ((used % 9) + 1) / 10);
-    const spot = side === 'left' ? `0 ${along}` : side === 'right' ? `1 ${along}`
-      : side === 'top' ? `${along} 0` : `${along} 1`;
-    pins.push({ portId: 'p' + (highest + 1), spot });
-    this.writePins(pins);
+    pins.push({ portId: 'p' + (highest + 1), spot: side === 'left' ? '0 0.5' : side === 'right' ? '1 0.5' : side === 'top' ? '0.5 0' : '0.5 1' });
+    this.writePins(this.spaced(pins));
   }
+
   setPinSide(i: number, side: 'left' | 'right' | 'top' | 'bottom'): void {
-    const pins = this.pins.map((p) => ({ ...p }));
+    const pins: { portId: string; spot: string; side?: string }[] = this.pins.map((p) => ({ ...p }));
     if (!pins[i]) return;
-    const at = this.pinAt(pins[i].spot) / 100;
-    pins[i].spot = side === 'left' ? `0 ${at}` : side === 'right' ? `1 ${at}`
-      : side === 'top' ? `${at} 0` : `${at} 1`;
-    this.writePins(pins);
-  }
-  setPinAt(i: number, value: any): void {
-    const pins = this.pins.map((p) => ({ ...p }));
-    if (!pins[i]) return;
-    const at = Math.min(100, Math.max(0, Number(value) || 0)) / 100;
-    const side = this.pinSide(pins[i].spot);
-    pins[i].spot = side === 'left' ? `0 ${at}` : side === 'right' ? `1 ${at}`
-      : side === 'top' ? `${at} 0` : `${at} 1`;
-    this.writePins(pins);
+    // Carry the intended side alongside, so respacing groups this pin with the
+    // side it is moving to rather than the one its old spot still describes.
+    pins[i].side = side;
+    this.writePins(this.spaced(pins));
   }
   removePin(i: number): void {
-    const pins = this.pins.filter((_, j) => j !== i);
+    const pins = this.spaced(this.pins.filter((_, j) => j !== i));
     // Any wire landing on the pin being removed falls back to the nearest side,
     // rather than the link silently detaching to the node's centre.
     const gone = this.pins[i]?.portId;

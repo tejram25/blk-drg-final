@@ -555,9 +555,10 @@
                                                     <!-- Connection pins, beyond the four sides every node has -->
                                                     @if (isStyledShape) {
                                                       <div class="prop-section">Named pins ({{ pins.length }})</div>
-                                                      <div class="pin-hint">Not needed to wire. Drag from anywhere on an edge and the wire keeps
-                                                        the point you dropped it on. Add a named pin only when a connection has to stay
-                                                        put and be referred to — a labelled interface on a processor, say.</div>
+                                                      <div class="pin-hint">Not needed to wire — drag from anywhere on an edge and the wire keeps
+                                                        the point you dropped it on. Add a named pin only when a connection has to stay put and
+                                                        be referred to, like a labelled interface on a processor. Pins space themselves evenly
+                                                        along whichever side they are on.</div>
                                                       @for (p of pins; track p.portId; let i = $index) {
                                                         <div class="pin-row">
                                                           <span class="pin-id">{{ p.portId }}</span>
@@ -567,8 +568,6 @@
                                                             <option value="top">Top</option>
                                                             <option value="bottom">Bottom</option>
                                                           </select>
-                                                          <input type="range" min="0" max="100" [ngModel]="pinAt(p.spot)" (ngModelChange)="setPinAt(i, $event)" />
-                                                          <span class="pin-at">{{ pinAt(p.spot) }}%</span>
                                                           <button class="pin-x" (click)="removePin(i)" matTooltip="Remove pin"><mat-icon>close</mat-icon></button>
                                                         </div>
                                                       }
