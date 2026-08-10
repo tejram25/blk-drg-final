@@ -454,7 +454,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     this.diagram.addDiagramListener('LinkRelinked', (e) => {
       const link = e.subject as go.Link;
-      this.pinDrawnEnds(link);
+      this.pinRelinkedEnd(link);
       if (link?.data?.wire) this.straightenWire(link);
     });
     this.diagram.addDiagramListener('ObjectSingleClicked', (e) => {
@@ -1441,27 +1441,71 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
    * wire *is* how its connection point is created. Only edge rails get a spot —
    * a wire dropped on a named pin should keep that pin's own position.
    */
+  private static readonly RAIL_IDS = new Set(['T', 'R', 'B', 'L']);
+
+  /**
+   * The rail a wire end is on, resolved from the link's *data*.
+   *
+   * `Link.fromPort` / `toPort` are unreliable at the moment these events fire —
+   * mid-relink the moved end is detached, so reading it silently skips the very
+   * write we are here to make. The data has already been updated, so go from
+   * there.
+   */
+  private railOf(nodeKey: unknown, portId: unknown): go.GraphObject | null {
+    if (!GojsEditorComponent.RAIL_IDS.has(String(portId))) return null;
+    const node = this.diagram.findNodeForKey(nodeKey as go.Key);
+    let found: go.GraphObject | null = null;
+    node?.ports.each((p) => { if (p.portId === portId) found = p; });
+    return found;
+  }
+
+  /** Write one end's attachment point, as a fraction along its rail. */
+  private setWireEnd(link: go.Link, which: 'from' | 'to', pt: go.Point | null): void {
+    const port = this.railOf(link.data?.[which], link.data?.[which + 'Port']);
+    if (!port || !pt) return;
+    const b = port.getDocumentBounds();
+    if (!b || !b.width || !b.height) return;
+    const fx = Math.min(1, Math.max(0, (pt.x - b.x) / b.width));
+    const fy = Math.min(1, Math.max(0, (pt.y - b.y) / b.height));
+    // A rail is long in one direction only; pin the wire along that axis and
+    // keep it on the rail's centreline — which is the block's edge — in the
+    // other, so the wire meets the outline rather than floating beside it.
+    const spot = b.height >= b.width ? new go.Spot(0.5, fy) : new go.Spot(fx, 0.5);
+    this.diagram.model.set(link.data, which + 'SpotXY', go.Spot.stringify(spot));
+  }
+
+  /** A newly drawn wire: both ends are being placed, by one drag. */
   private pinDrawnEnds(link: go.Link): void {
     if (!link) return;
-    const sides = new Set(['T', 'R', 'B', 'L']);
     const end = this.diagram.lastInput?.documentPoint ?? null;
-    const set = (which: 'from' | 'to', port: go.GraphObject | null, pt: go.Point | null) => {
-      if (!port || !pt || !sides.has(String(port.portId))) return;
-      const b = port.getDocumentBounds();
-      if (!b || !b.width || !b.height) return;
-      const fx = Math.min(1, Math.max(0, (pt.x - b.x) / b.width));
-      const fy = Math.min(1, Math.max(0, (pt.y - b.y) / b.height));
-      // A rail is long in one direction only; pin the wire along that axis and
-      // keep it on the rail's centreline — which is the block's edge — in the
-      // other, so the wire meets the outline rather than floating beside it.
-      const spot = b.height >= b.width ? new go.Spot(0.5, fy) : new go.Spot(fx, 0.5);
-      this.diagram.model.set(link.data, which + 'SpotXY', go.Spot.stringify(spot));
-    };
     this.diagram.model.commit(() => {
-      set('from', link.fromPort, this.linkStart);
-      set('to', link.toPort, end);
+      this.setWireEnd(link, 'from', this.linkStart);
+      this.setWireEnd(link, 'to', end);
     }, 'pin wire ends');
     this.linkStart = null;
+  }
+
+  /**
+   * A wire whose end was dragged: exactly one end moved, so only that one may
+   * be rewritten. Treating a relink like a fresh draw applied the grab point to
+   * the *from* end, which shifted an end the user never touched.
+   *
+   * Which end moved is decided by proximity to the drop point rather than by
+   * the tool's internals, so it holds for both relink handles and for a drop
+   * back onto the same block.
+   */
+  private pinRelinkedEnd(link: go.Link): void {
+    this.linkStart = null;
+    const pt = this.diagram.lastInput?.documentPoint ?? null;
+    if (!link || !pt) return;
+    const reach = (which: 'from' | 'to') => {
+      const port = this.railOf(link.data?.[which], link.data?.[which + 'Port']);
+      const b = port?.getDocumentBounds();
+      return b ? Math.abs(pt.x - (b.x + b.width / 2)) + Math.abs(pt.y - (b.y + b.height / 2)) : Infinity;
+    };
+    const moved: 'from' | 'to' = reach('from') <= reach('to') ? 'from' : 'to';
+    if (!isFinite(reach(moved))) return;
+    this.diagram.model.commit(() => this.setWireEnd(link, moved, pt), 'move wire end');
   }
 
   /** Apply the current wire style to a freshly created link (drawn by drag or by
