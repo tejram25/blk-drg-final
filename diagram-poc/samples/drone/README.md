@@ -10,6 +10,7 @@ components, not to draw pictures.
 | `01-drone-top-level.gojs.json` | Diagram 1 — top-level drone + ground controller. Load straight into the editor |
 | `02-battery-charger.gojs.json` | Diagram 2 — battery with charger |
 | `03-flight-controller.gojs.json` | Diagram 3 — flight controller (70 blocks, 57 nets) |
+| `04-key-suppliers.gojs.json` | Diagram 4 — resources from key suppliers (90 blocks, 55 nets) |
 | `build-01-…mjs` · `build-02-…mjs` | Generators. Coordinates are measured from the source artwork |
 | `render-harness.html` · `render.mjs` · `figures.json` | Headless renderer for verifying a model without the Angular app |
 | `01-drone-top-level.png` | Current render |
