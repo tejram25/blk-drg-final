@@ -49,7 +49,8 @@ let lk = 0;
 function link(from, to, fromPort, toPort, o = {}) {
   links.push({ key: --lk, from, to, fromPort, toPort, color: o.color ?? C.wire, width: 1.4,
     arrow: 'Triangle', arrowScale: o.arrowScale ?? 1.0, corner: 0,
-    ...(o.text ? { text: o.text, textColor: C.ink, textFont: F.net, textBg: 'rgba(255,255,255,0.92)' } : {}),
+    ...(o.text ? { text: o.text, textColor: C.ink, textFont: F.net, textBg: 'transparent',
+        textOffset: o.labelOffset ?? '0 -7', ...(o.labelAt ? { textFraction: o.labelAt } : {}) } : {}),
     ...(o.wire ? { wire: true } : {}) });
 }
 
@@ -96,7 +97,7 @@ box('k3', 'Connector',             R(296, 380, 96, 24), { fill: C.conn,  font: F
 box('k4', 'Individual\nComponents', R(402, 376, 96, 32), { fill: C.comp, font: F.key, textWidth: 90 });
 
 // ---------- wiring ----------
-link('typec', 'pd', 'a', 'a', { text: 'USB_VBUS 20V/5A' });
+link('typec', 'pd', 'a', 'a', { text: 'USB_VBUS 20V/5A', labelAt: 0.12 });
 link('typec', 'pd', 'b', 'b', { text: 'CCx' });
 link('typec', 'pd', 'c', 'c', { text: 'USB2.0' });
 link('pd',    'fet1',  'R', 'L', { text: 'V_USB_PD' });
@@ -104,8 +105,8 @@ link('fet1',  'batfet','R', 'L', { text: 'V_CHG' });
 link('batfet','fet2',  'R', 'L', { text: 'V_BAT' });
 link('fet2',  'cells', 'R', 'L', { text: 'V_CELLS' });
 link('pd',    'flash', 'd', 'T');
-link('pd',    'tp',    'e', 'L', { text: 'I2C2' });
-link('v33',   'pd',    'T', 'f', { text: '3.3V' });
+link('pd',    'tp',    'e', 'L', { text: 'I2C2', labelOffset: '-14 0', labelAt: 0.25 });
+link('v33',   'pd',    'T', 'f', { text: '3.3V', labelOffset: '-16 0' });
 link('vsys',  'v33',   'R', 'L', { wire: true });
 link('chg',   'fet1',  'T', 'B');
 link('chg',   'batfet','T', 'B');

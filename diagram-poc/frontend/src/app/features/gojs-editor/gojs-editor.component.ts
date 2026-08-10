@@ -993,6 +993,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       $(go.Panel, 'Auto',
         { segmentIndex: NaN, segmentFraction: 0.5, visible: false },
         new go.Binding('visible', 'text', (t) => !!t),
+        // Where the label sits on the wire. A net name centred on a short
+        // segment lands on top of the blocks at either end, so an imported
+        // drawing needs to be able to slide it along the run and lift it clear.
+        new go.Binding('segmentFraction', 'textFraction'),
+        new go.Binding('segmentIndex', 'textSegment'),
+        new go.Binding('segmentOffset', 'textOffset', go.Point.parse),
         $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: 'rgba(14,15,17,0.75)', stroke: null },
           new go.Binding('fill', 'textBg')),
         $(go.TextBlock, { font: '600 10px Roboto, sans-serif', stroke: '#e2e8f0', editable: true,

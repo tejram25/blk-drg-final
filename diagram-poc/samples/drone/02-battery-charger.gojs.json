@@ -433,7 +433,9 @@
    "text": "USB_VBUS 20V/5A",
    "textColor": "#141414",
    "textFont": "400 9px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -7",
+   "textFraction": 0.12
   },
   {
    "key": -2,
@@ -449,7 +451,8 @@
    "text": "CCx",
    "textColor": "#141414",
    "textFont": "400 9px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -7"
   },
   {
    "key": -3,
@@ -465,7 +468,8 @@
    "text": "USB2.0",
    "textColor": "#141414",
    "textFont": "400 9px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -7"
   },
   {
    "key": -4,
@@ -481,7 +485,8 @@
    "text": "V_USB_PD",
    "textColor": "#141414",
    "textFont": "400 9px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -7"
   },
   {
    "key": -5,
@@ -497,7 +502,8 @@
    "text": "V_CHG",
    "textColor": "#141414",
    "textFont": "400 9px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -7"
   },
   {
    "key": -6,
@@ -513,7 +519,8 @@
    "text": "V_BAT",
    "textColor": "#141414",
    "textFont": "400 9px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -7"
   },
   {
    "key": -7,
@@ -529,7 +536,8 @@
    "text": "V_CELLS",
    "textColor": "#141414",
    "textFont": "400 9px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -7"
   },
   {
    "key": -8,
@@ -557,7 +565,9 @@
    "text": "I2C2",
    "textColor": "#141414",
    "textFont": "400 9px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "-14 0",
+   "textFraction": 0.25
   },
   {
    "key": -10,
@@ -573,7 +583,8 @@
    "text": "3.3V",
    "textColor": "#141414",
    "textFont": "400 9px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "-16 0"
   },
   {
    "key": -11,

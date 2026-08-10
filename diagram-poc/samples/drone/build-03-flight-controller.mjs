@@ -56,7 +56,8 @@ let lk = 0;
 function link(from, to, fromPort, toPort, o = {}) {
   links.push({ key: --lk, from, to, fromPort, toPort, color: o.color ?? C.wire, width: 1.1,
     arrow: 'Triangle', arrowScale: o.arrowScale ?? 0.85, corner: 0,
-    ...(o.text ? { text: o.text, textColor: C.ink, textFont: F.net, textBg: 'rgba(255,255,255,0.92)' } : {}),
+    ...(o.text ? { text: o.text, textColor: C.ink, textFont: F.net, textBg: 'transparent',
+        textOffset: o.labelOffset ?? '0 -6', ...(o.labelAt ? { textFraction: o.labelAt } : {}) } : {}),
     ...(o.wire ? { wire: true } : {}) });
 }
 
@@ -178,47 +179,47 @@ link('soc', 'ddr', 'ddr', 'L', { text: 'DDR' });
 link('soc', 'emmc', 'emmc', 'L', { text: 'DDR' });
 link('o_dmic2', 'mic2', 'R', 'L', { text: '1CH-DMIC' });
 link('o_wcd', 'codec', 'R', 'L', { text: 'SWR' });
-link('codec', 'spkamp', 'B', 'T', { text: 'SWR\nPDM' });
+link('codec', 'spkamp', 'B', 'T', { text: 'SWR\nPDM', labelOffset: '-16 0' });
 link('spkamp', 'spk', 'R', 'L');
 link('o_mi2s', 'spkamp', 'R', 'L');
 
 // left side
 link('lte', 'usbhub', 'R', 'L', { text: 'VBUS' });
-link('radio', 'mcu', 'a', 'L', { text: 'USB' });
-link('radio', 'mcu', 'b', 'L', { text: 'GPIO' });
+link('radio', 'mcu', 'a', 'L', { text: 'USB', labelAt: 0.55 });
+link('radio', 'mcu', 'b', 'L', { text: 'GPIO', labelAt: 0.88 });
 link('usbhub', 'i_usb', 'R', 'L', { text: 'USB' });
 link('mcu', 'usbhub', 'T', 'B', { text: 'USB' });
 link('mcu', 'i_uart', 'R', 'L');
 link('joy', 'mcu', 'R', 'L');
 link('mcu', 'led', 'B', 'R');
-link('mcu', 'pwmmux', 'B', 'T', { text: 'PWM' });
-link('pwmmux', 'i_pwm', 'R', 'L', { text: 'PWM' });
-link('pwmmux', 'i_gpio', 'R', 'L', { text: 'Selection' });
+link('mcu', 'pwmmux', 'B', 'T', { text: 'PWM', labelAt: 0.25, labelOffset: '-14 0' });
+link('pwmmux', 'i_pwm', 'R', 'L', { text: 'PWM', labelAt: 0.68 });
+link('pwmmux', 'i_gpio', 'R', 'L', { text: 'Selection', labelAt: 0.28 });
 link('disp', 'i_dsi', 'R', 'L', { text: 'DSI' });
 link('disp', 'i_i2c1', 'R', 'L', { text: 'I2C' });
 link('hall', 'i_i2c2', 'R', 'L', { text: 'I2C' });
 link('dsup', 'disp', 'T', 'B');
 link('vconv', 'i_vbat', 'R', 'L');
 link('mosfet', 'vconv', 'R', 'L', { text: 'VSYS' });
-link('chgic', 'mosfet', 'T', 'L', { text: 'VBAT' });
-link('balance', 'mosfet', 'T', 'B', { text: 'VBATT' });
+link('chgic', 'mosfet', 'T', 'L', { text: 'VBAT', labelAt: 0.72 });
+link('balance', 'mosfet', 'T', 'B', { text: 'VBATT', labelAt: 0.15, labelOffset: '-18 0' });
 link('balance', 'cell1', 'a', 'L');
 link('balance', 'cell2', 'b', 'L');
-link('pdctl', 'chgic', 'R', 'L', { text: 'VBUS' });
+link('pdctl', 'chgic', 'R', 'L', { text: 'VBUS', labelAt: 0.5, labelOffset: '0 -7' });
 link('cardedge', 'pdctl', 'r1', 'L', { text: 'CC1\nCC2' });
 link('typec', 'cardedge', 'p1', 'l1', { text: 'VBUS' });
 link('typec', 'cardedge', 'p2', 'l2', { text: 'CCx' });
 link('typec', 'cardedge', 'p3', 'l3', { text: 'USB0 2.0' });
 link('typec', 'cardedge', 'p4', 'l4', { text: 'USB0 3.0' });
 link('typec', 'cardedge', 'p5', 'l5', { text: 'SBUx' });
-link('balance', 'i_i2c3', 'c', 'L', { text: 'I2C' });
+link('balance', 'i_i2c3', 'c', 'L', { text: 'I2C', labelAt: 0.35 });
 link('sw5v', 'i_usbdp', 'R', 'a', { text: '5V VBUS' });
-link('cardedge', 'i_usbdp', 'r2', 'b', { text: 'USB0 2.0' });
-link('cardedge', 'i_usbdp', 'r3', 'c', { text: 'USB2.0' });
-link('cardedge', 'auxsw', 'r4', 'L', { text: 'USB_SBU1' });
-link('cardedge', 'auxsw', 'r5', 'L', { text: 'USB_SBU2' });
+link('cardedge', 'i_usbdp', 'r2', 'b', { text: 'USB0 2.0', labelAt: 0.86 });
+link('cardedge', 'i_usbdp', 'r3', 'c', { text: 'USB2.0', labelAt: 0.9 });
+link('cardedge', 'auxsw', 'r4', 'L', { text: 'USB_SBU1', labelAt: 0.32 });
+link('cardedge', 'auxsw', 'r5', 'L', { text: 'USB_SBU2', labelAt: 0.38 });
 link('auxsw', 'i_usbdp', 'R', 'd', { text: 'DP_AUX' });
-link('pdctl', 'cardedge', 'B', 'B', { text: 'USB0 2.0' });
+link('pdctl', 'cardedge', 'B', 'B', { text: 'USB0 2.0', labelAt: 0.5, labelOffset: '0 8' });
 
 const model = { class: 'GraphLinksModel', linkFromPortIdProperty: 'fromPort',
   linkToPortIdProperty: 'toPort', linkKeyProperty: 'key', nodeDataArray: nodes, linkDataArray: links };

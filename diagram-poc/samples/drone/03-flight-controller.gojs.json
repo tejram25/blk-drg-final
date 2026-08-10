@@ -1280,7 +1280,8 @@
    "text": "GPIO_TX",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -2,
@@ -1296,7 +1297,8 @@
    "text": "GPIO_RX",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -3,
@@ -1312,7 +1314,8 @@
    "text": "UART",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -4,
@@ -1352,7 +1355,8 @@
    "text": "SSC_I3C0",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -7,
@@ -1368,7 +1372,8 @@
    "text": "SSC_I3C0",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -8,
@@ -1384,7 +1389,8 @@
    "text": "SSC_I2C4",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -9,
@@ -1400,7 +1406,8 @@
    "text": "I2C",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -10,
@@ -1428,7 +1435,8 @@
    "text": "I2C",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -12,
@@ -1444,7 +1452,8 @@
    "text": "1CH- DMIC",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -13,
@@ -1484,7 +1493,8 @@
    "text": "DDR",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -16,
@@ -1500,7 +1510,8 @@
    "text": "DDR",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -17,
@@ -1516,7 +1527,8 @@
    "text": "1CH-DMIC",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -18,
@@ -1532,7 +1544,8 @@
    "text": "SWR",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -19,
@@ -1548,7 +1561,8 @@
    "text": "SWR\nPDM",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "-16 0"
   },
   {
    "key": -20,
@@ -1588,7 +1602,8 @@
    "text": "VBUS",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -23,
@@ -1604,7 +1619,9 @@
    "text": "USB",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6",
+   "textFraction": 0.55
   },
   {
    "key": -24,
@@ -1620,7 +1637,9 @@
    "text": "GPIO",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6",
+   "textFraction": 0.88
   },
   {
    "key": -25,
@@ -1636,7 +1655,8 @@
    "text": "USB",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -26,
@@ -1652,7 +1672,8 @@
    "text": "USB",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -27,
@@ -1704,7 +1725,9 @@
    "text": "PWM",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "-14 0",
+   "textFraction": 0.25
   },
   {
    "key": -31,
@@ -1720,7 +1743,9 @@
    "text": "PWM",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6",
+   "textFraction": 0.68
   },
   {
    "key": -32,
@@ -1736,7 +1761,9 @@
    "text": "Selection",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6",
+   "textFraction": 0.28
   },
   {
    "key": -33,
@@ -1752,7 +1779,8 @@
    "text": "DSI",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -34,
@@ -1768,7 +1796,8 @@
    "text": "I2C",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -35,
@@ -1784,7 +1813,8 @@
    "text": "I2C",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -36,
@@ -1824,7 +1854,8 @@
    "text": "VSYS",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -39,
@@ -1840,7 +1871,9 @@
    "text": "VBAT",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6",
+   "textFraction": 0.72
   },
   {
    "key": -40,
@@ -1856,7 +1889,9 @@
    "text": "VBATT",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "-18 0",
+   "textFraction": 0.15
   },
   {
    "key": -41,
@@ -1896,7 +1931,9 @@
    "text": "VBUS",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -7",
+   "textFraction": 0.5
   },
   {
    "key": -44,
@@ -1912,7 +1949,8 @@
    "text": "CC1\nCC2",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -45,
@@ -1928,7 +1966,8 @@
    "text": "VBUS",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -46,
@@ -1944,7 +1983,8 @@
    "text": "CCx",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -47,
@@ -1960,7 +2000,8 @@
    "text": "USB0 2.0",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -48,
@@ -1976,7 +2017,8 @@
    "text": "USB0 3.0",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -49,
@@ -1992,7 +2034,8 @@
    "text": "SBUx",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -50,
@@ -2008,7 +2051,9 @@
    "text": "I2C",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6",
+   "textFraction": 0.35
   },
   {
    "key": -51,
@@ -2024,7 +2069,8 @@
    "text": "5V VBUS",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -52,
@@ -2040,7 +2086,9 @@
    "text": "USB0 2.0",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6",
+   "textFraction": 0.86
   },
   {
    "key": -53,
@@ -2056,7 +2104,9 @@
    "text": "USB2.0",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6",
+   "textFraction": 0.9
   },
   {
    "key": -54,
@@ -2072,7 +2122,9 @@
    "text": "USB_SBU1",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6",
+   "textFraction": 0.32
   },
   {
    "key": -55,
@@ -2088,7 +2140,9 @@
    "text": "USB_SBU2",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6",
+   "textFraction": 0.38
   },
   {
    "key": -56,
@@ -2104,7 +2158,8 @@
    "text": "DP_AUX",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 -6"
   },
   {
    "key": -57,
@@ -2120,7 +2175,9 @@
    "text": "USB0 2.0",
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
-   "textBg": "rgba(255,255,255,0.92)"
+   "textBg": "transparent",
+   "textOffset": "0 8",
+   "textFraction": 0.5
   }
  ]
 }
