@@ -38,12 +38,18 @@ window.buildDiagram = function(modelJson, geo) {
     const m = Math.min(dl, dr, dt, db);
     return m === dl ? go.Spot.Left : m === dr ? go.Spot.Right : m === dt ? go.Spot.Top : go.Spot.Bottom;
   };
-  const sidePort = (id, spot) => $(go.Shape, 'Circle', {
-    desiredSize: new go.Size(9,9), fill:'#0f172a', stroke:'#22d3ee', strokeWidth:1.5,
+  // A connection rail, not a dot: the whole edge is linkable, so several wires
+  // can leave one side and GoJS spreads them along it.
+  const sidePort = (id, spot, side, vertical) => $(go.Shape, 'RoundedRectangle', {
+    parameter1: 4, fill:'rgba(34,211,238,0.30)', stroke:'#22d3ee', strokeWidth:1,
+    desiredSize: vertical ? new go.Size(9, NaN) : new go.Size(NaN, 9),
+    stretch: vertical ? go.GraphObject.Vertical : go.GraphObject.Horizontal,
     cursor:'crosshair', opacity:0, alignment:spot, alignmentFocus:go.Spot.Center,
-    portId:id, fromLinkable:true, toLinkable:true, fromSpot:spot, toSpot:spot });
-  const sidePorts = () => [ sidePort('T',go.Spot.Top), sidePort('R',go.Spot.Right),
-    sidePort('B',go.Spot.Bottom), sidePort('L',go.Spot.Left) ];
+    portId:id, fromLinkable:true, toLinkable:true,
+    fromSpot:side||spot, toSpot:side||spot });
+  const SIDE = { T:[go.Spot.Top,go.Spot.TopSide,false], R:[go.Spot.Right,go.Spot.RightSide,true],
+                 B:[go.Spot.Bottom,go.Spot.BottomSide,false], L:[go.Spot.Left,go.Spot.LeftSide,true] };
+  const sidePorts = () => Object.keys(SIDE).map((k)=> sidePort(k, SIDE[k][0], SIDE[k][1], SIDE[k][2]));
   const pinPort = $(go.Panel, 'Spot',
     new go.Binding('alignment','spot',go.Spot.parse),
     $(go.Shape,'Circle',{ desiredSize:new go.Size(11,11), fill:'#0f172a', stroke:'#22d3ee',
@@ -57,7 +63,7 @@ window.buildDiagram = function(modelJson, geo) {
 
   // ---- block ----
   const block = $(go.Node,'Spot',
-    { locationSpot:go.Spot.Center, resizable:true, resizeObjectName:'BODY' },
+    { locationSpot:go.Spot.Center, resizable:true, resizeObjectName:'BODY', portSpreading: go.PortSpreading.Evenly },
     new go.Binding('location','loc',go.Point.parse),
     $(go.Panel,'Auto', body, { name:'BODY' }, sizeBind(),
       $(go.Shape,'RoundedRectangle',
@@ -78,7 +84,7 @@ window.buildDiagram = function(modelJson, geo) {
 
   // ---- shape ----
   const shape = $(go.Node,'Spot',
-    { locationSpot:go.Spot.Center, resizable:true, resizeObjectName:'SHAPE' },
+    { locationSpot:go.Spot.Center, resizable:true, resizeObjectName:'SHAPE', portSpreading: go.PortSpreading.Evenly },
     new go.Binding('location','loc',go.Point.parse),
     $(go.Panel,'Spot', body,
       $(go.Shape,'Rectangle',
@@ -165,7 +171,7 @@ window.buildDiagram = function(modelJson, geo) {
   // container. New optional data: fill, stroke, dashed(bool), titleColor,
   // titleAlign ("0.5 0.05" spot string), titleFont, corner.
   const group = $(go.Group,'Spot',
-    { locationSpot:go.Spot.Center, ungroupable:true, computesBoundsAfterDrag:true, handlesDragDropForMembers:true },
+    { locationSpot:go.Spot.Center, ungroupable:true, computesBoundsAfterDrag:true, handlesDragDropForMembers:true, portSpreading: go.PortSpreading.Evenly },
     new go.Binding('location','loc',go.Point.parse),
     new go.Binding('isSubGraphExpanded','expanded'),
     $(go.Panel,'Auto',

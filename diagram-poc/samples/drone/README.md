@@ -94,6 +94,12 @@ properties panel carries:
 and the wire dock carries colour, style, width, routing, **corners**,
 **arrowhead** and **arrow size** (`corner`, `arrow`, `arrowScale`).
 
+Each side of a block is a **connection rail**, not a single point: drag from an
+edge as many times as you like and the wires spread evenly along it, the way the
+Distribution Board feeds four ESCs. Add explicit pins only when a net has to sit
+at a *particular* place on the edge — a named interface on an SoC — rather than
+wherever the spreading puts it.
+
 Two behaviours worth knowing:
 
 - Setting any colour by hand also sets `fixedColor`. `retheme()` rewrites

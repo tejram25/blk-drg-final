@@ -735,16 +735,31 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private buildTemplates($: typeof go.GraphObject.make): void {
-    const sidePort = (id: string, spot: go.Spot) => $(
-      go.Shape, 'Circle',
+    /**
+     * A connection rail down a whole edge, not a dot in the middle of it.
+     *
+     * As a 9px dot with `fromSpot: Spot.Right`, a side accepted any number of
+     * wires but attached every one of them to the same point — four wires out
+     * of a distribution board left as one line and split further out, which is
+     * not what the block diagram shows. The `*Side` spots plus
+     * `portSpreading` let GoJS distribute them, but it distributes across the
+     * *port's* extent, so the port has to span the edge for that to mean
+     * anything.
+     */
+    const sidePort = (id: string, spot: go.Spot, side: go.Spot, vertical: boolean) => $(
+      go.Shape, 'RoundedRectangle',
       {
-        desiredSize: new go.Size(9, 9), fill: '#0f172a', stroke: '#22d3ee', strokeWidth: 1.5,
+        parameter1: 4, fill: 'rgba(34,211,238,0.30)', stroke: '#22d3ee', strokeWidth: 1,
+        desiredSize: vertical ? new go.Size(9, NaN) : new go.Size(NaN, 9),
+        stretch: vertical ? go.GraphObject.Vertical : go.GraphObject.Horizontal,
         cursor: 'crosshair', opacity: 0, alignment: spot, alignmentFocus: go.Spot.Center,
-        portId: id, fromLinkable: true, toLinkable: true, fromSpot: spot, toSpot: spot,
+        portId: id, fromLinkable: true, toLinkable: true, fromSpot: side, toSpot: side,
       });
     const sidePorts = () => [
-      sidePort('T', go.Spot.Top), sidePort('R', go.Spot.Right),
-      sidePort('B', go.Spot.Bottom), sidePort('L', go.Spot.Left),
+      sidePort('T', go.Spot.Top, go.Spot.TopSide, false),
+      sidePort('R', go.Spot.Right, go.Spot.RightSide, true),
+      sidePort('B', go.Spot.Bottom, go.Spot.BottomSide, false),
+      sidePort('L', go.Spot.Left, go.Spot.LeftSide, true),
     ];
     const sideSpot = (s: string) => {
       const sp = go.Spot.parse(s);
@@ -775,7 +790,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const block = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'BODY', toolTip: this.nodeTip($), ...hover },
+      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'BODY', toolTip: this.nodeTip($),
+        portSpreading: go.PortSpreading.Evenly, ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Auto', body, { name: 'BODY' }, sizeBind(),
@@ -799,7 +815,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const part = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'BODY', toolTip: this.nodeTip($), ...hover },
+      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'BODY', toolTip: this.nodeTip($),
+        portSpreading: go.PortSpreading.Evenly, ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Auto', body, { name: 'BODY' }, sizeBind(),
@@ -826,7 +843,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const image = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'PIC', ...hover },
+      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'PIC', portSpreading: go.PortSpreading.Evenly, ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Vertical', body,
@@ -841,7 +858,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const shape = $(
       go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'SHAPE', toolTip: this.nodeTip($), ...hover },
+      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'SHAPE', toolTip: this.nodeTip($),
+        portSpreading: go.PortSpreading.Evenly, ...hover },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Spot', body,
@@ -1042,7 +1060,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.diagram.groupTemplate = $(
       go.Group, 'Spot',
       { locationSpot: go.Spot.Center, ungroupable: true, computesBoundsAfterDrag: true,
-        handlesDragDropForMembers: true },
+        handlesDragDropForMembers: true, portSpreading: go.PortSpreading.Evenly },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('isSubGraphExpanded', 'expanded').makeTwoWay(),
       $(go.Panel, 'Auto',
