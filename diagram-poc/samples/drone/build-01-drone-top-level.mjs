@@ -50,7 +50,7 @@ function label(key, text, rect, o = {}) {
 let lk = 0;
 function link(from, to, fromPort, toPort, o = {}) {
   links.push({ key: --lk, from, to, fromPort, toPort, color: o.color ?? C.wire,
-    width: o.width ?? 1.5, arrow: 'Triangle', arrowScale: o.arrowScale ?? 1.15, corner: o.corner ?? 10 });
+    width: o.width ?? 1.5, arrow: 'Triangle', arrowScale: o.arrowScale ?? 1.15, corner: o.corner ?? 0 });
 }
 
 // ---------- title ----------
@@ -93,15 +93,15 @@ chip('trx', 'Transceiver (Tx/Rx)', 'COMM', R(570, 483, 160, 30), { fill: C.greyC
 
 // ---------- antennas & RF link ----------
 N({ key: 'ant_d', category: 'shape', group: 'DRONE', figure: 'FcAntennaCurl', text: '',
-    ...R(604, 522, 34, 38), fill: 'transparent', stroke: C.ink, fixedColor: true, minSize: '1 1', strokeWidth: 1.6 });
-label('ant_d_l', 'Antenna', R(642, 543, 60, 18), { group: 'DRONE', font: F.small, textWidth: 60 });
+    ...R(633, 528, 34, 40), fill: 'transparent', stroke: C.ink, fixedColor: true, minSize: '1 1', strokeWidth: 1.6 });
+label('ant_d_l', 'Antenna', R(674, 551, 60, 18), { group: 'DRONE', font: F.small, textWidth: 60 });
 
 label('cc', 'Control Commands', R(388, 608, 170, 20), { font: F.cap, textWidth: 170 });
 label('fd', 'Feedback/ Data', R(552, 630, 145, 20), { font: F.cap, textWidth: 145 });
 
-N({ key: 'ant_g', category: 'shape', figure: 'FcAntennaCurl', text: '', ...R(360, 632, 34, 38),
+N({ key: 'ant_g', category: 'shape', figure: 'FcAntennaCurl', text: '', ...R(356, 628, 34, 40),
     fill: 'transparent', stroke: C.ink, fixedColor: true, minSize: '1 1', strokeWidth: 1.6 });
-label('ant_g_l', 'Antenna', R(310, 643, 58, 18), { font: F.small, textWidth: 58 });
+label('ant_g_l', 'Antenna', R(296, 641, 58, 18), { font: F.small, textWidth: 58 });
 
 // ---------- Controller / Ground ----------
 group('GND', 'Controller / Ground', { fill: C.blue, stroke: C.blue,
@@ -124,12 +124,12 @@ link('FC', 'COMM', 'B', 'T');
 // transceiver -> drone antenna
 link('trx', 'ant_d', 'B', 'T');
 // RF: drone -> ground (feedback/data) and ground -> drone (control commands)
-link('ant_d', 'ant_g', 'B', 'R');
-link('ant_g', 'ant_d', 'T', 'L');
+link('ant_d', 'ant_g', 'B', 'R');   // feedback / data, down to the ground antenna
+link('ant_g', 'ant_d', 'L', 'L');   // control commands, up to the drone antenna
 // ground antenna -> ground transceiver
 link('ant_g', 'gtrx', 'B', 'T');
 
 const model = { class: 'GraphLinksModel', linkFromPortIdProperty: 'fromPort',
   linkToPortIdProperty: 'toPort', linkKeyProperty: 'key', nodeDataArray: nodes, linkDataArray: links };
-writeFileSync(new URL('./d1.json', import.meta.url), JSON.stringify(model, null, 1));
+writeFileSync(new URL('./01-drone-top-level.gojs.json', import.meta.url), JSON.stringify(model, null, 1));
 console.log('nodes', nodes.length, 'links', links.length);

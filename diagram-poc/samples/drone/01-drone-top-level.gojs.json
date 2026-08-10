@@ -382,8 +382,8 @@
    "group": "DRONE",
    "figure": "FcAntennaCurl",
    "text": "",
-   "loc": "621 541",
-   "size": "34 38",
+   "loc": "650 548",
+   "size": "34 40",
    "fill": "transparent",
    "stroke": "#141414",
    "fixedColor": true,
@@ -395,7 +395,7 @@
    "category": "shape",
    "figure": "Rectangle",
    "text": "Antenna",
-   "loc": "672 552",
+   "loc": "704 560",
    "size": "60 18",
    "fill": "transparent",
    "stroke": "transparent",
@@ -444,8 +444,8 @@
    "category": "shape",
    "figure": "FcAntennaCurl",
    "text": "",
-   "loc": "377 651",
-   "size": "34 38",
+   "loc": "373 648",
+   "size": "34 40",
    "fill": "transparent",
    "stroke": "#141414",
    "fixedColor": true,
@@ -457,7 +457,7 @@
    "category": "shape",
    "figure": "Rectangle",
    "text": "Antenna",
-   "loc": "339 652",
+   "loc": "325 650",
    "size": "58 18",
    "fill": "transparent",
    "stroke": "transparent",
@@ -511,7 +511,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -2,
@@ -523,7 +523,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -3,
@@ -535,7 +535,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -4,
@@ -547,7 +547,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -5,
@@ -559,7 +559,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -6,
@@ -571,7 +571,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -7,
@@ -583,7 +583,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -8,
@@ -595,7 +595,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -9,
@@ -607,7 +607,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -10,
@@ -619,7 +619,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -11,
@@ -631,7 +631,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -12,
@@ -643,7 +643,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -13,
@@ -655,7 +655,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -14,
@@ -667,19 +667,19 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -15,
    "from": "ant_g",
    "to": "ant_d",
-   "fromPort": "T",
+   "fromPort": "L",
    "toPort": "L",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   },
   {
    "key": -16,
@@ -691,7 +691,7 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 10
+   "corner": 0
   }
  ]
 }
