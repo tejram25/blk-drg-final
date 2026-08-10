@@ -226,6 +226,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.loadWireDefaults();
     this.loadPalette();
     this.refreshList();
     this.mobileMq = window.matchMedia('(max-width: 768px), (orientation: landscape) and (max-height: 500px)');
@@ -823,6 +824,36 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const sizeBind = () => new go.Binding('desiredSize', 'size',
       (s: string) => (s ? go.Size.parse(s) : new go.Size(NaN, NaN))).makeTwoWay((sz: go.Size) => go.Size.stringify(sz));
 
+    /**
+     * Named pins, on their own overlay stretched across the node's body.
+     *
+     * They cannot share the panel that holds the label: a panel with an
+     * itemArray keeps only its isPanelMain element when it rebuilds, so putting
+     * them there deletes the label.
+     *
+     * Use it *after* the side rails. Both are hit targets and a rail spans the
+     * whole edge, so whichever is declared last wins the hit test — with the
+     * pins first, a drag that started on a pin produced a wire from the side
+     * instead. The overlay must also stay pickable: it is the pins' own hit
+     * area, and `pickable: false` on the panel silences the entire subtree,
+     * which is what stopped a wire being drawn from a pin at all.
+     *
+     * A Spot panel positions its children against its *main* element, so the
+     * overlay needs one the size of the body — without it every pin lands near
+     * the middle of the block, which reads as wires escaping from inside a chip
+     * rather than from its edge. `stretch: Fill` is what lets one overlay serve
+     * every template: it takes the size of the node's own main element. Sizing
+     * it from `data.size` instead only works for nodes that carry an explicit
+     * size, which a group — sized by its members — never does.
+     */
+    const pinOverlay = () => $(
+      go.Panel, 'Spot',
+      { itemTemplate: pinPort, stretch: go.GraphObject.Fill },
+      new go.Binding('itemArray', 'ports'),
+      $(go.Shape, 'Rectangle',
+        { isPanelMain: true, fill: null, stroke: null, strokeWidth: 0, pickable: false,
+          stretch: go.GraphObject.Fill }));
+
     const block = $(
       go.Node, 'Spot',
       { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'BODY', toolTip: this.nodeTip($),
@@ -844,6 +875,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
             $(go.TextBlock, { font: '10px Roboto, sans-serif', stroke: '#9aa0a8', alignment: go.Spot.Left },
               new go.Binding('text', 'subtitle'))))),
       ...sidePorts(),
+      pinOverlay(),
     );
     this.diagram.nodeTemplateMap.set('block', block);
     this.diagram.nodeTemplate = block;
@@ -873,6 +905,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
                 $(go.TextBlock, { font: '10.5px Roboto, sans-serif', stroke: '#374151', alignment: go.Spot.Left },
                   new go.Binding('text', ''))) }))),
       ...sidePorts(),
+      pinOverlay(),
     );
     this.diagram.nodeTemplateMap.set('part', part);
 
@@ -888,6 +921,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         $(go.TextBlock, { font: '11px Roboto, sans-serif', stroke: '#94a3b8', editable: true, margin: new go.Margin(4, 0, 0, 0) },
           new go.Binding('text').makeTwoWay())),
       ...sidePorts(),
+      pinOverlay(),
     );
     this.diagram.nodeTemplateMap.set('image', image);
 
@@ -938,30 +972,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         new go.Binding('stroke', 'capColor'),
         new go.Binding('visible', 'sub', (s) => !!s && String(s).length > 0)),
       ...sidePorts(),
-      // Optional extra pins, on their own overlay stretched across the shape.
-      // They cannot share the panel that holds the label: a panel with an
-      // itemArray keeps only its isPanelMain element when it rebuilds, so
-      // putting them there deletes the label.
-      //
-      // Declared *after* the side rails on purpose. Both are hit targets, and a
-      // rail spans the whole edge, so whichever is declared last wins the hit
-      // test — with the pins first, a drag that started on a pin produced a
-      // wire from the side instead. The overlay must also stay pickable: it is
-      // the pins' own hit area, and `pickable: false` on the panel silences the
-      // entire subtree, which is what stopped a wire being drawn from a pin at
-      // all.
-      $(go.Panel, 'Spot',
-        { itemTemplate: pinPort },
-        new go.Binding('itemArray', 'ports'),
-        // A Spot panel positions its children against its *main* element, so
-        // the overlay needs one at the node's full size. Without it the pins
-        // align to whichever pin happens to be first and every one of them
-        // lands near the middle of the block — which reads as wires escaping
-        // from inside a chip rather than from its edge. It is not itself a
-        // target: only the pins on top of it are.
-        $(go.Shape, 'Rectangle',
-          { isPanelMain: true, fill: null, stroke: null, strokeWidth: 0, pickable: false },
-          new go.Binding('desiredSize', 'size', go.Size.parse))),
+      pinOverlay(),
     );
     this.diagram.nodeTemplateMap.set('shape', shape);
 
@@ -1188,6 +1199,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       // Containers are wired to in a block diagram ("power in on the left"), so
       // they need the same four ports every node has.
       ...sidePorts(),
+      pinOverlay(),
     );
     this.diagram.commandHandler.archetypeGroupData = { isGroup: true, text: 'Subsystem' };
   }
@@ -1664,20 +1676,33 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.diagram.model.commit(() => this.setWireEnd(link, moved, pt), 'move wire end');
   }
 
-  /** Apply the current wire style to a freshly created link (drawn by drag or by
-   * tap-to-connect); pin-to-pin links between electrical symbols become
-   * schematic wires and snap straight. */
+  /**
+   * Draw a freshly created link (by drag or by tap-to-connect) in the
+   * remembered wire style; pin-to-pin links between electrical symbols become
+   * schematic wires and snap straight.
+   *
+   * Every control on the wire dock is applied, arrowhead and corners included.
+   * Those three used to be left at the template's defaults, so a diagram drawn
+   * with square corners and a large arrowhead needed both re-set by hand on
+   * each new wire.
+   */
   private styleDrawnLink(link: go.Link): void {
     const elec = (n: go.Node | null) =>
       !!n && n.data?.category === 'symbol' && String(n.data.shape || '').startsWith('elec-');
     const wire = elec(link.fromNode) && elec(link.toNode);
+    const d = this.wireDefaults;
     this.diagram.model.commit((m) => {
-      m.set(link.data, 'color', this.wireColor);
-      m.set(link.data, 'width', this.wireWidth);
-      m.set(link.data, 'dash', wire || this.wireStyle === 'solid' ? null : [6, 3]);
-      m.set(link.data, 'flow', !wire && this.wireStyle === 'flow');
-      m.set(link.data, 'routing', this.wireRouter);
-      m.set(link.data, 'wire', wire);
+      m.set(link.data, 'color', d.color);
+      m.set(link.data, 'width', d.width);
+      m.set(link.data, 'dash', wire || d.style === 'solid' ? null : [6, 3]);
+      m.set(link.data, 'flow', !wire && d.style === 'flow');
+      m.set(link.data, 'routing', d.routing);
+      // A schematic wire has no arrowhead and square corners, whatever the dock
+      // says; anything else follows it.
+      m.set(link.data, 'wire', wire || d.arrow === 'none');
+      m.set(link.data, 'arrow', d.arrow === 'none' ? 'Standard' : d.arrow);
+      m.set(link.data, 'arrowScale', d.arrowScale);
+      m.set(link.data, 'corner', wire || d.corner === 'square' ? 0 : 8);
     }, 'style link');
     if (wire) this.straightenWire(link);
   }
@@ -1967,14 +1992,15 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => m.set(data, prop, value), 'wire ' + prop));
     }
   }
-  setWireColor(c: string): void { this.wireColor = c; this.applyWire('color', c); }
+  setWireColor(c: string): void { this.wireColor = c; this.rememberWire(); this.applyWire('color', c); }
   setWireStyle(s: 'flow' | 'dashed' | 'solid'): void {
     this.wireStyle = s;
+    this.rememberWire();
     this.applyWire('dash', this.wireLineDash());
     this.applyWire('flow', s === 'flow');
   }
-  setWireWidth(w: number): void { this.wireWidth = w; this.applyWire('width', w); }
-  setWireRouter(r: 'manhattan' | 'normal' | 'smooth'): void { this.wireRouter = r; this.applyWire('routing', r); }
+  setWireWidth(w: number): void { this.wireWidth = w; this.rememberWire(); this.applyWire('width', w); }
+  setWireRouter(r: 'manhattan' | 'normal' | 'smooth'): void { this.wireRouter = r; this.rememberWire(); this.applyWire('routing', r); }
 
   /** Arrowhead shape and size, and whether corners are rounded or square. */
   wireArrow: 'Standard' | 'Triangle' | 'none' = 'Standard';
@@ -1982,12 +2008,50 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   wireCorner: 'round' | 'square' = 'round';
   setWireArrow(a: 'Standard' | 'Triangle' | 'none'): void {
     this.wireArrow = a;
+    this.rememberWire();
     // `wire: true` is what hides the arrowhead; the figure is irrelevant then.
     this.applyWire('wire', a === 'none');
     if (a !== 'none') this.applyWire('arrow', a);
   }
-  setWireArrowScale(s: number): void { this.wireArrowScale = s; this.applyWire('arrowScale', s); }
-  setWireCorner(c: 'round' | 'square'): void { this.wireCorner = c; this.applyWire('corner', c === 'square' ? 0 : 8); }
+  setWireArrowScale(s: number): void { this.wireArrowScale = s; this.rememberWire(); this.applyWire('arrowScale', s); }
+  setWireCorner(c: 'round' | 'square'): void { this.wireCorner = c; this.rememberWire(); this.applyWire('corner', c === 'square' ? 0 : 8); }
+
+  /**
+   * The style the next wire is drawn in.
+   *
+   * Deliberately not the dock's own fields: those mirror whichever wire is
+   * selected, so that editing that wire is accurate. Reading the defaults off
+   * them meant clicking an older wire silently reset them, and the next wire
+   * you drew came out in that wire's style — so a style change had to be
+   * repeated for every single wire. Changing any control writes here instead,
+   * and only changing a control does.
+   */
+  private wireDefaults = {
+    color: this.wireColor, width: this.wireWidth, style: this.wireStyle, routing: this.wireRouter,
+    arrow: this.wireArrow, arrowScale: this.wireArrowScale, corner: this.wireCorner,
+  };
+  private static readonly WIRE_DEFAULTS_KEY = 'diagram.wireDefaults';
+
+  /** Adopt the dock's current settings as the default for new wires. */
+  private rememberWire(): void {
+    this.wireDefaults = {
+      color: this.wireColor, width: this.wireWidth, style: this.wireStyle, routing: this.wireRouter,
+      arrow: this.wireArrow, arrowScale: this.wireArrowScale, corner: this.wireCorner,
+    };
+    try { localStorage.setItem(GojsEditorComponent.WIRE_DEFAULTS_KEY, JSON.stringify(this.wireDefaults)); } catch { /* private mode */ }
+  }
+
+  /** Restore the remembered wire style, so it outlives a reload as well. */
+  private loadWireDefaults(): void {
+    let saved: any;
+    try { saved = JSON.parse(localStorage.getItem(GojsEditorComponent.WIRE_DEFAULTS_KEY) || 'null'); } catch { saved = null; }
+    if (!saved || typeof saved !== 'object') return;
+    this.wireDefaults = { ...this.wireDefaults, ...saved };
+    const d = this.wireDefaults;
+    this.wireColor = d.color; this.wireWidth = d.width; this.wireStyle = d.style;
+    this.wireRouter = d.routing; this.wireArrow = d.arrow; this.wireArrowScale = d.arrowScale;
+    this.wireCorner = d.corner;
+  }
   toggleWirePop(which: 'color' | 'style'): void { this.wirePop = this.wirePop === which ? null : which; }
   deleteSelectedEdge(): void {
     this.zone.runOutsideAngular(() => this.diagram.commandHandler.deleteSelection());

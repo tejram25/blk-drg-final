@@ -60,6 +60,14 @@ window.buildDiagram = function(modelJson, geo) {
       new go.Binding('fromSpot','spot',sideSpot),
       new go.Binding('toSpot','spot',sideSpot)));
   const body = { portId:'', fromLinkable:false, toLinkable:false, cursor:'move' };
+  // Mirrors the editor's overlay: `stretch: Fill` takes the size of the node's
+  // own main element, so one overlay serves a shape (which carries an explicit
+  // `size`) and a group (sized by its members) alike.
+  const pinOverlay = () => $(go.Panel,'Spot',
+    { itemTemplate: pinPort, stretch: go.GraphObject.Fill },
+    new go.Binding('itemArray','ports'),
+    $(go.Shape,'Rectangle',{ isPanelMain:true, fill:null, stroke:null, strokeWidth:0,
+      pickable:false, stretch: go.GraphObject.Fill }));
   const sizeBind = () => new go.Binding('desiredSize','size',
     (s)=> s? go.Size.parse(s): new go.Size(NaN,NaN)).makeTwoWay((sz)=>go.Size.stringify(sz));
 
@@ -80,7 +88,8 @@ window.buildDiagram = function(modelJson, geo) {
             new go.Binding('text')),
           $(go.TextBlock,{ font:'10px Roboto, sans-serif', stroke:'#9aa0a8', alignment:go.Spot.Left },
             new go.Binding('text','subtitle'))))),
-    ...sidePorts());
+    ...sidePorts(),
+    pinOverlay());
   diagram.nodeTemplateMap.set('block', block);
   diagram.nodeTemplate = block;
 
@@ -101,17 +110,13 @@ window.buildDiagram = function(modelJson, geo) {
         new go.Binding('text'), new go.Binding('stroke','labelColor'), new go.Binding('font','font'),
         new go.Binding('textAlign','textAlign'),
         new go.Binding('maxSize','textWidth',(w)=> new go.Size(w,NaN)))),
-    $(go.Panel,'Spot',
-      { itemTemplate: pinPort, pickable: false },
-      new go.Binding('itemArray','ports'),
-      $(go.Shape,'Rectangle',{ isPanelMain:true, fill:null, stroke:null, strokeWidth:0 },
-        new go.Binding('desiredSize','size',go.Size.parse))),
     $(go.TextBlock,{ alignment:new go.Spot(0.5,1,0,7), alignmentFocus:go.Spot.Top,
       font:'10.5px Roboto, sans-serif', stroke:'#94a3b8', textAlign:'center', maxSize:new go.Size(170,NaN) },
       new go.Binding('text','sub'),
       new go.Binding('stroke','capColor'),
       new go.Binding('visible','sub',(s)=>!!s && String(s).length>0)),
-    ...sidePorts());
+    ...sidePorts(),
+    pinOverlay());
   diagram.nodeTemplateMap.set('shape', shape);
 
   // ---- symbol ----
@@ -194,7 +199,8 @@ window.buildDiagram = function(modelJson, geo) {
       new go.Binding('font','titleFont'),
       new go.Binding('alignment','titleAlign',(s)=> go.Spot.parse(s)),
       new go.Binding('alignmentFocus','titleFocus',(s)=> go.Spot.parse(s))),
-    ...sidePorts());
+    ...sidePorts(),
+    pinOverlay());
   diagram.groupTemplate = group;
 
   diagram.model = go.Model.fromJson(modelJson);

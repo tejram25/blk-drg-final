@@ -60,7 +60,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 54
+   "textWidth": 54,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "i_uart",
@@ -76,7 +82,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 54
+   "textWidth": 54,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "i_gpio",
@@ -92,7 +104,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 54
+   "textWidth": 54,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "i_pwm",
@@ -108,7 +126,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 54
+   "textWidth": 54,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "i_dsi",
@@ -124,7 +148,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 54
+   "textWidth": 54,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "i_i2c1",
@@ -140,7 +170,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 54
+   "textWidth": 54,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "i_i2c2",
@@ -156,7 +192,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 54
+   "textWidth": 54,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "i_pcie",
@@ -188,7 +230,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 54
+   "textWidth": 54,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "i_i2c3",
@@ -204,7 +252,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 54
+   "textWidth": 54,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "i_usbdp",
@@ -254,7 +308,17 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 86
+   "textWidth": 86,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.3333"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.6667"
+    }
+   ]
   },
   {
    "key": "o_qup",
@@ -270,7 +334,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 86
+   "textWidth": 86,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "o_ssc",
@@ -342,7 +412,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 86
+   "textWidth": 86,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "o_gpio",
@@ -358,7 +434,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 86
+   "textWidth": 86,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "o_wifi",
@@ -374,7 +456,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 54
+   "textWidth": 54,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "o_dmic2",
@@ -390,7 +478,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 86
+   "textWidth": 86,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "o_wcd",
@@ -406,7 +500,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 86
+   "textWidth": 86,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "o_mi2s",
@@ -422,7 +522,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 86
+   "textWidth": 86,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "debugcon",
@@ -438,7 +544,17 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 66
+   "textWidth": 66,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.3333"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.6667"
+    }
+   ]
   },
   {
    "key": "gnss",
@@ -454,7 +570,17 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 86
+   "textWidth": 86,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "ufl",
@@ -470,7 +596,17 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 60
+   "textWidth": 60,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "gnssant",
@@ -486,7 +622,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 78
+   "textWidth": 78,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "mag",
@@ -502,7 +644,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 80
+   "textWidth": 80,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "imu",
@@ -518,7 +666,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 80
+   "textWidth": 80,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "als",
@@ -534,7 +688,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 126
+   "textWidth": 126,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "hapdrv",
@@ -550,7 +710,17 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 80
+   "textWidth": 80,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "hapmot",
@@ -566,7 +736,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 80
+   "textWidth": 80,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "temp",
@@ -582,7 +758,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 80
+   "textWidth": 80,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "mic1",
@@ -598,7 +780,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 80
+   "textWidth": 80,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "rgbled",
@@ -614,7 +802,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 56
+   "textWidth": 56,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "wifiant",
@@ -630,7 +824,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 82
+   "textWidth": 82,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "ddr",
@@ -646,7 +846,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 76
+   "textWidth": 76,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "emmc",
@@ -662,7 +868,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 76
+   "textWidth": 76,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "mic2",
@@ -678,7 +890,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 80
+   "textWidth": 80,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "codec",
@@ -694,7 +912,17 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 114
+   "textWidth": 114,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "spkamp",
@@ -710,7 +938,21 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 114
+   "textWidth": 114,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.5"
+    },
+    {
+     "portId": "p3",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "spk",
@@ -726,7 +968,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 52
+   "textWidth": 52,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "rfbg",
@@ -774,7 +1022,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 100
+   "textWidth": 100,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "radio",
@@ -816,7 +1070,21 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 84
+   "textWidth": 84,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p3",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "mcu",
@@ -832,7 +1100,37 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 86
+   "textWidth": 86,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.3333 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "0.6667 1"
+    },
+    {
+     "portId": "p3",
+     "spot": "0 0.25"
+    },
+    {
+     "portId": "p4",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p5",
+     "spot": "0 0.75"
+    },
+    {
+     "portId": "p6",
+     "spot": "1 0.5"
+    },
+    {
+     "portId": "p7",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "joy",
@@ -848,7 +1146,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 110
+   "textWidth": 110,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "led",
@@ -864,7 +1168,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 46
+   "textWidth": 46,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "pwmmux",
@@ -880,7 +1190,21 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 46
+   "textWidth": 46,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.3333"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.6667"
+    },
+    {
+     "portId": "p3",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "disp",
@@ -896,7 +1220,21 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 74
+   "textWidth": 74,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.3333"
+    },
+    {
+     "portId": "p3",
+     "spot": "1 0.6667"
+    }
+   ]
   },
   {
    "key": "hall",
@@ -912,7 +1250,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 76
+   "textWidth": 76,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "dsup",
@@ -928,7 +1272,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 32
+   "textWidth": 32,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "vconv",
@@ -944,7 +1294,17 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 82
+   "textWidth": 82,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "mosfet",
@@ -960,7 +1320,21 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 30
+   "textWidth": 30,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p3",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "chgic",
@@ -976,7 +1350,17 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 54
+   "textWidth": 54,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p2",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "balance",
@@ -1005,6 +1389,10 @@
     {
      "portId": "c",
      "spot": "1 0.85"
+    },
+    {
+     "portId": "p1",
+     "spot": "0.5 0"
     }
    ]
   },
@@ -1022,7 +1410,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 64
+   "textWidth": 64,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "cell2",
@@ -1038,7 +1432,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 64
+   "textWidth": 64,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "cellcap",
@@ -1070,7 +1470,21 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 58
+   "textWidth": 58,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p3",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "typec",
@@ -1165,6 +1579,10 @@
     {
      "portId": "r5",
      "spot": "1 0.88"
+    },
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
     }
    ]
   },
@@ -1182,7 +1600,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 58
+   "textWidth": 58,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "auxsw",
@@ -1198,7 +1622,21 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 88
+   "textWidth": 88,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.3333"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.6667"
+    },
+    {
+     "portId": "p3",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "legbg",
@@ -1270,8 +1708,8 @@
    "key": -1,
    "from": "o_dbg",
    "to": "debugcon",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1287,8 +1725,8 @@
    "key": -2,
    "from": "debugcon",
    "to": "o_dbg",
-   "fromPort": "L",
-   "toPort": "R",
+   "fromPort": "p2",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1304,8 +1742,8 @@
    "key": -3,
    "from": "o_qup",
    "to": "gnss",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1321,8 +1759,8 @@
    "key": -4,
    "from": "gnss",
    "to": "ufl",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p2",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1333,8 +1771,8 @@
    "key": -5,
    "from": "ufl",
    "to": "gnssant",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p2",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1346,7 +1784,7 @@
    "from": "o_ssc",
    "to": "mag",
    "fromPort": "a",
-   "toPort": "L",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1363,7 +1801,7 @@
    "from": "o_ssc",
    "to": "imu",
    "fromPort": "b",
-   "toPort": "L",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1380,7 +1818,7 @@
    "from": "o_ssc",
    "to": "als",
    "fromPort": "c",
-   "toPort": "L",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1397,7 +1835,7 @@
    "from": "o_i2c",
    "to": "hapdrv",
    "fromPort": "a",
-   "toPort": "L",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1413,8 +1851,8 @@
    "key": -10,
    "from": "hapdrv",
    "to": "hapmot",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p2",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1426,7 +1864,7 @@
    "from": "o_i2c",
    "to": "temp",
    "fromPort": "b",
-   "toPort": "L",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1442,8 +1880,8 @@
    "key": -12,
    "from": "o_dmic1",
    "to": "mic1",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1459,8 +1897,8 @@
    "key": -13,
    "from": "o_gpio",
    "to": "rgbled",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1471,8 +1909,8 @@
    "key": -14,
    "from": "o_wifi",
    "to": "wifiant",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1484,7 +1922,7 @@
    "from": "soc",
    "to": "ddr",
    "fromPort": "ddr",
-   "toPort": "L",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1501,7 +1939,7 @@
    "from": "soc",
    "to": "emmc",
    "fromPort": "emmc",
-   "toPort": "L",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1517,8 +1955,8 @@
    "key": -17,
    "from": "o_dmic2",
    "to": "mic2",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1534,8 +1972,8 @@
    "key": -18,
    "from": "o_wcd",
    "to": "codec",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1551,8 +1989,8 @@
    "key": -19,
    "from": "codec",
    "to": "spkamp",
-   "fromPort": "B",
-   "toPort": "T",
+   "fromPort": "p1",
+   "toPort": "p3",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1568,8 +2006,8 @@
    "key": -20,
    "from": "spkamp",
    "to": "spk",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p2",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1580,8 +2018,8 @@
    "key": -21,
    "from": "o_mi2s",
    "to": "spkamp",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1592,8 +2030,8 @@
    "key": -22,
    "from": "lte",
    "to": "usbhub",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1610,7 +2048,7 @@
    "from": "radio",
    "to": "mcu",
    "fromPort": "a",
-   "toPort": "L",
+   "toPort": "p3",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1628,7 +2066,7 @@
    "from": "radio",
    "to": "mcu",
    "fromPort": "b",
-   "toPort": "L",
+   "toPort": "p4",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1645,8 +2083,8 @@
    "key": -25,
    "from": "usbhub",
    "to": "i_usb",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p3",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1662,8 +2100,8 @@
    "key": -26,
    "from": "mcu",
    "to": "usbhub",
-   "fromPort": "T",
-   "toPort": "B",
+   "fromPort": "p7",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1679,8 +2117,8 @@
    "key": -27,
    "from": "mcu",
    "to": "i_uart",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p6",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1691,8 +2129,8 @@
    "key": -28,
    "from": "joy",
    "to": "mcu",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p5",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1703,8 +2141,8 @@
    "key": -29,
    "from": "mcu",
    "to": "led",
-   "fromPort": "B",
-   "toPort": "R",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1715,8 +2153,8 @@
    "key": -30,
    "from": "mcu",
    "to": "pwmmux",
-   "fromPort": "B",
-   "toPort": "T",
+   "fromPort": "p2",
+   "toPort": "p3",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1733,8 +2171,8 @@
    "key": -31,
    "from": "pwmmux",
    "to": "i_pwm",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p2",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1751,8 +2189,8 @@
    "key": -32,
    "from": "pwmmux",
    "to": "i_gpio",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1769,8 +2207,8 @@
    "key": -33,
    "from": "disp",
    "to": "i_dsi",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p2",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1786,8 +2224,8 @@
    "key": -34,
    "from": "disp",
    "to": "i_i2c1",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p3",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1803,8 +2241,8 @@
    "key": -35,
    "from": "hall",
    "to": "i_i2c2",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1820,8 +2258,8 @@
    "key": -36,
    "from": "dsup",
    "to": "disp",
-   "fromPort": "T",
-   "toPort": "B",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1832,8 +2270,8 @@
    "key": -37,
    "from": "vconv",
    "to": "i_vbat",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p2",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1844,8 +2282,8 @@
    "key": -38,
    "from": "mosfet",
    "to": "vconv",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p3",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1861,8 +2299,8 @@
    "key": -39,
    "from": "chgic",
    "to": "mosfet",
-   "fromPort": "T",
-   "toPort": "L",
+   "fromPort": "p2",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1879,8 +2317,8 @@
    "key": -40,
    "from": "balance",
    "to": "mosfet",
-   "fromPort": "T",
-   "toPort": "B",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1898,7 +2336,7 @@
    "from": "balance",
    "to": "cell1",
    "fromPort": "a",
-   "toPort": "L",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1910,7 +2348,7 @@
    "from": "balance",
    "to": "cell2",
    "fromPort": "b",
-   "toPort": "L",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1921,8 +2359,8 @@
    "key": -43,
    "from": "pdctl",
    "to": "chgic",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p3",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -1940,7 +2378,7 @@
    "from": "cardedge",
    "to": "pdctl",
    "fromPort": "r1",
-   "toPort": "L",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -2042,7 +2480,7 @@
    "from": "balance",
    "to": "i_i2c3",
    "fromPort": "c",
-   "toPort": "L",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -2059,7 +2497,7 @@
    "key": -51,
    "from": "sw5v",
    "to": "i_usbdp",
-   "fromPort": "R",
+   "fromPort": "p1",
    "toPort": "a",
    "color": "#A6AAAD",
    "width": 1.1,
@@ -2113,7 +2551,7 @@
    "from": "cardedge",
    "to": "auxsw",
    "fromPort": "r4",
-   "toPort": "L",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -2131,7 +2569,7 @@
    "from": "cardedge",
    "to": "auxsw",
    "fromPort": "r5",
-   "toPort": "L",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",
@@ -2148,7 +2586,7 @@
    "key": -56,
    "from": "auxsw",
    "to": "i_usbdp",
-   "fromPort": "R",
+   "fromPort": "p3",
    "toPort": "d",
    "color": "#A6AAAD",
    "width": 1.1,
@@ -2165,8 +2603,8 @@
    "key": -57,
    "from": "pdctl",
    "to": "cardedge",
-   "fromPort": "B",
-   "toPort": "B",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.1,
    "arrow": "Triangle",

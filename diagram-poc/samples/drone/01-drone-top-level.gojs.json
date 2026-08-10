@@ -49,7 +49,13 @@
    "font": "400 9.5px \"Arrow Display\", sans-serif",
    "fixedColor": true,
    "minSize": "1 1",
-   "strokeWidth": 1.6
+   "strokeWidth": 1.6,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "mot2",
@@ -65,7 +71,13 @@
    "font": "400 9.5px \"Arrow Display\", sans-serif",
    "fixedColor": true,
    "minSize": "1 1",
-   "strokeWidth": 1.6
+   "strokeWidth": 1.6,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "mot3",
@@ -81,7 +93,13 @@
    "font": "400 9.5px \"Arrow Display\", sans-serif",
    "fixedColor": true,
    "minSize": "1 1",
-   "strokeWidth": 1.6
+   "strokeWidth": 1.6,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "mot4",
@@ -97,7 +115,13 @@
    "font": "400 9.5px \"Arrow Display\", sans-serif",
    "fixedColor": true,
    "minSize": "1 1",
-   "strokeWidth": 1.6
+   "strokeWidth": 1.6,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "motcap",
@@ -130,7 +154,13 @@
    "titleFocus": "0.5 0.5",
    "titleFont": "700 12.5px \"Arrow Display\", sans-serif",
    "pad": "28 23 12 17",
-   "group": "DRONE"
+   "group": "DRONE",
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "esc1",
@@ -146,7 +176,17 @@
    "minSize": "1 1",
    "strokeWidth": 0,
    "font": "400 10.5px \"Arrow Display\", sans-serif",
-   "fixedColor": true
+   "fixedColor": true,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "esc2",
@@ -162,7 +202,17 @@
    "minSize": "1 1",
    "strokeWidth": 0,
    "font": "400 10.5px \"Arrow Display\", sans-serif",
-   "fixedColor": true
+   "fixedColor": true,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "esc3",
@@ -178,7 +228,17 @@
    "minSize": "1 1",
    "strokeWidth": 0,
    "font": "400 10.5px \"Arrow Display\", sans-serif",
-   "fixedColor": true
+   "fixedColor": true,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "esc4",
@@ -194,7 +254,17 @@
    "minSize": "1 1",
    "strokeWidth": 0,
    "font": "400 10.5px \"Arrow Display\", sans-serif",
-   "fixedColor": true
+   "fixedColor": true,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "PWR",
@@ -227,7 +297,13 @@
    "strokeWidth": 0,
    "font": "400 10.5px \"Arrow Display\", sans-serif",
    "fixedColor": true,
-   "textWidth": 80
+   "textWidth": 80,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    }
+   ]
   },
   {
    "key": "dist",
@@ -244,7 +320,33 @@
    "strokeWidth": 0,
    "font": "400 10.5px \"Arrow Display\", sans-serif",
    "fixedColor": true,
-   "textWidth": 104
+   "textWidth": 104,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.2"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.4"
+    },
+    {
+     "portId": "p3",
+     "spot": "0 0.6"
+    },
+    {
+     "portId": "p4",
+     "spot": "0 0.8"
+    },
+    {
+     "portId": "p5",
+     "spot": "1 0.5"
+    },
+    {
+     "portId": "p6",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "FC",
@@ -260,7 +362,21 @@
    "titleFocus": "0.5 0.5",
    "titleFont": "700 12.5px \"Arrow Display\", sans-serif",
    "pad": "20 27 22 25",
-   "group": "DRONE"
+   "group": "DRONE",
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p3",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "mcu",
@@ -324,7 +440,13 @@
    "titleFocus": "0.5 0.5",
    "titleFont": "700 12.5px \"Arrow Display\", sans-serif",
    "pad": "15 20 5 17",
-   "group": "DRONE"
+   "group": "DRONE",
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "tele",
@@ -374,7 +496,13 @@
    "minSize": "1 1",
    "strokeWidth": 0,
    "font": "400 10.5px \"Arrow Display\", sans-serif",
-   "fixedColor": true
+   "fixedColor": true,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    }
+   ]
   },
   {
    "key": "ant_d",
@@ -388,7 +516,21 @@
    "stroke": "#141414",
    "fixedColor": true,
    "minSize": "1 1",
-   "strokeWidth": 1.6
+   "strokeWidth": 1.6,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p3",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "ant_d_l",
@@ -450,7 +592,21 @@
    "stroke": "#141414",
    "fixedColor": true,
    "minSize": "1 1",
-   "strokeWidth": 1.6
+   "strokeWidth": 1.6,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p3",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "ant_g_l",
@@ -497,7 +653,13 @@
    "minSize": "1 1",
    "strokeWidth": 0,
    "font": "400 10.5px \"Arrow Display\", sans-serif",
-   "fixedColor": true
+   "fixedColor": true,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 0"
+    }
+   ]
   }
  ],
  "linkDataArray": [
@@ -505,8 +667,8 @@
    "key": -1,
    "from": "FC",
    "to": "ESC",
-   "fromPort": "T",
-   "toPort": "T",
+   "fromPort": "p3",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -517,8 +679,8 @@
    "key": -2,
    "from": "lipo",
    "to": "dist",
-   "fromPort": "B",
-   "toPort": "T",
+   "fromPort": "p1",
+   "toPort": "p6",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -529,8 +691,8 @@
    "key": -3,
    "from": "dist",
    "to": "esc1",
-   "fromPort": "L",
-   "toPort": "R",
+   "fromPort": "p1",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -541,8 +703,8 @@
    "key": -4,
    "from": "dist",
    "to": "esc2",
-   "fromPort": "L",
-   "toPort": "R",
+   "fromPort": "p2",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -553,8 +715,8 @@
    "key": -5,
    "from": "dist",
    "to": "esc3",
-   "fromPort": "L",
-   "toPort": "R",
+   "fromPort": "p3",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -565,8 +727,8 @@
    "key": -6,
    "from": "dist",
    "to": "esc4",
-   "fromPort": "L",
-   "toPort": "R",
+   "fromPort": "p4",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -577,8 +739,8 @@
    "key": -7,
    "from": "dist",
    "to": "FC",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p5",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -589,8 +751,8 @@
    "key": -8,
    "from": "esc1",
    "to": "mot1",
-   "fromPort": "L",
-   "toPort": "R",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -601,8 +763,8 @@
    "key": -9,
    "from": "esc2",
    "to": "mot2",
-   "fromPort": "L",
-   "toPort": "R",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -613,8 +775,8 @@
    "key": -10,
    "from": "esc3",
    "to": "mot3",
-   "fromPort": "L",
-   "toPort": "R",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -625,8 +787,8 @@
    "key": -11,
    "from": "esc4",
    "to": "mot4",
-   "fromPort": "L",
-   "toPort": "R",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -637,8 +799,8 @@
    "key": -12,
    "from": "FC",
    "to": "COMM",
-   "fromPort": "B",
-   "toPort": "T",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -649,8 +811,8 @@
    "key": -13,
    "from": "trx",
    "to": "ant_d",
-   "fromPort": "B",
-   "toPort": "T",
+   "fromPort": "p1",
+   "toPort": "p3",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -661,8 +823,8 @@
    "key": -14,
    "from": "ant_d",
    "to": "ant_g",
-   "fromPort": "B",
-   "toPort": "R",
+   "fromPort": "p1",
+   "toPort": "p3",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -673,8 +835,8 @@
    "key": -15,
    "from": "ant_g",
    "to": "ant_d",
-   "fromPort": "L",
-   "toPort": "L",
+   "fromPort": "p2",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",
@@ -685,8 +847,8 @@
    "key": -16,
    "from": "ant_g",
    "to": "gtrx",
-   "fromPort": "B",
-   "toPort": "T",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.5,
    "arrow": "Triangle",

@@ -12,6 +12,7 @@ components, not to draw pictures.
 | `03-flight-controller.gojs.json` | Diagram 3 — flight controller (70 blocks, 57 nets) |
 | `04-key-suppliers.gojs.json` | Diagram 4 — resources from key suppliers (90 blocks, 55 nets) |
 | `build-01-…mjs` · `build-02-…mjs` | Generators. Coordinates are measured from the source artwork |
+| `add-pins.mjs` | Turns the routed wire endpoints into named pins. Run after a generator |
 | `render-harness.html` · `render.mjs` · `figures.json` | Headless renderer for verifying a model without the Angular app |
 | `01-drone-top-level.png` | Current render |
 
@@ -20,8 +21,17 @@ components, not to draw pictures.
 ```bash
 cd diagram-poc/samples/drone
 node build-01-drone-top-level.mjs                                  # → .gojs.json
+node add-pins.mjs 01-drone-top-level.gojs.json --write             # endpoints → pins
 node render.mjs 01-drone-top-level.gojs.json 01-drone-top-level.png 2
 ```
+
+A generator writes wires against the **edge rails** — "leave from the right
+side" — and lets GoJS spread however many share a side along it. That routes
+correctly but leaves nothing to grab: the connection points are computed, not
+stored. `add-pins.mjs` reads back the geometry GoJS produced and writes it into
+the model, so every wire ends on a pin that can be seen, dragged or deleted.
+Nothing moves — it is checked by rendering before and after and diffing every
+endpoint — and it is safe to re-run, since ends already on a pin are left alone.
 
 The renderer needs a Chromium and a Playwright install; override the built-in
 paths with `CHROMIUM_PATH` / `PLAYWRIGHT_PATH` if yours differ.
@@ -93,6 +103,15 @@ properties panel carries:
 
 and the wire dock carries colour, style, width, routing, **corners**,
 **arrowhead** and **arrow size** (`corner`, `arrow`, `arrowScale`).
+
+Whatever you set on the wire dock becomes the style **every wire drawn after it**
+is given, and it survives a reload. Selecting an existing wire still shows that
+wire's own settings — so editing it is accurate — but it does not change what the
+next wire you draw looks like.
+
+Pins are shown on every kind of node: shapes, blocks, parts, images and
+containers. A container's pins matter as much as a block's — diagram 1 wires the
+antenna into the "Communication Systems" box, not into anything inside it.
 
 Each side of a block is a **connection rail**, not a single point. Drag from
 anywhere on an edge and the wire keeps the point you dropped it on — the

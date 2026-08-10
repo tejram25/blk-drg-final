@@ -89,6 +89,10 @@
     {
      "portId": "f",
      "spot": "0.1 1"
+    },
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
     }
    ]
   },
@@ -106,7 +110,21 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 400
+   "textWidth": 400,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p3",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "batfet",
@@ -122,7 +140,21 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 400
+   "textWidth": 400,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p3",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "fet2",
@@ -138,7 +170,21 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 400
+   "textWidth": 400,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p3",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "cells",
@@ -154,7 +200,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 180
+   "textWidth": 180,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "flash",
@@ -170,7 +222,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 400
+   "textWidth": 400,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "tp",
@@ -187,7 +245,13 @@
    "minSize": "1 1",
    "strokeWidth": 1.2,
    "textWidth": 400,
-   "dashPattern": true
+   "dashPattern": true,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "v33",
@@ -203,7 +267,17 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 76
+   "textWidth": 76,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    },
+    {
+     "portId": "p2",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "vsys",
@@ -220,7 +294,13 @@
    "minSize": "1 1",
    "strokeWidth": 0,
    "textWidth": 120,
-   "textAlign": "right"
+   "textAlign": "right",
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "1 0.5"
+    }
+   ]
   },
   {
    "key": "chg",
@@ -236,7 +316,17 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 150
+   "textWidth": 150,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.3333 0"
+    },
+    {
+     "portId": "p2",
+     "spot": "0.6667 0"
+    }
+   ]
   },
   {
    "key": "fuel",
@@ -252,7 +342,21 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 155
+   "textWidth": 155,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 1"
+    },
+    {
+     "portId": "p2",
+     "spot": "1 0.5"
+    },
+    {
+     "portId": "p3",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "ntc",
@@ -268,7 +372,13 @@
    "fixedColor": true,
    "minSize": "1 1",
    "strokeWidth": 0,
-   "textWidth": 400
+   "textWidth": 400,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0 0.5"
+    }
+   ]
   },
   {
    "key": "leds",
@@ -285,7 +395,13 @@
    "minSize": "1 1",
    "strokeWidth": 1.2,
    "textWidth": 400,
-   "dashPattern": true
+   "dashPattern": true,
+   "ports": [
+    {
+     "portId": "p1",
+     "spot": "0.5 0"
+    }
+   ]
   },
   {
    "key": "packttl",
@@ -475,8 +591,8 @@
    "key": -4,
    "from": "pd",
    "to": "fet1",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.4,
    "arrow": "Triangle",
@@ -492,8 +608,8 @@
    "key": -5,
    "from": "fet1",
    "to": "batfet",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p3",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.4,
    "arrow": "Triangle",
@@ -509,8 +625,8 @@
    "key": -6,
    "from": "batfet",
    "to": "fet2",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p3",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.4,
    "arrow": "Triangle",
@@ -526,8 +642,8 @@
    "key": -7,
    "from": "fet2",
    "to": "cells",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p3",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.4,
    "arrow": "Triangle",
@@ -544,7 +660,7 @@
    "from": "pd",
    "to": "flash",
    "fromPort": "d",
-   "toPort": "T",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.4,
    "arrow": "Triangle",
@@ -556,7 +672,7 @@
    "from": "pd",
    "to": "tp",
    "fromPort": "e",
-   "toPort": "L",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.4,
    "arrow": "Triangle",
@@ -573,7 +689,7 @@
    "key": -10,
    "from": "v33",
    "to": "pd",
-   "fromPort": "T",
+   "fromPort": "p2",
    "toPort": "f",
    "color": "#A6AAAD",
    "width": 1.4,
@@ -590,8 +706,8 @@
    "key": -11,
    "from": "vsys",
    "to": "v33",
-   "fromPort": "R",
-   "toPort": "L",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.4,
    "arrow": "Triangle",
@@ -603,8 +719,8 @@
    "key": -12,
    "from": "chg",
    "to": "fet1",
-   "fromPort": "T",
-   "toPort": "B",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.4,
    "arrow": "Triangle",
@@ -615,8 +731,8 @@
    "key": -13,
    "from": "chg",
    "to": "batfet",
-   "fromPort": "T",
-   "toPort": "B",
+   "fromPort": "p2",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.4,
    "arrow": "Triangle",
@@ -627,8 +743,8 @@
    "key": -14,
    "from": "fuel",
    "to": "fet2",
-   "fromPort": "T",
-   "toPort": "B",
+   "fromPort": "p3",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.4,
    "arrow": "Triangle",
@@ -639,8 +755,8 @@
    "key": -15,
    "from": "ntc",
    "to": "fuel",
-   "fromPort": "L",
-   "toPort": "R",
+   "fromPort": "p1",
+   "toPort": "p2",
    "color": "#A6AAAD",
    "width": 1.4,
    "arrow": "Triangle",
@@ -651,8 +767,8 @@
    "key": -16,
    "from": "fuel",
    "to": "leds",
-   "fromPort": "B",
-   "toPort": "T",
+   "fromPort": "p1",
+   "toPort": "p1",
    "color": "#A6AAAD",
    "width": 1.4,
    "arrow": "Triangle",
