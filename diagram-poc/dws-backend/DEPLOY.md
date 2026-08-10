@@ -64,6 +64,43 @@ which builds (with tests), ships, restarts, prints the status, and then polls
 `systemctl status` for about ten seconds — the health check is what tells the
 two apart.
 
+## If the service will not start
+
+`systemctl status` showing `status=203/EXEC` means systemd could not execute the
+binary in `ExecStart` — almost always the java path. systemd runs without the
+login profile, so a JVM outside `/usr/bin` is on your PATH but not the unit's,
+and the service dies before logging anything:
+
+```bash
+JAVA=$(readlink -f "$(command -v java)")      # e.g. /b001/app/openJDK_17/bin/java
+"$JAVA" -version                               # must be 17 — the jar targets 17
+
+sudo mkdir -p /etc/systemd/system/dws-backend.service.d
+sudo tee /etc/systemd/system/dws-backend.service.d/java-path.conf >/dev/null <<EOF
+[Service]
+ExecStart=
+ExecStart=$JAVA -Xms256m -Xmx512m -jar /home/oracle/dws-backend/dws-backend-0.0.1-SNAPSHOT.jar --server.port=8091
+EOF
+
+sudo systemctl daemon-reload && sudo systemctl restart dws-backend
+```
+
+The empty `ExecStart=` clears the inherited one; without it systemd refuses the
+unit for having two.
+
+**A client getting `ECONNREFUSED` is usually this**, not a network problem.
+Refused means the host answered and nothing was listening — a blocked port
+gives a timeout instead. Check in this order:
+
+```bash
+systemctl status dws-backend --no-pager | head -6   # want: active (running)
+ss -lntp | grep 8091                                # want: *:8091, not 127.0.0.1:8091
+curl -s http://127.0.0.1:8091/actuator/health       # want: {"status":"UP"}
+```
+
+Note the smoke test below uses `127.0.0.1`, which passes even when the port is
+closed to the outside — it proves the app is up, not that anyone can reach it.
+
 ## Smoke test
 
 ```bash
