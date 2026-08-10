@@ -855,14 +855,20 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           // stretches an imported 65x30 block to 65x40 — every small chip in a
           // reference diagram comes out the wrong height. Let the data opt out.
           new go.Binding('minSize', 'minSize', go.Size.parse),
-          new go.Binding('strokeWidth', 'strokeWidth')),
+          new go.Binding('strokeWidth', 'strokeWidth'),
+          // A dashed outline means "not fitted / optional" on a schematic —
+          // test points, a debug LED string — so it carries meaning and has to
+          // survive a round trip through the model.
+          new go.Binding('strokeDashArray', 'dashPattern',
+            (v) => (v === true ? [5, 4] : Array.isArray(v) ? v : null))),
         $(go.TextBlock,
           { editable: true, font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937',
             textAlign: 'center', maxSize: new go.Size(150, NaN), margin: 6 },
           new go.Binding('text').makeTwoWay(),
           new go.Binding('stroke', 'labelColor'),
-          // Imported artwork specifies its own type and wrap width.
+          // Imported artwork specifies its own type, alignment and wrap width.
           new go.Binding('font', 'font'),
+          new go.Binding('textAlign', 'textAlign'),
           new go.Binding('maxSize', 'textWidth', (w: number) => new go.Size(w, NaN))),
         $(go.Panel, 'Auto', { alignment: go.Spot.TopRight, alignmentFocus: go.Spot.TopRight, margin: 3, visible: false },
           new go.Binding('visible', 'components', (c) => Array.isArray(c) && c.length > 0),
@@ -875,6 +881,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         new go.Binding('text', 'sub').makeTwoWay(),
         new go.Binding('stroke', 'capColor'),
         new go.Binding('visible', 'sub', (s) => !!s && String(s).length > 0)),
+      // Optional extra pins, on their own overlay stretched across the shape.
+      // They cannot share the panel above: a panel with an itemArray keeps only
+      // its isPanelMain element when it rebuilds, so putting them there deletes
+      // the node's label. Four side ports remain available regardless.
+      $(go.Panel, 'Spot',
+        { itemTemplate: pinPort, stretch: go.GraphObject.Fill, pickable: false },
+        new go.Binding('itemArray', 'ports')),
       ...sidePorts(),
     );
     this.diagram.nodeTemplateMap.set('shape', shape);
@@ -972,11 +985,15 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       $(go.Panel, 'Auto',
         { segmentIndex: NaN, segmentFraction: 0.5, visible: false },
         new go.Binding('visible', 'text', (t) => !!t),
-        $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: 'rgba(14,15,17,0.75)', stroke: null }),
+        $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: 'rgba(14,15,17,0.75)', stroke: null },
+          new go.Binding('fill', 'textBg')),
         $(go.TextBlock, { font: '600 10px Roboto, sans-serif', stroke: '#e2e8f0', editable: true,
           margin: new go.Margin(1.5, 5, 1.5, 5) },
           new go.Binding('text').makeTwoWay(),
-          new go.Binding('stroke', 'color'))),
+          new go.Binding('stroke', 'color'),
+          // A net name on a schematic is plain text on the wire, not a chip.
+          new go.Binding('stroke', 'textColor'),
+          new go.Binding('font', 'textFont'))),
     );
 
     this.diagram.addModelChangedListener((e) => { if (e.isTransactionFinished) this.updateJunctions(); });

@@ -86,11 +86,16 @@ window.buildDiagram = function(modelJson, geo) {
         new go.Binding('figure','figure'), sizeBind(),
         new go.Binding('fill','fill'), new go.Binding('stroke','stroke'),
         new go.Binding('minSize','minSize',go.Size.parse),
-        new go.Binding('strokeWidth','strokeWidth')),
+        new go.Binding('strokeWidth','strokeWidth'),
+        new go.Binding('strokeDashArray','dashPattern',(v)=> v===true?[5,4]:(Array.isArray(v)?v:null))),
       $(go.TextBlock,
         { font:'600 12.5px Roboto, sans-serif', stroke:'#1f2937', textAlign:'center', maxSize:new go.Size(150,NaN), margin:6 },
         new go.Binding('text'), new go.Binding('stroke','labelColor'), new go.Binding('font','font'),
+        new go.Binding('textAlign','textAlign'),
         new go.Binding('maxSize','textWidth',(w)=> new go.Size(w,NaN)))),
+    $(go.Panel,'Spot',
+      { itemTemplate: pinPort, stretch: go.GraphObject.Fill, pickable: false },
+      new go.Binding('itemArray','ports')),
     $(go.TextBlock,{ alignment:new go.Spot(0.5,1,0,7), alignmentFocus:go.Spot.Top,
       font:'10.5px Roboto, sans-serif', stroke:'#94a3b8', textAlign:'center', maxSize:new go.Size(170,NaN) },
       new go.Binding('text','sub'),
@@ -144,9 +149,11 @@ window.buildDiagram = function(modelJson, geo) {
       new go.Binding('scale','arrowScale')),
     $(go.Panel,'Auto',{ segmentIndex:NaN, segmentFraction:0.5, visible:false },
       new go.Binding('visible','text',(t)=>!!t),
-      $(go.Shape,'RoundedRectangle',{ parameter1:4, fill:'rgba(255,255,255,0.9)', stroke:null }),
+      $(go.Shape,'RoundedRectangle',{ parameter1:4, fill:'rgba(255,255,255,0.9)', stroke:null },
+        new go.Binding('fill','textBg')),
       $(go.TextBlock,{ font:'600 10px Roboto, sans-serif', stroke:'#334155', margin:new go.Margin(1.5,5,1.5,5) },
-        new go.Binding('text'), new go.Binding('stroke','textColor'))));
+        new go.Binding('text'), new go.Binding('stroke','textColor'),
+        new go.Binding('font','textFont'))));
 
   // ---- group (ENHANCED: data-driven colored container) ----
   // Backwards compatible: with no styling data it renders the original dashed

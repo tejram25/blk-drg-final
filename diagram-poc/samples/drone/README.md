@@ -8,7 +8,8 @@ components, not to draw pictures.
 | File | What it is |
 |---|---|
 | `01-drone-top-level.gojs.json` | Diagram 1 — top-level drone + ground controller. Load straight into the editor |
-| `build-01-drone-top-level.mjs` | Generator that emits it. Coordinates are measured from the source artwork |
+| `02-battery-charger.gojs.json` | Diagram 2 — battery with charger |
+| `build-01-…mjs` · `build-02-…mjs` | Generators. Coordinates are measured from the source artwork |
 | `render-harness.html` · `render.mjs` · `figures.json` | Headless renderer for verifying a model without the Angular app |
 | `01-drone-top-level.png` | Current render |
 
@@ -62,4 +63,13 @@ diagram was drawn by hand rather than imported:
    so a solid black "Power System" and a blue "Flight Controller" are
    expressible. Groups with no styling data keep the old dashed look.
 4. **Arrowheads were fixed.** `arrow`, `arrowScale` and link `corner` are now
-   data-driven, along with `font` / `textWidth` / `strokeWidth` on shapes.
+   data-driven, along with `font` / `textAlign` / `textWidth` / `strokeWidth` on
+   shapes, and `textFont` / `textBg` on link labels.
+5. **A shape had exactly four ports.** A block diagram routinely needs more — a
+   connector with three signal rows, an SoC with a dozen interfaces — so a shape
+   can now declare pins at arbitrary spots via `ports`, like the symbol
+   template. They live on their own overlay panel: a GoJS panel with an
+   `itemArray` keeps only its `isPanelMain` element when it rebuilds, so putting
+   the pins beside the label silently deletes the label.
+6. **Dashed outlines** (`dashPattern`) — "not fitted / optional" on a schematic
+   is meaning, not decoration, and has to survive a round trip.
