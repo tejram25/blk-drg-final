@@ -554,9 +554,10 @@
 
                                                     <!-- Connection pins, beyond the four sides every node has -->
                                                     @if (isStyledShape) {
-                                                      <div class="prop-section">Connection pins ({{ pins.length }})</div>
-                                                      <div class="pin-hint">Every block already has a pin on each side. Add more when several wires
-                                                        arrive on the same edge and would otherwise stack on one point.</div>
+                                                      <div class="prop-section">Named pins ({{ pins.length }})</div>
+                                                      <div class="pin-hint">Not needed to wire. Drag from anywhere on an edge and the wire keeps
+                                                        the point you dropped it on. Add a named pin only when a connection has to stay
+                                                        put and be referred to — a labelled interface on a processor, say.</div>
                                                       @for (p of pins; track p.portId; let i = $index) {
                                                         <div class="pin-row">
                                                           <span class="pin-id">{{ p.portId }}</span>

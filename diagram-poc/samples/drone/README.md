@@ -94,11 +94,16 @@ properties panel carries:
 and the wire dock carries colour, style, width, routing, **corners**,
 **arrowhead** and **arrow size** (`corner`, `arrow`, `arrowScale`).
 
-Each side of a block is a **connection rail**, not a single point: drag from an
-edge as many times as you like and the wires spread evenly along it, the way the
-Distribution Board feeds four ESCs. Add explicit pins only when a net has to sit
-at a *particular* place on the edge — a named interface on an SoC — rather than
-wherever the spreading puts it.
+Each side of a block is a **connection rail**, not a single point. Drag from
+anywhere on an edge and the wire keeps the point you dropped it on — the
+connection point is created by drawing it, and is stored on the wire
+(`fromSpotXY` / `toSpotXY`) rather than declared on the block. Nothing has to be
+set up first, and two wires on one edge cannot land on top of each other.
+
+`ports` on a block is now only for **named** pins — a connection that has to
+stay put and be referred to, like the labelled interfaces on the processor in
+diagram 3. A wire dropped on one of those keeps the pin's position instead of
+its own.
 
 Two behaviours worth knowing:
 

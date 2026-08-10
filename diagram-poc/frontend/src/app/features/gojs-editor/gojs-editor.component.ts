@@ -447,9 +447,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       if (e.isTransactionFinished) this.zone.run(() => { this.updateCanvasEmpty(); this.scheduleAutosave(); });
     });
     this.diagram.addDiagramListener('ViewportBoundsChanged', () => this.onViewport());
-    this.diagram.addDiagramListener('LinkDrawn', (e) => this.styleDrawnLink(e.subject as go.Link));
+    this.diagram.addDiagramListener('LinkDrawn', (e) => {
+      const link = e.subject as go.Link;
+      this.pinDrawnEnds(link);
+      this.styleDrawnLink(link);
+    });
     this.diagram.addDiagramListener('LinkRelinked', (e) => {
       const link = e.subject as go.Link;
+      this.pinDrawnEnds(link);
       if (link?.data?.wire) this.straightenWire(link);
     });
     this.diagram.addDiagramListener('ObjectSingleClicked', (e) => {
@@ -1017,6 +1022,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       new go.Binding('curve', 'routing', (r) => r === 'smooth' ? go.Link.Bezier : go.Link.None),
       new go.Binding('corner', 'wire', (w) => (w ? 0 : 8)),
       new go.Binding('corner', 'corner'),
+      // Where this wire meets each block. Held on the wire, not on the block:
+      // a connection point belongs to the connection, so drawing one is enough
+      // to create it and nobody has to declare a pin up front. Absent, the
+      // block's own port decides, which is what an imported drawing wants.
+      // Spot.Default when absent, which hands the decision back to the port —
+      // an imported drawing carries no per-wire spots and must keep using them.
+      new go.Binding('fromSpot', 'fromSpotXY', (s) => (s ? go.Spot.parse(s) : go.Spot.Default)),
+      new go.Binding('toSpot', 'toSpotXY', (s) => (s ? go.Spot.parse(s) : go.Spot.Default)),
       $(go.Shape, { isPanelMain: true, stroke: 'transparent', strokeWidth: 18 }),
       $(go.Shape, { isPanelMain: true, strokeWidth: 2, stroke: '#94a3b8' },
         new go.Binding('stroke', 'color'),
@@ -1066,7 +1079,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       }
       const act = tool.doActivate.bind(tool);
       const deact = tool.doDeactivate.bind(tool);
-      tool.doActivate = () => { act(); this.showAllPins(true); };
+      tool.doActivate = () => {
+        // The mouse-down that started the drag: the exact point on the edge the
+        // user grabbed, which becomes this wire's connection point.
+        this.linkStart = this.diagram.firstInput?.documentPoint?.copy() ?? null;
+        act();
+        this.showAllPins(true);
+      };
       tool.doDeactivate = () => { deact(); this.showAllPins(false); };
     };
     styleLinking(this.diagram.toolManager.linkingTool);
@@ -1405,6 +1424,44 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
     return best;
+  }
+
+  /**
+   * Where the drag began, in document coordinates. `firstInput` is the
+   * mouse-down that started the tool, so it is the point on the block's edge
+   * the user actually grabbed.
+   */
+  private linkStart: go.Point | null = null;
+
+  /**
+   * Record where a freshly drawn wire meets each block, so it stays where it
+   * was dropped instead of sliding to the middle of the edge.
+   *
+   * This is what removes the need to declare a pin before wiring: drawing the
+   * wire *is* how its connection point is created. Only edge rails get a spot —
+   * a wire dropped on a named pin should keep that pin's own position.
+   */
+  private pinDrawnEnds(link: go.Link): void {
+    if (!link) return;
+    const sides = new Set(['T', 'R', 'B', 'L']);
+    const end = this.diagram.lastInput?.documentPoint ?? null;
+    const set = (which: 'from' | 'to', port: go.GraphObject | null, pt: go.Point | null) => {
+      if (!port || !pt || !sides.has(String(port.portId))) return;
+      const b = port.getDocumentBounds();
+      if (!b || !b.width || !b.height) return;
+      const fx = Math.min(1, Math.max(0, (pt.x - b.x) / b.width));
+      const fy = Math.min(1, Math.max(0, (pt.y - b.y) / b.height));
+      // A rail is long in one direction only; pin the wire along that axis and
+      // keep it on the rail's centreline — which is the block's edge — in the
+      // other, so the wire meets the outline rather than floating beside it.
+      const spot = b.height >= b.width ? new go.Spot(0.5, fy) : new go.Spot(fx, 0.5);
+      this.diagram.model.set(link.data, which + 'SpotXY', go.Spot.stringify(spot));
+    };
+    this.diagram.model.commit(() => {
+      set('from', link.fromPort, this.linkStart);
+      set('to', link.toPort, end);
+    }, 'pin wire ends');
+    this.linkStart = null;
   }
 
   /** Apply the current wire style to a freshly created link (drawn by drag or by
