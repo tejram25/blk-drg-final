@@ -530,8 +530,18 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
    * block/shape side handles rest hidden until hover. */
   private resetPins(node: go.Node): void {
     const c = node.data?.category;
+    // Pins someone added deliberately stay visible, the way a symbol's pins do.
+    // The four side rails do not — they would outline every block on the canvas.
+    // Without this a pin is invisible until you happen to hover the node, so
+    // moving one along its edge from the properties panel looks like nothing is
+    // happening, and there is no target to start a wire from.
+    const explicit = Array.isArray(node.data?.ports) && node.data.ports.length > 0;
     const rest = c === 'symbol' || c === 'basic' ? 0.45 : 0;
-    node.ports.each((p) => { if (p.portId) p.opacity = rest; });
+    const sides = new Set(['T', 'R', 'B', 'L']);
+    node.ports.each((p) => {
+      if (!p.portId) return;
+      p.opacity = explicit && !sides.has(p.portId) ? 0.55 : rest;
+    });
   }
 
   /**
@@ -902,22 +912,31 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         new go.Binding('text', 'sub').makeTwoWay(),
         new go.Binding('stroke', 'capColor'),
         new go.Binding('visible', 'sub', (s) => !!s && String(s).length > 0)),
+      ...sidePorts(),
       // Optional extra pins, on their own overlay stretched across the shape.
-      // They cannot share the panel above: a panel with an itemArray keeps only
-      // its isPanelMain element when it rebuilds, so putting them there deletes
-      // the node's label. Four side ports remain available regardless.
+      // They cannot share the panel that holds the label: a panel with an
+      // itemArray keeps only its isPanelMain element when it rebuilds, so
+      // putting them there deletes the label.
+      //
+      // Declared *after* the side rails on purpose. Both are hit targets, and a
+      // rail spans the whole edge, so whichever is declared last wins the hit
+      // test — with the pins first, a drag that started on a pin produced a
+      // wire from the side instead. The overlay must also stay pickable: it is
+      // the pins' own hit area, and `pickable: false` on the panel silences the
+      // entire subtree, which is what stopped a wire being drawn from a pin at
+      // all.
       $(go.Panel, 'Spot',
-        { itemTemplate: pinPort, pickable: false },
+        { itemTemplate: pinPort },
         new go.Binding('itemArray', 'ports'),
         // A Spot panel positions its children against its *main* element, so
         // the overlay needs one at the node's full size. Without it the pins
         // align to whichever pin happens to be first and every one of them
         // lands near the middle of the block — which reads as wires escaping
-        // from inside a chip rather than from its edge.
+        // from inside a chip rather than from its edge. It is not itself a
+        // target: only the pins on top of it are.
         $(go.Shape, 'Rectangle',
-          { isPanelMain: true, fill: null, stroke: null, strokeWidth: 0 },
+          { isPanelMain: true, fill: null, stroke: null, strokeWidth: 0, pickable: false },
           new go.Binding('desiredSize', 'size', go.Size.parse))),
-      ...sidePorts(),
     );
     this.diagram.nodeTemplateMap.set('shape', shape);
 
@@ -1565,12 +1584,21 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   addPin(side: 'left' | 'right' | 'top' | 'bottom' = 'right'): void {
     if (!this.selectedNode) return;
-    const pins = [...this.pins];
-    const n = pins.length;
-    const along = ((n % 4) + 1) / 5;
+    const pins = this.pins.map((p) => ({ ...p }));
+    // Number from the highest id in use, not from the count. Adding after a
+    // removal otherwise reissues an id that is still on the node, and two ports
+    // sharing an id makes every wire on them ambiguous.
+    const highest = pins.reduce((max, p) => {
+      const m = /^p(\d+)$/.exec(String(p.portId));
+      return m ? Math.max(max, Number(m[1])) : max;
+    }, 0);
+    // Spread down the chosen side rather than stacking: 1/5, 2/5 … and then
+    // halfway between the existing ones once the fifths are used up.
+    const used = pins.filter((p) => this.pinSide(p.spot) === side).length;
+    const along = used < 4 ? (used + 1) / 5 : Math.min(0.95, ((used % 9) + 1) / 10);
     const spot = side === 'left' ? `0 ${along}` : side === 'right' ? `1 ${along}`
       : side === 'top' ? `${along} 0` : `${along} 1`;
-    pins.push({ portId: 'p' + (n + 1), spot });
+    pins.push({ portId: 'p' + (highest + 1), spot });
     this.writePins(pins);
   }
   setPinSide(i: number, side: 'left' | 'right' | 'top' | 'bottom'): void {
