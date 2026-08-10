@@ -64,7 +64,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.3161"
     }
    ]
   },
@@ -108,7 +108,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.7375"
     }
    ]
   },
@@ -130,7 +130,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.4004"
     }
    ]
   },
@@ -152,7 +152,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.3696"
     }
    ]
   },
@@ -196,7 +196,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.477"
     }
    ]
   },
@@ -234,7 +234,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.4"
     }
    ]
   },
@@ -290,7 +290,7 @@
     },
     {
      "portId": "d",
-     "spot": "0 0.8"
+     "spot": "0 0.8478"
     }
    ]
   },
@@ -316,7 +316,7 @@
     },
     {
      "portId": "p2",
-     "spot": "1 0.6667"
+     "spot": "1 0.7143"
     }
    ]
   },
@@ -548,7 +548,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.3333"
+     "spot": "0 0.3158"
     },
     {
      "portId": "p2",
@@ -574,7 +574,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.375"
     },
     {
      "portId": "p2",
@@ -670,7 +670,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.4583"
     }
    ]
   },
@@ -806,7 +806,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.5511"
     }
    ]
   },
@@ -828,7 +828,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.5179"
     }
    ]
   },
@@ -850,7 +850,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.4837"
     }
    ]
   },
@@ -872,7 +872,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.5154"
     }
    ]
   },
@@ -920,7 +920,7 @@
     },
     {
      "portId": "p2",
-     "spot": "0 0.5"
+     "spot": "0 0.4211"
     }
    ]
   },
@@ -972,7 +972,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.4643"
     }
    ]
   },
@@ -1298,7 +1298,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0 0.5"
+     "spot": "0 0.4412"
     },
     {
      "portId": "p2",
@@ -1542,7 +1542,7 @@
    "ports": [
     {
      "portId": "l1",
-     "spot": "0 0.14"
+     "spot": "0 0.171"
     },
     {
      "portId": "l2",
@@ -2059,7 +2059,8 @@
    "textFont": "400 7px \"Arrow Display\", sans-serif",
    "textBg": "transparent",
    "textOffset": "0 -6",
-   "textFraction": 0.55
+   "textFraction": 0.55,
+   "fromEnd": 24
   },
   {
    "key": -24,
@@ -2439,7 +2440,8 @@
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
    "textBg": "transparent",
-   "textOffset": "0 -6"
+   "textOffset": "0 -6",
+   "fromEnd": 24
   },
   {
    "key": -48,
@@ -2456,7 +2458,8 @@
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
    "textBg": "transparent",
-   "textOffset": "0 -6"
+   "textOffset": "0 -6",
+   "fromEnd": 24
   },
   {
    "key": -49,
@@ -2544,7 +2547,8 @@
    "textFont": "400 7px \"Arrow Display\", sans-serif",
    "textBg": "transparent",
    "textOffset": "0 -6",
-   "textFraction": 0.9
+   "textFraction": 0.9,
+   "fromEnd": 24
   },
   {
    "key": -54,
@@ -2580,7 +2584,8 @@
    "textFont": "400 7px \"Arrow Display\", sans-serif",
    "textBg": "transparent",
    "textOffset": "0 -6",
-   "textFraction": 0.38
+   "textFraction": 0.38,
+   "fromEnd": 24
   },
   {
    "key": -56,

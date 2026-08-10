@@ -795,6 +795,13 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const pinPort = $(
       go.Panel, 'Spot',
       new go.Binding('alignment', 'spot', go.Spot.parse),
+      // Sit the marker *inside* the block with its outer edge on the outline,
+      // exactly as the rails do. Centred on the outline it did two bad things:
+      // the wire attached to the marker's outer edge and so stopped half a
+      // marker short of the block, and — because a Spot panel takes the size of
+      // everything in it — pins on one side only made the whole overlay
+      // lopsided, which shifted every pin on that node by half a marker.
+      new go.Binding('alignmentFocus', 'spot', sideSpot),
       // Shaped like the selection handles, deliberately: a small opaque square
       // on the outline. The translucent circle this replaces was 11px and drawn
       // through the border, so a row of them read as a smudge along the edge
@@ -1067,6 +1074,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       // an imported drawing carries no per-wire spots and must keep using them.
       new go.Binding('fromSpot', 'fromSpotXY', (s) => (s ? go.Spot.parse(s) : go.Spot.Default)),
       new go.Binding('toSpot', 'toSpotXY', (s) => (s ? go.Spot.parse(s) : go.Spot.Default)),
+      // How far a wire runs straight out of a block before it turns. It also
+      // decides where the turn happens — orthogonal routing puts the crossbar
+      // midway between the two end segments — so it is how two wires making the
+      // same journey are kept off each other rather than drawn as one line.
+      new go.Binding('fromEndSegmentLength', 'fromEnd'),
+      new go.Binding('toEndSegmentLength', 'toEnd'),
       $(go.Shape, { isPanelMain: true, stroke: 'transparent', strokeWidth: 18 }),
       $(go.Shape, { isPanelMain: true, strokeWidth: 2, stroke: '#94a3b8' },
         new go.Binding('stroke', 'color'),
@@ -1642,6 +1655,62 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.diagram.model.set(link.data, which + 'SpotXY', go.Spot.stringify(spot));
   }
 
+  /**
+   * Where a wire meets a block, in document coordinates, derived from the model
+   * rather than from `Link.points` — which has not been recomputed yet at the
+   * moment these handlers run.
+   */
+  private endDocPoint(link: go.Link, which: 'from' | 'to'): go.Point | null {
+    const portId = String(link.data?.[which + 'Port'] ?? '');
+    const node = this.diagram.findNodeForKey(link.data?.[which] as go.Key);
+    let port: go.GraphObject | null = null;
+    node?.ports.each((p) => { if (p.portId === portId) port = p; });
+    if (!port) return null;
+    const b = (port as go.GraphObject).getDocumentBounds();
+    if (!b || !b.width || !b.height) return null;
+    const raw = link.data?.[which + 'SpotXY'];
+    // A named pin has no recorded spot: it *is* the point.
+    if (!raw) return new go.Point(b.x + b.width / 2, b.y + b.height / 2);
+    const s = go.Spot.parse(String(raw));
+    return new go.Point(b.x + b.width * s.x, b.y + b.height * s.y);
+  }
+
+  /**
+   * A run within a few pixels of straight is drawn straight.
+   *
+   * Orthogonal routing turns a 1 px difference between two nearly-aligned ends
+   * into a full S-bend, and a dogleg in what reads as a straight line is the
+   * single thing that makes an otherwise correct drawing look hand-shaky. Only
+   * the end that was just placed moves, and only if it is on a rail — a named
+   * pin owns its position, and nudging it would drag every other wire on it.
+   */
+  private static readonly STRAIGHTEN_TOL = 6;
+
+  private straightenRun(link: go.Link, moved: 'from' | 'to'): void {
+    const portId = String(link.data?.[moved + 'Port'] ?? '');
+    if (!GojsEditorComponent.RAIL_IDS.has(portId)) return;
+    const other = moved === 'from' ? 'to' : 'from';
+    const otherId = String(link.data?.[other + 'Port'] ?? '');
+    const horizontal = portId === 'L' || portId === 'R';
+    // Only when both ends face along the same axis; an L-shaped run is meant
+    // to bend, and squaring it up would move the wire somewhere else entirely.
+    if (horizontal !== (otherId === 'L' || otherId === 'R')) return;
+    const a = this.endDocPoint(link, moved), z = this.endDocPoint(link, other);
+    if (!a || !z) return;
+    const off = horizontal ? z.y - a.y : z.x - a.x;
+    if (!off || Math.abs(off) > GojsEditorComponent.STRAIGHTEN_TOL) return;
+    const node = this.diagram.findNodeForKey(link.data?.[moved] as go.Key);
+    let port: go.GraphObject | null = null;
+    node?.ports.each((p) => { if (p.portId === portId) port = p; });
+    const b = (port as go.GraphObject | null)?.getDocumentBounds();
+    if (!b || !b.width || !b.height) return;
+    const s = go.Spot.parse(String(link.data?.[moved + 'SpotXY'] ?? '0.5 0.5'));
+    const snapped = horizontal
+      ? new go.Spot(s.x, Math.min(1, Math.max(0, (a.y + off - b.y) / b.height)))
+      : new go.Spot(Math.min(1, Math.max(0, (a.x + off - b.x) / b.width)), s.y);
+    this.diagram.model.set(link.data, moved + 'SpotXY', go.Spot.stringify(snapped));
+  }
+
   /** A newly drawn wire: both ends are being placed, by one drag. */
   private pinDrawnEnds(link: go.Link): void {
     if (!link) return;
@@ -1649,6 +1718,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.diagram.model.commit(() => {
       this.setWireEnd(link, 'from', this.linkStart);
       this.setWireEnd(link, 'to', end);
+      // The drop end yields to the grabbed one: you aimed with the first click.
+      this.straightenRun(link, 'to');
     }, 'pin wire ends');
     this.linkStart = null;
   }
@@ -1673,7 +1744,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     const moved: 'from' | 'to' = reach('from') <= reach('to') ? 'from' : 'to';
     if (!isFinite(reach(moved))) return;
-    this.diagram.model.commit(() => this.setWireEnd(link, moved, pt), 'move wire end');
+    this.diagram.model.commit(() => {
+      this.setWireEnd(link, moved, pt);
+      this.straightenRun(link, moved);
+    }, 'move wire end');
   }
 
   /**

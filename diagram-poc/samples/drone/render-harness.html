@@ -54,6 +54,9 @@ window.buildDiagram = function(modelJson, geo) {
   const sidePorts = () => Object.keys(SIDE).map((k)=> sidePort(k, SIDE[k][0], SIDE[k][1], SIDE[k][2]));
   const pinPort = $(go.Panel, 'Spot',
     new go.Binding('alignment','spot',go.Spot.parse),
+    // Marker wholly inside the block, outer edge on the outline: the wire then
+    // meets the block instead of stopping half a marker short of it.
+    new go.Binding('alignmentFocus','spot',sideSpot),
     $(go.Shape,'Circle',{ desiredSize:new go.Size(11,11), fill:'#0f172a', stroke:'#22d3ee',
       strokeWidth:1.5, cursor:'crosshair', opacity:0, fromLinkable:true, toLinkable:true },
       new go.Binding('portId','portId'),
@@ -155,6 +158,12 @@ window.buildDiagram = function(modelJson, geo) {
     new go.Binding('curve','routing',(r)=> r==='smooth'? go.Link.Bezier: go.Link.None),
     new go.Binding('corner','wire',(w)=> w?0:8),
     new go.Binding('corner','corner'),
+    new go.Binding('fromSpot','fromSpotXY',(s)=> s? go.Spot.parse(s): go.Spot.Default),
+    new go.Binding('toSpot','toSpotXY',(s)=> s? go.Spot.parse(s): go.Spot.Default),
+    // How far the wire runs straight out before it turns, and so where the
+    // crossbar sits: what keeps two wires making the same journey apart.
+    new go.Binding('fromEndSegmentLength','fromEnd'),
+    new go.Binding('toEndSegmentLength','toEnd'),
     $(go.Shape,{ isPanelMain:true, stroke:'transparent', strokeWidth:18 }),
     $(go.Shape,{ isPanelMain:true, strokeWidth:2, stroke:'#94a3b8' },
       new go.Binding('stroke','color'), new go.Binding('strokeWidth','width'), new go.Binding('strokeDashArray','dash')),

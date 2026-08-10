@@ -344,7 +344,7 @@
     },
     {
      "portId": "p6",
-     "spot": "0.5 0"
+     "spot": "0.5042 0"
     }
    ]
   },
@@ -444,7 +444,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0.5 0"
+     "spot": "0.4938 0"
     }
    ]
   },
@@ -657,7 +657,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0.5 0"
+     "spot": "0.503 0"
     }
    ]
   }
@@ -709,7 +709,8 @@
    "width": 1.5,
    "arrow": "Triangle",
    "arrowScale": 1.15,
-   "corner": 0
+   "corner": 0,
+   "fromEnd": 24
   },
   {
    "key": -5,

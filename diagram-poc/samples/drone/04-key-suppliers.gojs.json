@@ -76,7 +76,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0.3333 0"
+     "spot": "0.3542 0"
     },
     {
      "portId": "p2",
@@ -150,7 +150,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "0.5 0"
+     "spot": "0.3824 0"
     }
    ]
   },
@@ -954,7 +954,7 @@
     },
     {
      "portId": "p2",
-     "spot": "0.5 0"
+     "spot": "0.4651 0"
     }
    ]
   },
@@ -1164,7 +1164,7 @@
     },
     {
      "portId": "p2",
-     "spot": "0.5 0"
+     "spot": "0.5375 0"
     }
    ]
   },
@@ -1290,7 +1290,7 @@
     },
     {
      "portId": "p3",
-     "spot": "0.3333 0"
+     "spot": "0.3256 0"
     },
     {
      "portId": "p4",
@@ -1364,7 +1364,7 @@
     },
     {
      "portId": "p2",
-     "spot": "0 0.5"
+     "spot": "0 0.5435"
     },
     {
      "portId": "p3",
@@ -1398,7 +1398,7 @@
     },
     {
      "portId": "p3",
-     "spot": "0 0.5"
+     "spot": "0 0.5588"
     }
    ]
   },
@@ -2271,7 +2271,8 @@
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "wire": true,
+   "fromEnd": 24
   },
   {
    "key": -16,
@@ -2310,7 +2311,8 @@
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "wire": true,
+   "fromEnd": 24
   },
   {
    "key": -19,
@@ -2323,7 +2325,8 @@
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "wire": true,
+   "fromEnd": 52
   },
   {
    "key": -20,
@@ -2336,7 +2339,8 @@
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "wire": true,
+   "fromEnd": 38
   },
   {
    "key": -21,
@@ -2349,7 +2353,8 @@
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "wire": true,
+   "fromEnd": 24
   },
   {
    "key": -22,
