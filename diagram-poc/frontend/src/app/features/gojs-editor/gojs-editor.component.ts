@@ -771,7 +771,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         // 9px stripe is a fiddly thing to hit on a first attempt.
         desiredSize: vertical ? new go.Size(14, NaN) : new go.Size(NaN, 14),
         stretch: vertical ? go.GraphObject.Vertical : go.GraphObject.Horizontal,
-        cursor: 'crosshair', opacity: 0, alignment: spot, alignmentFocus: go.Spot.Center,
+        // `alignmentFocus: spot` keeps the rail wholly inside the block, with its
+        // outer edge on the outline. Centred on the outline it straddled it, and
+        // a connection point half a rail outside the block is what put the little
+        // hook at the start of every wire: the spot recorded for it was interior,
+        // so GoJS had no outward direction to leave in and doubled back.
+        cursor: 'crosshair', opacity: 0, alignment: spot, alignmentFocus: spot,
         portId: id, fromLinkable: true, toLinkable: true, fromSpot: side, toSpot: side,
       });
     const sidePorts = () => [
@@ -1098,12 +1103,47 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         port.strokeWidth = 2;
         port.fill = null;
       }
+      /**
+       * Place the preview endpoints ourselves.
+       *
+       * The stock implementation copies the real port's size onto the temporary
+       * one, which was fine while every port was a 9px dot. Now that a block's
+       * whole face is a drop target, that meant a block-sized circle drawn on top
+       * of the block you were dragging over. It also parks the preview at the
+       * port's *centre*, so a wire drawn from the bottom of a tall block's edge
+       * previewed from the middle and then jumped on release.
+       */
+      tool.portTargeted = (_node, port, temporarynode, temporaryport, toend) => {
+        const link = tool.temporaryLink;
+        const setSpot = (s: go.Spot) => { if (!link) return; if (toend) link.toSpot = s; else link.fromSpot = s; };
+        if (!port || !temporarynode || !temporaryport) { setSpot(go.Spot.Default); return; }
+        // Which end is under the pointer: the other one is anchored, either at
+        // the point the drag started from or at the wire's existing endpoint.
+        const moving = tool.isForwards === toend;
+        const orig = tool.originalLink;
+        let ref: go.Point | null;
+        if (moving) {
+          ref = this.diagram.lastInput?.documentPoint ?? null;
+        } else if (orig && orig.pointsCount > 1) {
+          ref = orig.getPoint(toend ? orig.pointsCount - 1 : 0).copy();
+        } else {
+          ref = this.linkStart;
+        }
+        temporaryport.desiredSize = new go.Size(14, 14);
+        temporarynode.locationSpot = go.Spot.Center;
+        temporarynode.location = this.tempPortPoint(port, ref);
+        // Leave the preview in the same direction the finished wire will, so the
+        // route does not change shape the instant the mouse comes up.
+        setSpot(this.outwardSpot(port));
+      };
+
       const act = tool.doActivate.bind(tool);
       const deact = tool.doDeactivate.bind(tool);
       tool.doActivate = () => {
         // The mouse-down that started the drag: the exact point on the edge the
         // user grabbed, which becomes this wire's connection point.
         this.linkStart = this.diagram.firstInput?.documentPoint?.copy() ?? null;
+        if (tool.temporaryLink) { tool.temporaryLink.fromSpot = go.Spot.Default; tool.temporaryLink.toSpot = go.Spot.Default; }
         act();
         this.showAllPins(true);
       };
@@ -1516,6 +1556,44 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.railOf(nodeKey, side);
   }
 
+  /**
+   * Where the preview endpoint belongs while a wire is being drawn: as close as
+   * possible to where the finished wire will actually attach.
+   *
+   * On a rail that is the grabbed point projected onto the block's outline; on a
+   * named pin it is the pin, which owns its own position; on a block's face it
+   * is simply the point under the pointer.
+   */
+  private tempPortPoint(port: go.GraphObject, ref: go.Point | null): go.Point {
+    const b = port.getDocumentBounds();
+    const centre = new go.Point(b.x + b.width / 2, b.y + b.height / 2);
+    if (!ref || !b.width || !b.height) return centre;
+    const x = Math.min(b.x + b.width, Math.max(b.x, ref.x));
+    const y = Math.min(b.y + b.height, Math.max(b.y, ref.y));
+    switch (String(port.portId ?? '')) {
+      case 'L': return new go.Point(b.x, y);
+      case 'R': return new go.Point(b.x + b.width, y);
+      case 'T': return new go.Point(x, b.y);
+      case 'B': return new go.Point(x, b.y + b.height);
+      case '': return new go.Point(x, y);
+      default: return centre;
+    }
+  }
+
+  /** The direction a wire leaves a port, for previewing its route. */
+  private outwardSpot(port: go.GraphObject): go.Spot {
+    switch (String(port.portId ?? '')) {
+      case 'L': return go.Spot.Left;
+      case 'R': return go.Spot.Right;
+      case 'T': return go.Spot.Top;
+      case 'B': return go.Spot.Bottom;
+      default: {
+        const s = port.fromSpot;
+        return s && !s.isDefault() ? s : go.Spot.Default;
+      }
+    }
+  }
+
   /** Write one end's attachment point, as a fraction along its rail. */
   private setWireEnd(link: go.Link, which: 'from' | 'to', pt: go.Point | null): void {
     if (!pt) return;
@@ -1538,10 +1616,17 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!b || !b.width || !b.height) return;
     const fx = Math.min(1, Math.max(0, (pt.x - b.x) / b.width));
     const fy = Math.min(1, Math.max(0, (pt.y - b.y) / b.height));
-    // A rail is long in one direction only; pin the wire along that axis and
-    // keep it on the rail's centreline — which is the block's edge — in the
-    // other, so the wire meets the outline rather than floating beside it.
-    const spot = b.height >= b.width ? new go.Spot(0.5, fy) : new go.Spot(fx, 0.5);
+    // A rail is long in one direction only: pin the wire along that axis, and on
+    // the *outer* edge in the other. The outer edge matters as much as the
+    // position — a spot on the boundary tells GoJS which way the wire leaves, so
+    // it heads straight out. An interior spot (the old 0.5 across) leaves the
+    // direction undefined, and orthogonal routing resolves that with a hook.
+    const spots: Record<string, go.Spot> = {
+      L: new go.Spot(0, fy), R: new go.Spot(1, fy),
+      T: new go.Spot(fx, 0), B: new go.Spot(fx, 1),
+    };
+    const spot = spots[String(port.portId)];
+    if (!spot) return;
     this.diagram.model.set(link.data, which + 'SpotXY', go.Spot.stringify(spot));
   }
 

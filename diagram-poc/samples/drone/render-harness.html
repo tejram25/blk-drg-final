@@ -42,9 +42,11 @@ window.buildDiagram = function(modelJson, geo) {
   // can leave one side and GoJS spreads them along it.
   const sidePort = (id, spot, side, vertical) => $(go.Shape, 'RoundedRectangle', {
     parameter1: 4, fill:'rgba(34,211,238,0.30)', stroke:'#22d3ee', strokeWidth:1,
-    desiredSize: vertical ? new go.Size(9, NaN) : new go.Size(NaN, 9),
+    // Mirrors the editor's rails: 14px wide and wholly inside the block, with
+    // its outer edge on the outline.
+    desiredSize: vertical ? new go.Size(14, NaN) : new go.Size(NaN, 14),
     stretch: vertical ? go.GraphObject.Vertical : go.GraphObject.Horizontal,
-    cursor:'crosshair', opacity:0, alignment:spot, alignmentFocus:go.Spot.Center,
+    cursor:'crosshair', opacity:0, alignment:spot, alignmentFocus:spot,
     portId:id, fromLinkable:true, toLinkable:true,
     fromSpot:side||spot, toSpot:side||spot });
   const SIDE = { T:[go.Spot.Top,go.Spot.TopSide,false], R:[go.Spot.Right,go.Spot.RightSide,true],
