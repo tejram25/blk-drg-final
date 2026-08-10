@@ -458,6 +458,33 @@
                                                                 <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 14 C 10 14 14 2 22 2" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
                                                               </div>
                                                             </div>
+                                                            <div class="pop-section"><span class="pop-title">Corners</span>
+                                                              <div class="dock-group">
+                                                                <button class="dock-btn" matTooltip="Rounded corners" [class.active]="wireCorner === 'round'" (click)="setWireCorner('round')">
+                                                                  <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 14 H 8 Q 12 14 12 10 V 2 H 22" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
+                                                                <button class="dock-btn" matTooltip="Square corners" [class.active]="wireCorner === 'square'" (click)="setWireCorner('square')">
+                                                                  <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 14 H 12 V 2 H 22" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
+                                                              </div>
+                                                            </div>
+                                                            <div class="pop-section"><span class="pop-title">Arrowhead</span>
+                                                              <div class="dock-group">
+                                                                <button class="dock-btn" matTooltip="Slim arrowhead" [class.active]="wireArrow === 'Standard'" (click)="setWireArrow('Standard')">
+                                                                  <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 8 H 15" stroke="currentColor" stroke-width="2" fill="none"/><path d="M 14 4 L 22 8 L 14 12 Z" fill="currentColor"/></svg></button>
+                                                                <button class="dock-btn" matTooltip="Wide arrowhead" [class.active]="wireArrow === 'Triangle'" (click)="setWireArrow('Triangle')">
+                                                                  <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 8 H 13" stroke="currentColor" stroke-width="2" fill="none"/><path d="M 12 2 L 22 8 L 12 14 Z" fill="currentColor"/></svg></button>
+                                                                <button class="dock-btn" matTooltip="No arrowhead (plain wire)" [class.active]="wireArrow === 'none'" (click)="setWireArrow('none')">
+                                                                  <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 8 H 22" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
+                                                              </div>
+                                                            </div>
+                                                            @if (wireArrow !== 'none') {
+                                                              <div class="pop-section"><span class="pop-title">Arrow size</span>
+                                                                <div class="dock-group">
+                                                                  <button class="dock-btn" matTooltip="Small" [class.active]="wireArrowScale <= 0.8" (click)="setWireArrowScale(0.7)">S</button>
+                                                                  <button class="dock-btn" matTooltip="Medium" [class.active]="wireArrowScale > 0.8 && wireArrowScale < 1.3" (click)="setWireArrowScale(1)">M</button>
+                                                                  <button class="dock-btn" matTooltip="Large" [class.active]="wireArrowScale >= 1.3" (click)="setWireArrowScale(1.5)">L</button>
+                                                                </div>
+                                                              </div>
+                                                            }
                                                           </div>
                                                         }
                                                       </div>
@@ -470,9 +497,81 @@
                                                         <div class="prop-type"><mat-icon>category</mat-icon>{{ nodeTypeName }}</div>
                                                         <label><span>{{ 'props.name' | translate }}</span>
                                                       <input [ngModel]="s.text" (ngModelChange)="setField('text', $event)" /></label>
-                                                      @if (!s.isPart) {
+                                                      @if (!s.isPart && !isStyledShape) {
                                                         <label><span>Colour</span>
                                                       <input type="color" [ngModel]="s.color" (ngModelChange)="setColor($event)" /></label>
+                                                    }
+
+                                                    <!-- Style: everything the JSON can carry, reachable by hand -->
+                                                    @if (isStyledShape) {
+                                                      <div class="prop-section">{{ isContainer ? 'Container style' : 'Style' }}</div>
+                                                      <div class="style-grid">
+                                                        <label><span>Fill</span>
+                                                          <input type="color" [ngModel]="s.fill" (ngModelChange)="setFill($event)" /></label>
+                                                        <label><span>Border</span>
+                                                          <input type="color" [ngModel]="s.stroke" (ngModelChange)="setStroke($event)" /></label>
+                                                        <label><span>Border width</span>
+                                                          <input type="number" min="0" max="12" step="0.5"
+                                                                 [ngModel]="s.strokeWidth" (ngModelChange)="setBorderWidth($event)" /></label>
+                                                      </div>
+                                                      <button class="secondary-btn" (click)="isContainer ? toggleContainerDashed() : toggleDashedOutline()">
+                                                        <mat-icon>border_style</mat-icon>
+                                                        <span>{{ (isContainer ? s.dashed !== false : s.dashPattern) ? 'Solid outline' : 'Dashed outline' }}</span>
+                                                      </button>
+
+                                                      @if (isContainer) {
+                                                        <div class="style-grid">
+                                                          <label><span>Title colour</span>
+                                                            <input type="color" [ngModel]="s.titleColor" (ngModelChange)="setTitleColor($event)" /></label>
+                                                          <label class="wide"><span>Title position</span>
+                                                            <select [ngModel]="titlePlacement" (ngModelChange)="setTitlePlacement($event)">
+                                                              <option value="0 0">Top left</option>
+                                                              <option value="0.5 0.06">Top centre</option>
+                                                              <option value="0.5 0.5">Centre</option>
+                                                              <option value="0.5 0.94">Bottom centre</option>
+                                                            </select></label>
+                                                        </div>
+                                                      } @else {
+                                                        <div class="style-grid">
+                                                          <label><span>Label colour</span>
+                                                            <input type="color" [ngModel]="s.labelColor" (ngModelChange)="setLabelColor($event)" /></label>
+                                                          <label><span>Label size</span>
+                                                            <input type="number" min="5" max="60" step="0.5"
+                                                                   [ngModel]="labelSize" (ngModelChange)="setLabelSize($event)" /></label>
+                                                          <label class="wide"><span>Text align</span>
+                                                            <select [ngModel]="s.textAlign || 'center'" (ngModelChange)="setTextAlign($event)">
+                                                              <option value="left">Left</option>
+                                                              <option value="center">Centre</option>
+                                                              <option value="right">Right</option>
+                                                            </select></label>
+                                                          <label><span>Width</span>
+                                                            <input type="number" min="8" [ngModel]="nodeW" (ngModelChange)="setNodeSize('w', $event)" /></label>
+                                                          <label><span>Height</span>
+                                                            <input type="number" min="8" [ngModel]="nodeH" (ngModelChange)="setNodeSize('h', $event)" /></label>
+                                                        </div>
+                                                      }
+                                                    }
+
+                                                    <!-- Connection pins, beyond the four sides every node has -->
+                                                    @if (isStyledShape) {
+                                                      <div class="prop-section">Connection pins ({{ pins.length }})</div>
+                                                      <div class="pin-hint">Every block already has a pin on each side. Add more when several wires
+                                                        arrive on the same edge and would otherwise stack on one point.</div>
+                                                      @for (p of pins; track p.portId; let i = $index) {
+                                                        <div class="pin-row">
+                                                          <span class="pin-id">{{ p.portId }}</span>
+                                                          <select [ngModel]="pinSide(p.spot)" (ngModelChange)="setPinSide(i, $event)">
+                                                            <option value="left">Left</option>
+                                                            <option value="right">Right</option>
+                                                            <option value="top">Top</option>
+                                                            <option value="bottom">Bottom</option>
+                                                          </select>
+                                                          <input type="range" min="0" max="100" [ngModel]="pinAt(p.spot)" (ngModelChange)="setPinAt(i, $event)" />
+                                                          <span class="pin-at">{{ pinAt(p.spot) }}%</span>
+                                                          <button class="pin-x" (click)="removePin(i)" matTooltip="Remove pin"><mat-icon>close</mat-icon></button>
+                                                        </div>
+                                                      }
+                                                      <button class="secondary-btn" (click)="addPin('right')"><mat-icon>add</mat-icon><span>Add pin</span></button>
                                                     }
                                                     <label><span>{{ 'props.partNumber' | translate }}</span>
                                                     <input [ngModel]="dataField('partNumber')" (ngModelChange)="setDataField('partNumber', $event)"

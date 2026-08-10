@@ -160,6 +160,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     text: string; color: string;
     partNumber?: string; supplier?: string; quantity?: number;
     isPart: boolean; details: { label: string; value: string }[]; specs: { label: string; value: string }[];
+    // style, edited from the properties panel
+    fill?: string; stroke?: string; labelColor?: string; titleColor?: string;
+    strokeWidth?: number; dashPattern?: boolean; dashed?: boolean; textAlign?: string;
   } | null = null;
 
   // dialog state
@@ -1412,6 +1415,18 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         partNumber: d.partNumber, supplier: d.supplier, quantity: d.quantity,
         details: partToShow ? this.partDetails(partToShow) : [],
         specs: partToShow ? this.partSpecs(partToShow) : [],
+        // Style, so the properties panel can edit what the model already carries.
+        // `<input type="color">` rejects anything that is not #rrggbb, so the
+        // theme's rgba() default and a transparent fill both fall back to a
+        // concrete swatch rather than leaving the control blank.
+        fill: this.hexOr(d.fill, '#ffffff'),
+        stroke: this.hexOr(d.stroke, '#334155'),
+        labelColor: this.hexOr(d.labelColor, '#1f2937'),
+        titleColor: this.hexOr(d.titleColor, '#f5a623'),
+        strokeWidth: typeof d.strokeWidth === 'number' ? d.strokeWidth : (d.isGroup ? 1.2 : 2),
+        dashPattern: d.dashPattern === true,
+        dashed: d.dashed,
+        textAlign: d.textAlign ?? 'center',
       };
     } else {
       this.sel = null;
@@ -1426,7 +1441,154 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => m.set(data, prop, value), 'edit ' + prop));
     if (this.sel) (this.sel as any)[prop] = value;
   }
-  setColor(color: string): void { this.setField('color', color); }
+
+  /**
+   * Colour means different things to different node types. A functional block
+   * paints its icon chip from `color`; a native shape paints from `fill` and
+   * `stroke`. Sending everything to `color` left the picker doing nothing at
+   * all on a shape, which is most of what a block diagram is made of.
+   */
+  setColor(color: string): void {
+    if (this.isStyledShape) { this.setFill(color); return; }
+    this.setField('color', color);
+  }
+
+  /** A colour an `<input type="color">` will accept, or a sensible stand-in. */
+  private hexOr(value: unknown, fallback: string): string {
+    return typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
+  }
+
+  // ---- style controls (shapes and containers) ----
+
+  /** A native shape or a container — the things the style controls apply to. */
+  get isStyledShape(): boolean {
+    const d = this.selectedNode?.data;
+    return !!d && (d.category === 'shape' || d.isGroup === true);
+  }
+  get isContainer(): boolean { return this.selectedNode?.data?.isGroup === true; }
+
+  /**
+   * Any hand-set colour also pins it. `retheme()` rewrites fill/stroke on every
+   * shape when the canvas theme flips, so without this the user's choice
+   * silently reverts the next time they toggle the theme.
+   */
+  setFill(v: string): void { this.setField('fill', v); this.setField('fixedColor', true); }
+  setStroke(v: string): void { this.setField('stroke', v); this.setField('fixedColor', true); }
+  setLabelColor(v: string): void { this.setField('labelColor', v); this.setField('fixedColor', true); }
+  setBorderWidth(v: any): void { this.setField('strokeWidth', Math.max(0, Number(v) || 0)); }
+  toggleDashedOutline(): void { this.setField('dashPattern', !this.selectedNode?.data?.dashPattern); }
+  setTextAlign(v: 'left' | 'center' | 'right'): void { this.setField('textAlign', v); }
+
+  /** Font size in px, preserving whatever weight/family the node already has. */
+  get labelSize(): number {
+    const m = /(\d+(?:\.\d+)?)px/.exec(String(this.selectedNode?.data?.font ?? ''));
+    return m ? Number(m[1]) : 12.5;
+  }
+  setLabelSize(v: any): void {
+    const size = Math.max(5, Number(v) || 12.5);
+    const cur = String(this.selectedNode?.data?.font ?? '');
+    this.setField('font', /(\d+(?:\.\d+)?)px/.test(cur)
+      ? cur.replace(/(\d+(?:\.\d+)?)px/, size + 'px')
+      : `400 ${size}px "Arrow Display", Roboto, sans-serif`);
+  }
+
+  /**
+   * Node size, so a block can be given exact dimensions rather than dragged.
+   * Reads the size the node was *given* where there is one — `actualBounds`
+   * includes the label overhang and the border, so a 160x70 block reports as
+   * 173x96 and typing that number back in quietly grows it.
+   */
+  private sizeField(i: 0 | 1): number | null {
+    const s = String(this.selectedNode?.data?.size ?? '').split(' ');
+    const v = Number(s[i]);
+    return s.length === 2 && isFinite(v) ? Math.round(v) : null;
+  }
+  get nodeW(): number { return this.sizeField(0) ?? Math.round(this.selectedNode?.actualBounds?.width ?? 0); }
+  get nodeH(): number { return this.sizeField(1) ?? Math.round(this.selectedNode?.actualBounds?.height ?? 0); }
+  setNodeSize(which: 'w' | 'h', v: any): void {
+    const n = this.selectedNode; if (!n) return;
+    const px = Math.max(8, Number(v) || 0);
+    const cur = go.Size.parse(String(n.data.size ?? `${this.nodeW} ${this.nodeH}`));
+    const size = which === 'w' ? new go.Size(px, cur.height || this.nodeH) : new go.Size(cur.width || this.nodeW, px);
+    this.setField('size', go.Size.stringify(size));
+    // An imported drawing opts out of the palette's 48x40 floor; a hand-drawn
+    // one has to as well, or a deliberately small block springs back.
+    if (!n.data.minSize) this.setField('minSize', '1 1');
+  }
+
+  // ---- container (group) controls ----
+  toggleContainerDashed(): void { this.setField('dashed', this.selectedNode?.data?.dashed === false); }
+  setTitleColor(v: string): void { this.setField('titleColor', v); }
+  setTitlePlacement(v: string): void { this.setField('titleAlign', v); this.setField('titleFocus', '0.5 0.5'); }
+  get titlePlacement(): string { return String(this.selectedNode?.data?.titleAlign ?? '0 0'); }
+
+  // ---- pins ----
+
+  /** Extra connection points, beyond the four sides every node already has. */
+  get pins(): { portId: string; spot: string }[] {
+    const p = this.selectedNode?.data?.ports;
+    return Array.isArray(p) ? p : [];
+  }
+  /** Which edge a pin sits on, derived from its spot. */
+  pinSide(spot: string): 'left' | 'right' | 'top' | 'bottom' {
+    const sp = go.Spot.parse(spot || '0 0');
+    const d: [string, number][] = [['left', sp.x], ['right', 1 - sp.x], ['top', sp.y], ['bottom', 1 - sp.y]];
+    return d.sort((a, b) => a[1] - b[1])[0][0] as any;
+  }
+  /** How far along that edge, 0..100. */
+  pinAt(spot: string): number {
+    const sp = go.Spot.parse(spot || '0 0');
+    const side = this.pinSide(spot);
+    return Math.round((side === 'left' || side === 'right' ? sp.y : sp.x) * 100);
+  }
+  private writePins(next: { portId: string; spot: string }[]): void {
+    this.setField('ports', next);
+    this.cdr.detectChanges();
+  }
+  addPin(side: 'left' | 'right' | 'top' | 'bottom' = 'right'): void {
+    if (!this.selectedNode) return;
+    const pins = [...this.pins];
+    const n = pins.length;
+    const along = ((n % 4) + 1) / 5;
+    const spot = side === 'left' ? `0 ${along}` : side === 'right' ? `1 ${along}`
+      : side === 'top' ? `${along} 0` : `${along} 1`;
+    pins.push({ portId: 'p' + (n + 1), spot });
+    this.writePins(pins);
+  }
+  setPinSide(i: number, side: 'left' | 'right' | 'top' | 'bottom'): void {
+    const pins = this.pins.map((p) => ({ ...p }));
+    if (!pins[i]) return;
+    const at = this.pinAt(pins[i].spot) / 100;
+    pins[i].spot = side === 'left' ? `0 ${at}` : side === 'right' ? `1 ${at}`
+      : side === 'top' ? `${at} 0` : `${at} 1`;
+    this.writePins(pins);
+  }
+  setPinAt(i: number, value: any): void {
+    const pins = this.pins.map((p) => ({ ...p }));
+    if (!pins[i]) return;
+    const at = Math.min(100, Math.max(0, Number(value) || 0)) / 100;
+    const side = this.pinSide(pins[i].spot);
+    pins[i].spot = side === 'left' ? `0 ${at}` : side === 'right' ? `1 ${at}`
+      : side === 'top' ? `${at} 0` : `${at} 1`;
+    this.writePins(pins);
+  }
+  removePin(i: number): void {
+    const pins = this.pins.filter((_, j) => j !== i);
+    // Any wire landing on the pin being removed falls back to the nearest side,
+    // rather than the link silently detaching to the node's centre.
+    const gone = this.pins[i]?.portId;
+    const side = gone ? this.pinSide(this.pins[i].spot) : null;
+    if (gone && side && this.selectedNode) {
+      const port = { left: 'L', right: 'R', top: 'T', bottom: 'B' }[side];
+      this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => {
+        this.selectedNode!.findLinksConnected().each((l) => {
+          if (l.data?.fromPort === gone) m.set(l.data, 'fromPort', port);
+          if (l.data?.toPort === gone) m.set(l.data, 'toPort', port);
+        });
+      }, 'repoint wires'));
+    }
+    this.writePins(pins);
+  }
   setQuantity(value: any): void { this.setField('quantity', Math.max(1, Number(value) || 1)); }
   dataField(key: string): string { return this.selectedNode?.data?.[key] ?? ''; }
   setDataField(key: string, value: string): void { this.setField(key, value); }
@@ -1499,6 +1661,19 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   setWireWidth(w: number): void { this.wireWidth = w; this.applyWire('width', w); }
   setWireRouter(r: 'manhattan' | 'normal' | 'smooth'): void { this.wireRouter = r; this.applyWire('routing', r); }
+
+  /** Arrowhead shape and size, and whether corners are rounded or square. */
+  wireArrow: 'Standard' | 'Triangle' | 'none' = 'Standard';
+  wireArrowScale = 1;
+  wireCorner: 'round' | 'square' = 'round';
+  setWireArrow(a: 'Standard' | 'Triangle' | 'none'): void {
+    this.wireArrow = a;
+    // `wire: true` is what hides the arrowhead; the figure is irrelevant then.
+    this.applyWire('wire', a === 'none');
+    if (a !== 'none') this.applyWire('arrow', a);
+  }
+  setWireArrowScale(s: number): void { this.wireArrowScale = s; this.applyWire('arrowScale', s); }
+  setWireCorner(c: 'round' | 'square'): void { this.wireCorner = c; this.applyWire('corner', c === 'square' ? 0 : 8); }
   toggleWirePop(which: 'color' | 'style'): void { this.wirePop = this.wirePop === which ? null : which; }
   deleteSelectedEdge(): void {
     this.zone.runOutsideAngular(() => this.diagram.commandHandler.deleteSelection());
@@ -1510,6 +1685,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.wireWidth = d.width || this.wireWidth;
     this.wireStyle = !d.dash ? 'solid' : (d.flow ? 'flow' : 'dashed');
     this.wireRouter = d.routing || this.wireRouter;
+    this.wireArrow = d.wire ? 'none' : (d.arrow === 'Triangle' ? 'Triangle' : 'Standard');
+    this.wireArrowScale = typeof d.arrowScale === 'number' ? d.arrowScale : 1;
+    this.wireCorner = d.corner === 0 ? 'square' : 'round';
   }
 
   // ---- editing commands ----

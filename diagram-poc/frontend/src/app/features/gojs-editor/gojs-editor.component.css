@@ -1292,3 +1292,57 @@
   0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 166, 35, 0.55); }
   50% { transform: scale(1.18); box-shadow: 0 0 0 5px rgba(245, 166, 35, 0); }
 }
+
+/* ---- style + pin controls in the properties panel ---- */
+.props .style-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 10px;
+  margin: 4px 0 8px;
+}
+.props .style-grid label { margin: 0; }
+.props .style-grid label.wide { grid-column: 1 / -1; }
+.props .style-grid input[type='number'],
+.props .style-grid select { width: 100%; }
+
+.props .pin-hint {
+  font-size: 10.5px;
+  line-height: 1.35;
+  opacity: 0.62;
+  margin: 2px 0 8px;
+}
+.props .pin-row {
+  display: grid;
+  grid-template-columns: 26px 74px 1fr 34px 24px;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+.props .pin-row .pin-id {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+.props .pin-row select { font-size: 11px; padding: 2px 4px; }
+.props .pin-row input[type='range'] { width: 100%; margin: 0; }
+.props .pin-row .pin-at {
+  font-size: 10px;
+  opacity: 0.62;
+  text-align: right;
+}
+.props .pin-row .pin-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+}
+.props .pin-row .pin-x:hover { opacity: 1; background: rgba(148, 163, 184, 0.18); }
+.props .pin-row .pin-x mat-icon { font-size: 15px; width: 15px; height: 15px; }

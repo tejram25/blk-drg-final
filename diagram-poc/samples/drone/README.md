@@ -75,3 +75,29 @@ diagram was drawn by hand rather than imported:
    the pins beside the label silently deletes the label.
 6. **Dashed outlines** (`dashPattern`) — "not fitted / optional" on a schematic
    is meaning, not decoration, and has to survive a round trip.
+
+## Doing this by hand
+
+Everything these generators write is also reachable from the editor's UI — the
+JSON is a shortcut, not a separate authoring path. With a block selected, the
+properties panel carries:
+
+| Control | Writes | Used by |
+|---|---|---|
+| Fill · Border · Border width | `fill` `stroke` `strokeWidth` | every coloured block |
+| Solid / dashed outline | `dashPattern` (`dashed` on a container) | Test Points, LEDs, the DRONE boundary |
+| Label colour · size · align | `labelColor` `font` `textAlign` | every label; align matters for the protection list |
+| Width · Height | `size` (+ `minSize`) | the exact block dimensions the artwork uses |
+| Title colour · position | `titleColor` `titleAlign` | "Power System" bottom-centre, "Flight Controller" centred |
+| Connection pins | `ports` | the Type-C signal rows, the processor's memory buses |
+
+and the wire dock carries colour, style, width, routing, **corners**,
+**arrowhead** and **arrow size** (`corner`, `arrow`, `arrowScale`).
+
+Two behaviours worth knowing:
+
+- Setting any colour by hand also sets `fixedColor`. `retheme()` rewrites
+  fill/stroke on every shape when the canvas theme flips, so without it your
+  choice would silently revert the next time someone toggled the theme.
+- Removing a pin repoints any wire that was landing on it to the nearest side,
+  rather than letting the link detach to the node's centre.
