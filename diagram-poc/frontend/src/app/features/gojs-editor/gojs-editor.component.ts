@@ -886,8 +886,16 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       // its isPanelMain element when it rebuilds, so putting them there deletes
       // the node's label. Four side ports remain available regardless.
       $(go.Panel, 'Spot',
-        { itemTemplate: pinPort, stretch: go.GraphObject.Fill, pickable: false },
-        new go.Binding('itemArray', 'ports')),
+        { itemTemplate: pinPort, pickable: false },
+        new go.Binding('itemArray', 'ports'),
+        // A Spot panel positions its children against its *main* element, so
+        // the overlay needs one at the node's full size. Without it the pins
+        // align to whichever pin happens to be first and every one of them
+        // lands near the middle of the block — which reads as wires escaping
+        // from inside a chip rather than from its edge.
+        $(go.Shape, 'Rectangle',
+          { isPanelMain: true, fill: null, stroke: null, strokeWidth: 0 },
+          new go.Binding('desiredSize', 'size', go.Size.parse))),
       ...sidePorts(),
     );
     this.diagram.nodeTemplateMap.set('shape', shape);
