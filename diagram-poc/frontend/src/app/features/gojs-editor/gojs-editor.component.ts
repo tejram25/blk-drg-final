@@ -1105,6 +1105,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       m.set(link.data, 'arrow', d.arrow === 'none' ? 'Standard' : d.arrow);
       m.set(link.data, 'arrowScale', d.arrowScale);
       m.set(link.data, 'corner', wire || d.corner === 'square' ? 0 : 8);
+      m.set(link.data, 'twoWay', !wire && d.twoWay);
     }, 'style link');
     if (wire) this.straightenWire(link);
   }

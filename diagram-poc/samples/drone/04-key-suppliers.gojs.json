@@ -55,6 +55,14 @@
     {
      "portId": "e5",
      "spot": "1 0.86"
+    },
+    {
+     "portId": "q1",
+     "spot": "0.458 0"
+    },
+    {
+     "portId": "q2",
+     "spot": "0.588 0"
     }
    ]
   },
@@ -129,6 +137,14 @@
     {
      "portId": "p2",
      "spot": "0.6667 0"
+    },
+    {
+     "portId": "p3",
+     "spot": "0.5 0"
+    },
+    {
+     "portId": "p4",
+     "spot": "0.5 0"
     }
    ]
   },
@@ -955,6 +971,10 @@
     {
      "portId": "p2",
      "spot": "0.4651 0"
+    },
+    {
+     "portId": "p3",
+     "spot": "0.5 1"
     }
    ]
   },
@@ -1149,8 +1169,8 @@
    "text": "SIM Board\nConnector",
    "loc": "694 215",
    "size": "80 34",
-   "fill": "#8B8F92",
-   "stroke": "#8B8F92",
+   "fill": "#000000",
+   "stroke": "#000000",
    "labelColor": "#FFFFFF",
    "font": "400 7.5px \"Arrow Display\", sans-serif",
    "fixedColor": true,
@@ -1219,9 +1239,9 @@
    "text": "LTE\nAntenna\nConnector",
    "loc": "770 211",
    "size": "56 42",
-   "fill": "#3FD6B0",
-   "stroke": "#3FD6B0",
-   "labelColor": "#141414",
+   "fill": "#000000",
+   "stroke": "#000000",
+   "labelColor": "#FFFFFF",
    "font": "400 7.5px \"Arrow Display\", sans-serif",
    "fixedColor": true,
    "minSize": "1 1",
@@ -1242,7 +1262,7 @@
    "key": "lteant3",
    "category": "shape",
    "figure": "Rectangle",
-   "text": "LTE\nAntenna",
+   "text": "LTE Antenna\nConnector",
    "loc": "834 211",
    "size": "56 42",
    "fill": "#000000",
@@ -2076,7 +2096,7 @@
    "to": "s1_spi",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
@@ -2085,33 +2105,34 @@
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
    "textBg": "transparent",
-   "textOffset": "-12 0"
+   "textOffset": "-12 0",
+   "twoWay": true
   },
   {
    "key": -2,
    "from": "gnssmod",
    "to": "s1_gnss",
-   "fromPort": "p1",
-   "toPort": "p1",
-   "color": "#8FA6B4",
+   "fromPort": "p3",
+   "toPort": "p4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -3,
    "from": "emmc",
-   "to": "s1_gnss",
+   "to": "soc1",
    "fromPort": "p1",
-   "toPort": "p2",
-   "color": "#8FA6B4",
+   "toPort": "q1",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -4,
@@ -2119,7 +2140,7 @@
    "to": "s1_ddr",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
@@ -2128,7 +2149,8 @@
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
    "textBg": "transparent",
-   "textOffset": "-12 0"
+   "textOffset": "-12 0",
+   "twoWay": true
   },
   {
    "key": -5,
@@ -2136,12 +2158,12 @@
    "to": "s1_lvds",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -6,
@@ -2149,12 +2171,12 @@
    "to": "s1_jtag",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -7,
@@ -2162,12 +2184,12 @@
    "to": "gnssmod",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -8,
@@ -2175,25 +2197,25 @@
    "to": "ledpwm",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": false
   },
   {
    "key": -9,
    "from": "ledpwm",
-   "to": "emmc",
+   "to": "soc1",
    "fromPort": "p1",
-   "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true,
+   "toPort": "q2"
   },
   {
    "key": -10,
@@ -2201,12 +2223,12 @@
    "to": "s1_l1",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -11,
@@ -2214,12 +2236,12 @@
    "to": "s1_l1",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -12,
@@ -2227,12 +2249,12 @@
    "to": "s1_l2",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -13,
@@ -2240,12 +2262,12 @@
    "to": "baro2",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -14,
@@ -2253,12 +2275,12 @@
    "to": "tsens",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -15,
@@ -2266,13 +2288,13 @@
    "to": "fandrv",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true,
-   "fromEnd": 24
+   "fromEnd": 24,
+   "twoWay": true
   },
   {
    "key": -16,
@@ -2280,12 +2302,12 @@
    "to": "fandrv",
    "fromPort": "p1",
    "toPort": "p3",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -17,
@@ -2293,12 +2315,12 @@
    "to": "motorctl",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -18,
@@ -2306,13 +2328,13 @@
    "to": "motorctl",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true,
-   "fromEnd": 24
+   "fromEnd": 24,
+   "twoWay": true
   },
   {
    "key": -19,
@@ -2320,13 +2342,13 @@
    "to": "cams",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true,
-   "fromEnd": 52
+   "fromEnd": 52,
+   "twoWay": true
   },
   {
    "key": -20,
@@ -2334,13 +2356,13 @@
    "to": "cams",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true,
-   "fromEnd": 38
+   "fromEnd": 38,
+   "twoWay": true
   },
   {
    "key": -21,
@@ -2348,13 +2370,13 @@
    "to": "imu2",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true,
-   "fromEnd": 24
+   "fromEnd": 24,
+   "twoWay": true
   },
   {
    "key": -22,
@@ -2362,12 +2384,12 @@
    "to": "imu2",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -23,
@@ -2375,12 +2397,12 @@
    "to": "norflash",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -24,
@@ -2388,12 +2410,12 @@
    "to": "fanconn",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": false
   },
   {
    "key": -25,
@@ -2401,12 +2423,12 @@
    "to": "baro2",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -26,
@@ -2414,11 +2436,12 @@
    "to": "s2_eth",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#93959B",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
+   "twoWay": false,
    "wire": true
   },
   {
@@ -2427,11 +2450,12 @@
    "to": "s2_pcie",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#93959B",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
+   "twoWay": false,
    "wire": true
   },
   {
@@ -2440,11 +2464,12 @@
    "to": "s2_spi",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#93959B",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
+   "twoWay": false,
    "wire": true
   },
   {
@@ -2453,11 +2478,12 @@
    "to": "s2_csi",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#93959B",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
+   "twoWay": false,
    "wire": true
   },
   {
@@ -2466,11 +2492,12 @@
    "to": "s2_i2c",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#93959B",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
+   "twoWay": false,
    "wire": true
   },
   {
@@ -2479,11 +2506,12 @@
    "to": "s2_i2cu",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#93959B",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
+   "twoWay": false,
    "wire": true
   },
   {
@@ -2492,12 +2520,12 @@
    "to": "dbgcon",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -33,
@@ -2505,12 +2533,12 @@
    "to": "lpddr2",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -34,
@@ -2518,12 +2546,12 @@
    "to": "tsens2",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -35,
@@ -2531,12 +2559,12 @@
    "to": "s2_uart2",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -36,
@@ -2544,12 +2572,12 @@
    "to": "wifimod",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -37,
@@ -2557,12 +2585,12 @@
    "to": "wifimod",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -38,
@@ -2570,12 +2598,12 @@
    "to": "wifiant1",
    "fromPort": "p3",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -39,
@@ -2583,12 +2611,12 @@
    "to": "wifiant2",
    "fromPort": "p4",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -40,
@@ -2596,12 +2624,12 @@
    "to": "usbc",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -41,
@@ -2609,12 +2637,12 @@
    "to": "buttons",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": false
   },
   {
    "key": -42,
@@ -2622,12 +2650,12 @@
    "to": "simbrd",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -43,
@@ -2635,12 +2663,12 @@
    "to": "ltemod",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -44,
@@ -2648,12 +2676,12 @@
    "to": "lteconn",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -45,
@@ -2661,12 +2689,12 @@
    "to": "lteant3",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -46,
@@ -2674,12 +2702,12 @@
    "to": "ltemod",
    "fromPort": "p1",
    "toPort": "p3",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -47,
@@ -2687,12 +2715,12 @@
    "to": "ltemod",
    "fromPort": "p1",
    "toPort": "p4",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -48,
@@ -2700,12 +2728,12 @@
    "to": "soc2",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -49,
@@ -2713,12 +2741,12 @@
    "to": "soc2",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#0084D5",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": true
   },
   {
    "key": -50,
@@ -2726,7 +2754,7 @@
    "to": "battif",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#93959B",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
@@ -2735,7 +2763,8 @@
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
    "textBg": "transparent",
-   "textOffset": "0 -6"
+   "textOffset": "0 -6",
+   "twoWay": false
   },
   {
    "key": -51,
@@ -2743,12 +2772,12 @@
    "to": "hotswap",
    "fromPort": "p3",
    "toPort": "p3",
-   "color": "#8FA6B4",
+   "color": "#93959B",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": false
   },
   {
    "key": -52,
@@ -2756,12 +2785,12 @@
    "to": "supercap",
    "fromPort": "p2",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#93959B",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": false
   },
   {
    "key": -53,
@@ -2769,12 +2798,12 @@
    "to": "inprot",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#93959B",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
    "corner": 0,
-   "wire": true
+   "twoWay": false
   },
   {
    "key": -54,
@@ -2782,7 +2811,7 @@
    "to": "pmc",
    "fromPort": "p1",
    "toPort": "p1",
-   "color": "#8FA6B4",
+   "color": "#93959B",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
@@ -2791,7 +2820,8 @@
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
    "textBg": "transparent",
-   "textOffset": "0 -6"
+   "textOffset": "0 -6",
+   "twoWay": false
   },
   {
    "key": -55,
@@ -2799,7 +2829,7 @@
    "to": "pmc",
    "fromPort": "p1",
    "toPort": "p2",
-   "color": "#8FA6B4",
+   "color": "#93959B",
    "width": 1.1,
    "arrow": "Triangle",
    "arrowScale": 0.8,
@@ -2808,7 +2838,8 @@
    "textColor": "#141414",
    "textFont": "400 7px \"Arrow Display\", sans-serif",
    "textBg": "transparent",
-   "textOffset": "-20 0"
+   "textOffset": "-20 0",
+   "twoWay": false
   }
  ]
 }

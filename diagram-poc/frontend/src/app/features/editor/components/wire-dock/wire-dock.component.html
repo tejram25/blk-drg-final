@@ -90,6 +90,16 @@
                   </div>
                 </div>
                 @if (wireArrow !== 'none') {
+                  <div class="pop-section"><span class="pop-title">Direction</span>
+                    <div class="dock-group">
+                      <button class="dock-btn" matTooltip="One way" [class.active]="!wireTwoWay" (click)="setWireTwoWay(false)">
+                        <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 8 H 15" stroke="currentColor" stroke-width="2" fill="none"/><path d="M 14 4 L 22 8 L 14 12 Z" fill="currentColor"/></svg></button>
+                      <button class="dock-btn" matTooltip="Two way" [class.active]="wireTwoWay" (click)="setWireTwoWay(true)">
+                        <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 9 8 H 15" stroke="currentColor" stroke-width="2" fill="none"/><path d="M 14 4 L 22 8 L 14 12 Z" fill="currentColor"/><path d="M 10 4 L 2 8 L 10 12 Z" fill="currentColor"/></svg></button>
+                    </div>
+                  </div>
+                }
+                @if (wireArrow !== 'none') {
                   <div class="pop-section"><span class="pop-title">Arrow size</span>
                     <div class="dock-group">
                       <button class="dock-btn" matTooltip="Small" [class.active]="wireArrowScale <= 0.8" (click)="setWireArrowScale(0.7)">S</button>

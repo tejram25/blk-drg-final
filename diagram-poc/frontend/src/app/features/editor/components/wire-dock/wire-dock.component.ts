@@ -18,12 +18,14 @@ export interface WireStyle {
   arrow: 'Standard' | 'Triangle' | 'none';
   arrowScale: number;
   corner: 'round' | 'square';
+  /** An arrowhead at both ends: the connection goes both ways. */
+  twoWay: boolean;
 }
 
 /** What a wire looks like before anyone has touched the dock. */
 export const DEFAULT_WIRE_STYLE: WireStyle = {
   color: '#22d3ee', width: 2, style: 'flow', routing: 'manhattan',
-  arrow: 'Standard', arrowScale: 1, corner: 'round',
+  arrow: 'Standard', arrowScale: 1, corner: 'round', twoWay: false,
 };
 
 /**
@@ -69,6 +71,7 @@ export class WireDockComponent {
   wireArrow: WireStyle['arrow'] = 'Standard';
   wireArrowScale = 1;
   wireCorner: WireStyle['corner'] = 'round';
+  wireTwoWay = false;
   wirePop: 'color' | 'style' | null = null;
 
   private static readonly KEY = 'diagram.wireDefaults';
@@ -101,6 +104,7 @@ export class WireDockComponent {
   }
   setWireArrowScale(s: number): void { this.wireArrowScale = s; this.remember(); this.emit('arrowScale', s); }
   setWireCorner(c: WireStyle['corner']): void { this.wireCorner = c; this.remember(); this.emit('corner', c === 'square' ? 0 : 8); }
+  setWireTwoWay(v: boolean): void { this.wireTwoWay = v; this.remember(); this.emit('twoWay', v); }
 
   toggleWirePop(which: 'color' | 'style'): void { this.wirePop = this.wirePop === which ? null : which; }
 
@@ -114,6 +118,7 @@ export class WireDockComponent {
     this.wireArrow = d['wire'] ? 'none' : (d['arrow'] === 'Triangle' ? 'Triangle' : 'Standard');
     this.wireArrowScale = typeof d['arrowScale'] === 'number' ? d['arrowScale'] : 1;
     this.wireCorner = d['corner'] === 0 ? 'square' : 'round';
+    this.wireTwoWay = !!d['twoWay'];
   }
 
   private emit(prop: string, value: unknown): void { this.apply.emit({ prop, value }); }
@@ -122,6 +127,7 @@ export class WireDockComponent {
     return {
       color: this.wireColor, width: this.wireWidth, style: this.wireStyle, routing: this.wireRouter,
       arrow: this.wireArrow, arrowScale: this.wireArrowScale, corner: this.wireCorner,
+      twoWay: this.wireTwoWay,
     };
   }
 
@@ -140,6 +146,6 @@ export class WireDockComponent {
     this.remembered = d;
     this.wireColor = d.color; this.wireWidth = d.width; this.wireStyle = d.style;
     this.wireRouter = d.routing; this.wireArrow = d.arrow; this.wireArrowScale = d.arrowScale;
-    this.wireCorner = d.corner;
+    this.wireCorner = d.corner; this.wireTwoWay = !!d.twoWay;
   }
 }

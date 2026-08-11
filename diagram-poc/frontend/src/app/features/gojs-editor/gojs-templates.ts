@@ -22,6 +22,12 @@ export interface TemplateHooks {
  * Install every node, group and link template on a diagram, and the tool
  * customisations that go with them.
  */
+/** The mirrored twin of an arrowhead, for the *from* end of a two-way wire. */
+function backwardArrow(name: string): string {
+  const n = name || 'Standard';
+  return n === 'Standard' ? 'Backward' : n.startsWith('Backward') ? n : 'Backward' + n;
+}
+
 export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.make, hooks: TemplateHooks): void {
     /**
      * A connection rail down a whole edge, not a dot in the middle of it.
@@ -374,6 +380,18 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
         // constant. Without these an imported diagram gets this template's
         // arrowhead at whatever size the stroke happens to make it.
         new go.Binding('toArrow', 'arrow'),
+        new go.Binding('scale', 'arrowScale')),
+      // A second arrowhead at the *from* end, for a two-way connection. A bus
+      // is bidirectional far more often than not — the source artwork draws 35
+      // of its wires with 63 arrowheads between them — and with only one
+      // arrowhead the reader is told a direction that is not true.
+      $(go.Shape, { fromArrow: 'Backward', fill: '#94a3b8', stroke: null, visible: false },
+        new go.Binding('fill', 'color'),
+        new go.Binding('visible', 'twoWay', (t) => !!t),
+        // GoJS orients a `fromArrow` along the link, so the same figure at both
+        // ends gives two heads pointing the same way. The mirrored "Backward"
+        // family is what makes it point outwards.
+        new go.Binding('fromArrow', 'arrow', backwardArrow),
         new go.Binding('scale', 'arrowScale')),
       $(go.Panel, 'Auto',
         { segmentIndex: NaN, segmentFraction: 0.5, visible: false },

@@ -177,6 +177,13 @@ window.buildDiagram = function(modelJson, geo) {
       new go.Binding('fill','color'), new go.Binding('visible','wire',(w)=>!w),
       new go.Binding('toArrow','arrow'),
       new go.Binding('scale','arrowScale')),
+    // A second arrowhead at the from end, for a two-way connection.
+    $(go.Shape,{ fromArrow:'BackwardTriangle', fill:'#94a3b8', stroke:null, scale:1, visible:false },
+      new go.Binding('fill','color'),
+      new go.Binding('visible','twoWay',(t)=>!!t),
+      // Mirrored, or both heads point the same way.
+      new go.Binding('fromArrow','arrow',(n)=> !n||n==='Standard'?'Backward':(String(n).startsWith('Backward')?n:'Backward'+n)),
+      new go.Binding('scale','arrowScale')),
     $(go.Panel,'Auto',{ segmentIndex:NaN, segmentFraction:0.5, visible:false },
       new go.Binding('visible','text',(t)=>!!t),
       new go.Binding('segmentFraction','textFraction'),
