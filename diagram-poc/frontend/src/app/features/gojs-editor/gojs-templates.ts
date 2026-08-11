@@ -359,6 +359,18 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
           new go.Binding('text').makeTwoWay(),
           ...labelStyle()),
         richStack($),
+        // A status marker on the block: the drawings put a round badge at the end
+        // of every part-number row.
+        $(go.Panel, 'Spot', { visible: false, alignment: new go.Spot(1, 0.5, -13, 0) },
+          new go.Binding('visible', 'badge', (b) => !!b),
+          new go.Binding('alignment', 'badgeSpot', go.Spot.parse),
+          $(go.Shape, 'Circle', { width: 18, height: 18, fill: '#f5a623', stroke: null },
+            new go.Binding('fill', 'badgeFill'),
+            new go.Binding('desiredSize', 'badgeSize', go.Size.parse)),
+          $(go.TextBlock, { font: '700 11px Roboto, sans-serif', stroke: '#ffffff' },
+            new go.Binding('text', 'badge'),
+            new go.Binding('stroke', 'badgeColor'),
+            new go.Binding('font', 'badgeFont'))),
         $(go.Panel, 'Auto', { alignment: go.Spot.TopRight, alignmentFocus: go.Spot.TopRight, margin: 3, visible: false },
           new go.Binding('visible', 'components', (c) => Array.isArray(c) && c.length > 0),
           $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: '#f5a623', stroke: null }),
@@ -685,16 +697,27 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
           new go.Binding('strokeDashArray', 'dashed', (v) => (v === false ? null : [7, 4]))),
         $(go.Placeholder, { padding: new go.Margin(30, 16, 16, 16) },
           new go.Binding('padding', 'pad', (p: string) => go.Margin.parse(p)))),
-      $(go.Panel, 'Horizontal',
+      $(go.Panel, 'Auto',
         { alignment: new go.Spot(0, 0, 10, 8), alignmentFocus: go.Spot.TopLeft },
         new go.Binding('alignment', 'titleAlign', (s: string) => go.Spot.parse(s)),
         new go.Binding('alignmentFocus', 'titleFocus', (s: string) => go.Spot.parse(s)),
-        $('SubGraphExpanderButton', { margin: new go.Margin(0, 6, 0, 0), visible: false },
-          new go.Binding('visible', 'collapsible')),
-        $(go.TextBlock, { font: 'bold 12px Roboto, sans-serif', stroke: '#f5a623', editable: true },
-          new go.Binding('text').makeTwoWay(),
-          new go.Binding('stroke', 'titleColor'),
-          new go.Binding('font', 'titleFont'))),
+        // A band behind the title, for the drawings that give a subsystem a
+        // coloured header strip rather than bare text on the fill.
+        $(go.Shape, 'Rectangle', { fill: null, stroke: null, strokeWidth: 0 },
+          new go.Binding('fill', 'titleBg'),
+          new go.Binding('stroke', 'titleBorder'),
+          new go.Binding('strokeWidth', 'titleBorder', (b) => (b ? 1 : 0)),
+          new go.Binding('desiredSize', 'titleSize2', go.Size.parse)),
+        // No padding by default, so a container with no band keeps its title
+        // exactly where it was; `titlePad` is what opens the band out.
+        $(go.Panel, 'Horizontal', { margin: new go.Margin(0, 0, 0, 0) },
+          new go.Binding('margin', 'titlePad', (p: string) => go.Margin.parse(p)),
+          $('SubGraphExpanderButton', { margin: new go.Margin(0, 6, 0, 0), visible: false },
+            new go.Binding('visible', 'collapsible')),
+          $(go.TextBlock, { font: 'bold 12px Roboto, sans-serif', stroke: '#f5a623', editable: true },
+            new go.Binding('text').makeTwoWay(),
+            new go.Binding('stroke', 'titleColor'),
+            new go.Binding('font', 'titleFont')))),
       // Containers are wired to in a block diagram ("power in on the left"), so
       // they need the same four ports every node has.
       ...sidePorts(),

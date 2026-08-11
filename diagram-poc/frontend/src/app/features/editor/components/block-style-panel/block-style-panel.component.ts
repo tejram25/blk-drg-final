@@ -9,9 +9,9 @@ import { Pin, PinSide, pinAlong, pinSide } from '../../../gojs-editor/gojs-pins'
  *  it is stored — the editor decides which model field each one writes. */
 export type StyleProp =
   'fill' | 'stroke' | 'borderWidth' | 'titleColor' | 'titlePlacement' | 'width' | 'height'
-  | 'titleX' | 'titleY' | 'titleSize' | 'pad' | 'corner';
+  | 'titleX' | 'titleY' | 'titleSize' | 'pad' | 'corner' | 'noFill' | 'noBorder';
 
-export interface StyleChange { prop: StyleProp; value: string | number; }
+export interface StyleChange { prop: StyleProp; value: string | number | boolean; }
 export interface PinSideChange { index: number; side: PinSide; }
 export interface PinAlongChange { index: number; along: number; }
 

@@ -14,10 +14,20 @@
 @if (styled) {
   <div class="prop-section">{{ container ? 'Container style' : 'Style' }}</div>
   <div class="style-grid">
+    <!-- A colour picker cannot say "none", and a caption or a note on the page
+         is a block with neither a fill nor an outline. -->
     <label><span>Fill</span>
-      <input type="color" [ngModel]="sel.fill" (ngModelChange)="style.emit({ prop: 'fill', value: $event })" /></label>
+      <span class="swatch-row">
+        <input type="color" [ngModel]="sel.fill" (ngModelChange)="style.emit({ prop: 'fill', value: $event })" />
+        <button type="button" class="none-btn" [class.on]="sel.fill === 'transparent'"
+                matTooltip="No fill" (click)="style.emit({ prop: 'noFill', value: sel.fill !== 'transparent' })">∅</button>
+      </span></label>
     <label><span>Border</span>
-      <input type="color" [ngModel]="sel.stroke" (ngModelChange)="style.emit({ prop: 'stroke', value: $event })" /></label>
+      <span class="swatch-row">
+        <input type="color" [ngModel]="sel.stroke" (ngModelChange)="style.emit({ prop: 'stroke', value: $event })" />
+        <button type="button" class="none-btn" [class.on]="sel.stroke === 'transparent'"
+                matTooltip="No border" (click)="style.emit({ prop: 'noBorder', value: sel.stroke !== 'transparent' })">∅</button>
+      </span></label>
     <label><span>Border width</span>
       <input type="number" min="0" max="12" step="0.5"
              [ngModel]="sel.strokeWidth" (ngModelChange)="style.emit({ prop: 'borderWidth', value: $event })" /></label>

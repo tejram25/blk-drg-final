@@ -1152,8 +1152,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         // `<input type="color">` rejects anything that is not #rrggbb, so the
         // theme's rgba() default and a transparent fill both fall back to a
         // concrete swatch rather than leaving the control blank.
-        fill: this.hexOr(d.fill, '#ffffff'),
-        stroke: this.hexOr(d.stroke, '#334155'),
+        // `transparent` is kept as-is so the "none" buttons can show their state;
+        // anything else a colour input cannot render falls back to a swatch.
+        fill: d.fill === 'transparent' ? 'transparent' : this.hexOr(d.fill, '#ffffff'),
+        stroke: d.stroke === 'transparent' ? 'transparent' : this.hexOr(d.stroke, '#334155'),
         labelColor: this.hexOr(d.labelColor, '#1f2937'),
         titleColor: this.hexOr(d.titleColor, '#f5a623'),
         strokeWidth: d.isGroup ? (typeof d.borderWidth === 'number' ? d.borderWidth : 1.2)
@@ -1382,7 +1384,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
    * size", "border width" — and this is where that becomes a model write.
    */
   applyStyle(c: StyleChange): void {
-    const n = Number(c.value), t = String(c.value);
+    const n = Number(c.value), t = String(c.value), on = c.value === true;
     switch (c.prop) {
       case 'fill': this.setFill(t); break;
       case 'stroke': this.setStroke(t); break;
@@ -1394,6 +1396,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'titleSize': this.setTitleSize(n); break;
       case 'pad': this.setContainerPad(n); break;
       case 'corner': this.setContainerCorner(n); break;
+      // `transparent` rather than removing the field: the templates fall back to
+      // their own default when a colour is absent, which is not the same as none.
+      case 'noFill': this.setFill(on ? 'transparent' : '#ffffff'); break;
+      case 'noBorder': this.setStroke(on ? 'transparent' : '#334155'); break;
       case 'width': this.setNodeSize('w', n); break;
       case 'height': this.setNodeSize('h', n); break;
     }

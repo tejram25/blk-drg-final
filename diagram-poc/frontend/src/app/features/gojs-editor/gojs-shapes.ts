@@ -53,6 +53,19 @@ const GEO: Record<string, string> = {
     'M6 5 L50 23 L6 41 Z M94 5 L50 23 L94 41 Z M50 23 L50 50 ' +
     'M30 58 A20 8 0 0 1 70 58 L70 90 A20 8 0 0 1 30 90 Z M30 58 A20 8 0 0 0 70 58',
   FcAntennaCurl: 'M62 100 L62 34 Q62 8 36 8 Q12 8 12 32',
+  // energy / plant icons a power or solar block diagram needs
+  FcSun:
+    'M50 26 A24 24 0 1 1 49.9 26 Z M50 0 L50 12 M50 88 L50 100 M0 50 L12 50 M88 50 L100 50 ' +
+    'M14.6 14.6 L23.1 23.1 M76.9 76.9 L85.4 85.4 M85.4 14.6 L76.9 23.1 M23.1 76.9 L14.6 85.4',
+  FcSolarPanel:
+    'M2 6 L98 6 L98 78 L2 78 Z M2 30 L98 30 M2 54 L98 54 M26 6 L26 78 M50 6 L50 78 M74 6 L74 78 ' +
+    'M50 78 L50 96 M30 96 L70 96',
+  FcBatteryCell: 'M22 10 L78 10 L78 92 L22 92 Z M40 2 L60 2 L60 10 L40 10 Z M34 30 L66 30 M50 22 L50 38',
+  FcMonitor:
+    'M2 8 L98 8 L98 66 L2 66 Z M12 18 L88 18 L88 56 L12 56 Z M40 66 L40 84 M60 66 L60 84 ' +
+    'M28 92 L72 92 M22 28 L60 28 M22 38 L52 38 M22 48 L64 48',
+  FcRadiating:
+    'M18 50 A16 16 0 0 1 34 34 M8 50 A26 26 0 0 1 34 24 M50 44 A6 6 0 1 1 49.9 44 Z',
   // logic gates
   FcAnd: 'M6 6 L48 6 A44 44 0 0 1 48 94 L6 94 Z',
   FcNand: 'M6 6 L44 6 A40 40 0 0 1 44 94 L6 94 Z M84 50 A8 8 0 1 1 100 50 A8 8 0 1 1 84 50',
@@ -110,6 +123,11 @@ export const SHAPE_DEFS: ShapeDef[] = [
   { key: 'fc-connector', label: 'Connector', category: 'Flowchart', figure: 'Circle', w: 56, h: 56 },
   { key: 'fc-prop-motor', label: 'Motor with Propeller', category: 'Flowchart', figure: 'FcPropMotor', w: 64, h: 88 },
   { key: 'fc-antenna', label: 'Antenna', category: 'Flowchart', figure: 'FcAntennaCurl', w: 46, h: 52 },
+  { key: 'fc-sun', label: 'Sun / solar source', category: 'Flowchart', figure: 'FcSun', w: 60, h: 60 },
+  { key: 'fc-solar-panel', label: 'Solar panel array', category: 'Flowchart', figure: 'FcSolarPanel', w: 84, h: 78 },
+  { key: 'fc-battery-cell', label: 'Battery cell', category: 'Flowchart', figure: 'FcBatteryCell', w: 34, h: 70 },
+  { key: 'fc-monitor', label: 'Monitor / gateway', category: 'Flowchart', figure: 'FcMonitor', w: 66, h: 62 },
+  { key: 'fc-radiating', label: 'Radiating / wireless', category: 'Flowchart', figure: 'FcRadiating', w: 44, h: 44 },
   // Logic gates
   { key: 'lg-and', label: 'AND', category: 'Logic', figure: 'FcAnd', w: 92, h: 66 },
   { key: 'lg-nand', label: 'NAND', category: 'Logic', figure: 'FcNand', w: 100, h: 66 },

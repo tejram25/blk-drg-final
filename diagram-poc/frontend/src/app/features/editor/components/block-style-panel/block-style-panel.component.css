@@ -74,3 +74,14 @@
   padding-top: 8px;
   border-top: 1px solid color-mix(in srgb, var(--border, #34353c) 30%, transparent);
 }
+
+/* A colour picker plus an explicit "none", since a picker cannot say it. */
+.swatch-row { display: flex; gap: 4px; align-items: center; margin-top: 4px; }
+.swatch-row input[type='color'] { margin-top: 0; flex: 1; min-width: 0; }
+.none-btn {
+  width: 26px; height: 28px; padding: 0; flex: none;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: transparent; color: var(--text); cursor: pointer; font-size: 13px; line-height: 1;
+}
+.none-btn:hover { border-color: var(--accent); }
+.none-btn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
