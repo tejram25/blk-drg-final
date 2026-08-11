@@ -531,26 +531,26 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return m;
   }
 
-  /** Restore a node's pins to their resting look: schematic/basic symbols keep
-   * a faint dot on every pin (so connection points are always visible);
-   * block/shape side handles rest hidden until hover. */
+  /**
+   * A node's resting look: nothing showing.
+   *
+   * Connection points are editing furniture, not part of the drawing. Left
+   * visible they speckle every block with markers the source artwork does not
+   * have, and they follow the drawing into an exported picture. Hovering a
+   * block still reveals every one of them, which is when you actually want to
+   * see where a wire can go.
+   *
+   * A schematic symbol is the exception: the faint dot on a resistor's lead is
+   * part of how the symbol reads, not a handle.
+   */
   private resetPins(node: go.Node): void {
     const c = node.data?.category;
-    // Pins someone added deliberately stay visible, the way a symbol's pins do.
-    // The four side rails do not — they would outline every block on the canvas.
-    // Without this a pin is invisible until you happen to hover the node, so
-    // moving one along its edge from the properties panel looks like nothing is
-    // happening, and there is no target to start a wire from.
-    const explicit = Array.isArray(node.data?.ports) && node.data.ports.length > 0;
-    const rest = c === 'symbol' || c === 'basic' ? 0.45 : 0;
-    const sides = new Set(['T', 'R', 'B', 'L']);
-    node.ports.each((p) => {
-      if (!p.portId) return;
-      // Fully opaque, not a ghost: these mark exact connection points, and a
-      // faded marker is precisely the thing that was hard to read.
-      p.opacity = explicit && !sides.has(p.portId) ? 1 : rest;
-    });
+    const rest = (c === 'symbol' || c === 'basic') && !this.pinsForced ? 0.45 : 0;
+    node.ports.each((p) => { if (p.portId) p.opacity = rest; });
   }
+
+  /** Set while an image is being captured: even a hovered node shows nothing. */
+  private pinsForced = false;
 
   /**
    * Magnetic pin alignment: if a freshly drawn wire connects two pins that are
@@ -580,8 +580,24 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private hoverPorts(obj: go.GraphObject, on: boolean): void {
     const node = obj.part;
     if (!(node instanceof go.Node)) return;
-    if (on) node.ports.each((p) => { if (p.portId) p.opacity = 1; });
+    if (on && !this.pinsForced) node.ports.each((p) => { if (p.portId) p.opacity = 1; });
     else this.resetPins(node);
+  }
+
+  /**
+   * Take every marker off the canvas for the duration of a capture.
+   *
+   * Hiding them on hover is not enough on its own: whichever block the pointer
+   * happens to be over when Export is clicked would keep its markers, and they
+   * would be baked into the picture.
+   */
+  private withoutPins<T>(capture: () => T): T {
+    this.pinsForced = true;
+    this.diagram.nodes.each((n) => this.resetPins(n));
+    try { return capture(); } finally {
+      this.pinsForced = false;
+      this.diagram.nodes.each((n) => this.resetPins(n));
+    }
   }
 
   private static readonly PARTS_DOCK_CAP = 5;
@@ -807,8 +823,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       // through the border, so a row of them read as a smudge along the edge
       // rather than as a row of connection points.
       $(go.Shape, 'Rectangle',
+        // Hidden at rest, exactly like the edge rails: a connection point is
+        // editing furniture, and left showing it speckles every block with
+        // markers that then follow the drawing into an exported picture.
+        // Hovering the block brings them all back.
         { desiredSize: new go.Size(9, 9), fill: '#0084D5', stroke: '#ffffff', strokeWidth: 1,
-          cursor: 'crosshair', opacity: 1, fromLinkable: true, toLinkable: true },
+          cursor: 'crosshair', opacity: 0, fromLinkable: true, toLinkable: true },
         new go.Binding('portId', 'portId'),
         new go.Binding('fromSpot', 'spot', sideSpot),
         new go.Binding('toSpot', 'spot', sideSpot)),
@@ -2934,7 +2954,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   runExport(format: 'png' | 'svg'): void {
     this.exportOpen = false;
-    this.withExportMask(() => { if (format === 'png') this.exportPng(); else this.exportSvg(); });
+    this.withExportMask(() => this.withoutPins(() => { if (format === 'png') this.exportPng(); else this.exportSvg(); }));
   }
   /** Hide the excluded nodes just for the image capture, then restore them.
    * The mask is silent (no undo entry, no autosave) and `hidden` never syncs to
