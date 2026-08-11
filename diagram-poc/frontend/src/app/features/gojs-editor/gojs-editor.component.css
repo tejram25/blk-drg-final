@@ -1,4 +1,4 @@
-    :host {
+:host {
       --bg: #141518; --bg-deep: #0e0f11;
       --panel: #1d1e23; --panel-2: #26272d;
       --border: #34353c; --border-soft: #2b2c32;
@@ -514,68 +514,11 @@
       -webkit-user-select: none; user-select: none;
       -webkit-touch-callout: none;
     }
-
-    /* ---- Wire dock (floating, bottom center) ---- */
-    .wire-dock {
-      position: absolute; bottom: 18px; left: 18px; z-index: 40;
-      display: flex; align-items: center; gap: 8px;
-      background: var(--panel); border: 1px solid var(--border);
-      border-radius: 11px; padding: 5px 9px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.45);
-    }
-    /* compact triggers that open a popover */
-    .dock-trigger {
-      display: inline-flex; align-items: center; gap: 1px;
-      height: 28px; padding: 0 2px 0 6px; cursor: pointer;
-      background: transparent; color: var(--muted);
-      border: 1px solid var(--border-soft); border-radius: 8px;
-    }
-    .dock-trigger:hover { background: var(--panel-2); color: var(--text); }
-    .dock-trigger.active { border-color: var(--accent); color: var(--text); }
     .trigger-swatch {
       width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
       outline: 1px solid rgba(255,255,255,.18);
     }
     .trigger-caret { font-size: 16px; width: 16px; height: 16px; }
-    /* popovers float above the dock */
-    .dock-backdrop { position: absolute; inset: 0; z-index: 35; }
-    .dock-pop {
-      position: absolute; left: 0; bottom: calc(100% + 8px);
-      display: flex; flex-direction: column; gap: 12px; min-width: 150px;
-      background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-      padding: 11px 12px; box-shadow: 0 14px 36px rgba(0,0,0,.55);
-    }
-    .pop-section { display: flex; flex-direction: column; gap: 6px; }
-    .pop-title {
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .07em; color: var(--faint);
-    }
-    .dock-label {
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .07em; color: var(--faint); white-space: nowrap;
-    }
-    .dock-sep { width: 1px; height: 22px; background: var(--border-soft); flex-shrink: 0; }
-    .swatches { display: flex; align-items: center; gap: 6px; }
-    .swatch {
-      width: 18px; height: 18px; border-radius: 50%; border: 2px solid transparent;
-      padding: 0; cursor: pointer; flex-shrink: 0;
-      outline: 1px solid rgba(255,255,255,.18);
-    }
-    .swatch.active { border-color: var(--text); outline: 2px solid var(--accent); }
-    .swatch.custom {
-      background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
-      height: 18px; width: 18px; overflow: hidden;
-    }
-    .swatch.custom::-webkit-color-swatch-wrapper { padding: 0; opacity: 0; }
-    .dock-group { display: flex; align-items: center; gap: 2px; }
-    .dock-btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 38px; height: 28px; border: 1px solid transparent; border-radius: 7px;
-      background: transparent; color: var(--muted); cursor: pointer;
-      transition: background .12s, color .12s;
-    }
-    .dock-btn:hover { background: var(--panel-2); color: var(--text); }
-    .dock-btn.active { background: var(--panel-2); color: var(--accent); border-color: var(--border); }
     @keyframes dock-flow-anim { to { stroke-dashoffset: -16; } }
     .dock-flow { animation: dock-flow-anim 1.2s linear infinite; }
 
@@ -605,7 +548,6 @@
       padding: 2px 7px; border-radius: 8px; white-space: nowrap;
       box-shadow: 0 2px 6px rgba(0,0,0,.3);
     }
-    .dock-del { --mat-icon-button-icon-color: #fca5a5; }
     .props {
       width: clamp(190px, 17vw, 230px); padding: 10px 11px;
       background: color-mix(in srgb, var(--panel) 88%, transparent);
@@ -690,11 +632,9 @@
     @media (max-width: 1320px) {
       .lbl-btn { padding: 0 8px; }
       .user-name { display: none; }
-    }
-
-    @media (max-width: 1200px) {
+    }@media (max-width: 1200px) {
       .brand-name { display: none; }
-    }
+}
 
     /* Compact (tablets & below): palette + properties become toolbar-toggled
        drawers that push the canvas; the toolbar wraps instead of overflowing. */
@@ -1024,13 +964,6 @@
   box-shadow: 0 6px 16px rgba(0,0,0,.35);
 }
 
-/* Wire dock + chat: glass */
-.wire-dock, .chat {
-  background: color-mix(in srgb, var(--panel) 84%, transparent);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-}
-.wire-dock { border-radius: 13px; }
-
 /* Onboarding: glass + soft entrance */
 .onboarding {
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -1055,9 +988,7 @@
 .hb-menu:focus-visible, .dd-trigger:focus-visible, .menu-item:focus-visible,
 .dd-item:focus-visible, .user-chip:focus-visible, .cls-pill:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
+}@media (prefers-reduced-motion: reduce) {
   .dropdown-menu, .dd-menu, .lang-menu, .ctx-menu, .onboarding { animation: none; }
   .palette .block-chip, .palette .symbol-item, .dw-row { transition: none; }
 }
@@ -1278,11 +1209,6 @@
   font-size: 9px; font-weight: 700; line-height: 1; color: #1a1303;
   background: var(--accent, #f5a623); border: 2px solid var(--panel, #1d1e23);
   border-radius: 20px; pointer-events: none; z-index: 2;
-}
-
-/* ---- wire label input in the wire dock ---- */
-.dock-label-input {
-  width: 110px; height: 26px; font-size: 11.5px; padding: 0 8px; border-radius: 7px;
 }
 .hdr-badge.inline { position: static; margin-left: 6px; border: none; }
 

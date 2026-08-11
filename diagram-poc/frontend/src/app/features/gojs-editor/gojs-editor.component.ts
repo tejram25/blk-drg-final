@@ -64,6 +64,7 @@ import { Command, CommandPaletteComponent } from '../../shared/components/comman
 import { WireGeometry } from './gojs-wire-geometry';
 import { Pin, pinSide, spaced } from './gojs-pins';
 import { buildTemplates } from './gojs-templates';
+import { DEFAULT_WIRE_STYLE, WireDockComponent, WireProp } from '../editor/components/wire-dock/wire-dock.component';
 
 /**
  * GoJS-based diagram editor — the electronics-aware block-diagram builder.
@@ -80,7 +81,7 @@ import { buildTemplates } from './gojs-templates';
         PartSearchPanelComponent, DesignwinPanelComponent, VersionsDialogComponent, CommentsPanelComponent,
         FeedbackLoopPanelComponent,
         TemplatesDialogComponent, ExportDialogComponent, CommandPaletteComponent,
-        ReviewsDialogComponent, ZoomDockComponent, ConfirmDialogComponent,
+        ReviewsDialogComponent, ZoomDockComponent, WireDockComponent, ConfirmDialogComponent,
     ],
     templateUrl: './gojs-editor.component.html',
     styleUrls: ['./gojs-editor.component.css']
@@ -150,14 +151,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   pendingDelete: DiagramSummary | null = null;
   reviewTarget: DiagramSummary | null = null;
 
-  // wire dock
-  readonly wireColors = ['#22d3ee', '#22c55e', '#f5a623', '#ef4444', '#a78bfa', '#64748b'];
-  wireColor = '#22d3ee';
-  /** Animated "flowing current" dashes by default, matching the classic editor. */
-  wireStyle: 'flow' | 'dashed' | 'solid' = 'flow';
-  wireWidth = 2;
-  wireRouter: 'manhattan' | 'normal' | 'smooth' = 'manhattan';
-  wirePop: 'color' | 'style' | null = null;
 
   sel: {
     text: string; color: string;
@@ -229,7 +222,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadWireDefaults();
     this.loadPalette();
     this.refreshList();
     this.mobileMq = window.matchMedia('(max-width: 768px), (orientation: landscape) and (max-height: 500px)');
@@ -1093,7 +1085,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const elec = (n: go.Node | null) =>
       !!n && n.data?.category === 'symbol' && String(n.data.shape || '').startsWith('elec-');
     const wire = elec(link.fromNode) && elec(link.toNode);
-    const d = this.wireDefaults;
+    // The dock owns the style new wires are drawn in.
+    const d = this.wireDock?.defaults ?? DEFAULT_WIRE_STYLE;
     this.diagram.model.commit((m) => {
       m.set(link.data, 'color', d.color);
       m.set(link.data, 'width', d.width);
@@ -1355,89 +1348,29 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ---- wire dock ----
+  //
+  // The controls, and the remembered style new wires are drawn in, belong to
+  // WireDockComponent. All the editor does is put the change on the selected
+  // wire and tell the dock what the newly selected one looks like.
 
-  wireLineDash(): number[] | null { return this.wireStyle === 'solid' ? null : [6, 3]; }
-  private applyWire(prop: string, value: any): void {
-    if (this.selectedEdge) {
-      const data = this.selectedEdge.data;
-      this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => m.set(data, prop, value), 'wire ' + prop));
-    }
-  }
-  setWireColor(c: string): void { this.wireColor = c; this.rememberWire(); this.applyWire('color', c); }
-  setWireStyle(s: 'flow' | 'dashed' | 'solid'): void {
-    this.wireStyle = s;
-    this.rememberWire();
-    this.applyWire('dash', this.wireLineDash());
-    this.applyWire('flow', s === 'flow');
-  }
-  setWireWidth(w: number): void { this.wireWidth = w; this.rememberWire(); this.applyWire('width', w); }
-  setWireRouter(r: 'manhattan' | 'normal' | 'smooth'): void { this.wireRouter = r; this.rememberWire(); this.applyWire('routing', r); }
+  @ViewChild(WireDockComponent) wireDock?: WireDockComponent;
 
-  /** Arrowhead shape and size, and whether corners are rounded or square. */
-  wireArrow: 'Standard' | 'Triangle' | 'none' = 'Standard';
-  wireArrowScale = 1;
-  wireCorner: 'round' | 'square' = 'round';
-  setWireArrow(a: 'Standard' | 'Triangle' | 'none'): void {
-    this.wireArrow = a;
-    this.rememberWire();
-    // `wire: true` is what hides the arrowhead; the figure is irrelevant then.
-    this.applyWire('wire', a === 'none');
-    if (a !== 'none') this.applyWire('arrow', a);
-  }
-  setWireArrowScale(s: number): void { this.wireArrowScale = s; this.rememberWire(); this.applyWire('arrowScale', s); }
-  setWireCorner(c: 'round' | 'square'): void { this.wireCorner = c; this.rememberWire(); this.applyWire('corner', c === 'square' ? 0 : 8); }
+  /** The selected wire's net/signal name, for the dock's text field. */
+  get wireLabel(): string { return String(this.selectedEdge?.data?.text ?? ''); }
 
-  /**
-   * The style the next wire is drawn in.
-   *
-   * Deliberately not the dock's own fields: those mirror whichever wire is
-   * selected, so that editing that wire is accurate. Reading the defaults off
-   * them meant clicking an older wire silently reset them, and the next wire
-   * you drew came out in that wire's style — so a style change had to be
-   * repeated for every single wire. Changing any control writes here instead,
-   * and only changing a control does.
-   */
-  private wireDefaults = {
-    color: this.wireColor, width: this.wireWidth, style: this.wireStyle, routing: this.wireRouter,
-    arrow: this.wireArrow, arrowScale: this.wireArrowScale, corner: this.wireCorner,
-  };
-  private static readonly WIRE_DEFAULTS_KEY = 'diagram.wireDefaults';
-
-  /** Adopt the dock's current settings as the default for new wires. */
-  private rememberWire(): void {
-    this.wireDefaults = {
-      color: this.wireColor, width: this.wireWidth, style: this.wireStyle, routing: this.wireRouter,
-      arrow: this.wireArrow, arrowScale: this.wireArrowScale, corner: this.wireCorner,
-    };
-    try { localStorage.setItem(GojsEditorComponent.WIRE_DEFAULTS_KEY, JSON.stringify(this.wireDefaults)); } catch { /* private mode */ }
+  applyWireProps(change: WireProp): void {
+    const data = this.selectedEdge?.data;
+    if (!data) return;
+    this.zone.runOutsideAngular(() => this.diagram.model.commit(
+      (m) => m.set(data, change.prop, change.value), 'wire ' + change.prop));
   }
 
-  /** Restore the remembered wire style, so it outlives a reload as well. */
-  private loadWireDefaults(): void {
-    let saved: any;
-    try { saved = JSON.parse(localStorage.getItem(GojsEditorComponent.WIRE_DEFAULTS_KEY) || 'null'); } catch { saved = null; }
-    if (!saved || typeof saved !== 'object') return;
-    this.wireDefaults = { ...this.wireDefaults, ...saved };
-    const d = this.wireDefaults;
-    this.wireColor = d.color; this.wireWidth = d.width; this.wireStyle = d.style;
-    this.wireRouter = d.routing; this.wireArrow = d.arrow; this.wireArrowScale = d.arrowScale;
-    this.wireCorner = d.corner;
-  }
-  toggleWirePop(which: 'color' | 'style'): void { this.wirePop = this.wirePop === which ? null : which; }
   deleteSelectedEdge(): void {
     this.zone.runOutsideAngular(() => this.diagram.commandHandler.deleteSelection());
     this.selectedEdge = null; this.cdr.detectChanges();
   }
-  private syncWireDock(link: go.Link): void {
-    const d = link.data || {};
-    this.wireColor = d.color || this.wireColor;
-    this.wireWidth = d.width || this.wireWidth;
-    this.wireStyle = !d.dash ? 'solid' : (d.flow ? 'flow' : 'dashed');
-    this.wireRouter = d.routing || this.wireRouter;
-    this.wireArrow = d.wire ? 'none' : (d.arrow === 'Triangle' ? 'Triangle' : 'Standard');
-    this.wireArrowScale = typeof d.arrowScale === 'number' ? d.arrowScale : 1;
-    this.wireCorner = d.corner === 0 ? 'square' : 'round';
-  }
+
+  private syncWireDock(link: go.Link): void { this.wireDock?.syncFrom(link.data); }
 
   // ---- editing commands ----
 
@@ -1659,7 +1592,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       .map((l) => ({ from: idMap.get(l.from), to: idMap.get(l.to), label: l.label }))
       .filter((l) => l.from && l.to)
       .map((l) => ({ category: 'link', from: l.from, to: l.to, fromPort: '', toPort: '',
-        color: this.wireColor, width: this.wireWidth, dash: [6, 3], flow: true }));
+        color: (this.wireDock?.defaults ?? DEFAULT_WIRE_STYLE).color,
+        width: (this.wireDock?.defaults ?? DEFAULT_WIRE_STYLE).width, dash: [6, 3], flow: true }));
 
     this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => {
       const gm = m as go.GraphLinksModel;
