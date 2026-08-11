@@ -408,25 +408,8 @@
    "category": "shape",
    "figure": "Rectangle",
    "text": "Pack level Protection:",
-   "loc": "1135 271",
-   "size": "210 18",
-   "fill": "transparent",
-   "stroke": "transparent",
-   "labelColor": "#141414",
-   "font": "700 13px \"Arrow Display\", sans-serif",
-   "fixedColor": true,
-   "minSize": "1 1",
-   "strokeWidth": 0,
-   "textWidth": 210,
-   "textAlign": "left"
-  },
-  {
-   "key": "pack",
-   "category": "shape",
-   "figure": "Rectangle",
-   "text": "•  Thermal Protection (Over Temperature)\n•  Overcharge Protection (OVP)\n•  Over-discharge Protection (UVP)\n•  Charge overcurrent Protection (OCC)\n•  Discharge overcurrent Protection (OCD)",
-   "loc": "1137.5 323",
-   "size": "215 78",
+   "loc": "1137.5 312.0",
+   "size": "215.0 100.0",
    "fill": "transparent",
    "stroke": "transparent",
    "labelColor": "#141414",
@@ -435,7 +418,8 @@
    "minSize": "1 1",
    "strokeWidth": 0,
    "textWidth": 215,
-   "textAlign": "left"
+   "textAlign": "left",
+   "html": "<div><b>Pack level Protection:</b></div><ul><li>Thermal Protection (Over Temperature)</li><li>Overcharge Protection (OVP)</li><li>Over-discharge Protection (UVP)</li><li>Charge overcurrent Protection (OCC)</li><li>Discharge overcurrent Protection (OCD)</li></ul>"
   },
   {
    "key": "keybg",

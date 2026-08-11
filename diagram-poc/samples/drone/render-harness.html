@@ -31,6 +31,67 @@ window.buildDiagram = function(modelJson, geo) {
     padding: 24,
   });
 
+  // ---- rich labels (port of rich-text.ts) ----
+  // draw.io stores a formatted label as HTML; a GoJS TextBlock is plain text,
+  // so each line is drawn as its own TextBlock.
+  const RT_ENT = { amp:'&', lt:'<', gt:'>', quot:'"', apos:"'", nbsp:' ' };
+  const rtDecode = (t) => String(t).replace(/&(#?\w+);/g, (m,e) => {
+    const k = String(e).toLowerCase();
+    if (RT_ENT[k] !== undefined) return RT_ENT[k];
+    return /^#\d+$/.test(e) ? String.fromCharCode(+e.slice(1)) : m; });
+  const rtIsRich = (h) => typeof h === 'string' && /<(b|strong|i|em|u|br|div|p|li|ul|ol)\b/i.test(h);
+  function rtParse(html) {
+    const lines = []; let runs = [], bullet = false, muted = 0;
+    const marks = { bold:0, italic:0, underline:0 };
+    const flush = () => { const k = runs.filter(r=>r.text.length);
+      if (k.length || bullet) lines.push({ runs: k.length?k:[{text:''}], bullet });
+      runs = []; bullet = false; };
+    const push = (t) => { if (t) runs.push({ text:t, bold:!!marks.bold, italic:!!marks.italic, underline:!!marks.underline }); };
+    const re = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>|([^<]+)/g; let m;
+    while ((m = re.exec(html)) !== null) {
+      if (m[2] !== undefined) { if (!muted) push(rtDecode(m[2]).replace(/\s+/g,' ')); continue; }
+      const tag = m[1].toLowerCase(), close = m[0][1] === '/';
+      if (tag === 'script' || tag === 'style') { muted = Math.max(0, muted + (close?-1:1)); continue; }
+      if (muted) continue;
+      if (tag==='b'||tag==='strong') marks.bold += close?-1:1;
+      else if (tag==='i'||tag==='em') marks.italic += close?-1:1;
+      else if (tag==='u') marks.underline += close?-1:1;
+      else if (tag==='br') flush();
+      else if (tag==='li') { flush(); if (!close) bullet = true; }
+      else if (tag==='div'||tag==='p') flush();
+      for (const k in marks) if (marks[k] < 0) marks[k] = 0;
+    }
+    flush();
+    while (lines.length && !lines[lines.length-1].bullet &&
+           !lines[lines.length-1].runs.some(r=>r.text.trim())) lines.pop();
+    return lines;
+  }
+  function rtFont(base, line) {
+    const total = line.runs.reduce((n,r)=>n+r.text.length,0) || 1;
+    const share = (k) => line.runs.reduce((n,r)=>n+(r[k]?r.text.length:0),0)/total;
+    const f = String(base || '600 12.5px Roboto, sans-serif').trim();
+    const m = /^((?:(?:normal|italic|oblique|bold|bolder|lighter|[1-9]00)\s+)*)(.*)$/.exec(f);
+    const lead = (m&&m[1]?m[1]:'').trim().split(/\s+/).filter(Boolean);
+    const rest = (m&&m[2]) || f;
+    const weight = lead.find(t=>/^(bold|bolder|lighter|[1-9]00)$/i.test(t));
+    const slant = share('italic')>0.5 ? 'italic' : lead.find(t=>/^(italic|oblique)$/i.test(t));
+    return [slant, share('bold')>0.5 ? '700' : weight, rest].filter(Boolean).join(' ');
+  }
+  function richItems(d) {
+    if (!rtIsRich(d && d.html)) return [];
+    const lines = rtParse(String(d.html));
+    const base = String(d.font || '600 12.5px Roboto, sans-serif');
+    const stroke = String(d.labelColor || '#1f2937');
+    const width = typeof d.textWidth === 'number' ? d.textWidth : 150;
+    const anyBullet = lines.some(l=>l.bullet);
+    return lines.map(l => ({
+      text: (l.bullet ? '\u2022  ' : '') + l.runs.map(r=>r.text).join(''),
+      font: rtFont(base, l),
+      underline: l.runs.length>0 && l.runs.every(r=>!r.text.trim()||r.underline),
+      align: anyBullet ? 'left' : String(d.textAlign || 'center'),
+      stroke, width }));
+  }
+
   // ---- ports ----
   const sideSpot = (s) => {
     const sp = go.Spot.parse(s);
@@ -110,9 +171,20 @@ window.buildDiagram = function(modelJson, geo) {
         new go.Binding('strokeDashArray','dashPattern',(v)=> v===true?[5,4]:(Array.isArray(v)?v:null))),
       $(go.TextBlock,
         { font:'600 12.5px Roboto, sans-serif', stroke:'#1f2937', textAlign:'center', maxSize:new go.Size(150,NaN), margin:6 },
+        new go.Binding('visible','html',(h)=>!rtIsRich(h)),
         new go.Binding('text'), new go.Binding('stroke','labelColor'), new go.Binding('font','font'),
         new go.Binding('textAlign','textAlign'),
-        new go.Binding('maxSize','textWidth',(w)=> new go.Size(w,NaN)))),
+        new go.Binding('maxSize','textWidth',(w)=> new go.Size(w,NaN))),
+      $(go.Panel,'Vertical',
+        { margin:6, visible:false, defaultAlignment:go.Spot.Left,
+          itemTemplate: $(go.Panel,'Auto',
+            $(go.TextBlock,{ alignment:go.Spot.Left },
+              new go.Binding('text'), new go.Binding('font'), new go.Binding('stroke'),
+              new go.Binding('isUnderline','underline'),
+              new go.Binding('textAlign','align'),
+              new go.Binding('maxSize','width',(w)=> new go.Size(w,NaN)))) },
+        new go.Binding('visible','html',(h)=>rtIsRich(h)),
+        new go.Binding('itemArray','',richItems))),
     $(go.TextBlock,{ alignment:new go.Spot(0.5,1,0,7), alignmentFocus:go.Spot.Top,
       font:'10.5px Roboto, sans-serif', stroke:'#94a3b8', textAlign:'center', maxSize:new go.Size(170,NaN) },
       new go.Binding('text','sub'),

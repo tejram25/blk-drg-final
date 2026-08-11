@@ -1,5 +1,6 @@
 import * as go from 'gojs';
 import { WireGeometry } from './gojs-wire-geometry';
+import { isRich, lineFont, lineUnderlined, parseRichText } from './rich-text';
 
 /**
  * What the templates need back from the editor.
@@ -26,6 +27,30 @@ export interface TemplateHooks {
 function backwardArrow(name: string): string {
   const n = name || 'Standard';
   return n === 'Standard' ? 'Backward' : n.startsWith('Backward') ? n : 'Backward' + n;
+}
+
+/**
+ * A rich label, flattened to one item per rendered line.
+ *
+ * A GoJS TextBlock is plain text, so a formatted label is drawn as a stack of
+ * them — one per line, each with its own font. That keeps the label inside the
+ * canvas: it zooms, hit-tests and lands in an exported picture, none of which
+ * an HTML element floated over the diagram would do.
+ */
+function richItems(d: go.ObjectData): go.ObjectData[] {
+  if (!isRich(d?.['html'])) return [];
+  const lines = parseRichText(String(d['html']));
+  const base = String(d['font'] || '600 12.5px Roboto, sans-serif');
+  const stroke = String(d['labelColor'] || '#1f2937');
+  const width = typeof d['textWidth'] === 'number' ? d['textWidth'] : 150;
+  const anyBullet = lines.some((l) => l.bullet);
+  return lines.map((l) => ({
+    text: (l.bullet ? '\u2022  ' : '') + l.runs.map((r) => r.text).join(''),
+    font: lineFont(base, l),
+    underline: lineUnderlined(l),
+    align: anyBullet ? 'left' : String(d['textAlign'] || 'center'),
+    stroke, width,
+  }));
 }
 
 export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.make, hooks: TemplateHooks): void {
@@ -238,15 +263,31 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
           // survive a round trip through the model.
           new go.Binding('strokeDashArray', 'dashPattern',
             (v) => (v === true ? [5, 4] : Array.isArray(v) ? v : null))),
+        // A formatted label is drawn by the stack below instead.
         $(go.TextBlock,
           { editable: true, font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937',
             textAlign: 'center', maxSize: new go.Size(150, NaN), margin: 6 },
+          new go.Binding('visible', 'html', (h) => !isRich(h)),
           new go.Binding('text').makeTwoWay(),
           new go.Binding('stroke', 'labelColor'),
           // Imported artwork specifies its own type, alignment and wrap width.
           new go.Binding('font', 'font'),
           new go.Binding('textAlign', 'textAlign'),
           new go.Binding('maxSize', 'textWidth', (w: number) => new go.Size(w, NaN))),
+        $(go.Panel, 'Vertical',
+          { margin: 6, visible: false, defaultAlignment: go.Spot.Left,
+            itemTemplate: $(go.Panel, 'Auto',
+              $(go.TextBlock, { alignment: go.Spot.Left },
+                new go.Binding('text'),
+                new go.Binding('font'),
+                new go.Binding('stroke'),
+                new go.Binding('isUnderline', 'underline'),
+                new go.Binding('textAlign', 'align'),
+                new go.Binding('maxSize', 'width', (w: number) => new go.Size(w, NaN)))) },
+          new go.Binding('visible', 'html', (h) => isRich(h)),
+          // Bound to the whole data object: the lines depend on the label, the
+          // font and the colour together, so any of them changing must redraw.
+          new go.Binding('itemArray', '', richItems)),
         $(go.Panel, 'Auto', { alignment: go.Spot.TopRight, alignmentFocus: go.Spot.TopRight, margin: 3, visible: false },
           new go.Binding('visible', 'components', (c) => Array.isArray(c) && c.length > 0),
           $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: '#f5a623', stroke: null }),

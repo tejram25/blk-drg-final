@@ -5,6 +5,7 @@
  * connections round-trip; rich symbol artwork does not.
  */
 import * as go from 'gojs';
+import { richToPlain } from './rich-text';
 
 function esc(s: string): string {
   return String(s ?? '')
@@ -32,7 +33,10 @@ export function exportDrawio(
   diagram.nodes.each((n) => {
     const b = n.actualBounds;
     const value = n.data?.value ? String(n.data.value) : '';
-    const label = esc((n.data?.text || n.data?.shape || '') + (value ? `\n${value}` : ''));
+    // A formatted label goes back out as the HTML draw.io stores; a plain one
+    // is escaped as before.
+    const rich = typeof n.data?.html === 'string' && n.data.html ? String(n.data.html) : '';
+    const label = rich || esc((n.data?.text || n.data?.shape || '') + (value ? `\n${value}` : ''));
     const shape = String(n.data?.shape || '');
     const src = (n.data?.category === 'symbol' || n.data?.category === 'basic') && shape && symbolSrc
       ? symbolSrc(shape) : null;
@@ -89,7 +93,13 @@ export function importDrawio(xml: string): go.ObjectData[] {
     nodeKeys.add(id);
     out.push({
       key: id, category: 'block',
-      text: (c.getAttribute('value') || '').replace(/<[^>]+>/g, '').trim(),
+      // Keep the markup. draw.io writes a formatted label as HTML (its
+      // `html=1` style), and stripping every tag turned a heading and five
+      // bullets into one squashed line. `text` stays as the plain reading of it
+      // so search, tooltips and any non-rich renderer still work.
+      html: /<(b|strong|i|em|u|br|div|p|li|ul|ol)\b/i.test(c.getAttribute('value') || '')
+        ? (c.getAttribute('value') || '') : undefined,
+      text: richToPlain(c.getAttribute('value') || ''),
       subtitle: 'Imported',
       color: fill && fill !== 'none' ? fill : '#1d4ed8',
       icon: 'crop_square',
