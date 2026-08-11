@@ -11,6 +11,7 @@ import com.example.diagram.web.error.NotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -29,8 +30,16 @@ public class DiagramServiceImpl implements DiagramService {
 
     @Override
     public List<DiagramSummary> listAll(String viewerEmail) {
+        // Most recently touched first. The list feeds the editor's "Open saved"
+        // dropdown, where insertion order buried whatever you had just saved at
+        // the bottom of a growing list. Fall back to the id when a row has no
+        // timestamp, so ordering is still stable for older records.
+        Comparator<Diagram> recentFirst = Comparator
+                .comparing(Diagram::getUpdatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(Diagram::getId, Comparator.nullsLast(Comparator.reverseOrder()));
         return repository.findAll().stream()
                 .filter(d -> canView(d, viewerEmail))
+                .sorted(recentFirst)
                 .map(d -> new DiagramSummary(d.getId(), d.getName(), d.getClassification(),
                         d.getOwnerEmail(), d.getUpdatedAt()))
                 .toList();
