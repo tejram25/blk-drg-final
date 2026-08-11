@@ -1215,6 +1215,20 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
      * begin looking.
      */
     const linkTool = this.diagram.toolManager.linkingTool;
+
+    /**
+     * A wire can only be *started* from something marked `fromLinkable`.
+     *
+     * GoJS defaults to `Either`, which also lets a drag begin on a to-linkable
+     * port and draw the link backwards. A block's body is deliberately
+     * to-linkable — that is what lets a wire be dropped anywhere on it — so with
+     * the default, pressing a block anywhere started a backwards wire instead of
+     * picking the block up, and nothing on the canvas could be moved. Nothing is
+     * lost by forbidding it: every port here is linkable in both directions, so
+     * any wire you could draw backwards you can draw forwards.
+     */
+    linkTool.direction = go.LinkingDirection.ForwardsOnly;
+
     const findPort = linkTool.findLinkablePort.bind(linkTool);
     linkTool.findLinkablePort = () => {
       const direct = findPort();
