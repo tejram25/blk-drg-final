@@ -1,3 +1,11 @@
+/* The host must not become a box of its own: `.props` is a child of the
+   editor's flex row and is stretched by it, and its own `overflow-y: auto` only
+   engages against that definite height. Wrapped in an ordinary host element the
+   panel sized to its content instead and ran off the bottom of the canvas.
+   `display: contents` puts `.props` back in the row, exactly where it was
+   before this became a component. */
+:host { display: contents; }
+
 /* Moved with the panel itself, verbatim from the editor stylesheet. */
 .props {
       width: clamp(190px, 17vw, 230px); padding: 10px 11px;

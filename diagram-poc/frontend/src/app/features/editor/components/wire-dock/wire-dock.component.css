@@ -1,3 +1,7 @@
+/* `.wire-dock` positions itself against the canvas; the host must not sit
+   between them as a layout box of its own. */
+:host { display: contents; }
+
 /* Moved with the dock itself, verbatim from the editor stylesheet. */
 /* ---- Wire dock (floating, bottom center) ---- */
     .wire-dock {
