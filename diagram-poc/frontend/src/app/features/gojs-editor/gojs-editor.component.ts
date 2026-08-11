@@ -1297,6 +1297,35 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   setContainerCorner(v: any): void { this.setField('corner', Math.min(60, Math.max(0, Number(v) || 0))); }
 
+  // ---- the band behind a container's title, and a block's status badge ----
+  get titleBg(): string { return String(this.selectedNode?.data?.titleBg ?? ''); }
+  get titleBandBorder(): string { return String(this.selectedNode?.data?.titleBorder ?? ''); }
+  get titleBandWidth(): number | null {
+    const w = Number(String(this.selectedNode?.data?.titleSize2 ?? '').split(/\s+/)[0]);
+    return isFinite(w) ? w : null;
+  }
+  /** A band needs padding to be a band at all, so switching it on gives it some. */
+  private setTitleBg(v: string | null): void {
+    this.setField('titleBg', v ?? '');
+    this.setField('titlePad', v ? '3 8 3 8' : '');
+  }
+  private setTitleBandWidth(v: any): void {
+    const w = Math.min(600, Math.max(0, Number(v) || 0));
+    const h = Number(String(this.selectedNode?.data?.titleSize2 ?? '').split(/\s+/)[1]) || 15;
+    this.setField('titleSize2', w ? `${w} ${h}` : '');
+  }
+  get badge(): string { return String(this.selectedNode?.data?.badge ?? ''); }
+  get badgeFill(): string { return this.hexOr(this.selectedNode?.data?.badgeFill, '#f5a623'); }
+  get badgeColor(): string { return this.hexOr(this.selectedNode?.data?.badgeColor, '#ffffff'); }
+  get badgeSize(): number {
+    const n = Number(String(this.selectedNode?.data?.badgeSize ?? '').split(/\s+/)[0]);
+    return isFinite(n) ? n : 18;
+  }
+  private setBadgeSize(v: any): void {
+    const n = Math.min(60, Math.max(8, Number(v) || 18));
+    this.setField('badgeSize', `${n} ${n}`);
+  }
+
   // ---- pins ----
 
   /** Extra connection points, beyond the four sides every node already has. */
@@ -1400,6 +1429,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       // their own default when a colour is absent, which is not the same as none.
       case 'noFill': this.setFill(on ? 'transparent' : '#ffffff'); break;
       case 'noBorder': this.setStroke(on ? 'transparent' : '#334155'); break;
+      case 'titleBg': this.setTitleBg(t); break;
+      case 'noTitleBg': this.setTitleBg(on ? null : '#dcebd5'); break;
+      case 'titleBandBorder': this.setField('titleBorder', t); break;
+      case 'titleBandWidth': this.setTitleBandWidth(n); break;
+      case 'badge': this.setField('badge', t); break;
+      case 'badgeFill': this.setField('badgeFill', t); break;
+      case 'badgeColor': this.setField('badgeColor', t); break;
+      case 'badgeSize': this.setBadgeSize(n); break;
       case 'width': this.setNodeSize('w', n); break;
       case 'height': this.setNodeSize('h', n); break;
     }

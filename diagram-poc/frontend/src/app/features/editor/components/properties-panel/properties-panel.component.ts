@@ -49,6 +49,13 @@ export class PropertiesPanelComponent {
   @Input() titleSize: number | null = null;
   @Input() pad: number | null = null;
   @Input() corner: number | null = null;
+  @Input() titleBg = '';
+  @Input() titleBandBorder = '';
+  @Input() titleBandWidth: number | null = null;
+  @Input() badge = '';
+  @Input() badgeFill = '#f5a623';
+  @Input() badgeColor = '#ffffff';
+  @Input() badgeSize: number | null = null;
   @Input() width: number | null = null;
   @Input() height: number | null = null;
   @Input() pins: Pin[] = [];

@@ -9,7 +9,9 @@ import { Pin, PinSide, pinAlong, pinSide } from '../../../gojs-editor/gojs-pins'
  *  it is stored — the editor decides which model field each one writes. */
 export type StyleProp =
   'fill' | 'stroke' | 'borderWidth' | 'titleColor' | 'titlePlacement' | 'width' | 'height'
-  | 'titleX' | 'titleY' | 'titleSize' | 'pad' | 'corner' | 'noFill' | 'noBorder';
+  | 'titleX' | 'titleY' | 'titleSize' | 'pad' | 'corner' | 'noFill' | 'noBorder'
+  | 'titleBg' | 'noTitleBg' | 'titleBandBorder' | 'titleBandWidth'
+  | 'badge' | 'badgeFill' | 'badgeColor' | 'badgeSize';
 
 export interface StyleChange { prop: StyleProp; value: string | number | boolean; }
 export interface PinSideChange { index: number; side: PinSide; }
@@ -58,6 +60,14 @@ export class BlockStylePanelComponent {
   @Input() titleSize: number | null = null;
   @Input() pad: number | null = null;
   @Input() corner: number | null = null;
+  /** The band behind a container's title, and the badge on a block. */
+  @Input() titleBg = '';
+  @Input() titleBandBorder = '';
+  @Input() titleBandWidth: number | null = null;
+  @Input() badge = '';
+  @Input() badgeFill = '#f5a623';
+  @Input() badgeColor = '#ffffff';
+  @Input() badgeSize: number | null = null;
   @Input() width: number | null = null;
   @Input() height: number | null = null;
   @Input() pins: Pin[] = [];

@@ -66,6 +66,20 @@
       <label><span>Corner radius</span>
         <input type="number" min="0" max="60" step="1"
                [ngModel]="corner" (ngModelChange)="style.emit({ prop: 'corner', value: $event })" /></label>
+      <!-- A band behind the title, for a subsystem with a coloured header strip -->
+      <label><span>Title band</span>
+        <span class="swatch-row">
+          <input type="color" [ngModel]="titleBg || '#dcebd5'"
+                 (ngModelChange)="style.emit({ prop: 'titleBg', value: $event })" />
+          <button type="button" class="none-btn" [class.on]="!titleBg" matTooltip="No band"
+                  (click)="style.emit({ prop: 'noTitleBg', value: !!titleBg })">∅</button>
+        </span></label>
+      <label><span>Band outline</span>
+        <input type="color" [ngModel]="titleBandBorder || '#4e9a3e'"
+               (ngModelChange)="style.emit({ prop: 'titleBandBorder', value: $event })" /></label>
+      <label class="wide"><span>Band width</span>
+        <input type="number" min="0" max="600" step="2" placeholder="auto"
+               [ngModel]="titleBandWidth" (ngModelChange)="style.emit({ prop: 'titleBandWidth', value: $event })" /></label>
     </div>
   } @else {
     <!-- Label colour, size and alignment live under Text, next to the rest of
@@ -75,6 +89,21 @@
         <input type="number" min="8" [ngModel]="width" (ngModelChange)="style.emit({ prop: 'width', value: $event })" /></label>
       <label><span>Height</span>
         <input type="number" min="8" [ngModel]="height" (ngModelChange)="style.emit({ prop: 'height', value: $event })" /></label>
+      <!-- A status marker at the block's edge: "?" to check, "!" to flag -->
+      <label class="wide"><span>Badge</span>
+        <input [ngModel]="badge" placeholder="none — try ? or !"
+               (ngModelChange)="style.emit({ prop: 'badge', value: $event })" /></label>
+      @if (badge) {
+        <label><span>Badge fill</span>
+          <input type="color" [ngModel]="badgeFill"
+                 (ngModelChange)="style.emit({ prop: 'badgeFill', value: $event })" /></label>
+        <label><span>Badge text</span>
+          <input type="color" [ngModel]="badgeColor"
+                 (ngModelChange)="style.emit({ prop: 'badgeColor', value: $event })" /></label>
+        <label><span>Badge size</span>
+          <input type="number" min="8" max="60" step="1"
+                 [ngModel]="badgeSize" (ngModelChange)="style.emit({ prop: 'badgeSize', value: $event })" /></label>
+      }
     </div>
   }
 }
