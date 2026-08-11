@@ -3,15 +3,17 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe } from '../../../../core/services/i18n/translate.pipe';
-import { Pin, PinSide, pinSide } from '../../../gojs-editor/gojs-pins';
+import { Pin, PinSide, pinAlong, pinSide } from '../../../gojs-editor/gojs-pins';
 
 /** A style property the panel can change, named for what it means, not for how
  *  it is stored — the editor decides which model field each one writes. */
 export type StyleProp =
-  'fill' | 'stroke' | 'borderWidth' | 'titleColor' | 'titlePlacement' | 'width' | 'height';
+  'fill' | 'stroke' | 'borderWidth' | 'titleColor' | 'titlePlacement' | 'width' | 'height'
+  | 'titleX' | 'titleY' | 'titleSize' | 'pad' | 'corner';
 
 export interface StyleChange { prop: StyleProp; value: string | number; }
 export interface PinSideChange { index: number; side: PinSide; }
+export interface PinAlongChange { index: number; along: number; }
 
 /** What the panel needs to know about the selected block to draw its controls. */
 export interface StyleSelection {
@@ -53,6 +55,9 @@ export class BlockStylePanelComponent {
   /** The label is HTML, so its words are edited under Text and not here. */
   @Input() formatted = false;
   @Input() titlePlacement = '0 0';
+  @Input() titleSize: number | null = null;
+  @Input() pad: number | null = null;
+  @Input() corner: number | null = null;
   @Input() width: number | null = null;
   @Input() height: number | null = null;
   @Input() pins: Pin[] = [];
@@ -64,7 +69,22 @@ export class BlockStylePanelComponent {
   @Output() addPin = new EventEmitter<void>();
   @Output() removePin = new EventEmitter<number>();
   @Output() pinSide = new EventEmitter<PinSideChange>();
+  @Output() pinAlong = new EventEmitter<PinAlongChange>();
 
   /** Which edge a pin's spot puts it on, for its row's dropdown. */
   sideOf(spot: string): PinSide { return pinSide(spot); }
+  /** How far along that edge it sits, as a percentage for its row's box. */
+  alongOf(spot: string): number { return Math.round(pinAlong(spot) * 100); }
+
+  /** The title spot as two numbers, so it can be nudged off the presets. */
+  private part(i: 0 | 1): number {
+    const n = Number(String(this.titlePlacement).trim().split(/\s+/)[i]);
+    return isFinite(n) ? Math.round(n * 100) / 100 : 0;
+  }
+  get titleX(): number { return this.part(0); }
+  get titleY(): number { return this.part(1); }
+  /** True when the spot is not one of the four offered, so the select says so. */
+  get titleCustom(): boolean {
+    return !['0 0', '0.5 0.06', '0.5 0.5', '0.5 0.94'].includes(String(this.titlePlacement));
+  }
 }

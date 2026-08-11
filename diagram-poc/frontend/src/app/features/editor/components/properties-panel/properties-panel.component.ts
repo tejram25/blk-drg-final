@@ -4,7 +4,7 @@ import { TranslatePipe } from '../../../../core/services/i18n/translate.pipe';
 import { BoxSuggestion, LinkedComponent } from '../../../../core/services/box-suggestion.service';
 import { Pin } from '../../../gojs-editor/gojs-pins';
 import {
-  BlockStylePanelComponent, PinSideChange, StyleChange, StyleSelection,
+  BlockStylePanelComponent, PinAlongChange, PinSideChange, StyleChange, StyleSelection,
 } from '../block-style-panel/block-style-panel.component';
 import {
   BlockPartsPanelComponent, DataFieldChange, PartsSelection, RowChange,
@@ -13,7 +13,7 @@ import {
   BlockTextPanelComponent, TextChange, TextSelection,
 } from '../block-text-panel/block-text-panel.component';
 
-export type { PinSideChange, StyleChange, DataFieldChange, RowChange, TextChange };
+export type { PinSideChange, PinAlongChange, StyleChange, DataFieldChange, RowChange, TextChange };
 
 /** Everything the panel shows about the selected block. */
 export type PanelSelection = StyleSelection & PartsSelection & TextSelection;
@@ -46,6 +46,9 @@ export class PropertiesPanelComponent {
   @Input() styled = false;
   @Input() container = false;
   @Input() titlePlacement = '0 0';
+  @Input() titleSize: number | null = null;
+  @Input() pad: number | null = null;
+  @Input() corner: number | null = null;
   @Input() width: number | null = null;
   @Input() height: number | null = null;
   @Input() pins: Pin[] = [];
@@ -74,6 +77,7 @@ export class PropertiesPanelComponent {
   @Output() addPin = new EventEmitter<void>();
   @Output() removePin = new EventEmitter<number>();
   @Output() pinSide = new EventEmitter<PinSideChange>();
+  @Output() pinAlong = new EventEmitter<PinAlongChange>();
   @Output() text = new EventEmitter<TextChange>();
   @Output() editText = new EventEmitter<void>();
 

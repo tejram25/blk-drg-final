@@ -525,6 +525,12 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
           new go.Binding('font', 'textFont'))),
     );
 
+    // Dropped on nothing: the block leaves whatever container it was in.
+    diagram.mouseDrop = (e: go.InputEvent) => {
+      const d = e.diagram;
+      if (!d.commandHandler.addTopLevelParts(d.selection, true)) d.currentTool.doCancel();
+    };
+
     diagram.addModelChangedListener((e) => { if (e.isTransactionFinished) hooks.updateJunctions(); });
 
     const styleLinking = (tool: go.LinkingBaseTool) => {
@@ -622,7 +628,15 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       const under = diagram.findObjectAt(pt, (x: go.GraphObject) => (x.part instanceof go.Node ? x : null), null);
       if (!under) return null;
       linkTool.startObject = under;
-      try { return findPort(); } finally { linkTool.startObject = null; }
+      try {
+        const port = findPort();
+        // Only a port a wire may actually *start* from. Naming a `startObject`
+        // makes GoJS hand back whatever port is there, and a block's body is a
+        // port — to-linkable, so a wire can be dropped anywhere on it. Returning
+        // that started a wire every time a block was pressed, which is why a
+        // block could not be dragged with the mouse at all.
+        return port && port.fromLinkable === true ? port : null;
+      } finally { linkTool.startObject = null; }
     };
 
     // A subsystem container. The defaults are the dashed amber box the palette
@@ -647,7 +661,15 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       go.Group, 'Spot',
       { layerName: 'Containers',
         locationSpot: go.Spot.Center, ungroupable: true, computesBoundsAfterDrag: true,
-        handlesDragDropForMembers: true, portSpreading: go.PortSpreading.Evenly },
+        handlesDragDropForMembers: true, portSpreading: go.PortSpreading.Evenly,
+        // Dropping a block on a container puts it inside. `handlesDragDropForMembers`
+        // only says the group handles the gesture; something still has to add the
+        // member. GoJS routes a drop that lands on a part to that part's handler,
+        // so this is where it arrives — `diagram.mouseDrop` only sees the misses.
+        mouseDrop: (_e: go.InputEvent, grp: go.GraphObject) => {
+          if (!(grp instanceof go.Group) || !grp.diagram) return;
+          if (!grp.addMembers(grp.diagram.selection, true)) grp.diagram.currentTool.doCancel();
+        } },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('isSubGraphExpanded', 'expanded').makeTwoWay(),
       $(go.Panel, 'Auto',

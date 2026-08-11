@@ -1,10 +1,11 @@
 import * as go from 'gojs';
 
-/** A named connection point on a block, as it is stored in the node's data. */
-export interface Pin { portId: string; spot: string; }
+/** A named connection point on a block, as it is stored in the node's data.
+ *  `fixed` means someone placed it, so even spacing leaves it alone. */
+export interface Pin { portId: string; spot: string; fixed?: boolean; }
 
 /** A pin being moved: `side` is where it is going, `spot` where it still is. */
-export interface PinMove extends Pin { side?: string; }
+export interface PinMove extends Pin { side?: string }
 
 export type PinSide = 'left' | 'right' | 'top' | 'bottom';
 
@@ -23,22 +24,38 @@ export function spotOn(side: PinSide, along: number): string {
     : side === 'top' ? `${along} 0` : `${along} 1`;
 }
 
+/** How far along its side a pin sits, 0 at one end and 1 at the other. */
+export function pinAlong(spot: string): number {
+  const sp = go.Spot.parse(spot || '0 0');
+  const side = pinSide(spot);
+  return side === 'left' || side === 'right' ? sp.y : sp.x;
+}
+
 /**
- * Space every pin evenly along the side it is on.
+ * Space pins evenly along the side they are on — except the ones that have been
+ * put somewhere on purpose.
  *
- * Placement is not something to hand-tune. Pins carried an explicit percentage,
- * which meant adding one put it wherever the arithmetic landed and moving one to
- * another side kept its old percentage — so two pins could sit on the same point
- * and the move looked like it had done nothing. Spacing is derived from what is
- * on each side, so it is always right and there is nothing to set.
+ * Even spacing is the right default: it means adding a pin never lands it on
+ * top of another, and moving one to a different side never carries a stale
+ * percentage with it. But the source drawings place pins at exact fractions, so
+ * a pin marked `fixed` keeps its own position and is simply skipped when the
+ * rest are spread out.
  */
 export function spaced(pins: PinMove[]): Pin[] {
   const out: Pin[] = [];
   for (const side of PIN_SIDES) {
     const onSide = pins.filter((p) => (p.side ?? pinSide(p.spot)) === side);
-    onSide.forEach((p, i) => {
-      out.push({ portId: p.portId, spot: spotOn(side, (i + 1) / (onSide.length + 1)) });
-    });
+    const loose = onSide.filter((p) => !p.fixed);
+    let i = 0;
+    for (const p of onSide) {
+      if (p.fixed) {
+        // A fixed pin that changed side keeps how far along it was.
+        out.push({ portId: p.portId, spot: spotOn(side, pinAlong(p.spot)), fixed: true });
+      } else {
+        out.push({ portId: p.portId, spot: spotOn(side, (i + 1) / (loose.length + 1)) });
+        i++;
+      }
+    }
   }
   // Keep the panel's order stable so rows do not jump around as you edit.
   const order = new Map(pins.map((p, i) => [p.portId, i]));

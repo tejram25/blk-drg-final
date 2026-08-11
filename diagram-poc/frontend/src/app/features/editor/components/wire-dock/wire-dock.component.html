@@ -24,6 +24,10 @@
     <span class="dock-sep"></span>
     <input class="dock-label-input" type="text" placeholder="Label…" matTooltip="Wire label (net / signal name)"
       [ngModel]="label" (ngModelChange)="labelChange.emit($event)" />
+    <button class="dock-trigger" matTooltip="How the label is drawn" [class.active]="wirePop === 'label'"
+      (click)="toggleWirePop('label')">
+      <span class="trigger-a" [style.color]="wireLabelColor">A</span><mat-icon class="trigger-caret">expand_more</mat-icon>
+    </button>
     <span class="dock-sep"></span>
     <button mat-icon-button [matTooltip]="'wire.delete' | translate" class="dock-del" (click)="remove.emit()"><mat-icon>delete</mat-icon></button>
   }
@@ -36,6 +40,38 @@
           <button class="swatch" [style.background]="c" [class.active]="wireColor === c" (click)="setWireColor(c); wirePop = null"></button>
         }
         <input type="color" class="swatch custom" matTooltip="Custom color" [ngModel]="wireColor" (ngModelChange)="setWireColor($event)" />
+      </div>
+    </div>
+  }
+  @if (wirePop === 'label') {
+    <div class="dock-pop">
+      <div class="pop-section"><span class="pop-title">Label colour</span>
+        <div class="swatches">
+          <input type="color" class="swatch custom" matTooltip="Text colour"
+                 [ngModel]="wireLabelColor" (ngModelChange)="setLabelColor($event)" />
+          <input type="color" class="swatch custom" matTooltip="Background"
+                 [ngModel]="wireLabelBg" (ngModelChange)="setLabelBg($event)" />
+          <button class="dock-btn" matTooltip="No background — plain text on the wire"
+                  (click)="clearLabelBg()">none</button>
+        </div>
+      </div>
+      <div class="pop-section"><span class="pop-title">Label size</span>
+        <div class="dock-group">
+          <input class="dock-num wide" type="number" min="4" max="48" step="0.5"
+                 [ngModel]="wireLabelSize" (ngModelChange)="setLabelSize($event)" />
+        </div>
+      </div>
+      <div class="pop-section"><span class="pop-title">Along the wire</span>
+        <div class="dock-group">
+          <input class="dock-range" type="range" min="0" max="1" step="0.01" matTooltip="Position along the run"
+                 [ngModel]="wireLabelAt" (ngModelChange)="setLabelAt($event)" />
+        </div>
+      </div>
+      <div class="pop-section"><span class="pop-title">Lift off the wire</span>
+        <div class="dock-group">
+          <input class="dock-num wide" type="number" min="-60" max="60" step="1"
+                 [ngModel]="wireLabelLift" (ngModelChange)="setLabelLift($event)" />
+        </div>
       </div>
     </div>
   }
@@ -59,6 +95,8 @@
               <svg viewBox="0 0 24 12" width="20" height="10"><path d="M 2 6 H 22" stroke="currentColor" stroke-width="2.4"/></svg></button>
               <button class="dock-btn" [matTooltip]="'wire.thick' | translate" [class.active]="wireWidth === 3" (click)="setWireWidth(3)">
                 <svg viewBox="0 0 24 12" width="20" height="10"><path d="M 2 6 H 22" stroke="currentColor" stroke-width="4"/></svg></button>
+              <input class="dock-num" type="number" min="0.2" max="20" step="0.1" matTooltip="Exact width"
+                     [ngModel]="wireWidth" (ngModelChange)="setWireWidth($event)" />
               </div>
             </div>
             <div class="pop-section"><span class="pop-title">{{ 'wire.popRouting' | translate }}</span>
@@ -105,6 +143,8 @@
                       <button class="dock-btn" matTooltip="Small" [class.active]="wireArrowScale <= 0.8" (click)="setWireArrowScale(0.7)">S</button>
                       <button class="dock-btn" matTooltip="Medium" [class.active]="wireArrowScale > 0.8 && wireArrowScale < 1.3" (click)="setWireArrowScale(1)">M</button>
                       <button class="dock-btn" matTooltip="Large" [class.active]="wireArrowScale >= 1.3" (click)="setWireArrowScale(1.5)">L</button>
+                      <input class="dock-num" type="number" min="0.1" max="4" step="0.05" matTooltip="Exact size"
+                             [ngModel]="wireArrowScale" (ngModelChange)="setWireArrowScale($event)" />
                     </div>
                   </div>
                 }

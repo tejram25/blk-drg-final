@@ -31,13 +31,31 @@
     <div class="style-grid">
       <label><span>Title colour</span>
         <input type="color" [ngModel]="sel.titleColor" (ngModelChange)="style.emit({ prop: 'titleColor', value: $event })" /></label>
+      <label><span>Title size</span>
+        <input type="number" min="5" max="60" step="0.5"
+               [ngModel]="titleSize" (ngModelChange)="style.emit({ prop: 'titleSize', value: $event })" /></label>
       <label class="wide"><span>Title position</span>
-        <select [ngModel]="titlePlacement" (ngModelChange)="style.emit({ prop: 'titlePlacement', value: $event })">
+        <select [ngModel]="titleCustom ? '' : titlePlacement"
+                (ngModelChange)="$event && style.emit({ prop: 'titlePlacement', value: $event })">
           <option value="0 0">Top left</option>
           <option value="0.5 0.06">Top centre</option>
           <option value="0.5 0.5">Centre</option>
           <option value="0.5 0.94">Bottom centre</option>
+          @if (titleCustom) { <option value="">Custom</option> }
         </select></label>
+      <!-- and the exact spot, since the source drawings sit between the presets -->
+      <label><span>Title x</span>
+        <input type="number" min="0" max="1" step="0.01"
+               [ngModel]="titleX" (ngModelChange)="style.emit({ prop: 'titleX', value: $event })" /></label>
+      <label><span>Title y</span>
+        <input type="number" min="0" max="1" step="0.01"
+               [ngModel]="titleY" (ngModelChange)="style.emit({ prop: 'titleY', value: $event })" /></label>
+      <label><span>Inner padding</span>
+        <input type="number" min="0" max="120" step="1"
+               [ngModel]="pad" (ngModelChange)="style.emit({ prop: 'pad', value: $event })" /></label>
+      <label><span>Corner radius</span>
+        <input type="number" min="0" max="60" step="1"
+               [ngModel]="corner" (ngModelChange)="style.emit({ prop: 'corner', value: $event })" /></label>
     </div>
   } @else {
     <!-- Label colour, size and alignment live under Text, next to the rest of
@@ -57,7 +75,7 @@
   <div class="pin-hint">Not needed to wire — drag from anywhere on an edge and the wire keeps
     the point you dropped it on. Add a named pin only when a connection has to stay put and
     be referred to, like a labelled interface on a processor. Pins space themselves evenly
-    along whichever side they are on.</div>
+    unless you type a position.</div>
   @for (p of pins; track p.portId; let i = $index) {
     <div class="pin-row">
       <span class="pin-id">{{ p.portId }}</span>
@@ -67,6 +85,10 @@
         <option value="top">Top</option>
         <option value="bottom">Bottom</option>
       </select>
+      <input class="pin-at" type="number" min="0" max="100" step="1"
+             matTooltip="How far along that side, %. Blank spaces it evenly."
+             [ngModel]="p.fixed ? alongOf(p.spot) : null" placeholder="auto"
+             (ngModelChange)="pinAlong.emit({ index: i, along: $event })" />
       <button class="pin-x" (click)="removePin.emit(i)" matTooltip="Remove pin"><mat-icon>close</mat-icon></button>
     </div>
   }

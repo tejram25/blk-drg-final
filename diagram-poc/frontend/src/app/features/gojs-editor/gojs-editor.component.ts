@@ -62,7 +62,7 @@ import { ZoomDockComponent } from '../editor/components/zoom-dock/zoom-dock.comp
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { WireGeometry } from './gojs-wire-geometry';
-import { Pin, pinSide, spaced } from './gojs-pins';
+import { Pin, PinMove, pinSide, spaced, spotOn } from './gojs-pins';
 import { buildTemplates } from './gojs-templates';
 import { DEFAULT_WIRE_STYLE, WireDockComponent, WireProp } from '../editor/components/wire-dock/wire-dock.component';
 import { PropertiesPanelComponent, StyleChange, TextChange } from '../editor/components/properties-panel/properties-panel.component';
@@ -1113,6 +1113,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       m.set(link.data, 'arrowScale', d.arrowScale);
       m.set(link.data, 'corner', wire || d.corner === 'square' ? 0 : 8);
       m.set(link.data, 'twoWay', !wire && d.twoWay);
+      // The label's own type, so a net name typed later matches the last one.
+      m.set(link.data, 'textColor', d.labelColor);
+      m.set(link.data, 'textFont', `600 ${d.labelSize}px Roboto, sans-serif`);
+      m.set(link.data, 'textBg', d.labelBg);
     }, 'style link');
     if (wire) this.straightenWire(link);
   }
@@ -1152,7 +1156,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         stroke: this.hexOr(d.stroke, '#334155'),
         labelColor: this.hexOr(d.labelColor, '#1f2937'),
         titleColor: this.hexOr(d.titleColor, '#f5a623'),
-        strokeWidth: typeof d.strokeWidth === 'number' ? d.strokeWidth : (d.isGroup ? 1.2 : 2),
+        strokeWidth: d.isGroup ? (typeof d.borderWidth === 'number' ? d.borderWidth : 1.2)
+          : (typeof d.strokeWidth === 'number' ? d.strokeWidth : 2),
         dashPattern: d.dashPattern === true,
         dashed: d.dashed,
         textAlign: d.textAlign ?? 'center',
@@ -1214,7 +1219,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   setFill(v: string): void { this.setField('fill', v); this.setField('fixedColor', true); }
   setStroke(v: string): void { this.setField('stroke', v); this.setField('fixedColor', true); }
   setLabelColor(v: string): void { this.setField('labelColor', v); this.setField('fixedColor', true); }
-  setBorderWidth(v: any): void { this.setField('strokeWidth', Math.max(0, Number(v) || 0)); }
+  /** A container draws its outline from `borderWidth`, a shape from `strokeWidth`.
+   *  Writing the wrong one made the control do nothing at all on a container. */
+  setBorderWidth(v: any): void {
+    this.setField(this.isContainer ? 'borderWidth' : 'strokeWidth', Math.max(0, Number(v) || 0));
+  }
   toggleDashedOutline(): void { this.setField('dashPattern', !this.selectedNode?.data?.dashPattern); }
   setTextAlign(v: 'left' | 'center' | 'right'): void { this.setField('textAlign', v); }
 
@@ -1247,6 +1256,44 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   setTitleColor(v: string): void { this.setField('titleColor', v); }
   setTitlePlacement(v: string): void { this.setField('titleAlign', v); this.setField('titleFocus', '0.5 0.5'); }
   get titlePlacement(): string { return String(this.selectedNode?.data?.titleAlign ?? '0 0'); }
+
+  /** One half of the title spot, so it can be put anywhere rather than on one
+   *  of four presets — which is where the source drawings put theirs. */
+  private setTitlePart(which: 0 | 1, v: any): void {
+    const n = Math.min(1, Math.max(0, Number(v) || 0));
+    const cur = this.titlePlacement.trim().split(/\s+/).map(Number);
+    const xy = [isFinite(cur[0]) ? cur[0] : 0, isFinite(cur[1]) ? cur[1] : 0];
+    xy[which] = n;
+    this.setTitlePlacement(`${xy[0]} ${xy[1]}`);
+  }
+  /** Title type size, keeping whatever weight and family it already has. */
+  get titleSize(): number {
+    const m = /(\d+(?:\.\d+)?)px/.exec(String(this.selectedNode?.data?.titleFont ?? ''));
+    return m ? Number(m[1]) : 12;
+  }
+  setTitleSize(v: any): void {
+    const size = Math.min(60, Math.max(5, Number(v) || 12));
+    const cur = String(this.selectedNode?.data?.titleFont ?? '');
+    this.setField('titleFont', /(\d+(?:\.\d+)?)px/.test(cur)
+      ? cur.replace(/(\d+(?:\.\d+)?)px/, size + 'px')
+      : `bold ${size}px Roboto, sans-serif`);
+  }
+  /** How much room a container leaves around what is inside it. */
+  get containerPad(): number {
+    const p = String(this.selectedNode?.data?.pad ?? '');
+    const n = Number(p.trim().split(/\s+/).pop());
+    return isFinite(n) ? n : 16;
+  }
+  setContainerPad(v: any): void {
+    const n = Math.min(120, Math.max(0, Number(v) || 0));
+    // Room is left at the top for the title, so that edge keeps its extra.
+    this.setField('pad', `${n + 14} ${n} ${n} ${n}`);
+  }
+  get containerCorner(): number {
+    const n = Number(this.selectedNode?.data?.corner);
+    return isFinite(n) ? n : 12;
+  }
+  setContainerCorner(v: any): void { this.setField('corner', Math.min(60, Math.max(0, Number(v) || 0))); }
 
   // ---- pins ----
 
@@ -1286,6 +1333,24 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     pins[i].side = side;
     this.writePins(spaced(pins));
   }
+  /**
+   * Put a pin at an exact position along its side, or hand it back to the
+   * even spacing when the box is cleared.
+   */
+  setPinAlong(i: number, along: any): void {
+    const pins: PinMove[] = this.pins.map((p) => ({ ...p }));
+    if (!pins[i]) return;
+    const n = Number(along);
+    if (along === null || along === '' || !isFinite(n)) {
+      delete pins[i].fixed;
+    } else {
+      const f = Math.min(1, Math.max(0, n / 100));
+      pins[i].spot = spotOn(pinSide(pins[i].spot), +f.toFixed(4));
+      pins[i].fixed = true;
+    }
+    this.writePins(spaced(pins));
+  }
+
   removePin(i: number): void {
     const pins = spaced(this.pins.filter((_, j) => j !== i));
     // Any wire landing on the pin being removed falls back to the nearest side,
@@ -1324,6 +1389,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'borderWidth': this.setBorderWidth(n); break;
       case 'titleColor': this.setTitleColor(t); break;
       case 'titlePlacement': this.setTitlePlacement(t); break;
+      case 'titleX': this.setTitlePart(0, n); break;
+      case 'titleY': this.setTitlePart(1, n); break;
+      case 'titleSize': this.setTitleSize(n); break;
+      case 'pad': this.setContainerPad(n); break;
+      case 'corner': this.setContainerCorner(n); break;
       case 'width': this.setNodeSize('w', n); break;
       case 'height': this.setNodeSize('h', n); break;
     }
@@ -1380,6 +1450,34 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'textWidth': this.setField('textWidth', Math.min(2000, Math.max(20, n || 150))); break;
       case 'formatted': this.setFormatted(b); break;
     }
+  }
+
+  /**
+   * Make a container: around the selection if there is one, empty otherwise.
+   *
+   * Ctrl+G already did the first half, but nothing in the UI said so, and there
+   * was no way at all to get an empty container to drag blocks into.
+   */
+  addContainer(): void {
+    const d = this.diagram;
+    const sel = d.selection.filter((x) => x instanceof go.Node && !(x as go.Node).data?.isGroup);
+    if (sel.count > 0 && d.commandHandler.canGroupSelection()) {
+      d.commandHandler.groupSelection();
+      const g = d.selection.first();
+      if (g) this.setField('text', 'Container');
+      this.syncSelection();
+      this.status = 'Container added around the selection';
+      return;
+    }
+    const c = d.viewportBounds.center;
+    this.zone.runOutsideAngular(() => d.model.commit((m) => {
+      m.addNodeData({ key: undefined, isGroup: true, text: 'Container',
+                      loc: go.Point.stringify(c), size: '320 220' });
+    }, 'add container'));
+    const made = d.findNodeForKey((d.model as go.GraphLinksModel).nodeDataArray.slice(-1)[0]?.['key']);
+    if (made) d.select(made);
+    this.status = 'Container added — drag blocks into it';
+    this.cdr.detectChanges();
   }
 
   /** Open the selected block's label for editing on the block itself. */

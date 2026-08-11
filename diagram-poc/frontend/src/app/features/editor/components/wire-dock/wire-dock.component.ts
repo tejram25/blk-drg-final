@@ -20,16 +20,22 @@ export interface WireStyle {
   corner: 'round' | 'square';
   /** An arrowhead at both ends: the connection goes both ways. */
   twoWay: boolean;
+  /** How a net name on the wire is drawn. */
+  labelColor: string;
+  labelSize: number;
+  labelBg: string;
 }
 
 /** What a wire looks like before anyone has touched the dock. */
 export const DEFAULT_WIRE_STYLE: WireStyle = {
   color: '#22d3ee', width: 2, style: 'flow', routing: 'manhattan',
   arrow: 'Standard', arrowScale: 1, corner: 'round', twoWay: false,
+  labelColor: '#e2e8f0', labelSize: 10, labelBg: 'rgba(14,15,17,0.75)',
 };
 
 /**
- * The wire style dock: colour, line style, width, routing, corners, arrowhead.
+ * The wire style dock: colour, line style, width, routing, corners, arrowhead
+ * and the net name's own type.
  *
  * It owns the whole wire-style concern, including the part that is easy to get
  * wrong — the difference between *what the selected wire looks like* and *what
@@ -72,7 +78,14 @@ export class WireDockComponent {
   wireArrowScale = 1;
   wireCorner: WireStyle['corner'] = 'round';
   wireTwoWay = false;
-  wirePop: 'color' | 'style' | null = null;
+  wireLabelColor = '#e2e8f0';
+  wireLabelSize = 10;
+  wireLabelBg = 'rgba(14,15,17,0.75)';
+  /** Where the label sits along the run, 0 at one end and 1 at the other. */
+  wireLabelAt = 0.5;
+  /** How far the label is lifted clear of the wire. */
+  wireLabelLift = 0;
+  wirePop: 'color' | 'style' | 'label' | null = null;
 
   private static readonly KEY = 'diagram.wireDefaults';
 
@@ -93,7 +106,10 @@ export class WireDockComponent {
     this.emit('dash', this.wireLineDash());
     this.emit('flow', s === 'flow');
   }
-  setWireWidth(w: number): void { this.wireWidth = w; this.remember(); this.emit('width', w); }
+  setWireWidth(w: number): void {
+    const v = Math.min(20, Math.max(0.2, Number(w) || 2));
+    this.wireWidth = v; this.remember(); this.emit('width', v);
+  }
   setWireRouter(r: WireStyle['routing']): void { this.wireRouter = r; this.remember(); this.emit('routing', r); }
   setWireArrow(a: WireStyle['arrow']): void {
     this.wireArrow = a;
@@ -102,11 +118,35 @@ export class WireDockComponent {
     this.emit('wire', a === 'none');
     if (a !== 'none') this.emit('arrow', a);
   }
-  setWireArrowScale(s: number): void { this.wireArrowScale = s; this.remember(); this.emit('arrowScale', s); }
+  setWireArrowScale(s: number): void {
+    // Clamped, not snapped: the reference drawings use 0.8 and 1.15, which no
+    // list of presets was ever going to contain.
+    const v = Math.min(4, Math.max(0.1, Number(s) || 1));
+    this.wireArrowScale = v; this.remember(); this.emit('arrowScale', v);
+  }
   setWireCorner(c: WireStyle['corner']): void { this.wireCorner = c; this.remember(); this.emit('corner', c === 'square' ? 0 : 8); }
   setWireTwoWay(v: boolean): void { this.wireTwoWay = v; this.remember(); this.emit('twoWay', v); }
 
-  toggleWirePop(which: 'color' | 'style'): void { this.wirePop = this.wirePop === which ? null : which; }
+  // ---- the net name on the wire ----
+  setLabelColor(c: string): void { this.wireLabelColor = c; this.remember(); this.emit('textColor', c); }
+  setLabelSize(n: any): void {
+    const v = Math.min(48, Math.max(4, Number(n) || 10));
+    this.wireLabelSize = v; this.remember();
+    this.emit('textFont', `600 ${v}px Roboto, sans-serif`);
+  }
+  setLabelBg(c: string): void { this.wireLabelBg = c; this.remember(); this.emit('textBg', c); }
+  /** No background at all — a net name on a schematic sits on the wire. */
+  clearLabelBg(): void { this.wireLabelBg = 'transparent'; this.remember(); this.emit('textBg', 'transparent'); }
+  setLabelAt(n: any): void {
+    const v = Math.min(1, Math.max(0, Number(n)));
+    this.wireLabelAt = v; this.emit('textFraction', v);
+  }
+  setLabelLift(n: any): void {
+    const v = Math.min(60, Math.max(-60, Number(n) || 0));
+    this.wireLabelLift = v; this.emit('textOffset', `0 ${-v}`);
+  }
+
+  toggleWirePop(which: 'color' | 'style' | 'label'): void { this.wirePop = this.wirePop === which ? null : which; }
 
   /** Show what the newly selected wire actually looks like. */
   syncFrom(data: Record<string, any> | null | undefined): void {
@@ -119,6 +159,11 @@ export class WireDockComponent {
     this.wireArrowScale = typeof d['arrowScale'] === 'number' ? d['arrowScale'] : 1;
     this.wireCorner = d['corner'] === 0 ? 'square' : 'round';
     this.wireTwoWay = !!d['twoWay'];
+    this.wireLabelColor = d['textColor'] || this.wireLabelColor;
+    this.wireLabelSize = Number(/(\d+(?:\.\d+)?)px/.exec(String(d['textFont'] || ''))?.[1]) || this.wireLabelSize;
+    this.wireLabelBg = d['textBg'] || this.wireLabelBg;
+    this.wireLabelAt = typeof d['textFraction'] === 'number' ? d['textFraction'] : 0.5;
+    this.wireLabelLift = -Number(String(d['textOffset'] || '0 0').split(/\s+/)[1] || 0);
   }
 
   private emit(prop: string, value: unknown): void { this.apply.emit({ prop, value }); }
@@ -127,7 +172,8 @@ export class WireDockComponent {
     return {
       color: this.wireColor, width: this.wireWidth, style: this.wireStyle, routing: this.wireRouter,
       arrow: this.wireArrow, arrowScale: this.wireArrowScale, corner: this.wireCorner,
-      twoWay: this.wireTwoWay,
+      twoWay: this.wireTwoWay, labelColor: this.wireLabelColor,
+      labelSize: this.wireLabelSize, labelBg: this.wireLabelBg,
     };
   }
 
@@ -147,5 +193,8 @@ export class WireDockComponent {
     this.wireColor = d.color; this.wireWidth = d.width; this.wireStyle = d.style;
     this.wireRouter = d.routing; this.wireArrow = d.arrow; this.wireArrowScale = d.arrowScale;
     this.wireCorner = d.corner; this.wireTwoWay = !!d.twoWay;
+    this.wireLabelColor = d.labelColor ?? this.wireLabelColor;
+    this.wireLabelSize = d.labelSize ?? this.wireLabelSize;
+    this.wireLabelBg = d.labelBg ?? this.wireLabelBg;
   }
 }
