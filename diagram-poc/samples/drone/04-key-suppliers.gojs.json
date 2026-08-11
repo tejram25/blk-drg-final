@@ -439,7 +439,7 @@
    "category": "shape",
    "figure": "Rectangle",
    "text": "SPI",
-   "loc": "604 566",
+   "loc": "670 566",
    "size": "40 20",
    "fill": "#3EB4E4",
    "stroke": "#3EB4E4",
@@ -1462,7 +1462,7 @@
    "ports": [
     {
      "portId": "p1",
-     "spot": "1 0.0848"
+     "spot": "1 0.0847"
     },
     {
      "portId": "p2",
