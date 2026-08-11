@@ -1075,12 +1075,18 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.diagram.linkTemplate = $(
       go.Link,
-      // Wires render beneath blocks, in the layer above the grid. Two reasons:
-      // a wire passing under a block reads better than one drawn across it, and
-      // a link's hit area is an invisible 18px stroke, so a wire sitting on top
-      // of the edge it attaches to swallowed the next drag from that same point
-      // — a second wire from one spot silently did nothing.
-      { layerName: 'Background',
+      // Wires render ABOVE blocks. A block diagram routinely puts a wire across
+      // something: diagram 3 hangs its interface chips on the face of the
+      // processor, so the last stretch of every wire into one crosses the
+      // processor's fill, and underneath it the wire and its arrowhead simply
+      // disappeared. Containers sit lower still (see the 'Containers' layer), so
+      // a wire crossing a subsystem box is drawn over it, as the artwork does.
+      //
+      // What made this look unsafe before was hit testing, not drawing: a wire
+      // lying across the edge it attaches to swallowed the drag that starts the
+      // next wire from that point. That is fixed where it belongs, in the
+      // linking tool's search for a port (see `findLinkablePort`).
+      { layerName: 'Foreground',
         routing: go.Link.Orthogonal, corner: 8, relinkableFrom: true, relinkableTo: true, reshapable: true, resegmentable: true },
       new go.Binding('routing', 'routing', (r) => r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.Orthogonal),
       new go.Binding('curve', 'routing', (r) => r === 'smooth' ? go.Link.Bezier : go.Link.None),
@@ -1100,7 +1106,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       // same journey are kept off each other rather than drawn as one line.
       new go.Binding('fromEndSegmentLength', 'fromEnd'),
       new go.Binding('toEndSegmentLength', 'toEnd'),
-      $(go.Shape, { isPanelMain: true, stroke: 'transparent', strokeWidth: 18 }),
+      // The invisible grab area. 10, not 18: a wire is now drawn above the
+      // blocks, so every pixel of this is a pixel of block you cannot press on.
+      $(go.Shape, { isPanelMain: true, stroke: 'transparent', strokeWidth: 10 }),
       $(go.Shape, { isPanelMain: true, strokeWidth: 2, stroke: '#94a3b8' },
         new go.Binding('stroke', 'color'),
         new go.Binding('strokeWidth', 'width'),
@@ -1196,13 +1204,51 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     styleLinking(this.diagram.toolManager.linkingTool);
     styleLinking(this.diagram.toolManager.relinkingTool);
 
+    /**
+     * Look past a wire for the port underneath it.
+     *
+     * Wires are drawn above blocks, and a link's hit area is a fat invisible
+     * stroke, so the wire you just drew covers the very point on the edge you
+     * grabbed. The stock search takes the topmost object and gives up, which
+     * made the second wire out of a point silently do nothing. Retry ignoring
+     * links: `startObject` is the documented way to tell the tool where to
+     * begin looking.
+     */
+    const linkTool = this.diagram.toolManager.linkingTool;
+    const findPort = linkTool.findLinkablePort.bind(linkTool);
+    linkTool.findLinkablePort = () => {
+      const direct = findPort();
+      if (direct) return direct;
+      const pt = this.diagram.firstInput?.documentPoint;
+      if (!pt) return null;
+      const under = this.diagram.findObjectAt(pt, (x: go.GraphObject) => (x.part instanceof go.Node ? x : null), null);
+      if (!under) return null;
+      linkTool.startObject = under;
+      try { return findPort(); } finally { linkTool.startObject = null; }
+    };
+
     // A subsystem container. The defaults are the dashed amber box the palette
     // creates; every visual is overridable from the data so an imported drawing
     // can carry its own containers (a solid black "Power System", a blue
     // "Flight Controller"), which one hard-coded style cannot express.
+    // Containers go below the wires, which are themselves below the blocks.
+    //
+    // A wire crossing a subsystem box is drawn over it in every block diagram
+    // there is — the source artwork runs four wires straight across a black
+    // "Power System" panel and a grey ESC enclosure. With containers in the same
+    // layer as blocks, the container's fill painted over the wires inside it and
+    // the last stretch of each wire, arrowhead included, simply vanished.
+    //
+    // Wires still sit below *blocks*, which is what stops a wire's invisible
+    // hit stroke stealing the drag that starts the next wire from the same edge.
+    const bg = this.diagram.findLayer('Background');
+    if (bg && !this.diagram.findLayer('Containers')) {
+      this.diagram.addLayerBefore(new go.Layer({ name: 'Containers' }), bg);
+    }
     this.diagram.groupTemplate = $(
       go.Group, 'Spot',
-      { locationSpot: go.Spot.Center, ungroupable: true, computesBoundsAfterDrag: true,
+      { layerName: 'Containers',
+        locationSpot: go.Spot.Center, ungroupable: true, computesBoundsAfterDrag: true,
         handlesDragDropForMembers: true, portSpreading: go.PortSpreading.Evenly },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('isSubGraphExpanded', 'expanded').makeTwoWay(),
