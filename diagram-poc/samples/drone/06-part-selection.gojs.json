@@ -346,13 +346,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "u5_1",
@@ -371,13 +365,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "u5_2",
@@ -396,13 +384,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "u5_3",
@@ -421,13 +403,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "u5_4",
@@ -446,13 +422,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "u5_5",
@@ -471,13 +441,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "u5_6",
@@ -496,13 +460,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "u5_7",
@@ -521,13 +479,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "u5_8",
@@ -546,13 +498,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "l4",
@@ -591,13 +537,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "l4_1",
@@ -616,13 +556,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "l4_2",
@@ -641,13 +575,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "l4_3",
@@ -666,13 +594,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "l4_4",
@@ -691,13 +613,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "l4_5",
@@ -716,13 +632,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "l4_6",
@@ -741,13 +651,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "l4_7",
@@ -766,13 +670,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "l4_8",
@@ -791,13 +689,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "esd",
@@ -836,13 +728,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "esd_1",
@@ -861,13 +747,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 170,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 170
   },
   {
    "key": "sense",
@@ -921,13 +801,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "tsen_1",
@@ -946,13 +820,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "inemo",
@@ -991,13 +859,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "wired",
@@ -1051,13 +913,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "usbp_1",
@@ -1076,13 +932,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "usbc",
@@ -1121,13 +971,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "power",
@@ -1181,13 +1025,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "dcdc_1",
@@ -1206,13 +1044,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "dcdc_2",
@@ -1231,13 +1063,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "dcdc_3",
@@ -1256,13 +1082,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "vreg",
@@ -1301,13 +1121,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "vreg_1",
@@ -1326,13 +1140,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "acdc",
@@ -1371,13 +1179,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "acdc_1",
@@ -1396,13 +1198,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "acdc_2",
@@ -1421,13 +1217,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "prot",
@@ -1466,13 +1256,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "prot_1",
@@ -1491,13 +1275,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "pmos",
@@ -1536,13 +1314,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "wless",
@@ -1596,13 +1368,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "filt",
@@ -1641,13 +1407,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "tx",
@@ -1701,13 +1461,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "hvp",
@@ -1746,13 +1500,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "hvp_1",
@@ -1771,13 +1519,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "hmi",
@@ -1831,13 +1573,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "lcd_1",
@@ -1856,13 +1592,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "lcd_2",
@@ -1881,13 +1611,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "lcd_3",
@@ -1906,13 +1630,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "audio",
@@ -1951,13 +1669,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "audio_1",
@@ -1976,13 +1688,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "lar",
@@ -2021,13 +1727,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "lbp",
@@ -2066,13 +1766,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "aprot",
@@ -2111,13 +1805,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "aprot_1",
@@ -2136,13 +1824,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "aprot_2",
@@ -2161,13 +1843,7 @@
    "labelColor": "#1F3FBF",
    "font": "400 8.5px \"Arrow Display\", sans-serif",
    "textAlign": "left",
-   "textWidth": 138,
-   "badge": "?",
-   "badgeFill": "#F0B323",
-   "badgeColor": "#3A2A05",
-   "badgeFont": "700 10px \"Arrow Display\", sans-serif",
-   "badgeSize": "13 13",
-   "badgeSpot": "1 0.5 -10 0"
+   "textWidth": 138
   },
   {
    "key": "footnote",

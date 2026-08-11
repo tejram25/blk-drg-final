@@ -1,6 +1,6 @@
 // Diagram 6 — "Part selection by subsystem".
 // Nested subsystem boxes: an outer coloured box, a banded sub-heading inside it,
-// and one row per part number with a status badge. Coordinates measured from the
+// and one row per part number. Coordinates measured from the
 // source artwork so the proportions match 1:1.
 import { writeFileSync } from 'node:fs';
 
@@ -9,7 +9,6 @@ const C = {
   ink: '#141414', white: '#FFFFFF', part: '#1F3FBF',
   confid: '#E4002B', noteBg: '#FCE9CE', noteLine: '#E8A33D', noteInk: '#B8651B',
   wire: '#8B1A3A',                       // the dark-red two-way arrows
-  badge: '#F0B323', badgeInk: '#3A2A05',
 };
 // Each subsystem: outer outline, band fill, band outline.
 const T = {
@@ -53,15 +52,20 @@ function band(key, text, parent, t, o = {}) {
       titleSize2: `${o.w ?? 172} ${o.h ?? 15}`,
       titleAlign: '0.5 0 0 0', titleFocus: '0.5 0', pad: '20 0 0 0' });
 }
-/** One part-number row, with the status badge the drawing puts on every one. */
+/**
+ * One part-number row.
+ *
+ * The source artwork puts an amber "?" at the end of every one. It is a status
+ * marker on a working document — this part is still to be decided — and not
+ * something a finished drawing should carry, so the rows are drawn without it.
+ * Adding one back is a marker in Properties > Badge; the row keeps the width
+ * that left room for it.
+ */
 function part(key, text, parent, x, y, w, t) {
   N({ key, category: 'shape', shape: 'sh-rect', figure: 'Rectangle', text, group: parent,
       ...R(x, y, w, 16), minSize: '1 1',
       fill: C.white, stroke: t.bandLine, strokeWidth: 0.8, fixedColor: true,
-      labelColor: C.part, font: F.part, textAlign: 'left', textWidth: w - 30,
-      badge: '?', badgeFill: C.badge, badgeColor: C.badgeInk,
-      badgeFont: `700 10px "${AD}", sans-serif`, badgeSize: '13 13',
-      badgeSpot: '1 0.5 -10 0' });
+      labelColor: C.part, font: F.part, textAlign: 'left', textWidth: w - 30 });
 }
 function plain(key, o) {
   N({ key, category: 'shape', shape: 'sh-rect', figure: 'Rectangle', text: o.text ?? '',
