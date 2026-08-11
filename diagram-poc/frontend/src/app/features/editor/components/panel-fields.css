@@ -1,7 +1,7 @@
 /* Form fields shared by the properties panel's two halves.
    Each Angular component is style-encapsulated, so a stylesheet cannot reach
    into a child. These rules used to be bare element selectors in the editor
-   and `.props ...` descendants in the panel; both stopped applying the moment
+   and `...` descendants in the panel; both stopped applying the moment
    the halves became components of their own. Shared here rather than pasted
    into each, so they cannot drift apart. */
 input, select {
@@ -21,13 +21,17 @@ input, select {
     select option { background: var(--panel); color: var(--text); }
     input::placeholder { color: var(--faint); }
 
-.props label { display: block; font-size: 11.5px; margin-bottom: 9px; color: var(--muted); }
-    .props input, textarea { display: block; width: 100%; margin-top: 4px; box-sizing: border-box; }
-    .props textarea {
+label { display: block; font-size: 11.5px; margin-bottom: 9px; color: var(--muted); }
+    input, textarea { display: block; width: 100%; margin-top: 4px; box-sizing: border-box; }
+    textarea {
       background: var(--bg-deep); color: var(--text); border: 1px solid var(--border);
       border-radius: 8px; padding: 7px 10px; font-size: 12.5px; font-family: inherit;
       resize: vertical; min-height: 42px; outline: none;
     }
-    .props textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-    .props input[type="color"] { padding: 2px 4px; height: 28px; cursor: pointer; }
-    .props button[mat-stroked-button] { width: 100%; margin-top: 6px; }
+    textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    input[type="color"] { padding: 2px 4px; height: 28px; cursor: pointer; }
+    button[mat-stroked-button] { width: 100%; margin-top: 6px; }
+
+/* Compact fields, to match the header's scale. */
+input:not([type="color"]), select { height: 30px; font-size: 12.5px; padding: 0 10px; }
+label { transition: color .12s; }

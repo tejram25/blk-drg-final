@@ -2574,16 +2574,19 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const reader = new FileReader();
     reader.onload = () => {
       const text = String(reader.result); let parsed: any; try { parsed = JSON.parse(text); } catch { parsed = null; }
+      // A catalogue drops its parts onto whatever is already open — it adds to
+      // the drawing rather than replacing it, so it stays on this document.
       if (parsed?.partserviceresult?.parts) this.importPartsCatalog(parsed);
       else {
+        // A whole diagram is a new document, not an edit of the open one.
+        // Without this the imported drawing inherited the open diagram's id and
+        // the next save wrote over it — a file you never meant to touch, gone.
+        // The draw.io import and the template picker both already work this way.
+        this.newDiagram();
+        // Named after the file, so it can be told apart in the Open list; every
+        // import used to save as "Untitled diagram".
+        this.diagramName = file.name.replace(/\.(gojs\.)?json$/i, '') || 'Imported diagram';
         this.applyContent(text);
-        // Name it after the file, the way the draw.io import already does.
-        // Without this every imported diagram saved as "Untitled diagram", so a
-        // few imports later the Open list was a row of identical names and the
-        // one you had just imported could not be picked out of them.
-        if (this.diagramName === 'Untitled diagram' || !this.diagramName.trim()) {
-          this.diagramName = file.name.replace(/\.(gojs\.)?json$/i, '') || 'Imported diagram';
-        }
         this.status = `Imported "${file.name}"`;
       }
       this.cdr.detectChanges();
