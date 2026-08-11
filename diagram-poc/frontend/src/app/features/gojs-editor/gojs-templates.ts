@@ -53,6 +53,49 @@ function richItems(d: go.ObjectData): go.ObjectData[] {
   }));
 }
 
+/**
+ * The bindings a plain label needs for the Text tab to reach it: type, colour,
+ * alignment, underline and the width it wraps at. Imported artwork carries the
+ * same four fields, so this is also what makes an imported label look right.
+ */
+function labelStyle(): go.Binding[] {
+  return [
+    new go.Binding('stroke', 'labelColor'),
+    new go.Binding('font', 'font'),
+    new go.Binding('textAlign', 'textAlign'),
+    new go.Binding('isUnderline', 'underline'),
+    new go.Binding('maxSize', 'textWidth', (w: number) => new go.Size(w, NaN)),
+  ];
+}
+
+/**
+ * The stack that draws a formatted label: one TextBlock per rendered line,
+ * hidden unless the label actually is one.
+ *
+ * Shared by the templates that can carry a formatted label, so the Text tab
+ * means the same thing on a functional block as on a native shape.
+ */
+function richStack($: typeof go.GraphObject.make): go.Panel {
+  return $(
+    go.Panel, 'Vertical',
+    {
+      margin: 6, visible: false, defaultAlignment: go.Spot.Left,
+      itemTemplate: $(go.Panel, 'Auto',
+        $(go.TextBlock, { alignment: go.Spot.Left },
+          new go.Binding('text'),
+          new go.Binding('font'),
+          new go.Binding('stroke'),
+          new go.Binding('isUnderline', 'underline'),
+          new go.Binding('textAlign', 'align'),
+          new go.Binding('maxSize', 'width', (w: number) => new go.Size(w, NaN)))),
+    },
+    new go.Binding('visible', 'html', (h) => isRich(h)),
+    // Bound to the whole data object: the lines depend on the label, the font
+    // and the colour together, so any of them changing must redraw.
+    new go.Binding('itemArray', '', richItems),
+  );
+}
+
 export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.make, hooks: TemplateHooks): void {
     /**
      * A connection rail down a whole edge, not a dot in the middle of it.
@@ -181,9 +224,13 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
             $(go.Shape, 'RoundedRectangle', { parameter1: 8, strokeWidth: 0 }, new go.Binding('fill', 'color')),
             $(go.TextBlock, { font: '20px Material Icons', stroke: '#ffffff' }, new go.Binding('text', 'icon'))),
           $(go.Panel, 'Vertical', { alignment: go.Spot.Left },
+            // A formatted label is drawn by the stack below instead.
             $(go.TextBlock,
               { font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937', editable: true, alignment: go.Spot.Left },
-              new go.Binding('text').makeTwoWay()),
+              new go.Binding('visible', 'html', (h) => !isRich(h)),
+              new go.Binding('text').makeTwoWay(),
+              ...labelStyle()),
+            richStack($),
             $(go.TextBlock, { font: '10px Roboto, sans-serif', stroke: '#9aa0a8', alignment: go.Spot.Left },
               new go.Binding('text', 'subtitle'))))),
       ...sidePorts(),
@@ -269,25 +316,8 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
             textAlign: 'center', maxSize: new go.Size(150, NaN), margin: 6 },
           new go.Binding('visible', 'html', (h) => !isRich(h)),
           new go.Binding('text').makeTwoWay(),
-          new go.Binding('stroke', 'labelColor'),
-          // Imported artwork specifies its own type, alignment and wrap width.
-          new go.Binding('font', 'font'),
-          new go.Binding('textAlign', 'textAlign'),
-          new go.Binding('maxSize', 'textWidth', (w: number) => new go.Size(w, NaN))),
-        $(go.Panel, 'Vertical',
-          { margin: 6, visible: false, defaultAlignment: go.Spot.Left,
-            itemTemplate: $(go.Panel, 'Auto',
-              $(go.TextBlock, { alignment: go.Spot.Left },
-                new go.Binding('text'),
-                new go.Binding('font'),
-                new go.Binding('stroke'),
-                new go.Binding('isUnderline', 'underline'),
-                new go.Binding('textAlign', 'align'),
-                new go.Binding('maxSize', 'width', (w: number) => new go.Size(w, NaN)))) },
-          new go.Binding('visible', 'html', (h) => isRich(h)),
-          // Bound to the whole data object: the lines depend on the label, the
-          // font and the colour together, so any of them changing must redraw.
-          new go.Binding('itemArray', '', richItems)),
+          ...labelStyle()),
+        richStack($),
         $(go.Panel, 'Auto', { alignment: go.Spot.TopRight, alignmentFocus: go.Spot.TopRight, margin: 3, visible: false },
           new go.Binding('visible', 'components', (c) => Array.isArray(c) && c.length > 0),
           $(go.Shape, 'RoundedRectangle', { parameter1: 4, fill: '#f5a623', stroke: null }),

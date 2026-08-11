@@ -396,7 +396,8 @@
                                                       <app-properties-panel
                                                         [sel]="s" [open]="propsOpen" [typeName]="nodeTypeName"
                                                         [styled]="isStyledShape" [container]="isContainer"
-                                                        [titlePlacement]="titlePlacement" [labelSize]="labelSize"
+                                                        [titlePlacement]="titlePlacement"
+                                                        [textual]="isTextual" [formatted]="isFormatted"
                                                         [width]="nodeW" [height]="nodeH" [pins]="pins"
                                                         [data]="selectedData" [defaultCategory]="defaultCategory" [box]="isBox"
                                                         [attachedParts]="attachedParts" [boxComponents]="boxComponents"
@@ -406,6 +407,7 @@
                                                         (style)="applyStyle($event)" (toggleDashed)="isContainer ? toggleContainerDashed() : toggleDashedOutline()"
                                                         (addPin)="addPin('right')" (removePin)="removePin($event)"
                                                         (pinSide)="setPinSide($event.index, $event.side)"
+                                                        (text)="applyText($event)"
                                                         (dataChange)="setDataField($event.key, $event.value)"
                                                         (quantity)="setQuantity($event)"
                                                         (checkLifecycle)="checkSelectedLifecycle()" (checkPos)="checkSelectedPos()"

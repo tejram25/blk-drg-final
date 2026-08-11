@@ -8,8 +8,7 @@ import { Pin, PinSide, pinSide } from '../../../gojs-editor/gojs-pins';
 /** A style property the panel can change, named for what it means, not for how
  *  it is stored — the editor decides which model field each one writes. */
 export type StyleProp =
-  'fill' | 'stroke' | 'borderWidth' | 'labelColor' | 'labelSize'
-  | 'textAlign' | 'titleColor' | 'titlePlacement' | 'width' | 'height';
+  'fill' | 'stroke' | 'borderWidth' | 'titleColor' | 'titlePlacement' | 'width' | 'height';
 
 export interface StyleChange { prop: StyleProp; value: string | number; }
 export interface PinSideChange { index: number; side: PinSide; }
@@ -51,8 +50,9 @@ export class BlockStylePanelComponent {
   @Input() styled = false;
   /** A container styles its title rather than a label, and has no size fields. */
   @Input() container = false;
+  /** The label is HTML, so its words are edited under Text and not here. */
+  @Input() formatted = false;
   @Input() titlePlacement = '0 0';
-  @Input() labelSize: number | null = null;
   @Input() width: number | null = null;
   @Input() height: number | null = null;
   @Input() pins: Pin[] = [];

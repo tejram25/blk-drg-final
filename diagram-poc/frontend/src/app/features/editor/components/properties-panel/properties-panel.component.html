@@ -3,12 +3,16 @@
   <div class="prop-type"><mat-icon>category</mat-icon>{{ typeName }}</div>
 
   <app-block-style-panel
-    [sel]="sel" [styled]="styled" [container]="container" [titlePlacement]="titlePlacement"
-    [labelSize]="labelSize" [width]="width" [height]="height" [pins]="pins"
+    [sel]="sel" [styled]="styled" [container]="container" [formatted]="formatted"
+    [titlePlacement]="titlePlacement" [width]="width" [height]="height" [pins]="pins"
     (rename)="rename.emit($event)" (colorChange)="colorChange.emit($event)"
     (style)="style.emit($event)" (toggleDashed)="toggleDashed.emit()"
     (addPin)="addPin.emit()" (removePin)="removePin.emit($event)"
     (pinSide)="pinSide.emit($event)"></app-block-style-panel>
+
+  @if (textual) {
+    <app-block-text-panel [sel]="sel" (text)="text.emit($event)"></app-block-text-panel>
+  }
 
   <app-block-parts-panel
     [sel]="sel" [data]="data" [defaultCategory]="defaultCategory" [box]="box"

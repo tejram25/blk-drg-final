@@ -65,7 +65,11 @@ import { WireGeometry } from './gojs-wire-geometry';
 import { Pin, pinSide, spaced } from './gojs-pins';
 import { buildTemplates } from './gojs-templates';
 import { DEFAULT_WIRE_STYLE, WireDockComponent, WireProp } from '../editor/components/wire-dock/wire-dock.component';
-import { PropertiesPanelComponent, StyleChange } from '../editor/components/properties-panel/properties-panel.component';
+import { PropertiesPanelComponent, StyleChange, TextChange } from '../editor/components/properties-panel/properties-panel.component';
+import {
+  BOLD_WEIGHT, FontParts, NORMAL_WEIGHT, formatFont, isRich, parseFont, plainToLines,
+  richToHtml, richToPlain,
+} from './rich-text';
 
 /**
  * GoJS-based diagram editor — the electronics-aware block-diagram builder.
@@ -160,6 +164,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     // style, edited from the properties panel
     fill?: string; stroke?: string; labelColor?: string; titleColor?: string;
     strokeWidth?: number; dashPattern?: boolean; dashed?: boolean; textAlign?: string;
+    // the label itself, edited from the Text tab
+    html?: string; font?: string; textWidth?: number; underline?: boolean;
   } | null = null;
 
   // dialog state
@@ -1149,6 +1155,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         dashPattern: d.dashPattern === true,
         dashed: d.dashed,
         textAlign: d.textAlign ?? 'center',
+        // The label, for the Text tab. `html` is only present on a formatted
+        // one — its absence is what "not formatted" means, here and in draw.io.
+        html: typeof d.html === 'string' ? d.html : undefined,
+        font: typeof d.font === 'string' ? d.font : undefined,
+        textWidth: typeof d.textWidth === 'number' ? d.textWidth : undefined,
+        underline: d.underline === true,
       };
     } else {
       this.sel = null;
@@ -1161,7 +1173,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.selectedNode) return;
     const data = this.selectedNode.data;
     this.zone.runOutsideAngular(() => this.diagram.model.commit((m) => m.set(data, prop, value), 'edit ' + prop));
-    if (this.sel) (this.sel as any)[prop] = value;
+    // A fresh object, not a mutation: the properties panels are OnPush, so a
+    // control whose state is *derived* — the Text tab's bold button, its line
+    // rows — only redraws when the input reference changes. An input the user
+    // typed into shows the new value either way, which is why mutating was
+    // enough until the label became something with structure.
+    if (this.sel) this.sel = { ...this.sel, [prop]: value };
   }
 
   /**
@@ -1200,19 +1217,6 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   setBorderWidth(v: any): void { this.setField('strokeWidth', Math.max(0, Number(v) || 0)); }
   toggleDashedOutline(): void { this.setField('dashPattern', !this.selectedNode?.data?.dashPattern); }
   setTextAlign(v: 'left' | 'center' | 'right'): void { this.setField('textAlign', v); }
-
-  /** Font size in px, preserving whatever weight/family the node already has. */
-  get labelSize(): number {
-    const m = /(\d+(?:\.\d+)?)px/.exec(String(this.selectedNode?.data?.font ?? ''));
-    return m ? Number(m[1]) : 12.5;
-  }
-  setLabelSize(v: any): void {
-    const size = Math.max(5, Number(v) || 12.5);
-    const cur = String(this.selectedNode?.data?.font ?? '');
-    this.setField('font', /(\d+(?:\.\d+)?)px/.test(cur)
-      ? cur.replace(/(\d+(?:\.\d+)?)px/, size + 'px')
-      : `400 ${size}px "Arrow Display", Roboto, sans-serif`);
-  }
 
   /**
    * Node size, so a block can be given exact dimensions rather than dragged.
@@ -1318,13 +1322,71 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'fill': this.setFill(t); break;
       case 'stroke': this.setStroke(t); break;
       case 'borderWidth': this.setBorderWidth(n); break;
-      case 'labelColor': this.setLabelColor(t); break;
-      case 'labelSize': this.setLabelSize(n); break;
-      case 'textAlign': this.setTextAlign(t as 'left' | 'center' | 'right'); break;
       case 'titleColor': this.setTitleColor(t); break;
       case 'titlePlacement': this.setTitlePlacement(t); break;
       case 'width': this.setNodeSize('w', n); break;
       case 'height': this.setNodeSize('h', n); break;
+    }
+  }
+
+  // ---- text (the Text tab) ----
+
+  /** Nodes whose label the Text tab can format — the ones whose template draws
+   *  a formatted one. A container has a title rather than a label, and a
+   *  catalogue part's card is laid out from its part data. */
+  get isTextual(): boolean {
+    const d = this.selectedNode?.data;
+    if (!d || d.isGroup === true) return false;
+    return d.category === 'shape' || d.category === 'block' || d.category == null;
+  }
+  /** Whether the selected block's label is HTML rather than a plain string. */
+  get isFormatted(): boolean { return isRich(this.selectedNode?.data?.html); }
+
+  /** Change one piece of the font shorthand, leaving the rest of it alone. */
+  private setFontPart(patch: Partial<FontParts>): void {
+    this.setField('font', formatFont({ ...parseFont(this.selectedNode?.data?.font), ...patch }));
+  }
+
+  /**
+   * Turn mxGraph's `html=1` on or off for this label.
+   *
+   * On, the plain string becomes a one-line document; off, the document is
+   * flattened back to the text it reads as. Neither direction invents anything,
+   * so a label can be switched back and forth — though formatting applied while
+   * it was on is gone once it is off, which is what "plain" means.
+   */
+  private setFormatted(on: boolean): void {
+    const d = this.selectedNode?.data; if (!d) return;
+    if (on) { this.setHtmlLabel(richToHtml(plainToLines(String(d.text ?? '')))); return; }
+    const plain = isRich(d.html) ? richToPlain(String(d.html)) : String(d.text ?? '');
+    this.setField('html', '');
+    this.setField('text', plain);
+  }
+
+  /** Write a formatted label, keeping `text` as its plain reading — the BOM,
+   *  search, tooltips and a .drawio export all still want a string. */
+  private setHtmlLabel(html: string): void {
+    this.setField('html', html);
+    this.setField('text', richToPlain(html));
+  }
+
+  /** One change from the Text tab, routed to whichever model field it means. */
+  applyText(c: TextChange): void {
+    const n = Number(c.value), t = String(c.value), b = c.value === true;
+    switch (c.prop) {
+      case 'fontFamily': if (t) this.setFontPart({ family: t }); break;
+      case 'labelSize': this.setFontPart({ size: Math.min(400, Math.max(5, n || 12.5)) }); break;
+      // Un-bolding lands on the weight the templates draw a label at, not on
+      // 400: dropping to 400 would make a block lighter than every other block
+      // on the page, which is not what "not bold" was asking for.
+      case 'bold': this.setFontPart({ weight: b ? BOLD_WEIGHT : NORMAL_WEIGHT }); break;
+      case 'italic': this.setFontPart({ italic: b }); break;
+      case 'underline': this.setField('underline', b); break;
+      case 'textAlign': this.setTextAlign(t as 'left' | 'center' | 'right'); break;
+      case 'labelColor': this.setLabelColor(t); break;
+      case 'textWidth': this.setField('textWidth', Math.min(2000, Math.max(20, n || 150))); break;
+      case 'formatted': this.setFormatted(b); break;
+      case 'html': this.setHtmlLabel(t); break;
     }
   }
   setDataField(key: string, value: string): void { this.setField(key, value); }

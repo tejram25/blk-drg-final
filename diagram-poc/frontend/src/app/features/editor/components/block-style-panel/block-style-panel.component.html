@@ -1,5 +1,10 @@
-    <label><span>{{ 'props.name' | translate }}</span>
+@if (formatted) {
+  <!-- The label is a document now, not a string; Text owns it. -->
+  <div class="pin-hint">This block's label is formatted — edit its words under <b>Text</b>.</div>
+} @else {
+  <label><span>{{ 'props.name' | translate }}</span>
   <input [ngModel]="sel.text" (ngModelChange)="rename.emit($event)" /></label>
+}
   @if (!sel.isPart && !styled) {
     <label><span>Colour</span>
   <input type="color" [ngModel]="sel.color" (ngModelChange)="colorChange.emit($event)" /></label>
@@ -35,18 +40,9 @@
         </select></label>
     </div>
   } @else {
+    <!-- Label colour, size and alignment live under Text, next to the rest of
+         the type controls, rather than being spelled twice. -->
     <div class="style-grid">
-      <label><span>Label colour</span>
-        <input type="color" [ngModel]="sel.labelColor" (ngModelChange)="style.emit({ prop: 'labelColor', value: $event })" /></label>
-      <label><span>Label size</span>
-        <input type="number" min="5" max="60" step="0.5"
-               [ngModel]="labelSize" (ngModelChange)="style.emit({ prop: 'labelSize', value: $event })" /></label>
-      <label class="wide"><span>Text align</span>
-        <select [ngModel]="sel.textAlign || 'center'" (ngModelChange)="style.emit({ prop: 'textAlign', value: $event })">
-          <option value="left">Left</option>
-          <option value="center">Centre</option>
-          <option value="right">Right</option>
-        </select></label>
       <label><span>Width</span>
         <input type="number" min="8" [ngModel]="width" (ngModelChange)="style.emit({ prop: 'width', value: $event })" /></label>
       <label><span>Height</span>

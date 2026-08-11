@@ -9,27 +9,30 @@ import {
 import {
   BlockPartsPanelComponent, DataFieldChange, PartsSelection, RowChange,
 } from '../block-parts-panel/block-parts-panel.component';
+import {
+  BlockTextPanelComponent, TextChange, TextSelection,
+} from '../block-text-panel/block-text-panel.component';
 
-export type { PinSideChange, StyleChange, DataFieldChange, RowChange };
+export type { PinSideChange, StyleChange, DataFieldChange, RowChange, TextChange };
 
 /** Everything the panel shows about the selected block. */
-export type PanelSelection = StyleSelection & PartsSelection;
+export type PanelSelection = StyleSelection & PartsSelection & TextSelection;
 
 /**
  * The right-hand inspector for the selected block.
  *
- * Two panels under one shell, because a block has two independent lives: how it
- * looks on the drawing, and what part it stands for. They change for different
- * reasons and often by different people, so they are separate components rather
- * than one long form; this shell is what gives them a common frame, a heading
- * and the delete button.
+ * Three panels under one shell, because a block has independent lives: how it
+ * looks on the drawing, how its label reads, and what part it stands for. They
+ * change for different reasons and often by different people, so they are
+ * separate components rather than one long form; this shell is what gives them
+ * a common frame, a heading and the delete button.
  *
  * It holds no state and never touches the diagram — it passes what it is given
  * down and passes intent back up.
  */
 @Component({
   selector: 'app-properties-panel',
-  imports: [MatIconModule, TranslatePipe, BlockStylePanelComponent, BlockPartsPanelComponent],
+  imports: [MatIconModule, TranslatePipe, BlockStylePanelComponent, BlockTextPanelComponent, BlockPartsPanelComponent],
   templateUrl: './properties-panel.component.html',
   styleUrls: ['./properties-panel.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,10 +46,15 @@ export class PropertiesPanelComponent {
   @Input() styled = false;
   @Input() container = false;
   @Input() titlePlacement = '0 0';
-  @Input() labelSize: number | null = null;
   @Input() width: number | null = null;
   @Input() height: number | null = null;
   @Input() pins: Pin[] = [];
+
+  // ---- text side ----
+  /** Whether the block's label is one the Text tab can format at all. */
+  @Input() textual = false;
+  /** Whether it already is formatted, which moves its words out of Style. */
+  @Input() formatted = false;
 
   // ---- parts side ----
   @Input() data: Record<string, string> = {};
@@ -66,6 +74,7 @@ export class PropertiesPanelComponent {
   @Output() addPin = new EventEmitter<void>();
   @Output() removePin = new EventEmitter<number>();
   @Output() pinSide = new EventEmitter<PinSideChange>();
+  @Output() text = new EventEmitter<TextChange>();
 
   @Output() dataChange = new EventEmitter<DataFieldChange>();
   @Output() quantity = new EventEmitter<number>();

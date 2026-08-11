@@ -60,9 +60,17 @@ export function parseRichText(html: string): RichLine[] {
   let bullet = false;
   const marks = { bold: 0, italic: 0, underline: 0 };
 
-  const flush = () => {
+  /**
+   * End a line. `force` emits it even when it is empty, which is what a `<br>`
+   * means — a blank line someone put there on purpose. Without it, whitespace
+   * between two pretty-printed `<div>`s would read as a line of its own while a
+   * deliberately empty one would vanish, which is exactly backwards.
+   */
+  const flush = (force = false) => {
     const kept = runs.filter((r) => r.text.length);
-    if (kept.length || bullet) lines.push({ runs: kept.length ? kept : [{ text: '' }], ...(bullet ? { bullet: true } : {}) });
+    if (kept.some((r) => r.text.trim()) || bullet || force) {
+      lines.push({ runs: kept.length ? kept : [{ text: '' }], ...(bullet ? { bullet: true } : {}) });
+    }
     runs = []; bullet = false;
   };
   const push = (text: string) => {
@@ -90,7 +98,7 @@ export function parseRichText(html: string): RichLine[] {
       case 'b': case 'strong': marks.bold += closing ? -1 : 1; break;
       case 'i': case 'em': marks.italic += closing ? -1 : 1; break;
       case 'u': marks.underline += closing ? -1 : 1; break;
-      case 'br': flush(); break;
+      case 'br': flush(true); break;
       case 'li': if (closing) flush(); else { flush(); bullet = true; } break;
       case 'div': case 'p': if (closing) flush(); else flush(); break;
       default: break;                       // ul/ol/font/span: structure we ignore
@@ -98,8 +106,6 @@ export function parseRichText(html: string): RichLine[] {
     for (const k of Object.keys(marks) as (keyof typeof marks)[]) if (marks[k] < 0) marks[k] = 0;
   }
   flush();
-  // trailing blank lines from a closing </div> say nothing
-  while (lines.length && !lines[lines.length - 1].bullet && !lines[lines.length - 1].runs.some((r) => r.text.trim())) lines.pop();
   return lines;
 }
 
@@ -115,7 +121,10 @@ export function richToHtml(lines: RichLine[]): string {
   const out: string[] = [];
   let inList = false;
   for (const l of lines) {
-    const body = l.runs.map(run).join('');
+    // Emptiness is judged on the text, not the markup: a line the user cleared
+    // may still carry its marks, and `<div><b></b></div>` would parse back as
+    // nothing at all, so the line would disappear as they typed.
+    const body = l.runs.some((r) => r.text) ? l.runs.map(run).join('') : '';
     if (l.bullet && !inList) { out.push('<ul>'); inList = true; }
     if (!l.bullet && inList) { out.push('</ul>'); inList = false; }
     out.push(l.bullet ? `<li>${body}</li>` : `<div>${body || '<br>'}</div>`);
@@ -137,6 +146,56 @@ export function plainToLines(text: string): RichLine[] {
   return String(text ?? '').split('\n').map((t) => ({ runs: [{ text: t }] }));
 }
 
+/** The font a label falls back to when the data does not name one. */
+export const DEFAULT_FONT = '600 12.5px Roboto, sans-serif';
+
+/** A CSS font shorthand, taken apart so a control can edit one piece of it. */
+export interface FontParts { italic: boolean; weight: string; size: number; family: string; }
+
+/**
+ * Split a CSS font shorthand into the pieces the Text tab edits.
+ *
+ * The leading style/weight words come off first, then the size, leaving the
+ * family — which is the one part that may legitimately contain spaces, quotes
+ * and commas (`"Arrow Display", Roboto, sans-serif`), so it is whatever is left
+ * rather than something matched.
+ *
+ * `oblique` is reported as italic. It is a distinction almost no font actually
+ * draws differently, and collapsing it is what lets the tab offer one toggle.
+ */
+export function parseFont(base: unknown): FontParts {
+  const f = String(base || DEFAULT_FONT).trim();
+  const m = /^((?:(?:normal|italic|oblique|bold|bolder|lighter|[1-9]00)\s+)*)(?:(\d+(?:\.\d+)?)px\s+)?(.*)$/.exec(f);
+  const lead = (m?.[1] ?? '').trim().split(/\s+/).filter(Boolean);
+  return {
+    italic: lead.some((t) => /^(italic|oblique)$/i.test(t)),
+    weight: lead.find((t) => /^(bold|bolder|lighter|[1-9]00)$/i.test(t)) ?? '',
+    size: m?.[2] ? Number(m[2]) : 12.5,
+    family: (m?.[3] || '').trim() || 'Roboto, sans-serif',
+  };
+}
+
+/** Put a font shorthand back together. */
+export function formatFont(p: FontParts): string {
+  return [p.italic ? 'italic' : '', p.weight, `${p.size}px`, p.family].filter(Boolean).join(' ');
+}
+
+/**
+ * The weight a label carries when it is not bold.
+ *
+ * Every template draws its label at 600 — that is what an ordinary block label
+ * looks like here, not a bold one. So 600 is the resting weight and the bold
+ * threshold sits above it; otherwise the Text tab's B button would be pressed
+ * on every block the moment it was selected.
+ */
+export const NORMAL_WEIGHT = '600';
+export const BOLD_WEIGHT = '700';
+
+/** True when a weight reads as bold rather than as an ordinary label. */
+export function isBoldWeight(weight: string): boolean {
+  return /^(bold|bolder)$/i.test(weight) || Number(weight) >= 700;
+}
+
 /**
  * A CSS font string for one line, from the node's base font.
  *
@@ -150,18 +209,15 @@ export function lineFont(base: string, line: RichLine): string {
   const total = line.runs.reduce((n, r) => n + r.text.length, 0) || 1;
   const share = (k: 'bold' | 'italic') =>
     line.runs.reduce((n, r) => n + (r[k] ? r.text.length : 0), 0) / total;
-  const f = String(base || '600 12.5px Roboto, sans-serif').trim();
-  // Split the leading style/weight words off the size-and-family remainder, so a
-  // bold line can be made genuinely heavier. The shape template's base is 600,
-  // which already reads as "bold" to a naive test — that is why a heading came
-  // out identical to the bullets under it.
-  const m = /^((?:(?:normal|italic|oblique|bold|bolder|lighter|[1-9]00)\s+)*)(.*)$/.exec(f);
-  const lead = (m?.[1] ?? '').trim().split(/\s+/).filter(Boolean);
-  const rest = m?.[2] || f;
-  const weight = lead.find((t) => /^(bold|bolder|lighter|[1-9]00)$/i.test(t));
-  const slant = share('italic') > 0.5 ? 'italic' : lead.find((t) => /^(italic|oblique)$/i.test(t));
-  const out = [slant, share('bold') > 0.5 ? '700' : weight, rest].filter(Boolean);
-  return out.join(' ');
+  const p = parseFont(base);
+  // A bold line is forced to 700 rather than left at the base weight: the shape
+  // template's base is 600, which already reads as "bold" to a naive test — that
+  // is why a heading came out identical to the bullets under it.
+  return formatFont({
+    ...p,
+    italic: p.italic || share('italic') > 0.5,
+    weight: share('bold') > 0.5 ? '700' : p.weight,
+  });
 }
 
 /** True when the whole line is underlined, which a TextBlock can draw. */
