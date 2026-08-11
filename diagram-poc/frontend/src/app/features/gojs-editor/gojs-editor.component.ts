@@ -1156,8 +1156,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         dashPattern: d.dashPattern === true,
         dashed: d.dashed,
         textAlign: d.textAlign ?? 'center',
-        // The label, for the Text tab. `html` is only present on a formatted
-        // one — its absence is what "not formatted" means, here and in draw.io.
+        // `html` is present only on a formatted label; its absence is the flag.
         html: typeof d.html === 'string' ? d.html : undefined,
         font: typeof d.font === 'string' ? d.font : undefined,
         textWidth: typeof d.textWidth === 'number' ? d.textWidth : undefined,
@@ -1348,14 +1347,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.setField('font', formatFont({ ...parseFont(this.selectedNode?.data?.font), ...patch }));
   }
 
-  /**
-   * Turn mxGraph's `html=1` on or off for this label.
-   *
-   * On, the plain string becomes a one-line document; off, the document is
-   * flattened back to the text it reads as. Neither direction invents anything,
-   * so a label can be switched back and forth — though formatting applied while
-   * it was on is gone once it is off, which is what "plain" means.
-   */
+/** Switch the label between a plain string and a document. Neither direction
+   *  invents anything, but formatting is gone once it is off. */
   private setFormatted(on: boolean): void {
     const d = this.selectedNode?.data; if (!d) return;
     if (on) { this.setHtmlLabel(richToHtml(plainToLines(String(d.text ?? '')))); return; }
@@ -1364,8 +1357,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.setField('text', plain);
   }
 
-  /** Write a formatted label, keeping `text` as its plain reading — the BOM,
-   *  search, tooltips and a .drawio export all still want a string. */
+  /** Keep `text` as the plain reading: the BOM, search and tooltips want a string. */
   private setHtmlLabel(html: string): void {
     this.setField('html', html);
     this.setField('text', richToPlain(html));

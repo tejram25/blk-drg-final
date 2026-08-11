@@ -80,25 +80,19 @@ window.buildDiagram = function(modelJson, geo) {
     const p = rtParseFont(base);
     return rtFormatFont({ ...p, italic: p.italic || !!r.italic, weight: r.bold ? '700' : p.weight });
   }
-  // Measured on a real 2D context, which is the engine the canvas draws with,
-  // so the wrap computed here is the wrap that appears.
   let rtCtx;
   function rtMeasure(text, font) {
     if (rtCtx === undefined) rtCtx = document.createElement('canvas').getContext('2d');
     rtCtx.font = font;
     return rtCtx.measureText(text).width;
   }
-  // The gap after the marker is a margin, not a space: the marker is its own
-  // TextBlock now, and a TextBlock trims the whitespace off its end.
+  // The gap is a margin: a TextBlock trims the whitespace off its end.
   const RT_BULLET = '\u2022', RT_BULLET_GAP = 6;
-  // A TextBlock holds one font, so a line with bold in the middle is several of
-  // them side by side — and GoJS cannot wrap what it cannot see as one line, so
-  // the wrapping is done here.
+  // A TextBlock holds one font, so a mixed line is several side by side — and
+  // GoJS cannot wrap what it cannot see as one line, so it is wrapped here.
   function rtLayout(lines, base, maxWidth) {
     const out = [];
     const plainFont = rtRunFont(base, {});
-    // The font's own line box, measured — a little taller than the box GoJS
-    // gives a TextBlock, which is the safe way round.
     rtMeasure('Mg', plainFont);
     const fm = rtCtx.measureText('Mg');
     const height = Math.ceil(((fm.fontBoundingBoxAscent||0) + (fm.fontBoundingBoxDescent||0))
@@ -157,9 +151,8 @@ window.buildDiagram = function(modelJson, geo) {
     const a = String(d.textAlign || 'center');
     return a === 'right' ? go.Spot.Right : a === 'left' ? go.Spot.Left : go.Spot.Center;
   }
-  // A Spot panel takes the size of everything in it, so a label taller than its
-  // block hangs outside the outline. The block grows to hold it instead — only
-  // for a formatted label; a plain one is the size the artwork says it is.
+  // A Spot panel sizes to everything in it, so an oversized label hangs out of
+  // the outline; the block grows instead. Formatted labels only.
   function shapeMinSize(d) {
     const floor = go.Size.parse(String((d && d.minSize) || '48 40'));
     if (!rtIsRich(d && d.html)) return floor;

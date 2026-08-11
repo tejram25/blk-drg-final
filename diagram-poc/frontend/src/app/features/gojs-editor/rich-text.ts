@@ -1,22 +1,13 @@
 /**
- * Rich labels, stored the way draw.io stores them.
+ * A formatted label is stored as an HTML string, which is what a .drawio file
+ * carries, so one round-trips as data instead of being flattened on import.
  *
- * draw.io's "Formatted Text" checkbox is mxGraph's `html=1` flag: the label
- * stops being plain text and becomes an HTML string. We keep that same
- * representation so a `.drawio` label round-trips as data rather than being
- * flattened on the way in — our importer used to strip every tag, which turned
- * a heading and five bullets into one squashed line.
- *
- * GoJS cannot render HTML in a node (a TextBlock is plain text; its only HTML
- * hook is the editor used while typing), so rendering is done by parsing the
- * HTML into lines and drawing each as its own TextBlock. That keeps the label
- * part of the canvas — it zooms, hit-tests and appears in an exported picture,
- * none of which is true of an HTML element floated over the diagram.
+ * A GoJS TextBlock is plain text, so rendering means parsing that HTML and
+ * drawing each run as its own TextBlock — which keeps the label on the canvas,
+ * where it zooms, hit-tests and lands in an exported picture.
  *
  * Deliberately a small subset: bold, italic, underline, line breaks and bullet
- * lists, which is what a block diagram's labels actually use. Anything else is
- * kept verbatim in the data and shown as its text, so nothing is destroyed by a
- * round trip through the editor.
+ * lists. Anything else is kept verbatim in the data and shown as its text.
  */
 
 /** A stretch of text sharing one set of marks. */
@@ -48,11 +39,9 @@ export function isRich(html: unknown): boolean {
 }
 
 /**
- * Parse a draw.io/mxGraph HTML label into lines.
- *
- * Hand-rolled over a fixed tag list rather than DOMParser: it runs the same in
- * a browser, in the render harness and in a plain node test, and it can never
- * put an attacker-supplied string anywhere near the document.
+ * Parse an HTML label into lines. Hand-rolled over a fixed tag list rather than
+ * DOMParser: it runs the same in a browser, the render harness and a node test,
+ * and it can never put an untrusted string near the document.
  */
 export function parseRichText(html: string): RichLine[] {
   const lines: RichLine[] = [];
@@ -60,12 +49,7 @@ export function parseRichText(html: string): RichLine[] {
   let bullet = false;
   const marks = { bold: 0, italic: 0, underline: 0 };
 
-  /**
-   * End a line. `force` emits it even when it is empty, which is what a `<br>`
-   * means — a blank line someone put there on purpose. Without it, whitespace
-   * between two pretty-printed `<div>`s would read as a line of its own while a
-   * deliberately empty one would vanish, which is exactly backwards.
-   */
+  /** End a line. `force` emits an empty one, which is what a `<br>` means. */
   const flush = (force = false) => {
     const kept = runs.filter((r) => r.text.length);
     if (kept.some((r) => r.text.trim()) || bullet || force) {
@@ -85,9 +69,7 @@ export function parseRichText(html: string): RichLine[] {
 
   const token = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>|([^<]+)/g;
   let m: RegExpExecArray | null;
-  // Nothing here reaches the DOM, so nothing can execute — but a label is no
-  // place to show the text of a <script> either.
-  let muted = 0;
+  let muted = 0;   // a label is no place to show the text of a <script>
   while ((m = token.exec(html)) !== null) {
     if (m[2] !== undefined) { if (!muted) push(decode(m[2]).replace(/\s+/g, ' ')); continue; }
     const tag = m[1].toLowerCase();
@@ -109,7 +91,7 @@ export function parseRichText(html: string): RichLine[] {
   return lines;
 }
 
-/** Serialise lines back to the HTML draw.io would have written. */
+/** Serialise lines back to HTML. */
 export function richToHtml(lines: RichLine[]): string {
   const run = (r: RichRun) => {
     let t = escapeHtml(r.text);
@@ -121,9 +103,7 @@ export function richToHtml(lines: RichLine[]): string {
   const out: string[] = [];
   let inList = false;
   for (const l of lines) {
-    // Emptiness is judged on the text, not the markup: a line the user cleared
-    // may still carry its marks, and `<div><b></b></div>` would parse back as
-    // nothing at all, so the line would disappear as they typed.
+    // Judged on the text, not the markup: `<div><b></b></div>` parses to nothing.
     const body = l.runs.some((r) => r.text) ? l.runs.map(run).join('') : '';
     if (l.bullet && !inList) { out.push('<ul>'); inList = true; }
     if (!l.bullet && inList) { out.push('</ul>'); inList = false; }
@@ -153,15 +133,9 @@ export const DEFAULT_FONT = '600 12.5px Roboto, sans-serif';
 export interface FontParts { italic: boolean; weight: string; size: number; family: string; }
 
 /**
- * Split a CSS font shorthand into the pieces the Text tab edits.
- *
- * The leading style/weight words come off first, then the size, leaving the
- * family — which is the one part that may legitimately contain spaces, quotes
- * and commas (`"Arrow Display", Roboto, sans-serif`), so it is whatever is left
- * rather than something matched.
- *
- * `oblique` is reported as italic. It is a distinction almost no font actually
- * draws differently, and collapsing it is what lets the tab offer one toggle.
+ * Split a CSS font shorthand into the pieces the Text tab edits. Style/weight
+ * come off first, then the size; the family is whatever is left, since it is
+ * the part that may hold spaces, quotes and commas. `oblique` reads as italic.
  */
 export function parseFont(base: unknown): FontParts {
   const f = String(base || DEFAULT_FONT).trim();
@@ -180,14 +154,7 @@ export function formatFont(p: FontParts): string {
   return [p.italic ? 'italic' : '', p.weight, `${p.size}px`, p.family].filter(Boolean).join(' ');
 }
 
-/**
- * The weight a label carries when it is not bold.
- *
- * Every template draws its label at 600 — that is what an ordinary block label
- * looks like here, not a bold one. So 600 is the resting weight and the bold
- * threshold sits above it; otherwise the Text tab's B button would be pressed
- * on every block the moment it was selected.
- */
+/** Templates draw labels at 600, so that is the resting weight, not a bold one. */
 export const NORMAL_WEIGHT = '600';
 export const BOLD_WEIGHT = '700';
 
@@ -199,9 +166,7 @@ export function isBoldWeight(weight: string): boolean {
 /** The font one run is drawn in, from the label's base font plus its marks. */
 export function runFont(base: string, r: RichRun): string {
   const p = parseFont(base);
-  // A bold run is forced to 700 rather than left at the base weight: the
-  // templates draw labels at 600, which already reads as "bold" to a naive
-  // test — that is why a heading first came out identical to its bullets.
+  // Forced to 700, not left at the base: 600 would read the same as its bullets.
   return formatFont({ ...p, italic: p.italic || !!r.italic, weight: r.bold ? BOLD_WEIGHT : p.weight });
 }
 
@@ -211,14 +176,9 @@ export function runFont(base: string, r: RichRun): string {
 export const BULLET = '\u2022';
 export const BULLET_GAP = 6;
 
-/** One run as it will actually be drawn. */
-export interface DrawnRun {
-  text: string; font: string; underline: boolean;
-  /** Space to leave after this run. Used for the gap behind a bullet marker,
-   *  which cannot be a space: a TextBlock trims the whitespace off its end, and
-   *  the marker is a TextBlock of its own now. */
-  gap?: number;
-}
+/** One run as it will actually be drawn. `gap` is the space after it, used for
+ *  the bullet marker — a TextBlock trims trailing whitespace, so it cannot be one. */
+export interface DrawnRun { text: string; font: string; underline: boolean; gap?: number; }
 
 /** One line of the drawn label: a row of runs, already wrapped to fit. */
 export interface DrawnLine {
@@ -231,14 +191,8 @@ export interface DrawnLine {
 
 let measureCtx: CanvasRenderingContext2D | null | undefined;
 
-/**
- * The width of a string in a given font.
- *
- * Measured on a throwaway 2D context, which is the same engine the canvas will
- * draw with, so the wrap this produces is the wrap that appears. Outside a
- * browser there is nothing to measure with, so it falls back to an estimate —
- * only tests run there, and a rough number is enough to keep them meaningful.
- */
+/** Width of a string, on the same 2D engine the canvas draws with. Outside a
+ *  browser it estimates, which is enough for the tests that run there. */
 export function measureText(text: string, font: string): number {
   if (measureCtx === undefined) {
     measureCtx = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null;
@@ -248,14 +202,8 @@ export function measureText(text: string, font: string): number {
   return measureCtx.measureText(text).width;
 }
 
-/**
- * The height of one line in a font.
- *
- * The font's own line box, which is a measurement rather than a multiple of the
- * size guessed at. It runs a little taller than the box GoJS gives a TextBlock,
- * and that way round is the safe one: a block sized from this has a pixel of
- * slack per line rather than a label creeping back out of it.
- */
+/** The font's own line box. Slightly taller than GoJS's, which is the safe way
+ *  round: a block sized from it has slack rather than a label creeping out. */
 export function fontLineHeight(font: string): number {
   measureText('Mg', font);                       // sets the context's font
   const m = measureCtx?.measureText('Mg') as TextMetrics | undefined;
@@ -266,15 +214,10 @@ export function fontLineHeight(font: string): number {
 /**
  * Wrap a formatted label into the lines and runs the canvas will draw.
  *
- * A GoJS TextBlock holds one font, so a line with bold in the middle has to be
- * several of them side by side — and once a line is several TextBlocks, GoJS
- * can no longer wrap it, because it cannot see the line as a whole. So the wrap
- * is done here: split every run into words, measure each in its own font, and
- * fill lines greedily. That is what lets a mark follow a selection instead of
- * being rounded up to the whole line.
- *
- * A word longer than the available width is left to overhang rather than being
- * broken mid-word, which is what a part number or a URL wants.
+ * A TextBlock holds one font, so a line with bold in the middle is several of
+ * them side by side — and GoJS cannot wrap what it cannot see as one line, so
+ * the wrapping is done here. A word longer than the width overhangs rather than
+ * breaking, which is what a part number wants.
  */
 export function layoutRich(lines: RichLine[], base: string, maxWidth: number): DrawnLine[] {
   const out: DrawnLine[] = [];
@@ -282,7 +225,7 @@ export function layoutRich(lines: RichLine[], base: string, maxWidth: number): D
   const height = Math.ceil(fontLineHeight(plainFont));
   const bulletWidth = measureText(BULLET, plainFont) + BULLET_GAP;
 
-  /** Adjacent words in the same font become one TextBlock, not one each. */
+  /** Adjacent words in one font become one TextBlock. */
   const merge = (toks: { text: string; font: string; underline: boolean }[]): DrawnRun[] => {
     const runs: DrawnRun[] = [];
     for (const t of toks) {

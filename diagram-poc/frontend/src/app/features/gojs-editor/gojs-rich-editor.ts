@@ -2,32 +2,11 @@ import * as go from 'gojs';
 import { DEFAULT_FONT, isRich, parseFont, parseRichText, richToHtml, richToPlain } from './rich-text';
 
 /**
- * In-place editing of a formatted label, the way draw.io does it.
- *
- * mxGraph's `mxCellEditor` is a `contenteditable` div laid over the cell on the
- * canvas — you double-click a shape and type on the shape, and the Format
- * panel's B/I/U act on whatever you have selected there. That split is
- * `mxCellEditor.isContentEditing()`, which is true when the cell being edited
- * carries `html=1`:
- *
- *     mxCellEditor.prototype.isContentEditing = function() {
- *       var state = this.graph.view.getState(this.editingCell);
- *       return state != null && state.style['html'] == 1;
- *     };
- *
- * and draw.io's bold action reads:
- *
- *     if (fn != null && graph.cellEditor.isContentEditing()) { fn(); }   // execCommand('bold')
- *     else { graph.stopEditing(false); graph.toggleCellStyleFlags(STYLE_FONTSTYLE, FONT_BOLD, cells); }
- *
- * This is the same arrangement for GoJS: the overlay below is our cell editor,
- * `active` is our `isContentEditing()`, and the Text tab branches on it.
- *
- * A plain label is left to GoJS's own text editor, which is right — that is
- * exactly the case draw.io sends down its non-content-editing branch too.
+ * A contenteditable laid over a block, so a formatted label is edited in place.
+ * `active` is what the Text tab branches on to send B/I/U to the selection here
+ * rather than to the whole label.
  */
 
-/** Static styling for the overlay, injected once. */
 const STYLE_ID = 'gojs-rich-editor-style';
 function ensureStyle(): void {
   if (document.getElementById(STYLE_ID)) return;
@@ -36,8 +15,7 @@ function ensureStyle(): void {
   s.textContent = `
 .gojs-rich-editor { box-sizing: border-box; outline: 2px solid #f5a623; outline-offset: 1px;
   background: #ffffff; overflow: visible; cursor: text; z-index: 20;
-  /* Stated, not inherited: a browser reports a semibold selection as bold, so
-     an inherited heavy face would light the B button on text that is not bold. */
+  /* Stated: a browser reads a semibold selection as bold, lighting B wrongly. */
   font-weight: 400; }
 .gojs-rich-editor ul, .gojs-rich-editor ol { margin: 0; padding-left: 1.2em; }
 .gojs-rich-editor li { margin: 0; }
@@ -51,16 +29,14 @@ class RichInPlaceEditor {
   private diagram: go.Diagram | null = null;
   private listeners = new Set<() => void>();
 
-  /** draw.io's `isContentEditing()`: a formatted label is open for editing. */
   get active(): boolean { return this.div !== null; }
   get element(): HTMLElement | null { return this.div; }
 
-  /** Whether double-clicking this node should open the rich editor at all. */
   canEdit(node: go.Node | null | undefined): boolean {
     return !!node && isRich(node.data?.html);
   }
 
-  /** Told when editing starts or stops, so the Text tab can redraw its buttons. */
+  /** Fires when editing starts or stops, so the Text tab can redraw. */
   subscribe(fn: () => void): () => void {
     this.listeners.add(fn);
     return () => this.listeners.delete(fn);
@@ -79,8 +55,7 @@ class RichInPlaceEditor {
     div.className = 'gojs-rich-editor';
     div.contentEditable = 'true';
     div.spellcheck = false;
-    // Through the parser on the way in: whatever the label carries, only the
-    // tags we draw ever reach the document.
+    // Through the parser, so only tags we draw reach the document.
     div.innerHTML = richToHtml(parseRichText(String(node.data.html ?? '')));
 
     this.div = div; this.node = node; this.diagram = diagram;
@@ -92,8 +67,7 @@ class RichInPlaceEditor {
     diagram.addDiagramListener('ViewportBoundsChanged', this.onViewport);
 
     div.focus();
-    // Selected on opening, as mxCellEditor does: a double-click on a label
-    // usually means "replace this", and the caret is one keystroke away.
+    // Select all: double-clicking a label usually means "replace this".
     const range = document.createRange();
     range.selectNodeContents(div);
     const sel = getSelection();
@@ -102,22 +76,20 @@ class RichInPlaceEditor {
     this.announce();
   }
 
-  /** Keep what was typed. */
   commit(): void { this.finish(true); }
-  /** Throw it away — Escape, as in draw.io. */
   cancel(): void { this.finish(false); }
 
   private readonly onBlur = () => this.finish(true);
 
   private readonly onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') { e.preventDefault(); this.finish(false); }
-    // Enter makes a new line in a formatted label; Ctrl/Cmd+Enter is done.
+    // Enter makes a new line here, so Ctrl/Cmd+Enter is "done".
     else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.finish(true); }
   };
 
   private readonly onViewport = () => this.place();
 
-  /** Lay the overlay over the block's outline, at the diagram's current scale. */
+  /** Over the block's outline, at the diagram's current scale. */
   private place(): void {
     const div = this.div, node = this.node, diagram = this.diagram;
     if (!div || !node || !diagram) return;
@@ -144,8 +116,7 @@ class RichInPlaceEditor {
 
   private finish(save: boolean): void {
     const div = this.div, node = this.node, diagram = this.diagram;
-    // Cleared first: removing the element fires blur, which would come straight
-    // back in here and commit a second time.
+    // Cleared first: removing the element fires blur, which re-enters here.
     this.div = null; this.node = null; this.diagram = null;
     if (!div) return;
     div.removeEventListener('blur', this.onBlur);
@@ -155,15 +126,12 @@ class RichInPlaceEditor {
     div.remove();
 
     if (save && node && diagram && !diagram.isReadOnly) {
-      // An emptied label is still a formatted one, just empty; writing nothing
-      // would read as "not formatted" and the block would change kind on the
-      // user without being asked.
+      // An emptied label is still a formatted one; '' would read as plain.
       const next = html || '<div><br></div>';
       if (next !== node.data.html) {
         diagram.model.commit((m) => {
           m.set(node.data, 'html', next);
-          // `text` stays the plain reading, for the BOM, search and tooltips.
-          m.set(node.data, 'text', richToPlain(next));
+          m.set(node.data, 'text', richToPlain(next));   // plain reading, for BOM and search
         }, 'edit label');
       }
     }
@@ -171,5 +139,5 @@ class RichInPlaceEditor {
   }
 }
 
-/** One editor for the app, the way a graph has one cell editor. */
+/** One editor for the app. */
 export const richEditing = new RichInPlaceEditor();

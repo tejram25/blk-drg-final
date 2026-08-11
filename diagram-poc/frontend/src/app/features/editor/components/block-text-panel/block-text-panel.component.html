@@ -13,8 +13,7 @@
     <input type="color" [ngModel]="sel.labelColor" (ngModelChange)="set('labelColor', $event)" /></label>
 </div>
 
-<!-- mousedown is swallowed so pressing a button does not drop the selection in
-     the block's editor that the button is about to act on. -->
+<!-- mousedown swallowed, so pressing a button keeps the selection it acts on -->
 <div class="text-bar" (mousedown)="keepSelection($event)">
   <div class="btn-group">
     <button type="button" [class.on]="markOn('bold')" (click)="toggleMark('bold')" matTooltip="Bold"><b>B</b></button>
@@ -41,7 +40,7 @@
   <input type="number" min="20" max="900" step="5"
          [ngModel]="wrapWidth" (ngModelChange)="set('textWidth', $event)" /></label>
 
-<!-- mxGraph's html=1: the label stops being a string and becomes a document -->
+<!-- the label stops being a string and becomes a document -->
 <button class="secondary-btn" [class.on]="formatted" (click)="set('formatted', !formatted)">
   <mat-icon>{{ formatted ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
   <span>Formatted text</span>
