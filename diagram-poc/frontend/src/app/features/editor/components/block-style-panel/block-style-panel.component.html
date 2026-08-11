@@ -81,6 +81,8 @@
         <input type="number" min="0" max="600" step="2" placeholder="auto"
                [ngModel]="titleBandWidth" (ngModelChange)="style.emit({ prop: 'titleBandWidth', value: $event })" /></label>
     </div>
+    <div class="pin-hint">Or hold <b>Alt</b> and drag the title on the canvas to put it anywhere
+      inside the container.</div>
   } @else {
     <!-- Label colour, size and alignment live under Text, next to the rest of
          the type controls, rather than being spelled twice. -->
@@ -89,21 +91,52 @@
         <input type="number" min="8" [ngModel]="width" (ngModelChange)="style.emit({ prop: 'width', value: $event })" /></label>
       <label><span>Height</span>
         <input type="number" min="8" [ngModel]="height" (ngModelChange)="style.emit({ prop: 'height', value: $event })" /></label>
-      <!-- A status marker at the block's edge: "?" to check, "!" to flag -->
-      <label class="wide"><span>Badge</span>
-        <input [ngModel]="badge" placeholder="none — try ? or !"
-               (ngModelChange)="style.emit({ prop: 'badge', value: $event })" /></label>
-      @if (badge) {
-        <label><span>Badge fill</span>
-          <input type="color" [ngModel]="badgeFill"
-                 (ngModelChange)="style.emit({ prop: 'badgeFill', value: $event })" /></label>
-        <label><span>Badge text</span>
-          <input type="color" [ngModel]="badgeColor"
-                 (ngModelChange)="style.emit({ prop: 'badgeColor', value: $event })" /></label>
-        <label><span>Badge size</span>
-          <input type="number" min="8" max="60" step="1"
-                 [ngModel]="badgeSize" (ngModelChange)="style.emit({ prop: 'badgeSize', value: $event })" /></label>
-      }
+    </div>
+  }
+}
+
+<!-- Where the name sits inside the block. Its own section for the same reason
+     the badge has one: it is as true of a functional block as of a shape, and
+     a block has no Style section to hide it in. -->
+@if (placeable) {
+  <div class="prop-section">Name</div>
+  <label class="wide"><span>Position</span>
+    <select [ngModel]="labelCustom ? '' : labelSpot"
+            (ngModelChange)="$event && style.emit({ prop: 'labelSpot', value: $event })">
+      <option value="0 0">Top left</option>
+      <option value="0.5 0">Top</option>
+      <option value="1 0">Top right</option>
+      <option value="0 0.5">Left</option>
+      <option value="0.5 0.5">Centre</option>
+      <option value="1 0.5">Right</option>
+      <option value="0 1">Bottom left</option>
+      <option value="0.5 1">Bottom</option>
+      <option value="1 1">Bottom right</option>
+      @if (labelCustom) { <option value="">Dragged</option> }
+    </select></label>
+  <div class="pin-hint">Or hold <b>Alt</b> and drag the name on the canvas to put it anywhere
+    inside the block.</div>
+}
+
+<!-- A status marker at the block's edge: "?" to check, "!" to flag. Its own
+     section, because a badge is as useful on a functional block as on a shape
+     and it was invisible buried under the shape-only size fields. -->
+@if (badgeable) {
+  <div class="prop-section">Badge</div>
+  <label><span>Marker</span>
+    <input [ngModel]="badge" placeholder="none — try ? or !"
+           (ngModelChange)="style.emit({ prop: 'badge', value: $event })" /></label>
+  @if (badge) {
+    <div class="style-grid">
+      <label><span>Fill</span>
+        <input type="color" [ngModel]="badgeFill"
+               (ngModelChange)="style.emit({ prop: 'badgeFill', value: $event })" /></label>
+      <label><span>Text</span>
+        <input type="color" [ngModel]="badgeColor"
+               (ngModelChange)="style.emit({ prop: 'badgeColor', value: $event })" /></label>
+      <label class="wide"><span>Size</span>
+        <input type="number" min="8" max="60" step="1"
+               [ngModel]="badgeSize" (ngModelChange)="style.emit({ prop: 'badgeSize', value: $event })" /></label>
     </div>
   }
 }

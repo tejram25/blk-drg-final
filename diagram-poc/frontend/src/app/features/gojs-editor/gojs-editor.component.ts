@@ -64,6 +64,7 @@ import { Command, CommandPaletteComponent } from '../../shared/components/comman
 import { WireGeometry } from './gojs-wire-geometry';
 import { Pin, PinMove, pinSide, spaced, spotOn } from './gojs-pins';
 import { buildTemplates } from './gojs-templates';
+import { LabelDragTool } from './gojs-label-drag';
 import { DEFAULT_WIRE_STYLE, WireDockComponent, WireProp } from '../editor/components/wire-dock/wire-dock.component';
 import { PropertiesPanelComponent, StyleChange, TextChange } from '../editor/components/properties-panel/properties-panel.component';
 import {
@@ -456,6 +457,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       nodeTip: (mk) => this.nodeTip(mk),
       wires: this.wires,
     });
+    // Before the dragging tool, which would otherwise pick the whole block up.
+    this.diagram.toolManager.mouseMoveTools.insertAt(0, new LabelDragTool());
     this.diagram.model = this.emptyModel();
 
     this.diagram.addDiagramListener('ChangedSelection', () => this.zone.run(() => this.syncSelection()));
@@ -1321,6 +1324,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const n = Number(String(this.selectedNode?.data?.badgeSize ?? '').split(/\s+/)[0]);
     return isFinite(n) ? n : 18;
   }
+  /** Where the block's name sits inside it. Absent means the centre, which is
+   *  where a label has always been drawn; the presets and an Alt-drag on the
+   *  canvas write the same field. */
+  get labelSpot(): string { return String(this.selectedNode?.data?.labelSpot ?? '0.5 0.5'); }
+
   private setBadgeSize(v: any): void {
     const n = Math.min(60, Math.max(8, Number(v) || 18));
     this.setField('badgeSize', `${n} ${n}`);
@@ -1437,6 +1445,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'badgeFill': this.setField('badgeFill', t); break;
       case 'badgeColor': this.setField('badgeColor', t); break;
       case 'badgeSize': this.setBadgeSize(n); break;
+      case 'labelSpot': this.setField('labelSpot', t); break;
       case 'width': this.setNodeSize('w', n); break;
       case 'height': this.setNodeSize('h', n); break;
     }

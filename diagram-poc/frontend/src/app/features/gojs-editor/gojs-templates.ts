@@ -4,6 +4,7 @@ import {
   DEFAULT_FONT, DrawnLine, isRich, layoutRich, parseRichText, richExtent,
 } from './rich-text';
 import { richEditing } from './gojs-rich-editor';
+import { NAME_FIELD, placeable } from './gojs-label-drag';
 
 /**
  * What the templates need back from the editor.
@@ -96,7 +97,10 @@ function labelStyle(): go.Binding[] {
 
 /** The stack that draws a formatted label. Shared, so the Text tab means the
  *  same thing on a functional block as on a native shape. */
-function richStack($: typeof go.GraphObject.make): go.Panel {
+function richStack(
+  $: typeof go.GraphObject.make,
+  ...extra: (go.Binding | Record<string, unknown>)[]
+): go.Panel {
   /** One drawn line: its runs laid side by side, each in its own font. */
   const row = $(
     go.Panel, 'Horizontal',
@@ -120,6 +124,7 @@ function richStack($: typeof go.GraphObject.make): go.Panel {
     new go.Binding('defaultAlignment', '', richAlignment),
     // Whole data object: the layout depends on label, font, width and colour.
     new go.Binding('itemArray', '', richItems),
+    ...extra,
   );
 }
 
@@ -263,7 +268,9 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
         $(go.Shape, 'RoundedRectangle',
           { parameter1: 10, fill: '#ffffff', stroke: '#d2d6dc', strokeWidth: 1.5, minSize: new go.Size(150, 52) },
           new go.Binding('stroke', 'color')),
-        $(go.Panel, 'Horizontal', { margin: 8 },
+        // The name and its icon are one lockup, and Alt-dragging moves it as
+        // one — a block's icon belongs beside its name, wherever that is put.
+        $(go.Panel, 'Horizontal', { margin: 8 }, ...placeable('labelSpot'),
           $(go.Panel, 'Auto', { width: 36, height: 36, margin: new go.Margin(0, 8, 0, 0) },
             $(go.Shape, 'RoundedRectangle', { parameter1: 8, strokeWidth: 0 }, new go.Binding('fill', 'color')),
             $(go.TextBlock, { font: '20px Material Icons', stroke: '#ffffff' }, new go.Binding('text', 'icon'))),
@@ -277,7 +284,19 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
               ...labelStyle()),
             richStack($),
             $(go.TextBlock, { font: '10px Roboto, sans-serif', stroke: '#9aa0a8', alignment: go.Spot.Left },
-              new go.Binding('text', 'subtitle'))))),
+              new go.Binding('text', 'subtitle')))),
+        // A status marker on the block: the drawings put a round badge at the end
+        // of every part-number row.
+        $(go.Panel, 'Spot', { visible: false, alignment: new go.Spot(1, 0.5, -13, 0) },
+          new go.Binding('visible', 'badge', (b) => !!b),
+          new go.Binding('alignment', 'badgeSpot', go.Spot.parse),
+          $(go.Shape, 'Circle', { width: 18, height: 18, fill: '#f5a623', stroke: null },
+            new go.Binding('fill', 'badgeFill'),
+            new go.Binding('desiredSize', 'badgeSize', go.Size.parse)),
+          $(go.TextBlock, { font: '700 11px Roboto, sans-serif', stroke: '#ffffff' },
+            new go.Binding('text', 'badge'),
+            new go.Binding('stroke', 'badgeColor'),
+            new go.Binding('font', 'badgeFont')))),
       ...sidePorts(),
       pinOverlay(),
     );
@@ -357,8 +376,9 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
             textAlign: 'center', maxSize: new go.Size(150, NaN), margin: 6 },
           new go.Binding('visible', 'html', (h) => !isRich(h)),
           new go.Binding('text').makeTwoWay(),
-          ...labelStyle()),
-        richStack($),
+          ...labelStyle(),
+          ...placeable('labelSpot')),
+        richStack($, ...placeable('labelSpot')),
         // A status marker on the block: the drawings put a round badge at the end
         // of every part-number row.
         $(go.Panel, 'Spot', { visible: false, alignment: new go.Spot(1, 0.5, -13, 0) },
@@ -453,7 +473,8 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
         $(go.TextBlock, { alignment: go.Spot.Center, font: '13px Roboto, sans-serif', stroke: '#1f2937',
           editable: true, maxSize: new go.Size(160, NaN), textAlign: 'center' },
           new go.Binding('text').makeTwoWay(),
-          new go.Binding('stroke', 'labelColor'))),
+          new go.Binding('stroke', 'labelColor'),
+          ...placeable('labelSpot'))),
     );
     diagram.nodeTemplateMap.set('basic', basicSym);
 
@@ -698,7 +719,9 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
         $(go.Placeholder, { padding: new go.Margin(30, 16, 16, 16) },
           new go.Binding('padding', 'pad', (p: string) => go.Margin.parse(p)))),
       $(go.Panel, 'Auto',
-        { alignment: new go.Spot(0, 0, 10, 8), alignmentFocus: go.Spot.TopLeft },
+        // A container's title is placeable the same way a block's name is, and
+        // writes the same field the Title position control does.
+        { alignment: new go.Spot(0, 0, 10, 8), alignmentFocus: go.Spot.TopLeft, [NAME_FIELD]: 'titleAlign' },
         new go.Binding('alignment', 'titleAlign', (s: string) => go.Spot.parse(s)),
         new go.Binding('alignmentFocus', 'titleFocus', (s: string) => go.Spot.parse(s)),
         // A band behind the title, for the drawings that give a subsystem a

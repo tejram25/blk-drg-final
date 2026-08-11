@@ -52,6 +52,9 @@ export class PropertiesPanelComponent {
   @Input() titleBg = '';
   @Input() titleBandBorder = '';
   @Input() titleBandWidth: number | null = null;
+  @Input() badgeable = false;
+  @Input() placeable = false;
+  @Input() labelSpot = '0.5 0.5';
   @Input() badge = '';
   @Input() badgeFill = '#f5a623';
   @Input() badgeColor = '#ffffff';

@@ -205,6 +205,15 @@ window.buildDiagram = function(modelJson, geo) {
       pickable:false, stretch: go.GraphObject.Fill }));
   const sizeBind = () => new go.Binding('desiredSize','size',
     (s)=> s? go.Size.parse(s): new go.Size(NaN,NaN)).makeTwoWay((sz)=>go.Size.stringify(sz));
+  // Where the name sits inside the block: absent means the centre, which is
+  // where every label was drawn before it could be put anywhere else. The
+  // fractional part of the spot is also the label's own focus, so "0 0" tucks
+  // it into the corner instead of hanging it half outside.
+  const nameSpot = (s)=> typeof s === 'string' && s.trim() ? go.Spot.parse(s) : go.Spot.Center;
+  const placeable = (field) => [
+    new go.Binding('alignment', field, nameSpot),
+    new go.Binding('alignmentFocus', field, (s)=> { const sp = nameSpot(s); return new go.Spot(sp.x, sp.y); }),
+  ];
 
   // ---- block ----
   const block = $(go.Node,'Spot',
@@ -214,7 +223,7 @@ window.buildDiagram = function(modelJson, geo) {
       $(go.Shape,'RoundedRectangle',
         { parameter1:10, fill:'#ffffff', stroke:'#d2d6dc', strokeWidth:1.5, minSize:new go.Size(150,52) },
         new go.Binding('stroke','color')),
-      $(go.Panel,'Horizontal',{ margin:8 },
+      $(go.Panel,'Horizontal',{ margin:8 }, ...placeable('labelSpot'),
         $(go.Panel,'Auto',{ width:36, height:36, margin:new go.Margin(0,8,0,0) },
           $(go.Shape,'RoundedRectangle',{ parameter1:8, strokeWidth:0 }, new go.Binding('fill','color')),
           $(go.TextBlock,{ font:'20px Material Icons', stroke:'#ffffff' }, new go.Binding('text','icon'))),
@@ -245,7 +254,8 @@ window.buildDiagram = function(modelJson, geo) {
         new go.Binding('visible','html',(h)=>!rtIsRich(h)),
         new go.Binding('text'), new go.Binding('stroke','labelColor'), new go.Binding('font','font'),
         new go.Binding('textAlign','textAlign'), new go.Binding('isUnderline','underline'),
-        new go.Binding('maxSize','textWidth',(w)=> new go.Size(w,NaN))),
+        new go.Binding('maxSize','textWidth',(w)=> new go.Size(w,NaN)),
+        ...placeable('labelSpot')),
       $(go.Panel,'Spot',{ visible:false, alignment:new go.Spot(1,0.5,-13,0) },
         new go.Binding('visible','badge',(b)=> !!b),
         new go.Binding('alignment','badgeSpot',go.Spot.parse),
@@ -268,7 +278,8 @@ window.buildDiagram = function(modelJson, geo) {
             new go.Binding('itemArray','runs')) },
         new go.Binding('visible','html',(h)=>rtIsRich(h)),
         new go.Binding('defaultAlignment','',richAlignment),
-        new go.Binding('itemArray','',richItems))),
+        new go.Binding('itemArray','',richItems),
+        ...placeable('labelSpot'))),
     $(go.TextBlock,{ alignment:new go.Spot(0.5,1,0,7), alignmentFocus:go.Spot.Top,
       font:'10.5px Roboto, sans-serif', stroke:'#94a3b8', textAlign:'center', maxSize:new go.Size(170,NaN) },
       new go.Binding('text','sub'),
@@ -304,7 +315,7 @@ window.buildDiagram = function(modelJson, geo) {
       $(go.Picture,{ isPanelMain:true, stretch:go.GraphObject.Fill, imageStretch:go.GraphObject.Fill, background:'transparent' },
         new go.Binding('source','source')),
       $(go.TextBlock,{ alignment:go.Spot.Center, font:'13px Roboto, sans-serif', stroke:'#1f2937', maxSize:new go.Size(160,NaN), textAlign:'center' },
-        new go.Binding('text'), new go.Binding('stroke','labelColor'))));
+        new go.Binding('text'), new go.Binding('stroke','labelColor'), ...placeable('labelSpot'))));
   diagram.nodeTemplateMap.set('basic', basicSym);
 
   // ---- link ----

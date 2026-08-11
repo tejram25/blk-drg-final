@@ -11,7 +11,7 @@ export type StyleProp =
   'fill' | 'stroke' | 'borderWidth' | 'titleColor' | 'titlePlacement' | 'width' | 'height'
   | 'titleX' | 'titleY' | 'titleSize' | 'pad' | 'corner' | 'noFill' | 'noBorder'
   | 'titleBg' | 'noTitleBg' | 'titleBandBorder' | 'titleBandWidth'
-  | 'badge' | 'badgeFill' | 'badgeColor' | 'badgeSize';
+  | 'badge' | 'badgeFill' | 'badgeColor' | 'badgeSize' | 'labelSpot';
 
 export interface StyleChange { prop: StyleProp; value: string | number | boolean; }
 export interface PinSideChange { index: number; side: PinSide; }
@@ -56,6 +56,11 @@ export class BlockStylePanelComponent {
   @Input() container = false;
   /** The label is HTML, so its words are edited under Text and not here. */
   @Input() formatted = false;
+  /** Anything that can carry a status badge — a shape or a functional block. */
+  @Input() badgeable = false;
+  /** Anything whose name can be moved around inside it: the same set. A
+   *  container places its title with the Title position control instead. */
+  @Input() placeable = false;
   @Input() titlePlacement = '0 0';
   @Input() titleSize: number | null = null;
   @Input() pad: number | null = null;
@@ -68,6 +73,8 @@ export class BlockStylePanelComponent {
   @Input() badgeFill = '#f5a623';
   @Input() badgeColor = '#ffffff';
   @Input() badgeSize: number | null = null;
+  /** Where the block's name sits inside it, as a spot. */
+  @Input() labelSpot = '0.5 0.5';
   @Input() width: number | null = null;
   @Input() height: number | null = null;
   @Input() pins: Pin[] = [];
@@ -96,5 +103,14 @@ export class BlockStylePanelComponent {
   /** True when the spot is not one of the four offered, so the select says so. */
   get titleCustom(): boolean {
     return !['0 0', '0.5 0.06', '0.5 0.5', '0.5 0.94'].includes(String(this.titlePlacement));
+  }
+
+  /** The nine places a name can be put by name. Anything else — which is what
+   *  dragging it on the canvas produces — reads as "dragged". */
+  static readonly NAME_SPOTS = [
+    '0 0', '0.5 0', '1 0', '0 0.5', '0.5 0.5', '1 0.5', '0 1', '0.5 1', '1 1',
+  ];
+  get labelCustom(): boolean {
+    return !BlockStylePanelComponent.NAME_SPOTS.includes(String(this.labelSpot).trim());
   }
 }
