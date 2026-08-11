@@ -13,11 +13,13 @@
     <input type="color" [ngModel]="sel.labelColor" (ngModelChange)="set('labelColor', $event)" /></label>
 </div>
 
-<div class="text-bar">
+<!-- mousedown is swallowed so pressing a button does not drop the selection
+     these buttons are about to act on. -->
+<div class="text-bar" (mousedown)="keepSelection($event)">
   <div class="btn-group">
-    <button type="button" [class.on]="bold" (click)="set('bold', !bold)" matTooltip="Bold"><b>B</b></button>
-    <button type="button" [class.on]="italic" (click)="set('italic', !italic)" matTooltip="Italic"><i>I</i></button>
-    <button type="button" [class.on]="underline" (click)="set('underline', !underline)" matTooltip="Underline"><u>U</u></button>
+    <button type="button" [class.on]="markOn('bold')" (click)="toggleMark('bold')" matTooltip="Bold"><b>B</b></button>
+    <button type="button" [class.on]="markOn('italic')" (click)="toggleMark('italic')" matTooltip="Italic"><i>I</i></button>
+    <button type="button" [class.on]="markOn('underline')" (click)="toggleMark('underline')" matTooltip="Underline"><u>U</u></button>
   </div>
   <div class="btn-group">
     <button type="button" [class.on]="align === 'left'" (click)="set('textAlign', 'left')" matTooltip="Align left">
@@ -27,6 +29,12 @@
     <button type="button" [class.on]="align === 'right'" (click)="set('textAlign', 'right')" matTooltip="Align right">
       <mat-icon>format_align_right</mat-icon></button>
   </div>
+  @if (formatted) {
+    <div class="btn-group">
+      <button type="button" [class.on]="bulletOn" (click)="toggleBullet()" matTooltip="Bullet list">
+        <mat-icon>format_list_bulleted</mat-icon></button>
+    </div>
+  }
 </div>
 
 <label><span>Wrap width</span>
@@ -40,23 +48,9 @@
 </button>
 
 @if (formatted) {
-  <div class="text-hint">Each line carries its own weight, so a heading can sit over a bullet list
-    in one block. A line is drawn in one font — that is what the canvas can show — so marks apply
-    to the whole line rather than to a selection inside it.</div>
-
-  @for (l of lines; track trackLine($index); let i = $index) {
-    <div class="line-row">
-      <div class="line-marks">
-        <button type="button" [class.on]="l.bullet" (click)="toggleBullet(i)" matTooltip="Bullet">
-          <mat-icon>format_list_bulleted</mat-icon></button>
-        <button type="button" [class.on]="lineHas(l, 'bold')" (click)="toggleMark(i, 'bold')" matTooltip="Bold"><b>B</b></button>
-        <button type="button" [class.on]="lineHas(l, 'italic')" (click)="toggleMark(i, 'italic')" matTooltip="Italic"><i>I</i></button>
-        <button type="button" [class.on]="lineHas(l, 'underline')" (click)="toggleMark(i, 'underline')" matTooltip="Underline"><u>U</u></button>
-        <button type="button" class="line-x" (click)="removeLine(i)" matTooltip="Remove line"><mat-icon>close</mat-icon></button>
-      </div>
-      <input class="line-text" [ngModel]="lineText(l)" (ngModelChange)="setLineText(i, $event)"
-             placeholder="Empty line" />
-    </div>
-  }
-  <button class="secondary-btn" (click)="addLine()"><mat-icon>add</mat-icon><span>Add line</span></button>
+  <div class="text-hint">Select words below and press <b>B</b>, <b>I</b> or <b>U</b>. The block
+    grows to hold whatever you write.</div>
+  <div #editor class="rich-editor" contenteditable="true" spellcheck="false"
+       [class.focused]="editing"
+       (focus)="onFocus()" (blur)="onBlur()" (input)="onInput()"></div>
 }

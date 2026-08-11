@@ -196,31 +196,142 @@ export function isBoldWeight(weight: string): boolean {
   return /^(bold|bolder)$/i.test(weight) || Number(weight) >= 700;
 }
 
-/**
- * A CSS font string for one line, from the node's base font.
- *
- * Marks are applied per line rather than per run: a GoJS TextBlock has one font,
- * and wrapping a mixed-format line across several TextBlocks would break word
- * wrap. A line that is entirely bold — a heading — is the case that matters in a
- * block diagram, and it is handled exactly. A line with bold in the middle of it
- * renders in the line's dominant marks; the original HTML is kept either way.
- */
-export function lineFont(base: string, line: RichLine): string {
-  const total = line.runs.reduce((n, r) => n + r.text.length, 0) || 1;
-  const share = (k: 'bold' | 'italic') =>
-    line.runs.reduce((n, r) => n + (r[k] ? r.text.length : 0), 0) / total;
+/** The font one run is drawn in, from the label's base font plus its marks. */
+export function runFont(base: string, r: RichRun): string {
   const p = parseFont(base);
-  // A bold line is forced to 700 rather than left at the base weight: the shape
-  // template's base is 600, which already reads as "bold" to a naive test — that
-  // is why a heading came out identical to the bullets under it.
-  return formatFont({
-    ...p,
-    italic: p.italic || share('italic') > 0.5,
-    weight: share('bold') > 0.5 ? '700' : p.weight,
-  });
+  // A bold run is forced to 700 rather than left at the base weight: the
+  // templates draw labels at 600, which already reads as "bold" to a naive
+  // test — that is why a heading first came out identical to its bullets.
+  return formatFont({ ...p, italic: p.italic || !!r.italic, weight: r.bold ? BOLD_WEIGHT : p.weight });
 }
 
-/** True when the whole line is underlined, which a TextBlock can draw. */
-export function lineUnderlined(line: RichLine): boolean {
-  return line.runs.length > 0 && line.runs.every((r) => !r.text.trim() || r.underline);
+// ---- laying a formatted label out for the canvas ----
+
+/** The marker drawn in front of a bullet, and the gap between it and the text. */
+export const BULLET = '\u2022';
+export const BULLET_GAP = 6;
+
+/** One run as it will actually be drawn. */
+export interface DrawnRun {
+  text: string; font: string; underline: boolean;
+  /** Space to leave after this run. Used for the gap behind a bullet marker,
+   *  which cannot be a space: a TextBlock trims the whitespace off its end, and
+   *  the marker is a TextBlock of its own now. */
+  gap?: number;
+}
+
+/** One line of the drawn label: a row of runs, already wrapped to fit. */
+export interface DrawnLine {
+  runs: DrawnRun[];
+  /** Left inset, so a bullet's wrapped remainder lines up under its first word. */
+  indent: number;
+  width: number;
+  height: number;
+}
+
+let measureCtx: CanvasRenderingContext2D | null | undefined;
+
+/**
+ * The width of a string in a given font.
+ *
+ * Measured on a throwaway 2D context, which is the same engine the canvas will
+ * draw with, so the wrap this produces is the wrap that appears. Outside a
+ * browser there is nothing to measure with, so it falls back to an estimate —
+ * only tests run there, and a rough number is enough to keep them meaningful.
+ */
+export function measureText(text: string, font: string): number {
+  if (measureCtx === undefined) {
+    measureCtx = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null;
+  }
+  if (!measureCtx) return text.length * parseFont(font).size * 0.55;
+  measureCtx.font = font;
+  return measureCtx.measureText(text).width;
+}
+
+/**
+ * The height of one line in a font.
+ *
+ * The font's own line box, which is a measurement rather than a multiple of the
+ * size guessed at. It runs a little taller than the box GoJS gives a TextBlock,
+ * and that way round is the safe one: a block sized from this has a pixel of
+ * slack per line rather than a label creeping back out of it.
+ */
+export function fontLineHeight(font: string): number {
+  measureText('Mg', font);                       // sets the context's font
+  const m = measureCtx?.measureText('Mg') as TextMetrics | undefined;
+  const h = (m?.fontBoundingBoxAscent ?? 0) + (m?.fontBoundingBoxDescent ?? 0);
+  return h > 0 ? h : parseFont(font).size * 1.4;
+}
+
+/**
+ * Wrap a formatted label into the lines and runs the canvas will draw.
+ *
+ * A GoJS TextBlock holds one font, so a line with bold in the middle has to be
+ * several of them side by side — and once a line is several TextBlocks, GoJS
+ * can no longer wrap it, because it cannot see the line as a whole. So the wrap
+ * is done here: split every run into words, measure each in its own font, and
+ * fill lines greedily. That is what lets a mark follow a selection instead of
+ * being rounded up to the whole line.
+ *
+ * A word longer than the available width is left to overhang rather than being
+ * broken mid-word, which is what a part number or a URL wants.
+ */
+export function layoutRich(lines: RichLine[], base: string, maxWidth: number): DrawnLine[] {
+  const out: DrawnLine[] = [];
+  const plainFont = runFont(base, { text: '' });
+  const height = Math.ceil(fontLineHeight(plainFont));
+  const bulletWidth = measureText(BULLET, plainFont) + BULLET_GAP;
+
+  /** Adjacent words in the same font become one TextBlock, not one each. */
+  const merge = (toks: { text: string; font: string; underline: boolean }[]): DrawnRun[] => {
+    const runs: DrawnRun[] = [];
+    for (const t of toks) {
+      const last = runs[runs.length - 1];
+      if (last && last.font === t.font && last.underline === t.underline) last.text += t.text;
+      else runs.push({ text: t.text, font: t.font, underline: t.underline });
+    }
+    return runs;
+  };
+
+  for (const line of lines) {
+    const limit = Math.max(20, maxWidth - (line.bullet ? bulletWidth : 0));
+    const tokens: { text: string; font: string; underline: boolean; w: number }[] = [];
+    for (const r of line.runs) {
+      const font = runFont(base, r);
+      for (const t of String(r.text).split(/(\s+)/)) {
+        if (t) tokens.push({ text: t, font, underline: !!r.underline, w: measureText(t, font) });
+      }
+    }
+
+    let cur: typeof tokens = [], curW = 0, first = true;
+    const emit = () => {
+      while (cur.length && !cur[cur.length - 1].text.trim()) { curW -= cur[cur.length - 1].w; cur.pop(); }
+      const lead: DrawnRun[] = line.bullet && first
+        ? [{ text: BULLET, font: plainFont, underline: false, gap: BULLET_GAP }] : [];
+      out.push({
+        runs: [...lead, ...merge(cur)],
+        indent: line.bullet && !first ? bulletWidth : 0,
+        width: curW + (line.bullet ? bulletWidth : 0),
+        height,
+      });
+      cur = []; curW = 0; first = false;
+    };
+
+    if (!tokens.length) { emit(); continue; }        // a blank line still takes a line
+    for (const t of tokens) {
+      if (cur.length && curW + t.w > limit && t.text.trim()) emit();
+      if (!cur.length && !t.text.trim()) continue;   // no leading space on a wrapped line
+      cur.push(t); curW += t.w;
+    }
+    if (cur.length) emit();
+  }
+  return out;
+}
+
+/** How much room a laid-out label needs, so a block can be grown to hold it. */
+export function richExtent(lines: DrawnLine[]): { width: number; height: number } {
+  return {
+    width: Math.ceil(lines.reduce((w, l) => Math.max(w, l.width), 0)),
+    height: Math.ceil(lines.reduce((h, l) => h + l.height, 0)),
+  };
 }

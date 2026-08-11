@@ -76,26 +76,98 @@ window.buildDiagram = function(modelJson, geo) {
              family: ((m&&m[3])||'').trim() || 'Roboto, sans-serif' };
   }
   const rtFormatFont = (p) => [p.italic?'italic':'', p.weight, p.size+'px', p.family].filter(Boolean).join(' ');
-  function rtFont(base, line) {
-    const total = line.runs.reduce((n,r)=>n+r.text.length,0) || 1;
-    const share = (k) => line.runs.reduce((n,r)=>n+(r[k]?r.text.length:0),0)/total;
+  function rtRunFont(base, r) {
     const p = rtParseFont(base);
-    return rtFormatFont({ ...p, italic: p.italic || share('italic')>0.5,
-                          weight: share('bold')>0.5 ? '700' : p.weight });
+    return rtFormatFont({ ...p, italic: p.italic || !!r.italic, weight: r.bold ? '700' : p.weight });
   }
+  // Measured on a real 2D context, which is the engine the canvas draws with,
+  // so the wrap computed here is the wrap that appears.
+  let rtCtx;
+  function rtMeasure(text, font) {
+    if (rtCtx === undefined) rtCtx = document.createElement('canvas').getContext('2d');
+    rtCtx.font = font;
+    return rtCtx.measureText(text).width;
+  }
+  // The gap after the marker is a margin, not a space: the marker is its own
+  // TextBlock now, and a TextBlock trims the whitespace off its end.
+  const RT_BULLET = '\u2022', RT_BULLET_GAP = 6;
+  // A TextBlock holds one font, so a line with bold in the middle is several of
+  // them side by side — and GoJS cannot wrap what it cannot see as one line, so
+  // the wrapping is done here.
+  function rtLayout(lines, base, maxWidth) {
+    const out = [];
+    const plainFont = rtRunFont(base, {});
+    // The font's own line box, measured — a little taller than the box GoJS
+    // gives a TextBlock, which is the safe way round.
+    rtMeasure('Mg', plainFont);
+    const fm = rtCtx.measureText('Mg');
+    const height = Math.ceil(((fm.fontBoundingBoxAscent||0) + (fm.fontBoundingBoxDescent||0))
+                             || rtParseFont(base).size * 1.4);
+    const bulletWidth = rtMeasure(RT_BULLET, plainFont) + RT_BULLET_GAP;
+    const merge = (toks) => {
+      const runs = [];
+      for (const t of toks) {
+        const last = runs[runs.length-1];
+        if (last && last.font === t.font && last.underline === t.underline) last.text += t.text;
+        else runs.push({ text: t.text, font: t.font, underline: t.underline });
+      }
+      return runs;
+    };
+    for (const line of lines) {
+      const limit = Math.max(20, maxWidth - (line.bullet ? bulletWidth : 0));
+      const tokens = [];
+      for (const r of line.runs) {
+        const font = rtRunFont(base, r);
+        for (const t of String(r.text).split(/(\s+)/)) {
+          if (t) tokens.push({ text: t, font, underline: !!r.underline, w: rtMeasure(t, font) });
+        }
+      }
+      let cur = [], curW = 0, first = true;
+      const emit = () => {
+        while (cur.length && !cur[cur.length-1].text.trim()) { curW -= cur[cur.length-1].w; cur.pop(); }
+        const lead = line.bullet && first
+          ? [{ text: RT_BULLET, font: plainFont, underline: false, gap: RT_BULLET_GAP }] : [];
+        out.push({ runs: lead.concat(merge(cur)),
+                   indent: line.bullet && !first ? bulletWidth : 0,
+                   width: curW + (line.bullet ? bulletWidth : 0), height });
+        cur = []; curW = 0; first = false;
+      };
+      if (!tokens.length) { emit(); continue; }
+      for (const t of tokens) {
+        if (cur.length && curW + t.w > limit && t.text.trim()) emit();
+        if (!cur.length && !t.text.trim()) continue;
+        cur.push(t); curW += t.w;
+      }
+      if (cur.length) emit();
+    }
+    return out;
+  }
+  const RICH_MARGIN = 6;
+  const rtLayoutOf = (d) => rtLayout(rtParse(String(d.html)),
+      String(d.font || '600 12.5px Roboto, sans-serif'),
+      typeof d.textWidth === 'number' ? d.textWidth : 150);
   function richItems(d) {
     if (!rtIsRich(d && d.html)) return [];
-    const lines = rtParse(String(d.html));
-    const base = String(d.font || '600 12.5px Roboto, sans-serif');
     const stroke = String(d.labelColor || '#1f2937');
-    const width = typeof d.textWidth === 'number' ? d.textWidth : 150;
-    const anyBullet = lines.some(l=>l.bullet);
-    return lines.map(l => ({
-      text: (l.bullet ? '\u2022  ' : '') + l.runs.map(r=>r.text).join(''),
-      font: rtFont(base, l),
-      underline: l.runs.length>0 && l.runs.every(r=>!r.text.trim()||r.underline),
-      align: anyBullet ? 'left' : String(d.textAlign || 'center'),
-      stroke, width }));
+    return rtLayoutOf(d).map(l => ({ indent: l.indent, runs: l.runs.map(r => ({ ...r, stroke })) }));
+  }
+  function richAlignment(d) {
+    if (!rtIsRich(d && d.html)) return go.Spot.Left;
+    if (rtParse(String(d.html)).some(l => l.bullet)) return go.Spot.Left;
+    const a = String(d.textAlign || 'center');
+    return a === 'right' ? go.Spot.Right : a === 'left' ? go.Spot.Left : go.Spot.Center;
+  }
+  // A Spot panel takes the size of everything in it, so a label taller than its
+  // block hangs outside the outline. The block grows to hold it instead — only
+  // for a formatted label; a plain one is the size the artwork says it is.
+  function shapeMinSize(d) {
+    const floor = go.Size.parse(String((d && d.minSize) || '48 40'));
+    if (!rtIsRich(d && d.html)) return floor;
+    const ls = rtLayoutOf(d);
+    const w = Math.ceil(ls.reduce((m,l)=>Math.max(m,l.width),0));
+    const h = Math.ceil(ls.reduce((m,l)=>m+l.height,0));
+    return new go.Size(Math.max(floor.width, w + RICH_MARGIN*2 + 4),
+                       Math.max(floor.height, h + RICH_MARGIN*2 + 4));
   }
 
   // ---- ports ----
@@ -172,7 +244,7 @@ window.buildDiagram = function(modelJson, geo) {
         { name:'SHAPE', isPanelMain:true, strokeWidth:2, fill:'#ffffff', stroke:'#334155', minSize:new go.Size(48,40) },
         new go.Binding('figure','figure'), sizeBind(),
         new go.Binding('fill','fill'), new go.Binding('stroke','stroke'),
-        new go.Binding('minSize','minSize',go.Size.parse),
+        new go.Binding('minSize','',shapeMinSize),
         new go.Binding('strokeWidth','strokeWidth'),
         new go.Binding('strokeDashArray','dashPattern',(v)=> v===true?[5,4]:(Array.isArray(v)?v:null))),
       $(go.TextBlock,
@@ -182,14 +254,17 @@ window.buildDiagram = function(modelJson, geo) {
         new go.Binding('textAlign','textAlign'), new go.Binding('isUnderline','underline'),
         new go.Binding('maxSize','textWidth',(w)=> new go.Size(w,NaN))),
       $(go.Panel,'Vertical',
-        { margin:6, visible:false, defaultAlignment:go.Spot.Left,
-          itemTemplate: $(go.Panel,'Auto',
-            $(go.TextBlock,{ alignment:go.Spot.Left },
-              new go.Binding('text'), new go.Binding('font'), new go.Binding('stroke'),
-              new go.Binding('isUnderline','underline'),
-              new go.Binding('textAlign','align'),
-              new go.Binding('maxSize','width',(w)=> new go.Size(w,NaN)))) },
+        { margin:RICH_MARGIN, visible:false,
+          itemTemplate: $(go.Panel,'Horizontal',
+            { itemTemplate: $(go.Panel,'Auto',
+                $(go.TextBlock,{ alignment:go.Spot.Left },
+                  new go.Binding('text'), new go.Binding('font'), new go.Binding('stroke'),
+                  new go.Binding('isUnderline','underline'),
+                  new go.Binding('margin','gap',(g)=> new go.Margin(0,g||0,0,0)))) },
+            new go.Binding('margin','indent',(i)=> new go.Margin(0,0,0,i||0)),
+            new go.Binding('itemArray','runs')) },
         new go.Binding('visible','html',(h)=>rtIsRich(h)),
+        new go.Binding('defaultAlignment','',richAlignment),
         new go.Binding('itemArray','',richItems))),
     $(go.TextBlock,{ alignment:new go.Spot(0.5,1,0,7), alignmentFocus:go.Spot.Top,
       font:'10.5px Roboto, sans-serif', stroke:'#94a3b8', textAlign:'center', maxSize:new go.Size(170,NaN) },

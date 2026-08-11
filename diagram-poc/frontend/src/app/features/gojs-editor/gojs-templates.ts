@@ -1,6 +1,8 @@
 import * as go from 'gojs';
 import { WireGeometry } from './gojs-wire-geometry';
-import { isRich, lineFont, lineUnderlined, parseRichText } from './rich-text';
+import {
+  DEFAULT_FONT, DrawnLine, isRich, layoutRich, parseRichText, richExtent,
+} from './rich-text';
 
 /**
  * What the templates need back from the editor.
@@ -29,28 +31,66 @@ function backwardArrow(name: string): string {
   return n === 'Standard' ? 'Backward' : n.startsWith('Backward') ? n : 'Backward' + n;
 }
 
+/** The margin the rich stack sits in, and so the padding a block needs for it. */
+const RICH_MARGIN = 6;
+
+/** A formatted label, wrapped into the rows the canvas will draw. */
+function richLayout(d: go.ObjectData): DrawnLine[] {
+  return layoutRich(
+    parseRichText(String(d['html'])),
+    String(d['font'] || DEFAULT_FONT),
+    typeof d['textWidth'] === 'number' ? d['textWidth'] : 150,
+  );
+}
+
 /**
- * A rich label, flattened to one item per rendered line.
+ * A rich label, as the rows and runs the canvas will draw.
  *
- * A GoJS TextBlock is plain text, so a formatted label is drawn as a stack of
- * them — one per line, each with its own font. That keeps the label inside the
- * canvas: it zooms, hit-tests and lands in an exported picture, none of which
- * an HTML element floated over the diagram would do.
+ * A GoJS TextBlock is plain text with one font, so a formatted label is drawn as
+ * a stack of rows, each row a line of TextBlocks side by side. That is what lets
+ * a mark cover a selection rather than being rounded up to a whole line — and it
+ * keeps the label inside the canvas: it zooms, hit-tests and lands in an
+ * exported picture, none of which an HTML element floated over the diagram does.
  */
 function richItems(d: go.ObjectData): go.ObjectData[] {
   if (!isRich(d?.['html'])) return [];
-  const lines = parseRichText(String(d['html']));
-  const base = String(d['font'] || '600 12.5px Roboto, sans-serif');
   const stroke = String(d['labelColor'] || '#1f2937');
-  const width = typeof d['textWidth'] === 'number' ? d['textWidth'] : 150;
-  const anyBullet = lines.some((l) => l.bullet);
-  return lines.map((l) => ({
-    text: (l.bullet ? '\u2022  ' : '') + l.runs.map((r) => r.text).join(''),
-    font: lineFont(base, l),
-    underline: lineUnderlined(l),
-    align: anyBullet ? 'left' : String(d['textAlign'] || 'center'),
-    stroke, width,
+  return richLayout(d).map((l) => ({
+    indent: l.indent,
+    runs: l.runs.map((r) => ({ ...r, stroke })),
   }));
+}
+
+/** Which way the rows of a formatted label line up. Bullets are always left. */
+function richAlignment(d: go.ObjectData): go.Spot {
+  if (!isRich(d?.['html'])) return go.Spot.Left;
+  if (parseRichText(String(d['html'])).some((l) => l.bullet)) return go.Spot.Left;
+  const a = String(d['textAlign'] || 'center');
+  return a === 'right' ? go.Spot.Right : a === 'left' ? go.Spot.Left : go.Spot.Center;
+}
+
+/**
+ * How small a shape may be drawn.
+ *
+ * A Spot panel takes the size of everything in it, so a label taller than its
+ * block does not clip — it hangs outside the outline, which is what a formatted
+ * label looked like. The block grows to hold its label instead. Only a formatted
+ * label does this: a plain one is the size the artwork says it is, and every
+ * reference drawing depends on that.
+ *
+ * The floor underneath is 48x40 for a shape dropped from the palette, which
+ * stops a careless drag producing something too small to click. An imported
+ * drawing carries its own measurements and says `minSize` to opt out — without
+ * that, an imported 65x30 chip is silently stretched to 65x40.
+ */
+function shapeMinSize(d: go.ObjectData): go.Size {
+  const floor = go.Size.parse(String(d?.['minSize'] ?? '48 40'));
+  if (!isRich(d?.['html'])) return floor;
+  const ext = richExtent(richLayout(d));
+  return new go.Size(
+    Math.max(floor.width, ext.width + RICH_MARGIN * 2 + 4),
+    Math.max(floor.height, ext.height + RICH_MARGIN * 2 + 4),
+  );
 }
 
 /**
@@ -76,22 +116,30 @@ function labelStyle(): go.Binding[] {
  * means the same thing on a functional block as on a native shape.
  */
 function richStack($: typeof go.GraphObject.make): go.Panel {
-  return $(
-    go.Panel, 'Vertical',
+  /** One drawn line: its runs laid side by side, each in its own font. */
+  const row = $(
+    go.Panel, 'Horizontal',
     {
-      margin: 6, visible: false, defaultAlignment: go.Spot.Left,
       itemTemplate: $(go.Panel, 'Auto',
         $(go.TextBlock, { alignment: go.Spot.Left },
           new go.Binding('text'),
           new go.Binding('font'),
           new go.Binding('stroke'),
           new go.Binding('isUnderline', 'underline'),
-          new go.Binding('textAlign', 'align'),
-          new go.Binding('maxSize', 'width', (w: number) => new go.Size(w, NaN)))),
+          new go.Binding('margin', 'gap', (g: number) => new go.Margin(0, g || 0, 0, 0)))),
     },
+    // A wrapped bullet lines its remainder up under the first word, not under
+    // the marker, which is what makes a list read as a list.
+    new go.Binding('margin', 'indent', (i: number) => new go.Margin(0, 0, 0, i || 0)),
+    new go.Binding('itemArray', 'runs'),
+  );
+  return $(
+    go.Panel, 'Vertical',
+    { margin: RICH_MARGIN, visible: false, itemTemplate: row },
     new go.Binding('visible', 'html', (h) => isRich(h)),
-    // Bound to the whole data object: the lines depend on the label, the font
-    // and the colour together, so any of them changing must redraw.
+    new go.Binding('defaultAlignment', '', richAlignment),
+    // Bound to the whole data object: the layout depends on the label, the font,
+    // the wrap width and the colour together, so any of them changing redraws.
     new go.Binding('itemArray', '', richItems),
   );
 }
@@ -298,12 +346,9 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
           sizeBind(),
           new go.Binding('fill', 'fill'),
           new go.Binding('stroke', 'stroke'),
-          // An imported drawing carries its own measurements. The 48x40 floor
-          // above is right for a shape someone drops from the palette (it stops
-          // a drag producing something too small to click), but it silently
-          // stretches an imported 65x30 block to 65x40 — every small chip in a
-          // reference diagram comes out the wrong height. Let the data opt out.
-          new go.Binding('minSize', 'minSize', go.Size.parse),
+          // Bound to the whole data object rather than to `minSize` alone: a
+          // formatted label raises the floor, so the label is part of the sum.
+          new go.Binding('minSize', '', shapeMinSize),
           new go.Binding('strokeWidth', 'strokeWidth'),
           // A dashed outline means "not fitted / optional" on a schematic —
           // test points, a debug LED string — so it carries meaning and has to
