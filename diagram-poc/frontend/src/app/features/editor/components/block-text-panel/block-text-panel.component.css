@@ -43,23 +43,4 @@
 
 .text-hint { font-size: 10.5px; line-height: 1.35; opacity: .62; margin: 2px 0 8px; }
 
-/* The editable label. It shows the real marks, because selecting words in
-   formatted text is the whole point of it. */
-.rich-editor {
-  min-height: 64px; max-height: 260px; overflow-y: auto;
-  padding: 8px 10px; margin-bottom: 8px;
-  background: var(--bg-deep); color: var(--text);
-  border: 1px solid var(--border); border-radius: 8px;
-  font-size: 12.5px; line-height: 1.45; font-family: inherit;
-  outline: none; cursor: text;
-  overflow-wrap: anywhere;
-  /* Stated, not inherited: the panel's own face is semibold, and the browser
-     reports a semibold selection as bold — which lit the B button on text that
-     was not bold at all. */
-  font-weight: 400;
-}
-.rich-editor b, .rich-editor strong { font-weight: 700; }
-.rich-editor.focused { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.rich-editor ul { margin: 2px 0; padding-left: 20px; }
-.rich-editor li { margin: 1px 0; }
-.rich-editor div { min-height: 1.45em; }
+.text-hint.editing { opacity: 1; color: var(--accent); }

@@ -3,6 +3,7 @@ import { WireGeometry } from './gojs-wire-geometry';
 import {
   DEFAULT_FONT, DrawnLine, isRich, layoutRich, parseRichText, richExtent,
 } from './rich-text';
+import { richEditing } from './gojs-rich-editor';
 
 /**
  * What the templates need back from the editor.
@@ -216,6 +217,27 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       mouseEnter: (_e: go.InputEvent, o: go.GraphObject) => { hooks.hoverPorts(o, true); hooks.showPartsDock(o.part, true); },
       mouseLeave: (_e: go.InputEvent, o: go.GraphObject) => { hooks.hoverPorts(o, false); hooks.showPartsDock(o.part, false); },
     };
+
+    /**
+     * Double-click opens the label for editing on the block itself.
+     *
+     * Which editor depends on the label, the same split draw.io makes with
+     * `isContentEditing()`: a formatted one gets the rich overlay, a plain one
+     * gets GoJS's own text editor. The plain case has to be opened by hand —
+     * the label is behind the body port that makes the whole block a drop
+     * target for wires, so a double-click never reaches the TextBlock and
+     * `TextEditingTool.canStart()` stays false.
+     */
+    const editLabel = {
+      doubleClick: (e: go.InputEvent, o: go.GraphObject) => {
+        const n = o.part;
+        if (!(n instanceof go.Node)) return;
+        e.handled = true;
+        if (richEditing.canEdit(n)) { richEditing.start(n); return; }
+        const label = n.findObject('LABEL');
+        if (label instanceof go.TextBlock) n.diagram?.commandHandler.editTextBlock(label);
+      },
+    };
     // `toLinkable` so a wire can be dropped anywhere on a block, not only on the
     // 9px rail at its edge — miss the rail and the drop used to fall back to
     // gravity-snapping, which is why several wires ended up sharing one point.
@@ -260,7 +282,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
     const block = $(
       go.Node, 'Spot',
       { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'BODY', toolTip: hooks.nodeTip($),
-        portSpreading: go.PortSpreading.Evenly, ...hover },
+        portSpreading: go.PortSpreading.Evenly, ...hover, ...editLabel },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Auto', body, { name: 'BODY' }, sizeBind(),
@@ -274,7 +296,8 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
           $(go.Panel, 'Vertical', { alignment: go.Spot.Left },
             // A formatted label is drawn by the stack below instead.
             $(go.TextBlock,
-              { font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937', editable: true, alignment: go.Spot.Left },
+              { name: 'LABEL', font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937',
+                editable: true, alignment: go.Spot.Left },
               new go.Binding('visible', 'html', (h) => !isRich(h)),
               new go.Binding('text').makeTwoWay(),
               ...labelStyle()),
@@ -335,7 +358,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
     const shape = $(
       go.Node, 'Spot',
       { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'SHAPE', toolTip: hooks.nodeTip($),
-        portSpreading: go.PortSpreading.Evenly, ...hover },
+        portSpreading: go.PortSpreading.Evenly, ...hover, ...editLabel },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('visible', 'hidden', (h) => !h),
       $(go.Panel, 'Spot', body,
@@ -357,7 +380,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
             (v) => (v === true ? [5, 4] : Array.isArray(v) ? v : null))),
         // A formatted label is drawn by the stack below instead.
         $(go.TextBlock,
-          { editable: true, font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937',
+          { name: 'LABEL', editable: true, font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937',
             textAlign: 'center', maxSize: new go.Size(150, NaN), margin: 6 },
           new go.Binding('visible', 'html', (h) => !isRich(h)),
           new go.Binding('text').makeTwoWay(),

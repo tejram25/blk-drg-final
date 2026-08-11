@@ -70,6 +70,7 @@ import {
   BOLD_WEIGHT, FontParts, NORMAL_WEIGHT, formatFont, isRich, parseFont, plainToLines,
   richToHtml, richToPlain,
 } from './rich-text';
+import { richEditing } from './gojs-rich-editor';
 
 /**
  * GoJS-based diagram editor — the electronics-aware block-diagram builder.
@@ -1386,8 +1387,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'labelColor': this.setLabelColor(t); break;
       case 'textWidth': this.setField('textWidth', Math.min(2000, Math.max(20, n || 150))); break;
       case 'formatted': this.setFormatted(b); break;
-      case 'html': this.setHtmlLabel(t); break;
     }
+  }
+
+  /** Open the selected block's label for editing on the block itself. */
+  editSelectedText(): void {
+    if (this.selectedNode && richEditing.canEdit(this.selectedNode)) richEditing.start(this.selectedNode);
   }
   setDataField(key: string, value: string): void { this.setField(key, value); }
 

@@ -1,18 +1,17 @@
 import {
-  AfterViewChecked, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef,
-  EventEmitter, Input, NgZone, OnDestroy, Output, ViewChild,
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, NgZone,
+  OnDestroy, Output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import {
-  DEFAULT_FONT, isBoldWeight, isRich, parseFont, parseRichText, richToHtml,
-} from '../../../gojs-editor/rich-text';
+import { DEFAULT_FONT, isBoldWeight, isRich, parseFont } from '../../../gojs-editor/rich-text';
+import { richEditing } from '../../../gojs-editor/gojs-rich-editor';
 
 /** A text property the tab can change, named for what it means to a reader. */
 export type TextProp =
   'fontFamily' | 'labelSize' | 'bold' | 'italic' | 'underline'
-  | 'textAlign' | 'labelColor' | 'textWidth' | 'formatted' | 'html';
+  | 'textAlign' | 'labelColor' | 'textWidth' | 'formatted';
 
 export interface TextChange { prop: TextProp; value: string | number | boolean; }
 
@@ -54,11 +53,13 @@ const COMMAND: Record<Mark, string> = { bold: 'bold', italic: 'italic', underlin
  * they apply to whatever is selected in the editor below — which is what
  * "Formatted text" (mxGraph's `html=1`) buys you.
  *
- * That editor is a `contenteditable`, the same mechanism draw.io uses, because
- * selecting words with the mouse is the interaction and nothing else provides
- * it. Everything going into it is re-serialised through our own parser first, so
- * the only markup that can reach the document is the handful of tags we draw —
- * an imported `.drawio` label is never trusted into `innerHTML` as it arrived.
+ * The words themselves are edited on the block, not in here: double-click and a
+ * `contenteditable` opens over the shape. That is where draw.io puts its editor
+ * too, and its Format panel makes the same branch this one does —
+ * `graph.cellEditor.isContentEditing()` there, `richEditing.active` here:
+ *
+ *     if (fn != null && graph.cellEditor.isContentEditing()) { fn(); }
+ *     else { graph.stopEditing(false); graph.toggleCellStyleFlags(...); }
  *
  * Presentation only: it reports what the user asked for and the editor decides
  * what that means for the model.
@@ -70,34 +71,37 @@ const COMMAND: Record<Mark, string> = { bold: 'bold', italic: 'italic', underlin
   styleUrls: ['../panel-fields.css', './block-text-panel.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BlockTextPanelComponent implements AfterViewChecked, OnDestroy {
+export class BlockTextPanelComponent implements OnDestroy {
   @Input({ required: true }) sel!: TextSelection;
 
   @Output() text = new EventEmitter<TextChange>();
-
-  @ViewChild('editor') private editorRef?: ElementRef<HTMLDivElement>;
+  /** Open the label for editing on the block, for people who do not guess that
+   *  double-clicking it does the same thing. */
+  @Output() editText = new EventEmitter<void>();
 
   readonly families = FAMILIES;
 
-  /**
-   * B, I and U show the state of the selection, and moving a selection is not
-   * an Angular event — a drag inside the editor changes what the buttons should
-   * say without anything calling into the component. `selectionchange` is the
-   * only notification there is for it.
-   */
-  private readonly onSelectionChange = () => {
-    // detectChanges, not markForCheck: this runs outside Angular, where marking
-    // alone would sit there until something else happened to tick.
-    if (this.editorRef && document.activeElement === this.editorRef.nativeElement) this.cdr.detectChanges();
-  };
+  private readonly stopWatching: () => void;
 
   constructor(private cdr: ChangeDetectorRef, private zone: NgZone) {
-    // Outside Angular: this fires on every caret movement, and only the few
-    // that happen inside our editor are worth a change-detection pass.
+    // Two things change what B/I/U should say without Angular hearing about it:
+    // the in-place editor opening or closing, and the caret moving inside it.
+    // draw.io redraws the same buttons off `input`, `mouseup` and `keyup` on its
+    // cell editor; `selectionchange` covers all of that and the caret keys too.
+    this.stopWatching = richEditing.subscribe(() => this.refresh());
     this.zone.runOutsideAngular(() => document.addEventListener('selectionchange', this.onSelectionChange));
   }
 
-  ngOnDestroy(): void { document.removeEventListener('selectionchange', this.onSelectionChange); }
+  ngOnDestroy(): void {
+    this.stopWatching();
+    document.removeEventListener('selectionchange', this.onSelectionChange);
+  }
+
+  private readonly onSelectionChange = () => { if (richEditing.active) this.refresh(); };
+
+  /** detectChanges, not markForCheck: this runs outside Angular, where marking
+   *  alone would sit there until something else happened to tick. */
+  private refresh(): void { try { this.cdr.detectChanges(); } catch { /* torn down */ } }
 
   // ---- whole-label state, read back out of the font shorthand ----
 
@@ -115,13 +119,16 @@ export class BlockTextPanelComponent implements AfterViewChecked, OnDestroy {
   /** True once the label is HTML rather than a plain string. */
   get formatted(): boolean { return isRich(this.sel?.html); }
 
+  /** draw.io's `isContentEditing()`: the label is open on the block, and it is
+   *  a formatted one, so the marks below act on the selection inside it. */
+  get contentEditing(): boolean { return richEditing.active; }
+
   set(prop: TextProp, value: string | number | boolean): void { this.text.emit({ prop, value }); }
 
-  // ---- marks: the whole label, or the selection in the editor ----
+  // ---- marks: the selection being edited, or the whole label ----
 
-  /** Whether a mark is on — for the selection when there is one, else the label. */
   markOn(mark: Mark): boolean {
-    if (this.formatted && this.editing) {
+    if (this.contentEditing) {
       try { return document.queryCommandState(COMMAND[mark]); } catch { /* not editing after all */ }
     }
     if (mark === 'underline') return this.sel?.underline === true;
@@ -129,87 +136,36 @@ export class BlockTextPanelComponent implements AfterViewChecked, OnDestroy {
   }
 
   toggleMark(mark: Mark): void {
-    if (this.formatted && this.editing) {
+    if (this.contentEditing) {
       // Tag-based markup, not inline styles: `<b>` is what draw.io writes and
       // what our parser reads, whereas `style="font-weight:bold"` would be
       // dropped on the way back in.
       try { document.execCommand('styleWithCSS', false, 'false'); } catch { /* older engine */ }
       document.execCommand(COMMAND[mark]);
-      this.pushFromEditor();
-      this.cdr.markForCheck();
+      this.refresh();
       return;
     }
     this.set(mark, !this.markOn(mark));
   }
 
-  /** Turn the line the caret is on into a bullet, or back out of one. */
+  /**
+   * Turn the line the caret is on into a bullet, or back out of one.
+   *
+   * Ours, not draw.io's — draw.io has no list button, only a block-style menu,
+   * and a bulleted list there comes from typing or pasting one. A block diagram
+   * is mostly bulleted notes, so the button earns its place.
+   */
   toggleBullet(): void {
-    if (!this.formatted || !this.editing) return;
+    if (!this.contentEditing) return;
     document.execCommand('insertUnorderedList');
-    this.pushFromEditor();
-    this.cdr.markForCheck();
+    this.refresh();
   }
 
   get bulletOn(): boolean {
-    if (!this.formatted || !this.editing) return false;
+    if (!this.contentEditing) return false;
     try { return document.queryCommandState('insertUnorderedList'); } catch { return false; }
   }
 
-  // ---- the editor itself ----
-
-  /**
-   * True while the caret is in the editor.
-   *
-   * Nothing is written into the editor while it is focused. The label we store
-   * is normalised — `<div>a</div>` where the browser may have left
-   * `<div>a<br></div>` — and putting that back mid-keystroke would collapse the
-   * caret to the start of the box on every character typed.
-   */
-  editing = false;
-
-  private lastShown: string | null = null;
-
-  ngAfterViewChecked(): void { this.syncEditor(); }
-
-  private syncEditor(): void {
-    const el = this.editorRef?.nativeElement;
-    // The flag is reconciled against the document rather than trusted. Selecting
-    // a different block destroys the editor while the caret is still in it, and
-    // a removed element never fires `blur` — leaving the flag stuck on, so the
-    // next block's label was never written into the new box and the first thing
-    // typed replaced it.
-    if (this.editing && (!el || document.activeElement !== el)) this.editing = false;
-    if (!el || this.editing) return;
-    // Re-serialised through the parser: whatever arrived, what lands in the
-    // document is only <div>, <ul>, <li>, <b>, <i>, <u> and escaped text.
-    const want = this.formatted ? richToHtml(parseRichText(String(this.sel.html))) : '';
-    if (want !== this.lastShown || el.innerHTML !== want) {
-      el.innerHTML = want;
-      this.lastShown = want;
-    }
-  }
-
-  onFocus(): void { this.editing = true; this.cdr.markForCheck(); }
-
-  onBlur(): void {
-    this.editing = false;
-    this.pushFromEditor();
-    this.lastShown = null;                       // let the next check re-normalise
-    this.cdr.markForCheck();
-  }
-
-  /** Live preview: the canvas follows the words as they are typed. */
-  onInput(): void { this.pushFromEditor(); }
-
   /** Keep the caret where it is when a toolbar button is pressed. */
   keepSelection(e: Event): void { e.preventDefault(); }
-
-  private pushFromEditor(): void {
-    const el = this.editorRef?.nativeElement;
-    if (!el) return;
-    const html = richToHtml(parseRichText(el.innerHTML));
-    // An emptied editor is still a formatted label, just an empty one; sending
-    // nothing would read as "not formatted" and the box would vanish mid-edit.
-    this.set('html', html || '<div><br></div>');
-  }
 }

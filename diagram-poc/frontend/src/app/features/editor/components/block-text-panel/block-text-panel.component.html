@@ -13,8 +13,8 @@
     <input type="color" [ngModel]="sel.labelColor" (ngModelChange)="set('labelColor', $event)" /></label>
 </div>
 
-<!-- mousedown is swallowed so pressing a button does not drop the selection
-     these buttons are about to act on. -->
+<!-- mousedown is swallowed so pressing a button does not drop the selection in
+     the block's editor that the button is about to act on. -->
 <div class="text-bar" (mousedown)="keepSelection($event)">
   <div class="btn-group">
     <button type="button" [class.on]="markOn('bold')" (click)="toggleMark('bold')" matTooltip="Bold"><b>B</b></button>
@@ -29,7 +29,7 @@
     <button type="button" [class.on]="align === 'right'" (click)="set('textAlign', 'right')" matTooltip="Align right">
       <mat-icon>format_align_right</mat-icon></button>
   </div>
-  @if (formatted) {
+  @if (contentEditing) {
     <div class="btn-group">
       <button type="button" [class.on]="bulletOn" (click)="toggleBullet()" matTooltip="Bullet list">
         <mat-icon>format_list_bulleted</mat-icon></button>
@@ -48,9 +48,13 @@
 </button>
 
 @if (formatted) {
-  <div class="text-hint">Select words below and press <b>B</b>, <b>I</b> or <b>U</b>. The block
-    grows to hold whatever you write.</div>
-  <div #editor class="rich-editor" contenteditable="true" spellcheck="false"
-       [class.focused]="editing"
-       (focus)="onFocus()" (blur)="onBlur()" (input)="onInput()"></div>
+  @if (contentEditing) {
+    <div class="text-hint editing">Editing on the block. Select words there and press
+      <b>B</b>, <b>I</b> or <b>U</b>. <b>Esc</b> to abandon the changes.</div>
+  } @else {
+    <button class="secondary-btn" (click)="editText.emit()">
+      <mat-icon>edit</mat-icon><span>Edit text on the block</span>
+    </button>
+    <div class="text-hint">Or double-click the block. The block grows to hold whatever you write.</div>
+  }
 }

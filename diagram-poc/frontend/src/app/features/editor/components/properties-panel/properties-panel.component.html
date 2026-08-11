@@ -11,7 +11,8 @@
     (pinSide)="pinSide.emit($event)"></app-block-style-panel>
 
   @if (textual) {
-    <app-block-text-panel [sel]="sel" (text)="text.emit($event)"></app-block-text-panel>
+    <app-block-text-panel [sel]="sel" (text)="text.emit($event)"
+      (editText)="editText.emit()"></app-block-text-panel>
   }
 
   <app-block-parts-panel

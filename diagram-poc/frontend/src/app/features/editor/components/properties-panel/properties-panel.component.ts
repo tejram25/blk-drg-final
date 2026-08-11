@@ -75,6 +75,7 @@ export class PropertiesPanelComponent {
   @Output() removePin = new EventEmitter<number>();
   @Output() pinSide = new EventEmitter<PinSideChange>();
   @Output() text = new EventEmitter<TextChange>();
+  @Output() editText = new EventEmitter<void>();
 
   @Output() dataChange = new EventEmitter<DataFieldChange>();
   @Output() quantity = new EventEmitter<number>();
