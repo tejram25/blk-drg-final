@@ -1,0 +1,26 @@
+<aside class="props" [class.open]="open">
+  <h3>{{ 'props.title' | translate }}</h3>
+  <div class="prop-type"><mat-icon>category</mat-icon>{{ typeName }}</div>
+
+  <app-block-style-panel
+    [sel]="sel" [styled]="styled" [container]="container" [titlePlacement]="titlePlacement"
+    [labelSize]="labelSize" [width]="width" [height]="height" [pins]="pins"
+    (rename)="rename.emit($event)" (colorChange)="colorChange.emit($event)"
+    (style)="style.emit($event)" (toggleDashed)="toggleDashed.emit()"
+    (addPin)="addPin.emit()" (removePin)="removePin.emit($event)"
+    (pinSide)="pinSide.emit($event)"></app-block-style-panel>
+
+  <app-block-parts-panel
+    [sel]="sel" [data]="data" [defaultCategory]="defaultCategory" [box]="box"
+    [attachedParts]="attachedParts" [boxComponents]="boxComponents"
+    [boxSuggestions]="boxSuggestions" [boxSuggestLoading]="boxSuggestLoading"
+    [boxSuggestError]="boxSuggestError" [selectedSupplier]="selectedSupplier"
+    (dataChange)="dataChange.emit($event)" (quantity)="quantity.emit($event)"
+    (checkLifecycle)="checkLifecycle.emit()" (checkPos)="checkPos.emit()"
+    (attachedQty)="attachedQty.emit($event)" (removeAttached)="removeAttached.emit($event)"
+    (componentQty)="componentQty.emit($event)" (componentSupplier)="componentSupplier.emit($event)"
+    (removeComponent)="removeComponent.emit($event)" (suggest)="suggest.emit()"
+    (link)="link.emit($event)"></app-block-parts-panel>
+
+  <button class="del-btn" (click)="remove.emit()"><mat-icon>delete</mat-icon><span>Delete</span></button>
+</aside>

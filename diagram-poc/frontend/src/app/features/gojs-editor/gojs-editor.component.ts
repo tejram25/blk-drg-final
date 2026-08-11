@@ -65,6 +65,7 @@ import { WireGeometry } from './gojs-wire-geometry';
 import { Pin, pinSide, spaced } from './gojs-pins';
 import { buildTemplates } from './gojs-templates';
 import { DEFAULT_WIRE_STYLE, WireDockComponent, WireProp } from '../editor/components/wire-dock/wire-dock.component';
+import { PropertiesPanelComponent, StyleChange } from '../editor/components/properties-panel/properties-panel.component';
 
 /**
  * GoJS-based diagram editor — the electronics-aware block-diagram builder.
@@ -81,7 +82,7 @@ import { DEFAULT_WIRE_STYLE, WireDockComponent, WireProp } from '../editor/compo
         PartSearchPanelComponent, DesignwinPanelComponent, VersionsDialogComponent, CommentsPanelComponent,
         FeedbackLoopPanelComponent,
         TemplatesDialogComponent, ExportDialogComponent, CommandPaletteComponent,
-        ReviewsDialogComponent, ZoomDockComponent, WireDockComponent, ConfirmDialogComponent,
+        ReviewsDialogComponent, ZoomDockComponent, WireDockComponent, PropertiesPanelComponent, ConfirmDialogComponent,
     ],
     templateUrl: './gojs-editor.component.html',
     styleUrls: ['./gojs-editor.component.css']
@@ -329,6 +330,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   onCanvasMouseLeave(): void {
     if (this.collab.active) this.collab.setLocalCursor(null);
     this.hidePartsDock();
+    // A node only un-hovers when the pointer crosses back out of it, so leaving
+    // the canvas in one movement — or loading a diagram with the pointer already
+    // resting on a block — left that block's markers lit with nothing under the
+    // pointer to explain them.
+    this.showAllPins(false);
   }
 
   private onViewport(): void {
@@ -1294,6 +1300,32 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   setQuantity(value: any): void { this.setField('quantity', Math.max(1, Number(value) || 1)); }
   dataField(key: string): string { return this.selectedNode?.data?.[key] ?? ''; }
+
+  /** The block's own data fields, as the parts panel reads them. */
+  get selectedData(): Record<string, string> {
+    return { partNumber: this.dataField('partNumber'), category: this.dataField('category'), notes: this.dataField('notes') };
+  }
+
+  /**
+   * One style change from the properties panel, routed to whichever model field
+   * it means. The panel names properties for what they are to a reader — "label
+   * size", "border width" — and this is where that becomes a model write.
+   */
+  applyStyle(c: StyleChange): void {
+    const n = Number(c.value), t = String(c.value);
+    switch (c.prop) {
+      case 'fill': this.setFill(t); break;
+      case 'stroke': this.setStroke(t); break;
+      case 'borderWidth': this.setBorderWidth(n); break;
+      case 'labelColor': this.setLabelColor(t); break;
+      case 'labelSize': this.setLabelSize(n); break;
+      case 'textAlign': this.setTextAlign(t as 'left' | 'center' | 'right'); break;
+      case 'titleColor': this.setTitleColor(t); break;
+      case 'titlePlacement': this.setTitlePlacement(t); break;
+      case 'width': this.setNodeSize('w', n); break;
+      case 'height': this.setNodeSize('h', n); break;
+    }
+  }
   setDataField(key: string, value: string): void { this.setField(key, value); }
 
   get nodeTypeName(): string {

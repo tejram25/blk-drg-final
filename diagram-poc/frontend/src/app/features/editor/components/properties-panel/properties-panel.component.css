@@ -1,0 +1,40 @@
+/* Moved with the panel itself, verbatim from the editor stylesheet. */
+.props {
+      width: clamp(190px, 17vw, 230px); padding: 10px 11px;
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border-left: 1px solid var(--border); overflow-y: auto;
+      box-shadow: -10px 0 30px rgba(0,0,0,.28);
+      position: relative; z-index: 10;
+    }
+    .props h3 {
+      margin: 0 0 8px; font-size: 11px; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--accent);
+      border-bottom: 1px solid var(--border-soft); padding-bottom: 7px;
+    }
+    /* Compact fields to match the header scale */
+    .props input:not([type="color"]), .props select { height: 30px; font-size: 12.5px; padding: 0 10px; }
+    .prop-type {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--muted);
+      background: color-mix(in srgb, var(--panel-2) 55%, transparent); border: 1px solid var(--border-soft);
+      border-radius: 8px; padding: 6px 8px; margin-bottom: 11px;
+    }
+    .prop-type mat-icon { font-size: 15px; width: 15px; height: 15px; color: var(--accent); }
+
+    /* ---- Scrollbars ---- */
+    .palette::-webkit-scrollbar, .props::-webkit-scrollbar { width: 8px; }
+    .palette::-webkit-scrollbar-thumb, .props::-webkit-scrollbar-thumb {
+      background: var(--border); border-radius: 4px;
+    }
+    .palette::-webkit-scrollbar-thumb:hover, .props::-webkit-scrollbar-thumb:hover {
+      background: #45464e;
+    }
+.del-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 7px 11px;
+  border-radius: 8px; border: 1px solid rgba(239,68,68,.4); background: transparent; color: #ef4444;
+  cursor: pointer; font-size: 12.5px; font-family: inherit; }
+.del-btn:hover { background: rgba(239,68,68,.1); }
+.del-btn mat-icon { font-size: 16px; width: 16px; height: 16px; }
+
+/* Properties panel rows breathe a little more */
+.props label { transition: color .12s; }

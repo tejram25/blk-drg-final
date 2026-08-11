@@ -1,0 +1,115 @@
+    <label><span>{{ 'props.partNumber' | translate }}</span>
+    <input [ngModel]="data['partNumber']" (ngModelChange)="dataChange.emit({ key: 'partNumber', value: $event })"
+    [placeholder]="'props.partPlaceholder' | translate" /></label>
+    <label><span>{{ 'props.category' | translate }}</span>
+  <input [ngModel]="data['category'] || defaultCategory" (ngModelChange)="dataChange.emit({ key: 'category', value: $event })" /></label>
+  <label><span>{{ 'props.notes' | translate }}</span>
+  <textarea rows="2" [ngModel]="data['notes']" (ngModelChange)="dataChange.emit({ key: 'notes', value: $event })"
+  [placeholder]="'props.notesPlaceholder' | translate"></textarea></label>
+  @if (sel.isPart) {
+    <label><span>Quantity</span>
+  <input type="number" min="1" [ngModel]="sel.quantity" (ngModelChange)="quantity.emit($event)" /></label>
+}
+@if (sel.isPart) {
+  <button class="secondary-btn" (click)="checkLifecycle.emit()"><mat-icon>fact_check</mat-icon><span>Check lifecycle</span></button>
+  <button class="secondary-btn" (click)="checkPos.emit()"><mat-icon>verified</mat-icon><span>Field-proven (POS)</span></button>
+  @if (sel.details.length) {
+    <div class="prop-section">Catalogue details</div>
+  }
+  <div class="part-details">
+    @for (d of sel.details; track d) {
+      <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
+    }
+  </div>
+  @if (sel.specs.length) {
+    <div class="prop-section">Specifications</div>
+  }
+  <div class="part-details">
+    @for (d of sel.specs; track d) {
+      <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
+    }
+  </div>
+}
+@if (box && attachedParts.length) {
+  <div class="prop-section">Attached Parts ({{ attachedParts.length }})</div>
+  @for (ap of attachedParts; track $index; let i = $index) {
+    <details class="attached-part-details" [open]="attachedParts.length === 1">
+      <summary class="attached-part-summary">
+        <mat-icon>inventory_2</mat-icon>
+        <span class="ap-name">{{ ap.part?.arwPartNum?.name || ap.part?.suppPartNum?.name || 'Part' }}</span>
+        <span class="ap-qty">Qty: {{ ap.quantity }}</span>
+      </summary>
+      <div class="attached-part-content">
+        <div class="part-details">
+          @for (d of partDetails(ap.part); track d) {
+            <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
+          }
+        </div>
+        @if (partSpecs(ap.part).length) {
+          <div class="prop-section-small">Specifications</div>
+          <div class="part-details">
+            @for (d of partSpecs(ap.part); track d) {
+              <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
+            }
+          </div>
+        }
+        <div class="ap-controls">
+          <label class="ap-qty-input">
+            <span>Qty</span>
+            <input type="number" min="1" [ngModel]="ap.quantity" (ngModelChange)="attachedQty.emit({ index: i, value: $event })" />
+          </label>
+          <button class="ap-remove" (click)="removeAttached.emit(i)" matTooltip="Remove part">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+    </details>
+  }
+}
+@if (box) {
+  <div class="prop-section">Components · AI + Design Win</div>
+  @for (c of boxComponents; track c.partNumber; let i = $index) {
+    <div class="linked-part">
+      <mat-icon>memory</mat-icon>
+      <div class="lp-main">
+        <b>{{ c.partNumber }}</b>
+        <span>{{ c.supplier }}@if (c.fieldProven) { · field-proven }@if (c.unitPrice) { · {{ money(c.unitPrice) }} }</span>
+        <div class="lp-controls">
+          @if (c.suppliers && c.suppliers.length > 1) {
+            <select class="bs-supplier" [ngModel]="c.supplier" (ngModelChange)="componentSupplier.emit({ index: i, value: $event })">
+              @for (sup of c.suppliers; track sup.name) { <option [value]="sup.name">{{ sup.name }}</option> }
+            </select>
+          }
+          <input class="lp-qty" type="number" min="1" [ngModel]="c.quantity" (ngModelChange)="componentQty.emit({ index: i, value: $event })" title="Quantity" />
+        </div>
+      </div>
+      <button class="lp-x" (click)="removeComponent.emit(i)" matTooltip="Unlink component"><mat-icon>close</mat-icon></button>
+    </div>
+  }
+  <button class="secondary-btn" (click)="suggest.emit()" [disabled]="boxSuggestLoading">
+    <mat-icon>auto_awesome</mat-icon><span>{{ boxSuggestLoading ? 'Finding components…' : (boxComponents.length ? 'Add another component' : 'Suggest component') }}</span></button>
+  @if (boxSuggestError) { <div class="bs-err">{{ boxSuggestError }}</div> }
+  @if (boxSuggestions.length) {
+    <div class="bs-list">
+      @for (bs of boxSuggestions; track bs.partNumber) {
+        <div class="bs-item">
+          <div class="bs-head"><b>{{ bs.partNumber }}</b>
+            @if (bs.customerApproved) { <span class="bs-approved"><mat-icon>emoji_events</mat-icon>Customer-approved</span> }
+            @if (bs.fieldProven) { <span class="bs-proven"><mat-icon>verified</mat-icon>Field-proven</span> }</div>
+          <div class="bs-desc">{{ bs.description }}</div>
+          <div class="bs-meta">{{ bs.manufacturer }} · {{ bs.stock }} in stock@if (bs.status) { · {{ bs.status }} }</div>
+          <div class="bs-actions">
+            @if (bs.suppliers.length > 1) {
+              <select class="bs-supplier" [ngModel]="selectedSupplier[bs.partNumber] || bs.suppliers[0].name" (ngModelChange)="selectedSupplier[bs.partNumber] = $event">
+                @for (sup of bs.suppliers; track sup.name) { <option [value]="sup.name">{{ sup.name }}</option> }
+              </select>
+            } @else if (bs.suppliers.length === 1) {
+              <span class="bs-onesup">{{ bs.suppliers[0].name }}</span>
+            }
+            <button class="bs-link" (click)="link.emit(bs)"><mat-icon>link</mat-icon>Link</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+}

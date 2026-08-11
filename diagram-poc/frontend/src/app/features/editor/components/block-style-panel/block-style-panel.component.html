@@ -1,0 +1,78 @@
+    <label><span>{{ 'props.name' | translate }}</span>
+  <input [ngModel]="sel.text" (ngModelChange)="rename.emit($event)" /></label>
+  @if (!sel.isPart && !styled) {
+    <label><span>Colour</span>
+  <input type="color" [ngModel]="sel.color" (ngModelChange)="colorChange.emit($event)" /></label>
+}
+
+<!-- Style: everything the JSON can carry, reachable by hand -->
+@if (styled) {
+  <div class="prop-section">{{ container ? 'Container style' : 'Style' }}</div>
+  <div class="style-grid">
+    <label><span>Fill</span>
+      <input type="color" [ngModel]="sel.fill" (ngModelChange)="style.emit({ prop: 'fill', value: $event })" /></label>
+    <label><span>Border</span>
+      <input type="color" [ngModel]="sel.stroke" (ngModelChange)="style.emit({ prop: 'stroke', value: $event })" /></label>
+    <label><span>Border width</span>
+      <input type="number" min="0" max="12" step="0.5"
+             [ngModel]="sel.strokeWidth" (ngModelChange)="style.emit({ prop: 'borderWidth', value: $event })" /></label>
+  </div>
+  <button class="secondary-btn" (click)="toggleDashed.emit()">
+    <mat-icon>border_style</mat-icon>
+    <span>{{ (container ? sel.dashed !== false : sel.dashPattern) ? 'Solid outline' : 'Dashed outline' }}</span>
+  </button>
+
+  @if (container) {
+    <div class="style-grid">
+      <label><span>Title colour</span>
+        <input type="color" [ngModel]="sel.titleColor" (ngModelChange)="style.emit({ prop: 'titleColor', value: $event })" /></label>
+      <label class="wide"><span>Title position</span>
+        <select [ngModel]="titlePlacement" (ngModelChange)="style.emit({ prop: 'titlePlacement', value: $event })">
+          <option value="0 0">Top left</option>
+          <option value="0.5 0.06">Top centre</option>
+          <option value="0.5 0.5">Centre</option>
+          <option value="0.5 0.94">Bottom centre</option>
+        </select></label>
+    </div>
+  } @else {
+    <div class="style-grid">
+      <label><span>Label colour</span>
+        <input type="color" [ngModel]="sel.labelColor" (ngModelChange)="style.emit({ prop: 'labelColor', value: $event })" /></label>
+      <label><span>Label size</span>
+        <input type="number" min="5" max="60" step="0.5"
+               [ngModel]="labelSize" (ngModelChange)="style.emit({ prop: 'labelSize', value: $event })" /></label>
+      <label class="wide"><span>Text align</span>
+        <select [ngModel]="sel.textAlign || 'center'" (ngModelChange)="style.emit({ prop: 'textAlign', value: $event })">
+          <option value="left">Left</option>
+          <option value="center">Centre</option>
+          <option value="right">Right</option>
+        </select></label>
+      <label><span>Width</span>
+        <input type="number" min="8" [ngModel]="width" (ngModelChange)="style.emit({ prop: 'width', value: $event })" /></label>
+      <label><span>Height</span>
+        <input type="number" min="8" [ngModel]="height" (ngModelChange)="style.emit({ prop: 'height', value: $event })" /></label>
+    </div>
+  }
+}
+
+<!-- Connection pins, beyond the four sides every node has -->
+@if (styled) {
+  <div class="prop-section">Named pins ({{ pins.length }})</div>
+  <div class="pin-hint">Not needed to wire — drag from anywhere on an edge and the wire keeps
+    the point you dropped it on. Add a named pin only when a connection has to stay put and
+    be referred to, like a labelled interface on a processor. Pins space themselves evenly
+    along whichever side they are on.</div>
+  @for (p of pins; track p.portId; let i = $index) {
+    <div class="pin-row">
+      <span class="pin-id">{{ p.portId }}</span>
+      <select [ngModel]="sideOf(p.spot)" (ngModelChange)="pinSide.emit({ index: i, side: $event })">
+        <option value="left">Left</option>
+        <option value="right">Right</option>
+        <option value="top">Top</option>
+        <option value="bottom">Bottom</option>
+      </select>
+      <button class="pin-x" (click)="removePin.emit(i)" matTooltip="Remove pin"><mat-icon>close</mat-icon></button>
+    </div>
+  }
+  <button class="secondary-btn" (click)="addPin.emit()"><mat-icon>add</mat-icon><span>Add pin</span></button>
+}

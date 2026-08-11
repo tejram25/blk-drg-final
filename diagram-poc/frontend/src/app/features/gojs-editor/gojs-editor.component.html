@@ -393,205 +393,30 @@
 
                                                     <!-- Properties -->
                                                     @if (sel; as s) {
-                                                      <aside class="props" [class.open]="propsOpen">
-                                                        <h3>{{ 'props.title' | translate }}</h3>
-                                                        <div class="prop-type"><mat-icon>category</mat-icon>{{ nodeTypeName }}</div>
-                                                        <label><span>{{ 'props.name' | translate }}</span>
-                                                      <input [ngModel]="s.text" (ngModelChange)="setField('text', $event)" /></label>
-                                                      @if (!s.isPart && !isStyledShape) {
-                                                        <label><span>Colour</span>
-                                                      <input type="color" [ngModel]="s.color" (ngModelChange)="setColor($event)" /></label>
+                                                      <app-properties-panel
+                                                        [sel]="s" [open]="propsOpen" [typeName]="nodeTypeName"
+                                                        [styled]="isStyledShape" [container]="isContainer"
+                                                        [titlePlacement]="titlePlacement" [labelSize]="labelSize"
+                                                        [width]="nodeW" [height]="nodeH" [pins]="pins"
+                                                        [data]="selectedData" [defaultCategory]="defaultCategory" [box]="isBox"
+                                                        [attachedParts]="attachedParts" [boxComponents]="boxComponents"
+                                                        [boxSuggestions]="boxSuggestions" [boxSuggestLoading]="boxSuggestLoading"
+                                                        [boxSuggestError]="boxSuggestError" [selectedSupplier]="selectedSupplier"
+                                                        (rename)="setField('text', $event)" (colorChange)="setColor($event)"
+                                                        (style)="applyStyle($event)" (toggleDashed)="isContainer ? toggleContainerDashed() : toggleDashedOutline()"
+                                                        (addPin)="addPin('right')" (removePin)="removePin($event)"
+                                                        (pinSide)="setPinSide($event.index, $event.side)"
+                                                        (dataChange)="setDataField($event.key, $event.value)"
+                                                        (quantity)="setQuantity($event)"
+                                                        (checkLifecycle)="checkSelectedLifecycle()" (checkPos)="checkSelectedPos()"
+                                                        (attachedQty)="setAttachedPartQty($event.index, +$event.value)"
+                                                        (removeAttached)="removeAttachedPart($event)"
+                                                        (componentQty)="setComponentQty($event.index, +$event.value)"
+                                                        (componentSupplier)="setComponentSupplier($event.index, $event.value + '')"
+                                                        (removeComponent)="removeComponent($event)"
+                                                        (suggest)="suggestComponent()" (link)="linkSuggestion($event)"
+                                                        (remove)="deleteSelection()"></app-properties-panel>
                                                     }
-
-                                                    <!-- Style: everything the JSON can carry, reachable by hand -->
-                                                    @if (isStyledShape) {
-                                                      <div class="prop-section">{{ isContainer ? 'Container style' : 'Style' }}</div>
-                                                      <div class="style-grid">
-                                                        <label><span>Fill</span>
-                                                          <input type="color" [ngModel]="s.fill" (ngModelChange)="setFill($event)" /></label>
-                                                        <label><span>Border</span>
-                                                          <input type="color" [ngModel]="s.stroke" (ngModelChange)="setStroke($event)" /></label>
-                                                        <label><span>Border width</span>
-                                                          <input type="number" min="0" max="12" step="0.5"
-                                                                 [ngModel]="s.strokeWidth" (ngModelChange)="setBorderWidth($event)" /></label>
-                                                      </div>
-                                                      <button class="secondary-btn" (click)="isContainer ? toggleContainerDashed() : toggleDashedOutline()">
-                                                        <mat-icon>border_style</mat-icon>
-                                                        <span>{{ (isContainer ? s.dashed !== false : s.dashPattern) ? 'Solid outline' : 'Dashed outline' }}</span>
-                                                      </button>
-
-                                                      @if (isContainer) {
-                                                        <div class="style-grid">
-                                                          <label><span>Title colour</span>
-                                                            <input type="color" [ngModel]="s.titleColor" (ngModelChange)="setTitleColor($event)" /></label>
-                                                          <label class="wide"><span>Title position</span>
-                                                            <select [ngModel]="titlePlacement" (ngModelChange)="setTitlePlacement($event)">
-                                                              <option value="0 0">Top left</option>
-                                                              <option value="0.5 0.06">Top centre</option>
-                                                              <option value="0.5 0.5">Centre</option>
-                                                              <option value="0.5 0.94">Bottom centre</option>
-                                                            </select></label>
-                                                        </div>
-                                                      } @else {
-                                                        <div class="style-grid">
-                                                          <label><span>Label colour</span>
-                                                            <input type="color" [ngModel]="s.labelColor" (ngModelChange)="setLabelColor($event)" /></label>
-                                                          <label><span>Label size</span>
-                                                            <input type="number" min="5" max="60" step="0.5"
-                                                                   [ngModel]="labelSize" (ngModelChange)="setLabelSize($event)" /></label>
-                                                          <label class="wide"><span>Text align</span>
-                                                            <select [ngModel]="s.textAlign || 'center'" (ngModelChange)="setTextAlign($event)">
-                                                              <option value="left">Left</option>
-                                                              <option value="center">Centre</option>
-                                                              <option value="right">Right</option>
-                                                            </select></label>
-                                                          <label><span>Width</span>
-                                                            <input type="number" min="8" [ngModel]="nodeW" (ngModelChange)="setNodeSize('w', $event)" /></label>
-                                                          <label><span>Height</span>
-                                                            <input type="number" min="8" [ngModel]="nodeH" (ngModelChange)="setNodeSize('h', $event)" /></label>
-                                                        </div>
-                                                      }
-                                                    }
-
-                                                    <!-- Connection pins, beyond the four sides every node has -->
-                                                    @if (isStyledShape) {
-                                                      <div class="prop-section">Named pins ({{ pins.length }})</div>
-                                                      <div class="pin-hint">Not needed to wire — drag from anywhere on an edge and the wire keeps
-                                                        the point you dropped it on. Add a named pin only when a connection has to stay put and
-                                                        be referred to, like a labelled interface on a processor. Pins space themselves evenly
-                                                        along whichever side they are on.</div>
-                                                      @for (p of pins; track p.portId; let i = $index) {
-                                                        <div class="pin-row">
-                                                          <span class="pin-id">{{ p.portId }}</span>
-                                                          <select [ngModel]="pinSide(p.spot)" (ngModelChange)="setPinSide(i, $event)">
-                                                            <option value="left">Left</option>
-                                                            <option value="right">Right</option>
-                                                            <option value="top">Top</option>
-                                                            <option value="bottom">Bottom</option>
-                                                          </select>
-                                                          <button class="pin-x" (click)="removePin(i)" matTooltip="Remove pin"><mat-icon>close</mat-icon></button>
-                                                        </div>
-                                                      }
-                                                      <button class="secondary-btn" (click)="addPin('right')"><mat-icon>add</mat-icon><span>Add pin</span></button>
-                                                    }
-                                                    <label><span>{{ 'props.partNumber' | translate }}</span>
-                                                    <input [ngModel]="dataField('partNumber')" (ngModelChange)="setDataField('partNumber', $event)"
-                                                    [placeholder]="'props.partPlaceholder' | translate" /></label>
-                                                    <label><span>{{ 'props.category' | translate }}</span>
-                                                  <input [ngModel]="dataField('category') || defaultCategory" (ngModelChange)="setDataField('category', $event)" /></label>
-                                                  <label><span>{{ 'props.notes' | translate }}</span>
-                                                  <textarea rows="2" [ngModel]="dataField('notes')" (ngModelChange)="setDataField('notes', $event)"
-                                                  [placeholder]="'props.notesPlaceholder' | translate"></textarea></label>
-                                                  @if (s.isPart) {
-                                                    <label><span>Quantity</span>
-                                                  <input type="number" min="1" [ngModel]="s.quantity" (ngModelChange)="setQuantity($event)" /></label>
-                                                }
-                                                @if (s.isPart) {
-                                                  <button class="secondary-btn" (click)="checkSelectedLifecycle()"><mat-icon>fact_check</mat-icon><span>Check lifecycle</span></button>
-                                                  <button class="secondary-btn" (click)="checkSelectedPos()"><mat-icon>verified</mat-icon><span>Field-proven (POS)</span></button>
-                                                  @if (s.details.length) {
-                                                    <div class="prop-section">Catalogue details</div>
-                                                  }
-                                                  <div class="part-details">
-                                                    @for (d of s.details; track d) {
-                                                      <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
-                                                    }
-                                                  </div>
-                                                  @if (s.specs.length) {
-                                                    <div class="prop-section">Specifications</div>
-                                                  }
-                                                  <div class="part-details">
-                                                    @for (d of s.specs; track d) {
-                                                      <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
-                                                    }
-                                                  </div>
-                                                }
-                                                @if (isBox && attachedParts.length) {
-                                                  <div class="prop-section">Attached Parts ({{ attachedParts.length }})</div>
-                                                  @for (ap of attachedParts; track $index; let i = $index) {
-                                                    <details class="attached-part-details" [open]="attachedParts.length === 1">
-                                                      <summary class="attached-part-summary">
-                                                        <mat-icon>inventory_2</mat-icon>
-                                                        <span class="ap-name">{{ ap.part?.arwPartNum?.name || ap.part?.suppPartNum?.name || 'Part' }}</span>
-                                                        <span class="ap-qty">Qty: {{ ap.quantity }}</span>
-                                                      </summary>
-                                                      <div class="attached-part-content">
-                                                        <div class="part-details">
-                                                          @for (d of partDetails(ap.part); track d) {
-                                                            <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
-                                                          }
-                                                        </div>
-                                                        @if (partSpecs(ap.part).length) {
-                                                          <div class="prop-section-small">Specifications</div>
-                                                          <div class="part-details">
-                                                            @for (d of partSpecs(ap.part); track d) {
-                                                              <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
-                                                            }
-                                                          </div>
-                                                        }
-                                                        <div class="ap-controls">
-                                                          <label class="ap-qty-input">
-                                                            <span>Qty</span>
-                                                            <input type="number" min="1" [ngModel]="ap.quantity" (ngModelChange)="setAttachedPartQty(i, $event)" />
-                                                          </label>
-                                                          <button class="ap-remove" (click)="removeAttachedPart(i)" matTooltip="Remove part">
-                                                            <mat-icon>delete</mat-icon>
-                                                          </button>
-                                                        </div>
-                                                      </div>
-                                                    </details>
-                                                  }
-                                                }
-                                                @if (isBox) {
-                                                  <div class="prop-section">Components · AI + Design Win</div>
-                                                  @for (c of boxComponents; track c.partNumber; let i = $index) {
-                                                    <div class="linked-part">
-                                                      <mat-icon>memory</mat-icon>
-                                                      <div class="lp-main">
-                                                        <b>{{ c.partNumber }}</b>
-                                                        <span>{{ c.supplier }}@if (c.fieldProven) { · field-proven }@if (c.unitPrice) { · {{ money(c.unitPrice) }} }</span>
-                                                        <div class="lp-controls">
-                                                          @if (c.suppliers && c.suppliers.length > 1) {
-                                                            <select class="bs-supplier" [ngModel]="c.supplier" (ngModelChange)="setComponentSupplier(i, $event)">
-                                                              @for (sup of c.suppliers; track sup.name) { <option [value]="sup.name">{{ sup.name }}</option> }
-                                                            </select>
-                                                          }
-                                                          <input class="lp-qty" type="number" min="1" [ngModel]="c.quantity" (ngModelChange)="setComponentQty(i, $event)" title="Quantity" />
-                                                        </div>
-                                                      </div>
-                                                      <button class="lp-x" (click)="removeComponent(i)" matTooltip="Unlink component"><mat-icon>close</mat-icon></button>
-                                                    </div>
-                                                  }
-                                                  <button class="secondary-btn" (click)="suggestComponent()" [disabled]="boxSuggestLoading">
-                                                    <mat-icon>auto_awesome</mat-icon><span>{{ boxSuggestLoading ? 'Finding components…' : (boxComponents.length ? 'Add another component' : 'Suggest component') }}</span></button>
-                                                  @if (boxSuggestError) { <div class="bs-err">{{ boxSuggestError }}</div> }
-                                                  @if (boxSuggestions.length) {
-                                                    <div class="bs-list">
-                                                      @for (bs of boxSuggestions; track bs.partNumber) {
-                                                        <div class="bs-item">
-                                                          <div class="bs-head"><b>{{ bs.partNumber }}</b>
-                                                            @if (bs.customerApproved) { <span class="bs-approved"><mat-icon>emoji_events</mat-icon>Customer-approved</span> }
-                                                            @if (bs.fieldProven) { <span class="bs-proven"><mat-icon>verified</mat-icon>Field-proven</span> }</div>
-                                                          <div class="bs-desc">{{ bs.description }}</div>
-                                                          <div class="bs-meta">{{ bs.manufacturer }} · {{ bs.stock }} in stock@if (bs.status) { · {{ bs.status }} }</div>
-                                                          <div class="bs-actions">
-                                                            @if (bs.suppliers.length > 1) {
-                                                              <select class="bs-supplier" [ngModel]="selectedSupplier[bs.partNumber] || bs.suppliers[0].name" (ngModelChange)="selectedSupplier[bs.partNumber] = $event">
-                                                                @for (sup of bs.suppliers; track sup.name) { <option [value]="sup.name">{{ sup.name }}</option> }
-                                                              </select>
-                                                            } @else if (bs.suppliers.length === 1) {
-                                                              <span class="bs-onesup">{{ bs.suppliers[0].name }}</span>
-                                                            }
-                                                            <button class="bs-link" (click)="linkSuggestion(bs)"><mat-icon>link</mat-icon>Link</button>
-                                                          </div>
-                                                        </div>
-                                                      }
-                                                    </div>
-                                                  }
-                                                }
-                                                <button class="del-btn" (click)="deleteSelection()"><mat-icon>delete</mat-icon><span>Delete</span></button>
-                                              </aside>
-                                            }
                                           </div>
 
                                           <!-- Session chat -->

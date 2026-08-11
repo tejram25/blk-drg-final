@@ -1,0 +1,75 @@
+:host { display: block; }
+
+/* Moved with the panel itself, verbatim from the editor stylesheet. */
+/* ---- style + pin controls in the properties panel ---- */
+.style-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 10px;
+  margin: 4px 0 8px;
+}
+.style-grid label { margin: 0; }
+.style-grid label.wide { grid-column: 1 / -1; }
+.style-grid input[type='number'],
+.style-grid select { width: 100%; }
+
+.pin-hint {
+  font-size: 10.5px;
+  line-height: 1.35;
+  opacity: 0.62;
+  margin: 2px 0 8px;
+}
+.pin-row {
+  display: grid;
+  grid-template-columns: 30px 1fr 24px;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+.pin-row .pin-id {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+.pin-row select { font-size: 11px; padding: 2px 4px; }
+.pin-row .pin-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+}
+.pin-row .pin-x:hover { opacity: 1; background: rgba(148, 163, 184, 0.18); }
+.pin-row .pin-x mat-icon { font-size: 15px; width: 15px; height: 15px; }
+/* Shared with the sibling panel: each component is style-encapsulated, so
+   a rule both halves use has to exist in both. */
+.prop-section {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--faint);
+      margin: 12px 0 8px; padding-top: 10px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+/* Properties helpers reused from the old editor */
+.secondary-btn { display: inline-flex; align-items: center; gap: 6px; margin: 4px 0 10px; padding: 7px 11px;
+  border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text);
+  cursor: pointer; font-size: 12.5px; font-family: inherit; }
+.secondary-btn:hover { border-color: var(--accent); }
+.secondary-btn mat-icon { font-size: 16px; width: 16px; height: 16px; }
+.prop-section-small {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--faint);
+  margin: 12px 0 8px;
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--border, #34353c) 30%, transparent);
+}
