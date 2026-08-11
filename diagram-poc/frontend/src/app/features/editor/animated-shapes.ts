@@ -223,6 +223,29 @@ export const ANIMATED_SYMBOLS: Record<string, AnimDef> = {
     ],
     pins: [{ x: 0, y: 30 }, { x: 90, y: 30 }],
   },
+  // A sun on its own, for a drawing whose panels are a separate block.
+  'anim-sun': {
+    width: 56, height: 56,
+    parts: [
+      { tag: 'circle', attrs: { cx: '28', cy: '28', r: '12', fill: '#facc15', stroke: '#eab308', 'stroke-width': '1.5', class: 'anim-pulse' } },
+      { tag: 'path', attrs: { d: 'M 28 2 L 28 10 M 28 46 L 28 54 M 2 28 L 10 28 M 46 28 L 54 28', stroke: '#facc15', 'stroke-width': '2.5', 'stroke-linecap': 'round', fill: 'none', class: 'anim-pulse-alt' } },
+      { tag: 'path', attrs: { d: 'M 9.6 9.6 L 15.3 15.3 M 40.7 40.7 L 46.4 46.4 M 46.4 9.6 L 40.7 15.3 M 15.3 40.7 L 9.6 46.4', stroke: '#facc15', 'stroke-width': '2.5', 'stroke-linecap': 'round', fill: 'none', class: 'anim-pulse' } },
+    ],
+    pins: [{ x: 28, y: 56 }],
+  },
+  // A gateway or router: a screen with traffic blinking across it.
+  'anim-gateway': {
+    width: 64, height: 60,
+    parts: [
+      { tag: 'rect', attrs: { x: '2', y: '4', width: '60', height: '38', rx: '3', fill: '#0f172a', stroke: METAL, 'stroke-width': '2' } },
+      { tag: 'rect', attrs: { x: '8', y: '10', width: '48', height: '26', fill: '#1e293b' } },
+      { tag: 'rect', attrs: { x: '12', y: '14', width: '24', height: '3', fill: '#22d3ee', class: 'anim-charge-1' } },
+      { tag: 'rect', attrs: { x: '12', y: '21', width: '34', height: '3', fill: '#22d3ee', class: 'anim-charge-2' } },
+      { tag: 'rect', attrs: { x: '12', y: '28', width: '18', height: '3', fill: '#22d3ee', class: 'anim-charge-3' } },
+      { tag: 'path', attrs: { d: 'M 24 42 L 24 52 M 40 42 L 40 52 M 14 56 L 50 56', stroke: METAL, 'stroke-width': '2.5', 'stroke-linecap': 'round', fill: 'none' } },
+    ],
+    pins: [{ x: 0, y: 22 }, { x: 64, y: 22 }, { x: 32, y: 60 }],
+  },
   'anim-solar': {
     width: 80, height: 60,
     parts: [

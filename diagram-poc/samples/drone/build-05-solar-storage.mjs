@@ -2,6 +2,7 @@
 // Coordinates measured from the source artwork (853 x 1201 px space), so the
 // proportions match 1:1. Emits a GoJS GraphLinksModel the app can load.
 import { writeFileSync } from 'node:fs';
+import { animSource } from './anim-source.mjs';
 
 const AD = 'Arrow Display';
 const C = {
@@ -48,6 +49,15 @@ function chip(key, text, group, x, y, w, h, o = {}) {
       labelColor: o.labelColor ?? C.white, font: o.font ?? F.chip,
       textAlign: 'center', textWidth: w - 8 });
 }
+/**
+ * An animated symbol: the sun pulses, the panel's cells glow, the battery
+ * charges, the gateway's traffic blinks. On the canvas the editor flips the
+ * picture through its frames; a PNG is a still, so it carries frame 0.
+ */
+function anim(key, shape, x, y, w, h, o = {}) {
+  N({ key, category: 'symbol', shape, source: animSource(shape),
+      ...R(x, y, w, h), text: o.text ?? '', labelColor: o.labelColor ?? C.ink });
+}
 /** A caption or an icon: a block with neither fill nor outline. */
 function plain(key, o) {
   N({ key, category: 'shape', shape: o.shape ?? 'sh-rect', figure: o.figure ?? 'Rectangle',
@@ -82,18 +92,13 @@ plain('modk2', { x: 642, y: 36, w: 150, h: 14, text: 'Last Modified By:', font: 
                  labelColor: C.noteInk, textAlign: 'left' });
 
 // ------------------------------------------------------------- the plant ----
-plain('sun', { x: 106, y: 182, w: 46, h: 46, figure: 'FcSun', shape: 'fc-sun',
-               stroke: C.icon, strokeWidth: 1.4 });
-plain('pv', { x: 98, y: 236, w: 66, h: 62, figure: 'FcSolarPanel', shape: 'fc-solar-panel',
-              stroke: C.icon, strokeWidth: 1.2 });
-plain('cell', { x: 124, y: 344, w: 22, h: 46, figure: 'FcBatteryCell', shape: 'fc-battery-cell',
-                stroke: C.icon, strokeWidth: 1.2 });
+anim('sun', 'anim-sun', 104, 176, 48, 48);
+anim('pv', 'anim-solar', 92, 232, 78, 60);
+anim('cell', 'anim-glow-battery', 100, 344, 62, 40);
 plain('conn', { x: 100, y: 990, w: 40, h: 22, figure: 'FcCard', shape: 'fc-card',
                 stroke: C.icon, strokeWidth: 1.2, text: '' });
-plain('radio', { x: 692, y: 1046, w: 34, h: 34, figure: 'FcRadiating', shape: 'fc-radiating',
-                 stroke: '#1E5AA8', strokeWidth: 1.6 });
-plain('gateway', { x: 762, y: 348, w: 46, h: 42, figure: 'FcMonitor', shape: 'fc-monitor',
-                   stroke: C.icon, strokeWidth: 1.2 });
+anim('radio', 'anim-antenna', 686, 1040, 40, 46);
+anim('gateway', 'anim-gateway', 758, 344, 54, 50);
 plain('acgrid', { x: 796, y: 246, w: 52, h: 34, text: 'AC\ngrid', font: F.cap, textAlign: 'left' });
 plain('gwlabel', { x: 748, y: 1052, w: 78, h: 34, text: 'Gateway\nor router', font: F.cap });
 
