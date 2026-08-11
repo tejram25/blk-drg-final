@@ -140,12 +140,20 @@ is given, and it survives a reload. Selecting an existing wire still shows that
 wire's own settings — so editing it is accurate — but it does not change what the
 next wire you draw looks like.
 
-Pins are shown on every kind of node: shapes, blocks, parts, images and
-containers. A container's pins matter as much as a block's — diagram 1 wires the
-antenna into the "Communication Systems" box, not into anything inside it. A pin
-marker sits wholly *inside* the block with its outer edge on the outline, so the
-wire meets the block; centred on the outline, as it used to be, every wire on a
-pin stopped half a marker short of the block it was drawn to.
+Pins exist on every kind of node: shapes, blocks, parts, images and containers.
+A container's pins matter as much as a block's — diagram 1 wires the antenna into
+the "Communication Systems" box, not into anything inside it.
+
+They are **editing furniture, so they only appear on hover**, and an export
+never shows them whatever the pointer is doing. A pin marker sits wholly
+*inside* the block with its outer edge on the outline, so the wire meets the
+block; centred on the outline, as it used to be, every wire on a pin stopped
+half a marker short of the block it was drawn to.
+
+Wires are drawn **over** blocks and **under** containers. A block diagram
+routinely puts a wire across something — diagram 3 hangs its interface chips on
+the face of the processor, so the last stretch of every wire into one crosses
+it — and underneath, the wire and its arrowhead simply disappeared.
 
 A run drawn within a few pixels of straight is snapped straight as you release
 it. A run that genuinely bends is left alone — the two ends have to face along
