@@ -63,7 +63,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { WireGeometry } from './gojs-wire-geometry';
 import { Pin, PinMove, pinSide, spaced, spotOn } from './gojs-pins';
-import { buildTemplates, fitPorts } from './gojs-templates';
+import { RAIL_IDS, buildTemplates, fitPorts, railAt, showRail } from './gojs-templates';
 import { LabelDragTool } from './gojs-label-drag';
 import { DEFAULT_WIRE_STYLE, WireDockComponent, WireProp } from '../editor/components/wire-dock/wire-dock.component';
 import { PropertiesPanelComponent, StyleChange, TextChange } from '../editor/components/properties-panel/properties-panel.component';
@@ -457,6 +457,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.applyGridTheme();
     buildTemplates(this.diagram, $, {
       hoverPorts: (o, on) => this.hoverPorts(o, on),
+      hoverEdge: (o, pt) => this.hoverEdge(o, pt),
       showPartsDock: (part, on) => this.showPartsDock(part, on),
       showAllPins: (on) => this.showAllPins(on),
       updateJunctions: () => this.updateJunctions(),
@@ -467,6 +468,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.diagram.toolManager.mouseMoveTools.insertAt(0, new LabelDragTool());
     this.diagram.model = this.emptyModel();
 
+    // Rails are fitted whenever the drawing settles, not when the pointer
+    // arrives: a rail still at full width when you reach the block has already
+    // decided the cursor, and on a small block that reads as a box that cannot
+    // be picked up at all.
+    this.diagram.addDiagramListener('LayoutCompleted', () => this.diagram.nodes.each((n) => fitPorts(n)));
     this.diagram.addDiagramListener('ChangedSelection', () => this.zone.run(() => this.syncSelection()));
     this.diagram.addDiagramListener('TextEdited', () => this.zone.run(() => this.syncSelection()));
     this.diagram.addModelChangedListener((e) => {
@@ -571,7 +577,15 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private resetPins(node: go.Node): void {
     const c = node.data?.category;
     const rest = (c === 'symbol' || c === 'basic') && !this.pinsForced ? 0.45 : 0;
-    node.ports.each((p) => { if (p.portId) p.opacity = rest; });
+    node.ports.each((p) => {
+      if (!p.portId) return;
+      p.opacity = rest;
+      // Back to a rail that cannot be pressed: while a wire is in flight they
+      // are all live targets, and this is where that ends.
+      if (RAIL_IDS.has(String(p.portId))) p.pickable = false;
+    });
+    const body = node.findPort('');
+    if (body) body.cursor = 'move';
   }
 
   /** Set while an image is being captured: even a hovered node shows nothing. */
@@ -601,15 +615,33 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       m.set(tn.data, 'loc', go.Point.stringify(loc)), 'align wire'));
   }
 
-  /** Brighten a node's link ports on hover (the body itself stays movable). */
+  /**
+   * Hovering a block reveals its named pins. Its edge rails are not revealed
+   * here: they follow the pointer one at a time (see {@link hoverEdge}), so
+   * that a block is never wrapped in a blue frame with no middle left to
+   * take hold of.
+   */
   private hoverPorts(obj: go.GraphObject, on: boolean): void {
     const node = obj.part;
     if (!(node instanceof go.Node)) return;
-    // Size the rails to the block first: this runs as the pointer arrives, so
-    // it is both what the user sees and what they are about to press on.
-    if (on) fitPorts(node);
-    if (on && !this.pinsForced) node.ports.each((p) => { if (p.portId) p.opacity = 1; });
-    else this.resetPins(node);
+    if (on && !this.pinsForced) {
+      node.ports.each((p) => { if (p.portId && !RAIL_IDS.has(String(p.portId))) p.opacity = 1; });
+    } else {
+      this.resetPins(node);
+    }
+  }
+
+  /** The edge the pointer is reaching for lights up; the rest of the block
+   *  stays the block, and stays draggable. */
+  private hoverEdge(obj: go.GraphObject, pt: go.Point): void {
+    const node = obj.part;
+    if (!(node instanceof go.Node) || this.pinsForced || this.diagram.currentTool !== this.diagram.toolManager) return;
+    const rail = railAt(node, pt);
+    showRail(node, rail);
+    // Also now, not on the next movement: GoJS picks the cursor for a move
+    // before this runs, so leaving it to the object's own cursor showed the
+    // answer to where the pointer was a moment ago.
+    this.diagram.currentCursor = rail ? 'crosshair' : 'move';
   }
 
   /**
@@ -736,7 +768,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private showAllPins(on: boolean): void {
     if (!this.diagram) return;
     this.diagram.nodes.each((n) => {
-      if (on) n.ports.each((p) => { if (p.portId) p.opacity = 1; });
+      // Every rail is live while a wire is in flight — that is the moment the
+      // whole canvas is a set of places to drop it.
+      if (on) n.ports.each((p) => { if (p.portId) { p.opacity = 1; p.pickable = true; } });
       else this.resetPins(n);
     });
   }

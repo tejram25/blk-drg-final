@@ -16,6 +16,8 @@ import { NAME_FIELD, placeable } from './gojs-label-drag';
  */
 export interface TemplateHooks {
   hoverPorts(obj: go.GraphObject, on: boolean): void;
+  /** Where the pointer is on a block, so one edge rail can follow it. */
+  hoverEdge(obj: go.GraphObject, pt: go.Point): void;
   showPartsDock(part: go.Part | null, on: boolean): void;
   showAllPins(on: boolean): void;
   updateJunctions(): void;
@@ -39,6 +41,71 @@ const RICH_MARGIN = 6;
 /** The thickest an edge rail is ever drawn, and which side it crosses. */
 const RAIL_MAX = 14;
 const RAIL_DIR = '_rail';
+/** The four edge rails, by port id. */
+export const RAIL_IDS = new Set(['T', 'R', 'B', 'L']);
+/** How close to an edge counts as reaching for it rather than for the block. */
+const RAIL_REACH = 4;
+
+/** A rail's thickness on a block of this size: a share of the side it crosses,
+ *  never more than RAIL_MAX and never so thin it cannot be hit. */
+function railThickness(across: number): number {
+  return Math.max(3, Math.min(RAIL_MAX, across * 0.18));
+}
+
+/** The body of a block — what its rails are drawn against. A node is as tall as
+ *  a caption hanging below it; the box is what the user sees. */
+function bodyBounds(node: go.Node): go.Rect {
+  return (node.findPort('') ?? node).getDocumentBounds();
+}
+
+/**
+ * Which edge the pointer is reaching for, or null when it is on the block
+ * itself.
+ *
+ * A rail is the target for starting a wire, so it wants to be easy to hit; but
+ * lighting all four at once frames the block in blue, and on a small block that
+ * frame is the block. One edge at a time — the nearest, and only when the
+ * pointer is actually at it — leaves the middle unmistakably the block's own.
+ */
+export function railAt(node: go.Node, pt: go.Point): string | null {
+  const b = bodyBounds(node);
+  if (!b.width || !b.height) return null;
+  const gap: Record<string, number> = {
+    L: pt.x - b.x, R: b.right - pt.x, T: pt.y - b.y, B: b.bottom - pt.y,
+  };
+  let near = 'L';
+  for (const id of Object.keys(gap)) if (gap[id] < gap[near]) near = id;
+  if (gap[near] < 0) return null;
+  const across = near === 'L' || near === 'R' ? b.width : b.height;
+  return gap[near] <= railThickness(across) + RAIL_REACH ? near : null;
+}
+
+/**
+ * Show one edge rail, or none, and say so with the cursor.
+ *
+ * The rails are never pickable at rest — an invisible stripe that takes the
+ * press meant for the block is exactly what made a small block impossible to
+ * pick up. What decides whether a press starts a wire is the press point
+ * itself (see the linking tool's `findLinkablePort`), so this is only what the
+ * user is shown: the edge that is live, and a crosshair while over it.
+ */
+export function showRail(node: go.Node, id: string | null): void {
+  node.ports.each((p) => {
+    const pid = String(p.portId ?? '');
+    if (RAIL_IDS.has(pid)) p.opacity = pid === id ? 1 : 0;
+  });
+  const body = node.findPort('');
+  if (body) body.cursor = id ? 'crosshair' : 'move';
+}
+
+/** The rail a press at this point belongs to, as an object to start a wire on. */
+export function railPortAt(node: go.Node, pt: go.Point): go.GraphObject | null {
+  const id = railAt(node, pt);
+  if (!id) return null;
+  let found: go.GraphObject | null = null;
+  node.ports.each((p) => { if (p.portId === id) found = p; });
+  return found;
+}
 
 /**
  * Fit a block's connection rails to the block.
@@ -51,14 +118,15 @@ const RAIL_DIR = '_rail';
  * crosses — a rail can be thin, but the middle of a block always stays the
  * block's own.
  *
- * Called as the pointer enters a block, which is the last moment its size is
- * known and always before anything can be pressed on it.
+ * Called whenever the diagram settles, not on hover: a rail that is still
+ * block-wide when the pointer first arrives has already decided the cursor, and
+ * on a small block that first impression is a box you cannot pick up.
  */
 export function fitPorts(node: go.Node): void {
   // The body, not the node: a node is as tall as its caption hanging below it,
   // and the rails belong to the box.
   const b = (node.findPort('') ?? node).actualBounds;
-  const want = (across: number) => Math.max(3, Math.min(RAIL_MAX, across * 0.18));
+  const want = railThickness;
   node.ports.each((p) => {
     const dir = (p as unknown as Record<string, unknown>)[RAIL_DIR];
     if (dir !== 'v' && dir !== 'h') return;
@@ -189,7 +257,10 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
         // a connection point half a rail outside the block is what put the little
         // hook at the start of every wire: the spot recorded for it was interior,
         // so GoJS had no outward direction to leave in and doubled back.
-        cursor: 'crosshair', opacity: 0, alignment: spot, alignmentFocus: spot,
+        // Not pickable at rest: a rail is a place a wire starts, not a thing
+        // lying over the block waiting to take the press meant for it. A wire
+        // in flight turns them all on so the whole canvas is a target again.
+        cursor: 'crosshair', opacity: 0, pickable: false, alignment: spot, alignmentFocus: spot,
         portId: id, fromLinkable: true, toLinkable: true, fromSpot: side, toSpot: side,
       });
     const sidePorts = () => [
@@ -235,6 +306,9 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
     const hover = {
       mouseEnter: (_e: go.InputEvent, o: go.GraphObject) => { hooks.hoverPorts(o, true); hooks.showPartsDock(o.part, true); },
       mouseLeave: (_e: go.InputEvent, o: go.GraphObject) => { hooks.hoverPorts(o, false); hooks.showPartsDock(o.part, false); },
+      // Which edge is live follows the pointer across the block, so the rails
+      // are never a frame around it.
+      mouseOver: (e: go.InputEvent, o: go.GraphObject) => hooks.hoverEdge(o, e.documentPoint),
     };
 
     /**
@@ -673,16 +747,6 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
     styleLinking(diagram.toolManager.linkingTool);
     styleLinking(diagram.toolManager.relinkingTool);
 
-    /**
-     * Look past a wire for the port underneath it.
-     *
-     * Wires are drawn above blocks, and a link's hit area is a fat invisible
-     * stroke, so the wire you just drew covers the very point on the edge you
-     * grabbed. The stock search takes the topmost object and gives up, which
-     * made the second wire out of a point silently do nothing. Retry ignoring
-     * links: `startObject` is the documented way to tell the tool where to
-     * begin looking.
-     */
     const linkTool = diagram.toolManager.linkingTool;
 
     /**
@@ -698,24 +762,27 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
      */
     linkTool.direction = go.LinkingDirection.ForwardsOnly;
 
+    /**
+     * Whether a press starts a wire is decided by where it landed, not by what
+     * happens to be pickable there.
+     *
+     * The rails are not pickable, deliberately: an invisible stripe lying over
+     * a block took the press meant for the block, and on a small block that is
+     * every press. So the search is done by arithmetic instead — a press within
+     * reach of an edge starts a wire from that edge, and a press anywhere else
+     * on the block is the block being picked up. It also steps past a wire
+     * lying over the very point you grabbed, which used to make the second wire
+     * out of a point silently do nothing.
+     */
     const findPort = linkTool.findLinkablePort.bind(linkTool);
     linkTool.findLinkablePort = () => {
       const direct = findPort();
-      if (direct) return direct;
+      if (direct && direct.fromLinkable === true) return direct;
       const pt = diagram.firstInput?.documentPoint;
       if (!pt) return null;
-      const under = diagram.findObjectAt(pt, (x: go.GraphObject) => (x.part instanceof go.Node ? x : null), null);
-      if (!under) return null;
-      linkTool.startObject = under;
-      try {
-        const port = findPort();
-        // Only a port a wire may actually *start* from. Naming a `startObject`
-        // makes GoJS hand back whatever port is there, and a block's body is a
-        // port — to-linkable, so a wire can be dropped anywhere on it. Returning
-        // that started a wire every time a block was pressed, which is why a
-        // block could not be dragged with the mouse at all.
-        return port && port.fromLinkable === true ? port : null;
-      } finally { linkTool.startObject = null; }
+      const node = diagram.findObjectAt(pt, (x: go.GraphObject) => x.part,
+        (q: go.GraphObject) => q instanceof go.Node) as go.Node | null;
+      return node ? railPortAt(node, pt) : null;
     };
 
     // A subsystem container. The defaults are the dashed amber box the palette
