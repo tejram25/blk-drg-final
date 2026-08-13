@@ -36,6 +36,40 @@ function backwardArrow(name: string): string {
 /** The margin the rich stack sits in, and so the padding a block needs for it. */
 const RICH_MARGIN = 6;
 
+/** The thickest an edge rail is ever drawn, and which side it crosses. */
+const RAIL_MAX = 14;
+const RAIL_DIR = '_rail';
+
+/**
+ * Fit a block's connection rails to the block.
+ *
+ * A rail spans a whole edge so that several wires leaving one side can spread
+ * out along it, and at a fixed 14px that is most of a small block: a part row
+ * 16px tall was covered end to end by its own top and bottom rails, so it read
+ * as a blue frame with no middle and a press anywhere on it started a wire
+ * instead of picking the row up. Each rail is now a share of the side it
+ * crosses — a rail can be thin, but the middle of a block always stays the
+ * block's own.
+ *
+ * Called as the pointer enters a block, which is the last moment its size is
+ * known and always before anything can be pressed on it.
+ */
+export function fitPorts(node: go.Node): void {
+  // The body, not the node: a node is as tall as its caption hanging below it,
+  // and the rails belong to the box.
+  const b = (node.findPort('') ?? node).actualBounds;
+  const want = (across: number) => Math.max(3, Math.min(RAIL_MAX, across * 0.18));
+  node.ports.each((p) => {
+    const dir = (p as unknown as Record<string, unknown>)[RAIL_DIR];
+    if (dir !== 'v' && dir !== 'h') return;
+    const vertical = dir === 'v';
+    const t = want(vertical ? b.width : b.height);
+    const now = vertical ? p.desiredSize.width : p.desiredSize.height;
+    if (Math.abs(now - t) < 0.5) return;
+    p.desiredSize = vertical ? new go.Size(t, NaN) : new go.Size(NaN, t);
+  });
+}
+
 /** A formatted label, wrapped into the rows the canvas will draw. */
 function richLayout(d: go.ObjectData): DrawnLine[] {
   return layoutRich(
@@ -144,9 +178,11 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       go.Shape, 'RoundedRectangle',
       {
         parameter1: 4, fill: 'rgba(34,211,238,0.30)', stroke: '#22d3ee', strokeWidth: 1,
-        // 14px, not 9: this is the grab target for starting a wire, and a
-        // 9px stripe is a fiddly thing to hit on a first attempt.
-        desiredSize: vertical ? new go.Size(14, NaN) : new go.Size(NaN, 14),
+        // RAIL_MAX, not 9: this is the grab target for starting a wire, and a
+        // 9px stripe is a fiddly thing to hit on a first attempt. It is a
+        // ceiling rather than a constant — see `fitPorts`.
+        desiredSize: vertical ? new go.Size(RAIL_MAX, NaN) : new go.Size(NaN, RAIL_MAX),
+        [RAIL_DIR]: vertical ? 'v' : 'h',
         stretch: vertical ? go.GraphObject.Vertical : go.GraphObject.Horizontal,
         // `alignmentFocus: spot` keeps the rail wholly inside the block, with its
         // outer edge on the outline. Centred on the outline it straddled it, and
@@ -397,7 +433,11 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
           $(go.TextBlock, { font: '700 9px Roboto, sans-serif', stroke: '#1a1303', margin: new go.Margin(1, 5, 1, 5) },
             new go.Binding('text', 'components',
               (c) => !Array.isArray(c) || !c.length ? '' : (c.length === 1 ? c[0].partNumber : c.length + ' parts'))))),
-      $(go.TextBlock, { alignment: new go.Spot(0.5, 1, 0, 7), alignmentFocus: go.Spot.Top,
+      // Hidden until there is a caption to show. An empty TextBlock still
+      // measures a line high, and this one hangs below the shape, so leaving it
+      // on stretched every block's bounds ~19px past its own outline — which is
+      // what put the selection outline and the hover markers off the box.
+      $(go.TextBlock, { alignment: new go.Spot(0.5, 1, 0, 7), alignmentFocus: go.Spot.Top, visible: false,
         font: '10.5px Roboto, sans-serif', stroke: '#94a3b8', editable: true, textAlign: 'center', maxSize: new go.Size(170, NaN) },
         new go.Binding('text', 'sub').makeTwoWay(),
         new go.Binding('stroke', 'capColor'),
@@ -713,6 +753,11 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
           new go.Binding('fill', 'fill'),
           new go.Binding('stroke', 'stroke'),
           new go.Binding('strokeWidth', 'borderWidth'),
+          // A container is sized by what is inside it, which leaves one you
+          // have just drawn — and so has nothing inside — a box too small to
+          // aim at. A floor gives it a size of its own until it has members,
+          // and is what the Width and Height fields write.
+          new go.Binding('minSize', 'minSize', go.Size.parse),
           // Only an explicit `dashed: false` makes the border solid, so an
           // existing group with no styling data keeps its dashed look.
           new go.Binding('strokeDashArray', 'dashed', (v) => (v === false ? null : [7, 4]))),

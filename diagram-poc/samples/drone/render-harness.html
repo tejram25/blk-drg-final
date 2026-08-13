@@ -280,7 +280,10 @@ window.buildDiagram = function(modelJson, geo) {
         new go.Binding('defaultAlignment','',richAlignment),
         new go.Binding('itemArray','',richItems),
         ...placeable('labelSpot'))),
-    $(go.TextBlock,{ alignment:new go.Spot(0.5,1,0,7), alignmentFocus:go.Spot.Top,
+    // Off until there is a caption: an empty TextBlock still measures a line
+    // high, and this one hangs below the shape, so it stretched every block's
+    // bounds past its own outline.
+    $(go.TextBlock,{ alignment:new go.Spot(0.5,1,0,7), alignmentFocus:go.Spot.Top, visible:false,
       font:'10.5px Roboto, sans-serif', stroke:'#94a3b8', textAlign:'center', maxSize:new go.Size(170,NaN) },
       new go.Binding('text','sub'),
       new go.Binding('stroke','capColor'),

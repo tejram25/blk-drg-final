@@ -63,7 +63,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { WireGeometry } from './gojs-wire-geometry';
 import { Pin, PinMove, pinSide, spaced, spotOn } from './gojs-pins';
-import { buildTemplates } from './gojs-templates';
+import { buildTemplates, fitPorts } from './gojs-templates';
 import { LabelDragTool } from './gojs-label-drag';
 import { DEFAULT_WIRE_STYLE, WireDockComponent, WireProp } from '../editor/components/wire-dock/wire-dock.component';
 import { PropertiesPanelComponent, StyleChange, TextChange } from '../editor/components/properties-panel/properties-panel.component';
@@ -599,6 +599,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private hoverPorts(obj: go.GraphObject, on: boolean): void {
     const node = obj.part;
     if (!(node instanceof go.Node)) return;
+    // Size the rails to the block first: this runs as the pointer arrives, so
+    // it is both what the user sees and what they are about to press on.
+    if (on) fitPorts(node);
     if (on && !this.pinsForced) node.ports.each((p) => { if (p.portId) p.opacity = 1; });
     else this.resetPins(node);
   }
@@ -1238,8 +1241,11 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
    * includes the label overhang and the border, so a 160x70 block reports as
    * 173x96 and typing that number back in quietly grows it.
    */
+  /** Which field carries a node's size. A container has no size of its own —
+   *  it sits where its members are — so for one the number is a floor. */
+  private get sizeProp(): 'size' | 'minSize' { return this.isContainer ? 'minSize' : 'size'; }
   private sizeField(i: 0 | 1): number | null {
-    const s = String(this.selectedNode?.data?.size ?? '').split(' ');
+    const s = String(this.selectedNode?.data?.[this.sizeProp] ?? '').split(' ');
     const v = Number(s[i]);
     return s.length === 2 && isFinite(v) ? Math.round(v) : null;
   }
@@ -1247,13 +1253,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   get nodeH(): number { return this.sizeField(1) ?? Math.round(this.selectedNode?.actualBounds?.height ?? 0); }
   setNodeSize(which: 'w' | 'h', v: any): void {
     const n = this.selectedNode; if (!n) return;
+    const prop = this.sizeProp;
     const px = Math.max(8, Number(v) || 0);
-    const cur = go.Size.parse(String(n.data.size ?? `${this.nodeW} ${this.nodeH}`));
+    const cur = go.Size.parse(String(n.data[prop] ?? `${this.nodeW} ${this.nodeH}`));
     const size = which === 'w' ? new go.Size(px, cur.height || this.nodeH) : new go.Size(cur.width || this.nodeW, px);
-    this.setField('size', go.Size.stringify(size));
+    this.setField(prop, go.Size.stringify(size));
     // An imported drawing opts out of the palette's 48x40 floor; a hand-drawn
     // one has to as well, or a deliberately small block springs back.
-    if (!n.data.minSize) this.setField('minSize', '1 1');
+    if (prop === 'size' && !n.data.minSize) this.setField('minSize', '1 1');
   }
 
   // ---- container (group) controls ----
@@ -1522,9 +1529,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     const c = d.viewportBounds.center;
+    // `minSize`, not `size`: a container is sized by its members, so a size is
+    // something it cannot honour and an empty one came out a 63x60 stub at the
+    // origin. A floor it can honour, and it gives way as blocks are dropped in.
     this.zone.runOutsideAngular(() => d.model.commit((m) => {
       m.addNodeData({ key: undefined, isGroup: true, text: 'Container',
-                      loc: go.Point.stringify(c), size: '320 220' });
+                      loc: go.Point.stringify(c), minSize: '320 220' });
     }, 'add container'));
     const made = d.findNodeForKey((d.model as go.GraphLinksModel).nodeDataArray.slice(-1)[0]?.['key']);
     if (made) d.select(made);

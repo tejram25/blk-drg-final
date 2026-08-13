@@ -80,6 +80,13 @@
       <label class="wide"><span>Band width</span>
         <input type="number" min="0" max="600" step="2" placeholder="auto"
                [ngModel]="titleBandWidth" (ngModelChange)="style.emit({ prop: 'titleBandWidth', value: $event })" /></label>
+      <!-- A container has no size of its own — it sits where its members are —
+           so these are the smallest it may be drawn, which is also the size of
+           one with nothing in it yet. -->
+      <label><span>Width</span>
+        <input type="number" min="8" [ngModel]="width" (ngModelChange)="style.emit({ prop: 'width', value: $event })" /></label>
+      <label><span>Height</span>
+        <input type="number" min="8" [ngModel]="height" (ngModelChange)="style.emit({ prop: 'height', value: $event })" /></label>
     </div>
     <div class="pin-hint">Or hold <b>Alt</b> and drag the title on the canvas to put it anywhere
       inside the container.</div>
