@@ -63,7 +63,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { WireGeometry } from './gojs-wire-geometry';
 import { Pin, PinMove, pinSide, spaced, spotOn } from './gojs-pins';
-import { RAIL_IDS, buildTemplates, fitPorts, railAt, showRail } from './gojs-templates';
+import { RAIL_IDS, buildTemplates, fitPorts, hideRail, railAt, showRail } from './gojs-templates';
 import { LabelDragTool } from './gojs-label-drag';
 import { DEFAULT_WIRE_STYLE, WireDockComponent, WireProp } from '../editor/components/wire-dock/wire-dock.component';
 import { PropertiesPanelComponent, StyleChange, TextChange } from '../editor/components/properties-panel/properties-panel.component';
@@ -586,6 +586,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     const body = node.findPort('');
     if (body) body.cursor = 'move';
+    hideRail(node);
   }
 
   /** Set while an image is being captured: even a hovered node shows nothing. */
@@ -637,7 +638,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const node = obj.part;
     if (!(node instanceof go.Node) || this.pinsForced || this.diagram.currentTool !== this.diagram.toolManager) return;
     const rail = railAt(node, pt);
-    showRail(node, rail);
+    showRail(node, rail, pt);
     // Also now, not on the next movement: GoJS picks the cursor for a move
     // before this runs, so leaving it to the object's own cursor showed the
     // answer to where the pointer was a moment ago.
@@ -768,10 +769,18 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private showAllPins(on: boolean): void {
     if (!this.diagram) return;
     this.diagram.nodes.each((n) => {
-      // Every rail is live while a wire is in flight — that is the moment the
-      // whole canvas is a set of places to drop it.
-      if (on) n.ports.each((p) => { if (p.portId) { p.opacity = 1; p.pickable = true; } });
-      else this.resetPins(n);
+      if (!on) { this.resetPins(n); return; }
+      // A wire in flight makes every rail a live target — but still not a drawn
+      // one. Nothing is lost: a wire may be dropped anywhere on a block and is
+      // taken to the nearest facing edge, so the block itself is the target and
+      // does not need painting. Named pins do light up: dropping on one of
+      // those means something particular, so it has to be visible to aim at.
+      n.ports.each((p) => {
+        const id = String(p.portId ?? '');
+        if (!id) return;
+        p.pickable = true;
+        p.opacity = RAIL_IDS.has(id) ? 0 : 1;
+      });
     });
   }
 

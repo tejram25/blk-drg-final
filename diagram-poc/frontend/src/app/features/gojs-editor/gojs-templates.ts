@@ -80,22 +80,40 @@ export function railAt(node: go.Node, pt: go.Point): string | null {
   return gap[near] <= railThickness(across) + RAIL_REACH ? near : null;
 }
 
+/** The dot marking where a wire would leave the block from. */
+export const WIRE_DOT = 'WIREDOT';
+
 /**
- * Show one edge rail, or none, and say so with the cursor.
+ * Say where a wire would start — with a dot on the edge, not a band along it.
  *
- * The rails are never pickable at rest — an invisible stripe that takes the
- * press meant for the block is exactly what made a small block impossible to
- * pick up. What decides whether a press starts a wire is the press point
- * itself (see the linking tool's `findLinkablePort`), so this is only what the
- * user is shown: the edge that is live, and a crosshair while over it.
+ * The rails are geometry, not decoration: they are never drawn and never
+ * pressable. What decides whether a press starts a wire is the press point
+ * itself (see the linking tool's `findLinkablePort`), and the cursor already
+ * says which gesture you will get, so a translucent stripe down the edge was
+ * ink with no job — on a small block it was most of the block. A single dot at
+ * the point the wire would actually attach says the same thing and says it more
+ * precisely, since that is exactly where the wire ends up.
  */
-export function showRail(node: go.Node, id: string | null): void {
-  node.ports.each((p) => {
-    const pid = String(p.portId ?? '');
-    if (RAIL_IDS.has(pid)) p.opacity = pid === id ? 1 : 0;
-  });
-  const body = node.findPort('');
-  if (body) body.cursor = id ? 'crosshair' : 'move';
+export function showRail(node: go.Node, id: string | null, pt: go.Point | null): void {
+  const dot = node.findObject(WIRE_DOT);
+  if (!dot) return;
+  const b = bodyBounds(node);
+  if (!id || !pt || !b.width || !b.height) { dot.visible = false; return; }
+  const fx = Math.min(1, Math.max(0, (pt.x - b.x) / b.width));
+  const fy = Math.min(1, Math.max(0, (pt.y - b.y) / b.height));
+  const spot = id === 'L' ? new go.Spot(0, fy) : id === 'R' ? new go.Spot(1, fy)
+    : id === 'T' ? new go.Spot(fx, 0) : new go.Spot(fx, 1);
+  dot.alignment = spot;
+  // Wholly inside the outline: a Spot panel takes the size of everything in it,
+  // so a dot straddling the edge would quietly make the block bigger.
+  dot.alignmentFocus = spot;
+  dot.visible = true;
+}
+
+/** Hide the connection dot — the pointer has left, or a picture is being taken. */
+export function hideRail(node: go.Node): void {
+  const dot = node.findObject(WIRE_DOT);
+  if (dot) dot.visible = false;
 }
 
 /** The rail a press at this point belongs to, as an object to start a wire on. */
@@ -257,9 +275,10 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
         // a connection point half a rail outside the block is what put the little
         // hook at the start of every wire: the spot recorded for it was interior,
         // so GoJS had no outward direction to leave in and doubled back.
-        // Not pickable at rest: a rail is a place a wire starts, not a thing
-        // lying over the block waiting to take the press meant for it. A wire
-        // in flight turns them all on so the whole canvas is a target again.
+        // Never drawn and not pickable at rest: a rail is the arithmetic of
+        // where a wire may attach, not a thing lying over the block waiting to
+        // take the press meant for it. A wire in flight turns them all on, so
+        // the whole canvas becomes a set of places to drop it.
         cursor: 'crosshair', opacity: 0, pickable: false, alignment: spot, alignmentFocus: spot,
         portId: id, fromLinkable: true, toLinkable: true, fromSpot: side, toSpot: side,
       });
@@ -269,6 +288,10 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       sidePort('B', go.Spot.Bottom, go.Spot.BottomSide, false),
       sidePort('L', go.Spot.Left, go.Spot.LeftSide, true),
     ];
+    /** Where the wire would leave from, shown while the pointer is at an edge. */
+    const wireDot = () => $(go.Shape, 'Circle',
+      { name: WIRE_DOT, desiredSize: new go.Size(9, 9), fill: '#22d3ee', stroke: '#ffffff',
+        strokeWidth: 1.5, visible: false, pickable: false });
     const sideSpot = (s: string) => {
       const sp = go.Spot.parse(s);
       const dl = sp.x, dr = 1 - sp.x, dt = sp.y, db = 1 - sp.y;
@@ -409,6 +432,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
             new go.Binding('font', 'badgeFont')))),
       ...sidePorts(),
       pinOverlay(),
+      wireDot(),
     );
     diagram.nodeTemplateMap.set('block', block);
     diagram.nodeTemplate = block;
@@ -439,6 +463,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
                   new go.Binding('text', ''))) }))),
       ...sidePorts(),
       pinOverlay(),
+      wireDot(),
     );
     diagram.nodeTemplateMap.set('part', part);
 
@@ -455,6 +480,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
           new go.Binding('text').makeTwoWay())),
       ...sidePorts(),
       pinOverlay(),
+      wireDot(),
     );
     diagram.nodeTemplateMap.set('image', image);
 
@@ -518,6 +544,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
         new go.Binding('visible', 'sub', (s) => !!s && String(s).length > 0)),
       ...sidePorts(),
       pinOverlay(),
+      wireDot(),
     );
     diagram.nodeTemplateMap.set('shape', shape);
 
@@ -868,6 +895,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       // they need the same four ports every node has.
       ...sidePorts(),
       pinOverlay(),
+      wireDot(),
     );
     diagram.commandHandler.archetypeGroupData = { isGroup: true, text: 'Subsystem' };
 }
