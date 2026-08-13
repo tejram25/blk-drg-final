@@ -11,7 +11,8 @@ export type StyleProp =
   'fill' | 'stroke' | 'borderWidth' | 'titleColor' | 'titlePlacement' | 'width' | 'height'
   | 'titleX' | 'titleY' | 'titleSize' | 'pad' | 'corner' | 'noFill' | 'noBorder'
   | 'titleBg' | 'noTitleBg' | 'titleBandBorder' | 'titleBandWidth'
-  | 'badge' | 'badgeFill' | 'badgeColor' | 'badgeSize' | 'labelSpot' | 'labelX' | 'labelY';
+  | 'badge' | 'badgeFill' | 'badgeColor' | 'badgeSize' | 'labelSpot' | 'labelX' | 'labelY'
+  | 'labelColor' | 'labelSize';
 
 export interface StyleChange { prop: StyleProp; value: string | number | boolean; }
 export interface PinSideChange { index: number; side: PinSide; }
@@ -79,6 +80,10 @@ export class BlockStylePanelComponent {
   @Input() labelSpot = '0.5 0.5';
   @Input() labelX = 0.5;
   @Input() labelY = 0.5;
+  /** The name's own colour and type size — the pair a container spells as
+   *  Title colour and Title size. */
+  @Input() labelColor = '#1f2937';
+  @Input() labelSize: number | null = null;
   @Input() width: number | null = null;
   @Input() height: number | null = null;
   @Input() pins: Pin[] = [];

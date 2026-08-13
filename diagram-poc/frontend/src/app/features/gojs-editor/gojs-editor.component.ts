@@ -1008,8 +1008,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     return names[k] ?? k;
   }
 
-  /** Label colour for shape captions, tuned to the current canvas theme. */
-  private get labelColor(): string { return this.lightCanvas ? '#1f2937' : '#e2e8f0'; }
+  /** The label colour a *newly placed* shape gets, following the canvas theme.
+   *  Distinct from `labelColor`, which is the colour of the selected block's
+   *  own name as the properties panel shows it. */
+  private get themeLabelColor(): string { return this.lightCanvas ? '#1f2937' : '#e2e8f0'; }
 
   /** Fill / stroke / label colours for native shapes on the current canvas theme. */
   private shapeTheme(): { fill: string; stroke: string; labelColor: string } {
@@ -1031,7 +1033,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (info) {
       const data: go.ObjectData = {
         category: info.basic ? 'basic' : 'symbol', text: b.label, shape: b.shape, source: info.source,
-        size: `${info.width} ${info.height}`, loc: go.Point.stringify(loc), labelColor: this.labelColor,
+        size: `${info.width} ${info.height}`, loc: go.Point.stringify(loc), labelColor: this.themeLabelColor,
         ports: info.pins.map((p, i) => ({ portId: `p${i}`, spot: `${p.fx} ${p.fy}` })),
       };
       if (b.shape?.startsWith('elec-')) {
@@ -1400,22 +1402,46 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       ? cur.replace(/(\d+(?:\.\d+)?)px/, size + 'px')
       : `bold ${size}px Roboto, sans-serif`);
   }
-  /** How much room a container leaves around what is inside it. */
+  /**
+   * How much room is left around what is inside — the members of a container,
+   * the name of a block. One control, because it is one idea, and the model
+   * field it writes differs only because a container's padding has four sides.
+   */
   get containerPad(): number {
-    const p = String(this.selectedNode?.data?.pad ?? '');
-    const n = Number(p.trim().split(/\s+/).pop());
+    const p = this.selectedNode?.data?.pad;
+    if (!this.isContainer) return typeof p === 'number' ? p : 6;
+    const n = Number(String(p ?? '').trim().split(/\s+/).pop());
     return isFinite(n) ? n : 16;
   }
   setContainerPad(v: any): void {
     const n = Math.min(120, Math.max(0, Number(v) || 0));
+    if (!this.isContainer) { this.setField('pad', n); return; }
     // Room is left at the top for the title, so that edge keeps its extra.
     this.setField('pad', `${n + 14} ${n} ${n} ${n}`);
   }
   get containerCorner(): number {
     const n = Number(this.selectedNode?.data?.corner);
-    return isFinite(n) ? n : 12;
+    return isFinite(n) ? n : (this.isContainer ? 12 : 0);
   }
-  setContainerCorner(v: any): void { this.setField('corner', Math.min(60, Math.max(0, Number(v) || 0))); }
+  /** A radius only rounds a figure that has corners to round, so asking for one
+   *  on a plain rectangle turns it into a rounded one. */
+  setContainerCorner(v: any): void {
+    const n = Math.min(60, Math.max(0, Number(v) || 0));
+    this.setField('corner', n);
+    const fig = String(this.selectedNode?.data?.figure ?? '');
+    if (!this.isContainer && n > 0 && fig === 'Rectangle') this.setField('figure', 'RoundedRectangle');
+  }
+
+  /** The name's own colour and type size — Title colour and Title size, for
+   *  something that has a name rather than a title. */
+  get labelColor(): string { return this.hexOr(this.selectedNode?.data?.labelColor, '#1f2937'); }
+  get labelSize(): number {
+    const m = /(\d+(?:\.\d+)?)px/.exec(String(this.selectedNode?.data?.font ?? ''));
+    return m ? Number(m[1]) : 12.5;
+  }
+  private setLabelSize(v: any): void {
+    this.setFontPart({ size: Math.min(60, Math.max(5, Number(v) || 12.5)) });
+  }
 
   // ---- the band behind a container's title, and a block's status badge ----
   get titleBg(): string { return String(this.selectedNode?.data?.titleBg ?? ''); }
@@ -1593,6 +1619,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'labelSpot': this.setField('labelSpot', t); break;
       case 'labelX': this.setLabelPart(0, n); break;
       case 'labelY': this.setLabelPart(1, n); break;
+      case 'labelColor': this.setLabelColor(t); break;
+      case 'labelSize': this.setLabelSize(n); break;
       case 'width': this.setNodeSize('w', n); break;
       case 'height': this.setNodeSize('h', n); break;
     }
@@ -1965,7 +1993,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Build a live diagram of coloured shapes from the extracted nodes/links. */
   private applyExtractedDiagram(res: ImageDiagramResult): void {
     const stamp = Date.now().toString(36);
-    const cap = this.labelColor;
+    const cap = this.themeLabelColor;
     const idMap = new Map<string, string>();
     const nodes: go.ObjectData[] = (res.nodes || []).map((n) => {
       const key = `img-${stamp}-${n.id}`;

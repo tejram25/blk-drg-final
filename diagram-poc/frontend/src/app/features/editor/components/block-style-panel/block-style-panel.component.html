@@ -91,13 +91,19 @@
     <div class="pin-hint">Or hold <b>Alt</b> and drag the title on the canvas to put it anywhere
       inside the container.</div>
   } @else {
-    <!-- Label colour, size and alignment live under Text, next to the rest of
-         the type controls, rather than being spelled twice. -->
     <div class="style-grid">
       <label><span>Width</span>
         <input type="number" min="8" [ngModel]="width" (ngModelChange)="style.emit({ prop: 'width', value: $event })" /></label>
       <label><span>Height</span>
         <input type="number" min="8" [ngModel]="height" (ngModelChange)="style.emit({ prop: 'height', value: $event })" /></label>
+      <!-- The same two a container has: the gap the name keeps to the outline,
+           and how round the corners are. -->
+      <label><span>Inner padding</span>
+        <input type="number" min="0" max="120" step="1"
+               [ngModel]="pad" (ngModelChange)="style.emit({ prop: 'pad', value: $event })" /></label>
+      <label><span>Corner radius</span>
+        <input type="number" min="0" max="60" step="1"
+               [ngModel]="corner" (ngModelChange)="style.emit({ prop: 'corner', value: $event })" /></label>
     </div>
   }
 }
@@ -129,6 +135,28 @@
     <label><span>Name y</span>
       <input type="number" min="0" max="1" step="0.01"
              [ngModel]="labelY" (ngModelChange)="style.emit({ prop: 'labelY', value: $event })" /></label>
+  </div>
+  <div class="style-grid">
+    <label><span>Name colour</span>
+      <input type="color" [ngModel]="labelColor"
+             (ngModelChange)="style.emit({ prop: 'labelColor', value: $event })" /></label>
+    <label><span>Name size</span>
+      <input type="number" min="5" max="60" step="0.5"
+             [ngModel]="labelSize" (ngModelChange)="style.emit({ prop: 'labelSize', value: $event })" /></label>
+    <!-- A band behind the name, exactly as a container has behind its title -->
+    <label><span>Name band</span>
+      <span class="swatch-row">
+        <input type="color" [ngModel]="titleBg || '#dcebd5'"
+               (ngModelChange)="style.emit({ prop: 'titleBg', value: $event })" />
+        <button type="button" class="none-btn" [class.on]="!titleBg" matTooltip="No band"
+                (click)="style.emit({ prop: 'noTitleBg', value: !!titleBg })">∅</button>
+      </span></label>
+    <label><span>Band outline</span>
+      <input type="color" [ngModel]="titleBandBorder || '#4e9a3e'"
+             (ngModelChange)="style.emit({ prop: 'titleBandBorder', value: $event })" /></label>
+    <label class="wide"><span>Band width</span>
+      <input type="number" min="0" max="600" step="2" placeholder="auto"
+             [ngModel]="titleBandWidth" (ngModelChange)="style.emit({ prop: 'titleBandWidth', value: $event })" /></label>
   </div>
   <div class="pin-hint">0,0 is the top left of the block and 1,1 the bottom right. Or hold
     <b>Alt</b> and drag the name on the canvas to put it anywhere inside.</div>

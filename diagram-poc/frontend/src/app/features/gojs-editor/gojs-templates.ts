@@ -498,6 +498,8 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
           sizeBind(),
           new go.Binding('fill', 'fill'),
           new go.Binding('stroke', 'stroke'),
+          // Rounded corners, the same control a container has.
+          new go.Binding('parameter1', 'corner'),
           // Whole data object, not `minSize`: a formatted label raises the floor.
           new go.Binding('minSize', '', shapeMinSize),
           new go.Binding('strokeWidth', 'strokeWidth'),
@@ -506,14 +508,25 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
           // survive a round trip through the model.
           new go.Binding('strokeDashArray', 'dashPattern',
             (v) => (v === true ? [5, 4] : Array.isArray(v) ? v : null))),
-        // A formatted label is drawn by the stack below instead.
-        $(go.TextBlock,
-          { name: 'LABEL', editable: true, font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937',
-            textAlign: 'center', maxSize: new go.Size(150, NaN), margin: 6 },
+        // A formatted label is drawn by the stack below instead. The name sits
+        // in a panel of its own so it can be given a band behind it, the way a
+        // container's title can — the band is nothing until a colour is set,
+        // and the name's own margin becomes the padding inside it.
+        $(go.Panel, 'Auto', ...placeable('labelSpot'),
           new go.Binding('visible', 'html', (h) => !isRich(h)),
-          new go.Binding('text').makeTwoWay(),
-          ...labelStyle(),
-          ...placeable('labelSpot')),
+          $(go.Shape, 'Rectangle', { fill: null, stroke: null, strokeWidth: 0 },
+            new go.Binding('fill', 'titleBg'),
+            new go.Binding('stroke', 'titleBorder'),
+            new go.Binding('strokeWidth', 'titleBorder', (b) => (b ? 1 : 0)),
+            new go.Binding('desiredSize', 'titleSize2', go.Size.parse)),
+          $(go.TextBlock,
+            { name: 'LABEL', editable: true, font: '600 12.5px Roboto, sans-serif', stroke: '#1f2937',
+              textAlign: 'center', maxSize: new go.Size(150, NaN), margin: 6 },
+            new go.Binding('text').makeTwoWay(),
+            // How much room the name keeps around itself: the gap to the
+            // outline, and the padding inside a band.
+            new go.Binding('margin', 'pad', (v: number) => new go.Margin(typeof v === 'number' ? v : 6)),
+            ...labelStyle())),
         richStack($, ...placeable('labelSpot')),
         // A status marker on the block: the drawings put a round badge at the end
         // of every part-number row.

@@ -57,6 +57,8 @@ export class PropertiesPanelComponent {
   @Input() labelSpot = '0.5 0.5';
   @Input() labelX = 0.5;
   @Input() labelY = 0.5;
+  @Input() labelColor = '#1f2937';
+  @Input() labelSize: number | null = null;
   @Input() badge = '';
   @Input() badgeFill = '#f5a623';
   @Input() badgeColor = '#ffffff';
