@@ -533,7 +533,13 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       // linking tool's search for a port (see `findLinkablePort`).
       { layerName: 'Foreground',
         routing: go.Link.Orthogonal, corner: 8, relinkableFrom: true, relinkableTo: true, reshapable: true, resegmentable: true },
-      new go.Binding('routing', 'routing', (r) => r === 'normal' || r === 'smooth' ? go.Link.Normal : go.Link.Orthogonal),
+      // A hand-drawn wire says `manhattan` and goes *around* what is in its way:
+      // a wire drawn straight through a block it has nothing to do with is the
+      // one routing mistake a reader cannot forgive. An imported drawing carries
+      // no routing at all and keeps plain orthogonal, so its wires stay exactly
+      // where the artwork put them.
+      new go.Binding('routing', 'routing', (r) => (r === 'normal' || r === 'smooth' ? go.Link.Normal
+        : r === 'manhattan' || r === 'avoid' ? go.Link.AvoidsNodes : go.Link.Orthogonal)),
       new go.Binding('curve', 'routing', (r) => r === 'smooth' ? go.Link.Bezier : go.Link.None),
       new go.Binding('corner', 'wire', (w) => (w ? 0 : 8)),
       new go.Binding('corner', 'corner'),
@@ -733,6 +739,11 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
     diagram.groupTemplate = $(
       go.Group, 'Spot',
       { layerName: 'Containers',
+        // A wire routing around blocks must still be free to cross a subsystem
+        // box — every block diagram runs wires straight across one, and a wire
+        // detouring around a whole enclosure to reach something inside it would
+        // be far worse than the crossing it avoided.
+        avoidable: false,
         locationSpot: go.Spot.Center, ungroupable: true, computesBoundsAfterDrag: true,
         handlesDragDropForMembers: true, portSpreading: go.PortSpreading.Evenly,
         // Dropping a block on a container puts it inside. `handlesDragDropForMembers`

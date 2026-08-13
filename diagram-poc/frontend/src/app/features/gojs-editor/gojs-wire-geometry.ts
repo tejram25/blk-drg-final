@@ -176,40 +176,155 @@ export class WireGeometry {
     return new go.Point(b.x + b.width * s.x, b.y + b.height * s.y);
   }
 
-  /**
-   * A run within a few pixels of straight is drawn straight.
-   *
-   * Orthogonal routing turns a 1 px difference between two nearly-aligned ends
-   * into a full S-bend, and a dogleg in what reads as a straight line is the
-   * single thing that makes an otherwise correct drawing look hand-shaky. Only
-   * the end that was just placed moves, and only if it is on a rail — a named
-   * pin owns its position, and nudging it would drag every other wire on it.
-   */
-  static readonly STRAIGHTEN_TOL = 6;
+  /** The grid a hand-drawn wire lines up with — the one blocks snap to. */
+  static readonly GRID = 8;
 
-  private straightenRun(link: go.Link, moved: 'from' | 'to'): void {
-    const portId = String(link.data?.[moved + 'Port'] ?? '');
-    if (!WireGeometry.RAIL_IDS.has(portId)) return;
-    const other = moved === 'from' ? 'to' : 'from';
-    const otherId = String(link.data?.[other + 'Port'] ?? '');
-    const horizontal = portId === 'L' || portId === 'R';
-    // Only when both ends face along the same axis; an L-shaped run is meant
-    // to bend, and squaring it up would move the wire somewhere else entirely.
-    if (horizontal !== (otherId === 'L' || otherId === 'R')) return;
-    const a = this.endDocPoint(link, moved), z = this.endDocPoint(link, other);
-    if (!a || !z) return;
-    const off = horizontal ? z.y - a.y : z.x - a.x;
-    if (!off || Math.abs(off) > WireGeometry.STRAIGHTEN_TOL) return;
-    const node = this.diagram.findNodeForKey(link.data?.[moved] as go.Key);
-    let port: go.GraphObject | null = null;
-    node?.ports.each((p) => { if (p.portId === portId) port = p; });
-    const b = (port as go.GraphObject | null)?.getDocumentBounds();
-    if (!b || !b.width || !b.height) return;
-    const s = go.Spot.parse(String(link.data?.[moved + 'SpotXY'] ?? '0.5 0.5'));
-    const snapped = horizontal
-      ? new go.Spot(s.x, Math.min(1, Math.max(0, (a.y + off - b.y) / b.height)))
-      : new go.Spot(Math.min(1, Math.max(0, (a.x + off - b.x) / b.width)), s.y);
-    this.diagram.model.set(link.data, moved + 'SpotXY', go.Spot.stringify(snapped));
+  /** The port a wire end is attached to, whether rail or named pin. */
+  private portOf(link: go.Link, which: 'from' | 'to'): go.GraphObject | null {
+    const portId = String(link.data?.[which + 'Port'] ?? '');
+    const node = this.diagram.findNodeForKey(link.data?.[which] as go.Key);
+    let found: go.GraphObject | null = null;
+    node?.ports.each((p) => { if (p.portId === portId) found = p; });
+    return found;
+  }
+
+  /**
+   * How far a wire end may travel across the run, and which way it faces.
+   *
+   * A rail spans a whole edge, so its end can sit anywhere along it — that band
+   * is what makes a straight wire possible between two blocks that do not line
+   * up. A named pin is a point: it owns its position, so it offers no band, only
+   * the line it is on.
+   */
+  private endBand(link: go.Link, which: 'from' | 'to'):
+  { axis: 'h' | 'v'; lo: number; hi: number; fixed: boolean } | null {
+    const portId = String(link.data?.[which + 'Port'] ?? '');
+    const port = this.portOf(link, which);
+    const b = port?.getDocumentBounds();
+    if (!port || !b || !b.width || !b.height) return null;
+    if (WireGeometry.RAIL_IDS.has(portId)) {
+      const horizontal = portId === 'L' || portId === 'R';
+      return horizontal
+        ? { axis: 'h', lo: b.y, hi: b.y + b.height, fixed: false }
+        : { axis: 'v', lo: b.x, hi: b.x + b.width, fixed: false };
+    }
+    // A named pin: the axis it faces comes from the side it sits on.
+    const s = port.fromSpot;
+    const horizontal = s.equals(go.Spot.Left) || s.equals(go.Spot.Right);
+    const c = new go.Point(b.x + b.width / 2, b.y + b.height / 2);
+    const at = horizontal ? c.y : c.x;
+    return { axis: horizontal ? 'h' : 'v', lo: at, hi: at, fixed: true };
+  }
+
+  /**
+   * Draw a run straight whenever the two ends can reach a common line.
+   *
+   * Orthogonal routing turns any difference between two ends into a dogleg, and
+   * a bend in what reads as a straight line is the single thing that makes an
+   * otherwise correct drawing look hand-shaky. Because a rail spans a whole
+   * edge, two blocks whose faces overlap at all can always be joined by a
+   * straight wire — the wire just has to meet each block at the same height.
+   * So rather than nudging ends that are already nearly aligned, this puts both
+   * ends on one line, chosen inside the band both can reach and snapped to the
+   * grid when the grid falls inside it.
+   *
+   * It gives up honestly: ends facing along different axes make an L, and two
+   * blocks whose faces do not overlap cannot be joined straight. Those keep
+   * their bend.
+   *
+   * @param prefer the end whose position wins — the one the user aimed with.
+   */
+  alignRun(link: go.Link, prefer: 'from' | 'to', offset = 0): boolean {
+    const bands = { from: this.endBand(link, 'from'), to: this.endBand(link, 'to') };
+    if (!bands.from || !bands.to || bands.from.axis !== bands.to.axis) return false;
+    const lo = Math.max(bands.from.lo, bands.to.lo);
+    const hi = Math.min(bands.from.hi, bands.to.hi);
+    if (hi - lo < 1) return false;
+    const horizontal = bands.from.axis === 'h';
+    const clamp = (v: number) => Math.min(hi, Math.max(lo, v));
+
+    // Where to put the line: a pinned end decides it, otherwise the end the
+    // user aimed with. Then the grid, if the grid line is one both ends reach.
+    const fixed = bands.from.fixed ? 'from' : bands.to.fixed ? 'to' : null;
+    const source = this.endDocPoint(link, fixed ?? prefer);
+    if (!source) return false;
+    let at = clamp((horizontal ? source.y : source.x) + offset);
+    if (!fixed) {
+      const g = Math.round(at / WireGeometry.GRID) * WireGeometry.GRID;
+      if (g >= lo && g <= hi) at = g;
+    }
+
+    for (const which of ['from', 'to'] as const) {
+      if (bands[which]!.fixed) continue;
+      const port = this.portOf(link, which);
+      const b = port?.getDocumentBounds();
+      if (!b || !b.width || !b.height) continue;
+      const s = go.Spot.parse(String(link.data?.[which + 'SpotXY'] ?? '0.5 0.5'));
+      const spot = horizontal
+        ? new go.Spot(s.x, Math.min(1, Math.max(0, (at - b.y) / b.height)))
+        : new go.Spot(Math.min(1, Math.max(0, (at - b.x) / b.width)), s.y);
+      this.diagram.model.set(link.data, which + 'SpotXY', go.Spot.stringify(spot));
+    }
+    return true;
+  }
+
+  /** The straight, axis-parallel stretches of a link, as they are drawn. */
+  private runsOf(link: go.Link): { v: boolean; at: number; lo: number; hi: number }[] {
+    const out: { v: boolean; at: number; lo: number; hi: number }[] = [];
+    const pts: go.Point[] = [];
+    link.points.each((p) => pts.push(p.copy()));
+    for (let i = 0; i + 1 < pts.length; i++) {
+      const s = pts[i], e = pts[i + 1];
+      if (Math.abs(s.x - e.x) < 0.5 && Math.abs(s.y - e.y) > 1) {
+        out.push({ v: true, at: s.x, lo: Math.min(s.y, e.y), hi: Math.max(s.y, e.y) });
+      } else if (Math.abs(s.y - e.y) < 0.5 && Math.abs(s.x - e.x) > 1) {
+        out.push({ v: false, at: s.y, lo: Math.min(s.x, e.x), hi: Math.max(s.x, e.x) });
+      }
+    }
+    return out;
+  }
+
+  /** How much of this wire is drawn on top of another one. */
+  private overlapLength(link: go.Link): number {
+    const mine = this.runsOf(link);
+    let worst = 0;
+    this.diagram.links.each((other) => {
+      if (other === link) return;
+      for (const a of this.runsOf(other)) {
+        for (const c of mine) {
+          if (a.v !== c.v || Math.abs(a.at - c.at) > 1.5) continue;
+          worst = Math.max(worst, Math.min(a.hi, c.hi) - Math.max(a.lo, c.lo));
+        }
+      }
+    });
+    return worst;
+  }
+
+  /**
+   * Move a wire off any wire it was drawn on top of.
+   *
+   * Two wires making the same journey land on the same line and read as one
+   * line that mysteriously has two arrowheads. A rail is a whole edge, so there
+   * is room to one side: the wire is stepped along it a grid square at a time,
+   * out and back, and settles at the first place it has the line to itself. If
+   * there is nowhere — the band both ends can reach is too narrow — it stays
+   * where the user put it rather than being dragged somewhere arbitrary.
+   */
+  private separate(link: go.Link): void {
+    const clear = () => { link.updateRoute(); return this.overlapLength(link) <= 3; };
+    if (clear()) return;
+    const home = {
+      from: link.data?.['fromSpotXY'] as string | undefined,
+      to: link.data?.['toSpotXY'] as string | undefined,
+    };
+    for (const step of [1, -1, 2, -2, 3, -3, 4, -4]) {
+      if (!this.alignRun(link, 'to', step * WireGeometry.GRID)) break;
+      if (clear()) return;
+    }
+    for (const which of ['from', 'to'] as const) {
+      if (home[which] !== undefined) this.diagram.model.set(link.data, which + 'SpotXY', home[which]);
+    }
+    link.updateRoute();
   }
 
   /** A newly drawn wire: both ends are being placed, by one drag. */
@@ -220,7 +335,8 @@ export class WireGeometry {
       this.setWireEnd(link, 'from', this.linkStart);
       this.setWireEnd(link, 'to', end);
       // The drop end yields to the grabbed one: you aimed with the first click.
-      this.straightenRun(link, 'to');
+      this.alignRun(link, 'from');
+      this.separate(link);
     }, 'pin wire ends');
     this.linkStart = null;
   }
@@ -247,7 +363,10 @@ export class WireGeometry {
     if (!isFinite(reach(moved))) return;
     this.diagram.model.commit(() => {
       this.setWireEnd(link, moved, pt);
-      this.straightenRun(link, moved);
+      // The end that did not move decides the line, so dragging one end of a
+      // straight wire keeps it straight instead of putting a step in it.
+      this.alignRun(link, moved === 'from' ? 'to' : 'from');
+      this.separate(link);
     }, 'move wire end');
   }
 }
