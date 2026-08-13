@@ -1446,6 +1446,34 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
    *  canvas write the same field. */
   get labelSpot(): string { return String(this.selectedNode?.data?.labelSpot ?? '0.5 0.5'); }
 
+  /**
+   * The name's place as two fractions of the block, which is how a container
+   * states its title's and so how this should read too.
+   *
+   * A name dragged on the canvas is stored as the middle plus an offset in
+   * pixels — that is what keeps it put when the block is resized — so the
+   * fraction has to be worked out against the block's own size.
+   */
+  private labelPart(i: 0 | 1): number {
+    const s = go.Spot.parse(this.labelSpot);
+    const n = this.selectedNode;
+    const b = n ? (n.findPort('') ?? n).actualBounds : null;
+    const across = (i === 0 ? b?.width : b?.height) || 1;
+    const frac = (i === 0 ? s.x : s.y) + (i === 0 ? s.offsetX : s.offsetY) / across;
+    return Math.round(Math.min(1, Math.max(0, frac)) * 100) / 100;
+  }
+  get labelX(): number { return this.labelPart(0); }
+  get labelY(): number { return this.labelPart(1); }
+
+  /** Typing a position replaces the offset with a plain fraction, so the name
+   *  keeps that place in the block whatever size the block becomes. */
+  private setLabelPart(which: 0 | 1, v: any): void {
+    const n = Math.min(1, Math.max(0, Number(v) || 0));
+    const xy = [this.labelX, this.labelY];
+    xy[which] = n;
+    this.setField('labelSpot', `${xy[0]} ${xy[1]}`);
+  }
+
   private setBadgeSize(v: any): void {
     const n = Math.min(60, Math.max(8, Number(v) || 18));
     this.setField('badgeSize', `${n} ${n}`);
@@ -1563,6 +1591,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'badgeColor': this.setField('badgeColor', t); break;
       case 'badgeSize': this.setBadgeSize(n); break;
       case 'labelSpot': this.setField('labelSpot', t); break;
+      case 'labelX': this.setLabelPart(0, n); break;
+      case 'labelY': this.setLabelPart(1, n); break;
       case 'width': this.setNodeSize('w', n); break;
       case 'height': this.setNodeSize('h', n); break;
     }

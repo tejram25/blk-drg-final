@@ -121,8 +121,17 @@
       <option value="1 1">Bottom right</option>
       @if (labelCustom) { <option value="">Dragged</option> }
     </select></label>
-  <div class="pin-hint">Or hold <b>Alt</b> and drag the name on the canvas to put it anywhere
-    inside the block.</div>
+  <!-- and the exact spot, the same way a container places its title -->
+  <div class="style-grid">
+    <label><span>Name x</span>
+      <input type="number" min="0" max="1" step="0.01"
+             [ngModel]="labelX" (ngModelChange)="style.emit({ prop: 'labelX', value: $event })" /></label>
+    <label><span>Name y</span>
+      <input type="number" min="0" max="1" step="0.01"
+             [ngModel]="labelY" (ngModelChange)="style.emit({ prop: 'labelY', value: $event })" /></label>
+  </div>
+  <div class="pin-hint">0,0 is the top left of the block and 1,1 the bottom right. Or hold
+    <b>Alt</b> and drag the name on the canvas to put it anywhere inside.</div>
 }
 
 <!-- A status marker at the block's edge: "?" to check, "!" to flag. Its own

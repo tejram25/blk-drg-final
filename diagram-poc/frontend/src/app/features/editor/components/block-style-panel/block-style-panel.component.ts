@@ -11,7 +11,7 @@ export type StyleProp =
   'fill' | 'stroke' | 'borderWidth' | 'titleColor' | 'titlePlacement' | 'width' | 'height'
   | 'titleX' | 'titleY' | 'titleSize' | 'pad' | 'corner' | 'noFill' | 'noBorder'
   | 'titleBg' | 'noTitleBg' | 'titleBandBorder' | 'titleBandWidth'
-  | 'badge' | 'badgeFill' | 'badgeColor' | 'badgeSize' | 'labelSpot';
+  | 'badge' | 'badgeFill' | 'badgeColor' | 'badgeSize' | 'labelSpot' | 'labelX' | 'labelY';
 
 export interface StyleChange { prop: StyleProp; value: string | number | boolean; }
 export interface PinSideChange { index: number; side: PinSide; }
@@ -73,8 +73,12 @@ export class BlockStylePanelComponent {
   @Input() badgeFill = '#f5a623';
   @Input() badgeColor = '#ffffff';
   @Input() badgeSize: number | null = null;
-  /** Where the block's name sits inside it, as a spot. */
+  /** Where the block's name sits inside it, as a spot, and as the two
+   *  fractions the number boxes show — a dragged name is stored as an offset
+   *  in pixels, so the editor works those out against the block's own size. */
   @Input() labelSpot = '0.5 0.5';
+  @Input() labelX = 0.5;
+  @Input() labelY = 0.5;
   @Input() width: number | null = null;
   @Input() height: number | null = null;
   @Input() pins: Pin[] = [];
