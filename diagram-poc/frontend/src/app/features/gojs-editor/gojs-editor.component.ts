@@ -269,6 +269,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    document.removeEventListener('keydown', this.spaceToPan);
+    document.removeEventListener('keyup', this.spaceToPan);
     if (this.mobileMq && this.mobileMqListener) this.mobileMq.removeEventListener('change', this.mobileMqListener);
     this.chatSub?.unsubscribe();
     this.modelReplacedSub?.unsubscribe();
@@ -278,6 +280,28 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.overview) this.overview.div = null;
     if (this.diagram) this.diagram.div = null;
   }
+
+  /**
+   * Hold the space bar to pan.
+   *
+   * A drag on the background now draws a selection band, so panning needs a
+   * gesture of its own — space-and-drag is the one every drawing tool uses.
+   * The wheel and the scrollbars still scroll, and neither is affected.
+   *
+   * Ignored while typing: a space in the diagram's name, in chat or in a label
+   * is a space.
+   */
+  private readonly spaceToPan = (e: KeyboardEvent): void => {
+    if (e.code !== 'Space' || !this.diagram) return;
+    const el = e.target as HTMLElement | null;
+    const tag = el?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable) return;
+    const panning = e.type === 'keydown';
+    const tm = this.diagram.toolManager;
+    if (tm.dragSelectingTool.isEnabled !== panning) return;
+    tm.dragSelectingTool.isEnabled = !panning;
+    this.diagram.currentCursor = panning ? 'grab' : '';
+  };
 
   // ---- menus / keyboard ----
 
@@ -443,6 +467,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       allowDrop: true,
       'draggingTool.isGridSnapEnabled': true,
       'draggingTool.gridSnapCellSize': new go.Size(8, 8),
+      // A drag on the background selects the blocks it covers, straight away.
+      // GoJS waits 175ms before it will start a band and hands a quicker drag
+      // to panning, so out of the box you could only rubber-band by pressing,
+      // pausing, then dragging — which nobody discovers. Panning moved to the
+      // space bar, the scroll wheel and the scrollbars (see `spaceToPan`).
+      'dragSelectingTool.delay': 0,
       'linkingTool.isUnconnectedLinkValid': false,
       'linkingTool.portGravity': 20,
       'relinkingTool.portGravity': 20,
@@ -473,8 +503,37 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     // decided the cursor, and on a small block that reads as a box that cannot
     // be picked up at all.
     this.diagram.addDiagramListener('LayoutCompleted', () => this.diagram.nodes.each((n) => fitPorts(n)));
+    /**
+     * Deleting a container keeps what was inside it.
+     *
+     * GoJS removes a group's members along with the group — reasonable when a
+     * group owns its parts, wrong for a subsystem box, which is a way of saying
+     * "these belong together" drawn around blocks that exist in their own
+     * right. Deleting the box to redraw it should not take twenty blocks with
+     * it. Anything the user actually selected alongside the box still goes.
+     */
+    this.diagram.addDiagramListener('SelectionDeleting', (e) => {
+      const doomed = e.subject as go.Set<go.Part>;
+      const model = this.diagram.model as go.GraphLinksModel;
+      const freed: go.Part[] = [];
+      doomed.each((part) => {
+        if (!(part instanceof go.Group)) return;
+        part.memberParts.each((m) => { if (!doomed.contains(m) && m.data) freed.push(m); });
+      });
+      // Collected first: clearing a member's group key changes the very
+      // collection being walked.
+      for (const m of freed) model.setGroupKeyForNodeData(m.data, undefined);
+    });
     this.diagram.addDiagramListener('ChangedSelection', () => this.zone.run(() => this.syncSelection()));
-    this.diagram.addDiagramListener('TextEdited', () => this.zone.run(() => this.syncSelection()));
+    this.diagram.addDiagramListener('TextEdited', (e) => {
+      // A label editor takes several lines, so Enter adds one rather than
+      // finishing — press it and click away and the label quietly gained a
+      // blank line, which then sets the block's height. Nobody means that.
+      const tb = e.subject as go.TextBlock;
+      const tidy = String(tb?.text ?? '').replace(/\s+$/, '');
+      if (tb && tidy !== tb.text) this.diagram.model.commit(() => { tb.text = tidy; }, 'tidy label');
+      this.zone.run(() => this.syncSelection());
+    });
     this.diagram.addModelChangedListener((e) => {
       if (e.isTransactionFinished) this.zone.run(() => { this.updateCanvasEmpty(); this.scheduleAutosave(); });
     });
@@ -506,6 +565,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       const w = tooltip.measuredBounds.width;
       tooltip.location = new go.Point(vb.centerX - w / 2, vb.y + 12 / this.diagram.scale);
     };
+    document.addEventListener('keydown', this.spaceToPan);
+    document.addEventListener('keyup', this.spaceToPan);
     this.canvasRef.nativeElement.classList.toggle('canvas-light', this.lightCanvas);
     this.startAnimations();
   }
