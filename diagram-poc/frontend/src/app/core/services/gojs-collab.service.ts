@@ -15,6 +15,16 @@ export interface RemoteCursor {
   y: number;
 }
 
+/**
+ * What one participant can see: the corner and zoom an older client sends, and
+ * the region — middle and size, in document units — that following actually
+ * needs.
+ */
+export interface Viewport {
+  x: number; y: number; scale: number;
+  cx?: number; cy?: number; w?: number; h?: number;
+}
+
 /** A member of the current session (includes you), for the roster UI. */
 export interface Participant {
   id: number;
@@ -113,7 +123,7 @@ export class GojsCollabService {
   private presenceSeeded = false;
   private readonly leaveGraceMs = 6000;
 
-  private viewports = new Map<string, { x: number; y: number; scale: number }>();
+  private viewports = new Map<string, Viewport>();
   followUid: string | null = null;
   applyingViewport = false;
 
@@ -384,9 +394,23 @@ export class GojsCollabService {
     this.provider.awareness.setLocalStateField('cursor', point);
   }
 
+  /**
+   * Publish what this user can see, for anyone following them.
+   *
+   * `x`/`y`/`scale` are the top-left corner and zoom, which is what an older
+   * client reads. On their own they are not enough to follow someone: two
+   * people rarely have the same window, and matching corners then leaves the
+   * follower looking somewhere else — a laptop following a wide monitor lost
+   * the right-hand third of what was being talked about. What is followed is
+   * the *region*: the middle of the view and how much of the drawing fits in
+   * it, in document units, which is the same question on any screen.
+   */
   setLocalViewport(vp: { x: number; y: number; scale: number }): void {
     if (!this.provider || this.applyingViewport) return;
-    this.provider.awareness.setLocalStateField('viewport', vp);
+    const b = this.diagram?.viewportBounds;
+    this.provider.awareness.setLocalStateField('viewport', b && b.width > 0 && b.height > 0
+      ? { ...vp, cx: b.centerX, cy: b.centerY, w: b.width, h: b.height }
+      : vp);
   }
 
   toggleFollow(uid: string): void {
@@ -395,12 +419,24 @@ export class GojsCollabService {
     if (this.followUid) this.applyViewport(this.viewports.get(this.followUid));
   }
 
-  private applyViewport(vp?: { x: number; y: number; scale: number }): void {
+  private applyViewport(vp?: Viewport): void {
     if (!vp || !this.diagram) return;
+    const d = this.diagram;
     this.applyingViewport = true;
     try {
-      this.diagram.scale = vp.scale;
-      this.diagram.position = new go.Point(vp.x, vp.y);
+      const mine = d.viewportBounds;
+      if (!vp.w || !vp.h || mine.width <= 0 || mine.height <= 0) {
+        d.scale = vp.scale;
+        d.position = new go.Point(vp.x, vp.y);
+        return;
+      }
+      // Zoom out far enough to hold everything they can see. Never further in
+      // than they are: a bigger window then shows the same drawing at the same
+      // size with more around it, rather than magnifying it past the person
+      // who is talking.
+      const px = mine.width * d.scale, py = mine.height * d.scale;
+      d.scale = Math.max(d.minScale, Math.min(vp.scale, px / vp.w, py / vp.h));
+      d.centerRect(new go.Rect(vp.cx! - vp.w / 2, vp.cy! - vp.h / 2, vp.w, vp.h));
     } finally {
       this.applyingViewport = false;
     }
@@ -438,7 +474,7 @@ export class GojsCollabService {
     const cursors: RemoteCursor[] = [];
     const byUid = new Map<string, Participant>();
     const cursorUids = new Set<string>();
-    const freshViewports = new Map<string, { x: number; y: number; scale: number }>();
+    const freshViewports = new Map<string, Viewport>();
     states.forEach((state: any, id: number) => {
       if (!state?.user) return;
       const uid = state.user.uid || `client-${id}`;

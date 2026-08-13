@@ -52,7 +52,7 @@
                           <input class="doc-name" [(ngModel)]="diagramName" [placeholder]="'doc.placeholder' | translate" />
                           <div class="dd open-dd">
                             <button type="button" class="dd-trigger" [class.open]="openMenuOpen" (click)="toggleMenu('open', $event)">
-                              <span class="dd-val">{{ selectedDiagramId != null ? selectedDiagramName : ('open.saved' | translate) }}</span>
+                              <span class="dd-val">{{ selectedDiagramId != null && selectedDiagramName ? selectedDiagramName : ('open.saved' | translate) }}</span>
                               <svg class="dd-caret" width="11" height="7" viewBox="0 0 12 8"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </button>
                             @if (openMenuOpen) {

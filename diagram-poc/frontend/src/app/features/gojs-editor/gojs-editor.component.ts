@@ -233,6 +233,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.loadPalette();
     this.refreshList();
+    // Which diagram this is, before anything is drawn. Read after the view was
+    // checked — which is where the loading of it belongs, since it needs the
+    // canvas — it changed the name on the toolbar a moment too late, and
+    // Angular reported the button's label changing after it had been checked.
+    const routeId = this.route.snapshot.paramMap.get('id');
+    if (routeId) this.selectedDiagramId = Number(routeId);
     this.mobileMq = window.matchMedia('(max-width: 768px), (orientation: landscape) and (max-height: 500px)');
     this.applyMobile(this.mobileMq.matches);
     this.mobileMqListener = (e) => this.zone.run(() => { this.applyMobile(e.matches); this.cdr.detectChanges(); });
@@ -259,7 +265,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.zone.runOutsideAngular(() => this.initDiagram());
     const id = this.route.snapshot.paramMap.get('id');
-    if (id) { this.selectedDiagramId = Number(id); this.doLoad(Number(id)); }
+    if (id) this.doLoad(Number(id));
   }
 
   ngOnDestroy(): void {
@@ -2448,7 +2454,14 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       if (s) { d.avgRating = s.average; d.reviewCount = s.count; }
     }
   }
-  get selectedDiagramName(): string { return this.savedDiagrams.find((d) => d.id === this.selectedDiagramId)?.name ?? ''; }
+  /** The name on the open-a-diagram button. The saved list arrives after the
+   *  diagram itself does, so until it lands the name we already have is the
+   *  honest label — looking it up in a list that is still empty blanked the
+   *  button for a moment on every load. */
+  get selectedDiagramName(): string {
+    const saved = this.savedDiagrams.find((d) => d.id === this.selectedDiagramId)?.name;
+    return saved || this.diagramName || '';
+  }
   load(): void {
     if (this.selectedDiagramId == null) { this.newDiagram(); return; }
     this.doLoad(this.selectedDiagramId);
