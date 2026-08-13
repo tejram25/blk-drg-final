@@ -177,9 +177,13 @@ export class GojsCollabService {
     this.provider.on('sync', (isSynced: boolean) => {
       if (!isSynced || !this.cells || !this.diagram || this.seeded) return;
       this.seeded = true;
+      // Anyone else *connected*, counted by connection and not by account: a
+      // second tab of your own is still a canvas that has been open elsewhere
+      // and may be behind. Judged by account, that tab decided nobody was here
+      // and published its own copy over the room instead of adopting it.
       let othersPresent = false;
       this.provider!.awareness.getStates().forEach((s: any, id: number) => {
-        if (id !== this.provider!.awareness.clientID && s?.user?.uid && s.user.uid !== this.myUserId) othersPresent = true;
+        if (id !== this.provider!.awareness.clientID && s?.user) othersPresent = true;
       });
       if (this.cells.size > 0 && othersPresent) this.replaceModelFromRoom();
       else this.publishAll();
@@ -485,7 +489,12 @@ export class GojsCollabService {
       } else if (isSelf) {
         byUid.get(uid)!.isSelf = true;
       }
-      if (isSelf || !state?.cursor || cursorUids.has(uid)) return;
+      // Only your *own connection's* pointer is left undrawn. The roster still
+      // counts a person once however many tabs they have open, but a pointer
+      // belongs to a canvas: judged by account, your second tab's pointer was
+      // taken for your own and nothing was drawn at all, which is what
+      // collaboration looks like when it looks broken.
+      if (id === awareness.clientID || !state?.cursor || cursorUids.has(uid)) return;
       cursorUids.add(uid);
       cursors.push({ id, name: state.user.name, color: state.user.color, x: state.cursor.x, y: state.cursor.y });
     });
