@@ -45,6 +45,18 @@ const RAIL_DIR = '_rail';
 export const RAIL_IDS = new Set(['T', 'R', 'B', 'L']);
 /** How close to an edge counts as reaching for it rather than for the block. */
 const RAIL_REACH = 4;
+/**
+ * The same, for a container — and much narrower on purpose.
+ *
+ * A container is mostly edge: a box with its members filling it and its title
+ * along the top. Judged by the rule a block uses, the whole frame and the title
+ * with it counted as reaching for an edge, so pressing a container anywhere it
+ * could be taken hold of drew a wire instead of moving it. Wires do attach to
+ * containers — most of the wires in the reference drawings do — so the outline
+ * stays a place to start one; it is just the outline now, and the title and the
+ * room inside belong to the container.
+ */
+const GROUP_REACH = 6;
 
 /** A rail's thickness on a block of this size: a share of the side it crosses,
  *  never more than RAIL_MAX and never so thin it cannot be hit. */
@@ -77,7 +89,8 @@ export function railAt(node: go.Node, pt: go.Point): string | null {
   for (const id of Object.keys(gap)) if (gap[id] < gap[near]) near = id;
   if (gap[near] < 0) return null;
   const across = near === 'L' || near === 'R' ? b.width : b.height;
-  return gap[near] <= railThickness(across) + RAIL_REACH ? near : null;
+  const reach = node instanceof go.Group ? GROUP_REACH : railThickness(across) + RAIL_REACH;
+  return gap[near] <= reach ? near : null;
 }
 
 /** The dot marking where a wire would leave the block from. */
@@ -820,6 +833,13 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       if (direct && direct.fromLinkable === true) return direct;
       const pt = diagram.firstInput?.documentPoint;
       if (!pt) return null;
+      // The words are a handle, never a wire: a name is what you take hold of
+      // to move a block, and a container's title is how a container is moved
+      // at all.
+      const hit = diagram.findObjectAt(pt, null, null);
+      for (let o: go.GraphObject | null = hit; o; o = o.panel) {
+        if ((o as unknown as Record<string, unknown>)[NAME_FIELD]) return null;
+      }
       const node = diagram.findObjectAt(pt, (x: go.GraphObject) => x.part,
         (q: go.GraphObject) => q instanceof go.Node) as go.Node | null;
       return node ? railPortAt(node, pt) : null;
