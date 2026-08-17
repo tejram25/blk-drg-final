@@ -347,6 +347,20 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
     const wireDot = () => $(go.Shape, 'Circle',
       { name: WIRE_DOT, desiredSize: new go.Size(9, 9), fill: '#22d3ee', stroke: '#ffffff',
         strokeWidth: 1.5, visible: false, pickable: false });
+    // A status marker at the box's edge — "?" to check, "!" to flag. Invisible
+    // until a marker is set, so a box that carries none looks no different, and
+    // shared by every kind of box so the control means the same everywhere.
+    const badgePanel = () => $(
+      go.Panel, 'Spot', { visible: false, alignment: new go.Spot(1, 0.5, -13, 0) },
+      new go.Binding('visible', 'badge', (b) => !!b),
+      new go.Binding('alignment', 'badgeSpot', go.Spot.parse),
+      $(go.Shape, 'Circle', { width: 18, height: 18, fill: '#f5a623', stroke: null },
+        new go.Binding('fill', 'badgeFill'),
+        new go.Binding('desiredSize', 'badgeSize', go.Size.parse)),
+      $(go.TextBlock, { font: '700 11px Roboto, sans-serif', stroke: '#ffffff' },
+        new go.Binding('text', 'badge'),
+        new go.Binding('stroke', 'badgeColor'),
+        new go.Binding('font', 'badgeFont')));
     const sideSpot = (s: string) => {
       const sp = go.Spot.parse(s);
       const dl = sp.x, dr = 1 - sp.x, dt = sp.y, db = 1 - sp.y;
@@ -1014,6 +1028,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       ...sidePorts(),
       pinOverlay(),
       wireDot(),
+      badgePanel(),
     );
     diagram.commandHandler.archetypeGroupData = { isGroup: true, text: 'Subsystem' };
 }

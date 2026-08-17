@@ -10,9 +10,9 @@
   <input type="color" [ngModel]="sel.color" (ngModelChange)="colorChange.emit($event)" /></label>
 }
 
-<!-- Style: everything the JSON can carry, reachable by hand -->
+<!-- Style: one set of controls for every box, whether it holds things or not. -->
 @if (styled) {
-  <div class="prop-section">{{ container ? 'Container style' : 'Style' }}</div>
+  <div class="prop-section">Style</div>
   <div class="style-grid">
     <!-- A colour picker cannot say "none", and a caption or a note on the page
          is a block with neither a fill nor an outline. -->
@@ -37,75 +37,21 @@
     <span>{{ (container ? sel.dashed !== false : sel.dashPattern) ? 'Solid outline' : 'Dashed outline' }}</span>
   </button>
 
-  @if (container) {
-    <div class="style-grid">
-      <label><span>Title colour</span>
-        <input type="color" [ngModel]="sel.titleColor" (ngModelChange)="style.emit({ prop: 'titleColor', value: $event })" /></label>
-      <label><span>Title size</span>
-        <input type="number" min="5" max="60" step="0.5"
-               [ngModel]="titleSize" (ngModelChange)="style.emit({ prop: 'titleSize', value: $event })" /></label>
-      <label class="wide"><span>Title position</span>
-        <select [ngModel]="titleCustom ? '' : titlePlacement"
-                (ngModelChange)="$event && style.emit({ prop: 'titlePlacement', value: $event })">
-          <option value="0 0">Top left</option>
-          <option value="0.5 0.06">Top centre</option>
-          <option value="0.5 0.5">Centre</option>
-          <option value="0.5 0.94">Bottom centre</option>
-          @if (titleCustom) { <option value="">Custom</option> }
-        </select></label>
-      <!-- and the exact spot, since the source drawings sit between the presets -->
-      <label><span>Title x</span>
-        <input type="number" min="0" max="1" step="0.01"
-               [ngModel]="titleX" (ngModelChange)="style.emit({ prop: 'titleX', value: $event })" /></label>
-      <label><span>Title y</span>
-        <input type="number" min="0" max="1" step="0.01"
-               [ngModel]="titleY" (ngModelChange)="style.emit({ prop: 'titleY', value: $event })" /></label>
-      <label><span>Inner padding</span>
-        <input type="number" min="0" max="120" step="1"
-               [ngModel]="pad" (ngModelChange)="style.emit({ prop: 'pad', value: $event })" /></label>
-      <label><span>Corner radius</span>
-        <input type="number" min="0" max="60" step="1"
-               [ngModel]="corner" (ngModelChange)="style.emit({ prop: 'corner', value: $event })" /></label>
-      <!-- A band behind the title, for a subsystem with a coloured header strip -->
-      <label><span>Title band</span>
-        <span class="swatch-row">
-          <input type="color" [ngModel]="titleBg || '#dcebd5'"
-                 (ngModelChange)="style.emit({ prop: 'titleBg', value: $event })" />
-          <button type="button" class="none-btn" [class.on]="!titleBg" matTooltip="No band"
-                  (click)="style.emit({ prop: 'noTitleBg', value: !!titleBg })">∅</button>
-        </span></label>
-      <label><span>Band outline</span>
-        <input type="color" [ngModel]="titleBandBorder || '#4e9a3e'"
-               (ngModelChange)="style.emit({ prop: 'titleBandBorder', value: $event })" /></label>
-      <label class="wide"><span>Band width</span>
-        <input type="number" min="0" max="600" step="2" placeholder="auto"
-               [ngModel]="titleBandWidth" (ngModelChange)="style.emit({ prop: 'titleBandWidth', value: $event })" /></label>
-      <!-- A container has no size of its own — it sits where its members are —
-           so these are the smallest it may be drawn, which is also the size of
-           one with nothing in it yet. -->
-      <label><span>Width</span>
-        <input type="number" min="8" [ngModel]="width" (ngModelChange)="style.emit({ prop: 'width', value: $event })" /></label>
-      <label><span>Height</span>
-        <input type="number" min="8" [ngModel]="height" (ngModelChange)="style.emit({ prop: 'height', value: $event })" /></label>
-    </div>
-    <div class="pin-hint">Or hold <b>Alt</b> and drag the title on the canvas to put it anywhere
-      inside the container.</div>
-  } @else {
-    <div class="style-grid">
-      <label><span>Width</span>
-        <input type="number" min="8" [ngModel]="width" (ngModelChange)="style.emit({ prop: 'width', value: $event })" /></label>
-      <label><span>Height</span>
-        <input type="number" min="8" [ngModel]="height" (ngModelChange)="style.emit({ prop: 'height', value: $event })" /></label>
-      <!-- The same two a container has: the gap the name keeps to the outline,
-           and how round the corners are. -->
-      <label><span>Inner padding</span>
-        <input type="number" min="0" max="120" step="1"
-               [ngModel]="pad" (ngModelChange)="style.emit({ prop: 'pad', value: $event })" /></label>
-      <label><span>Corner radius</span>
-        <input type="number" min="0" max="60" step="1"
-               [ngModel]="corner" (ngModelChange)="style.emit({ prop: 'corner', value: $event })" /></label>
-    </div>
-  }
+  <div class="style-grid">
+    <!-- A container is sized by what it holds, so for one these are the floor
+         it is drawn at; for a plain shape they are its exact size. Either way
+         the control is the same. -->
+    <label><span>Width</span>
+      <input type="number" min="8" [ngModel]="width" (ngModelChange)="style.emit({ prop: 'width', value: $event })" /></label>
+    <label><span>Height</span>
+      <input type="number" min="8" [ngModel]="height" (ngModelChange)="style.emit({ prop: 'height', value: $event })" /></label>
+    <label><span>Inner padding</span>
+      <input type="number" min="0" max="120" step="1"
+             [ngModel]="pad" (ngModelChange)="style.emit({ prop: 'pad', value: $event })" /></label>
+    <label><span>Corner radius</span>
+      <input type="number" min="0" max="60" step="1"
+             [ngModel]="corner" (ngModelChange)="style.emit({ prop: 'corner', value: $event })" /></label>
+  </div>
 }
 
 <!-- Where the name sits inside the block. Its own section for the same reason

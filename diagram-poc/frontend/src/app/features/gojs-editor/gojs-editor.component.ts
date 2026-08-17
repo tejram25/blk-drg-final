@@ -1346,7 +1346,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   setFill(v: string): void { this.setField('fill', v); this.setField('fixedColor', true); }
   setStroke(v: string): void { this.setField('stroke', v); this.setField('fixedColor', true); }
-  setLabelColor(v: string): void { this.setField('labelColor', v); this.setField('fixedColor', true); }
+  setLabelColor(v: string): void { this.setField(this.nameColorField, v); this.setField('fixedColor', true); }
   /** A container draws its outline from `borderWidth`, a shape from `strokeWidth`.
    *  Writing the wrong one made the control do nothing at all on a container. */
   setBorderWidth(v: any): void {
@@ -1440,11 +1440,20 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.isContainer && n > 0 && fig === 'Rectangle') this.setField('figure', 'RoundedRectangle');
   }
 
-  /** The name's own colour and type size — Title colour and Title size, for
-   *  something that has a name rather than a title. */
-  get labelColor(): string { return this.hexOr(this.selectedNode?.data?.labelColor, '#1f2937'); }
+  /**
+   * The words on a box, whatever kind of box it is. A container's words are its
+   * title, a shape's are its name; the controls read the same, so these three
+   * pick the field each one lives in and the panel never has to know which.
+   */
+  private get nameColorField(): 'labelColor' | 'titleColor' { return this.isContainer ? 'titleColor' : 'labelColor'; }
+  private get nameFontField(): 'font' | 'titleFont' { return this.isContainer ? 'titleFont' : 'font'; }
+  private get nameSpotField(): 'labelSpot' | 'titleAlign' { return this.isContainer ? 'titleAlign' : 'labelSpot'; }
+
+  get labelColor(): string {
+    return this.hexOr(this.selectedNode?.data?.[this.nameColorField], this.isContainer ? '#f5a623' : '#1f2937');
+  }
   get labelSize(): number {
-    const m = /(\d+(?:\.\d+)?)px/.exec(String(this.selectedNode?.data?.font ?? ''));
+    const m = /(\d+(?:\.\d+)?)px/.exec(String(this.selectedNode?.data?.[this.nameFontField] ?? ''));
     return m ? Number(m[1]) : 12.5;
   }
   private setLabelSize(v: any): void {
@@ -1478,7 +1487,25 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Where the block's name sits inside it. Absent means the centre, which is
    *  where a label has always been drawn; the presets and an Alt-drag on the
    *  canvas write the same field. */
-  get labelSpot(): string { return String(this.selectedNode?.data?.labelSpot ?? '0.5 0.5'); }
+  get labelSpot(): string {
+    return String(this.selectedNode?.data?.[this.nameSpotField] ?? (this.isContainer ? '0 0' : '0.5 0.5'));
+  }
+
+  /**
+   * Put the words where the Name controls ask.
+   *
+   * A shape stores this as `labelSpot`, which its template reads for both the
+   * anchor and which point of the label lands there. A container's title is
+   * positioned by `titleAlign` and a separate `titleFocus`, so the same request
+   * writes both — the focus being the fractional part of the spot, so a corner
+   * preset tucks the title into the corner exactly as it does a shape's name.
+   */
+  private setNameSpot(spot: string): void {
+    if (!this.isContainer) { this.setField('labelSpot', spot); return; }
+    const s = go.Spot.parse(spot);
+    this.setField('titleAlign', spot);
+    this.setField('titleFocus', `${s.x} ${s.y}`);
+  }
 
   /**
    * The name's place as two fractions of the block, which is how a container
@@ -1505,7 +1532,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const n = Math.min(1, Math.max(0, Number(v) || 0));
     const xy = [this.labelX, this.labelY];
     xy[which] = n;
-    this.setField('labelSpot', `${xy[0]} ${xy[1]}`);
+    this.setNameSpot(`${xy[0]} ${xy[1]}`);
   }
 
   private setBadgeSize(v: any): void {
@@ -1624,7 +1651,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'badgeFill': this.setField('badgeFill', t); break;
       case 'badgeColor': this.setField('badgeColor', t); break;
       case 'badgeSize': this.setBadgeSize(n); break;
-      case 'labelSpot': this.setField('labelSpot', t); break;
+      case 'labelSpot': this.setNameSpot(t); break;
       case 'labelX': this.setLabelPart(0, n); break;
       case 'labelY': this.setLabelPart(1, n); break;
       case 'labelColor': this.setLabelColor(t); break;
@@ -1752,7 +1779,8 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (shape.startsWith('elec-')) return `${this.i18n.td('Electrical')} · ${this.symbolLabel(shape)}`;
     if (shape.startsWith('anim-')) return `${this.i18n.td('Animated')} · ${this.symbolLabel(shape)}`;
     if (isBasic(shape)) return `${this.i18n.td('Shapes')} · ${BASIC_SHAPES[shape]?.label ?? 'Shape'}`;
-    return this.i18n.td('Component');
+    if (this.isContainer) return this.i18n.td('Container');
+    return this.i18n.td('Shape');
   }
   get defaultCategory(): string {
     const d = this.selectedNode?.data; const shape = d?.shape ?? '';

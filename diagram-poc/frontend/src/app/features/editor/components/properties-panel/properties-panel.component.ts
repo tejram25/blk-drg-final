@@ -55,7 +55,7 @@ export class PropertiesPanelComponent {
   get tabs(): { id: PaneId; label: string; icon: string; shown: boolean }[] {
     return [
       { id: 'style', label: 'Style', icon: 'palette', shown: true },
-      { id: 'text', label: this.titleText ? 'Title' : 'Text', icon: 'title', shown: this.textual },
+      { id: 'text', label: 'Text', icon: 'title', shown: this.textual },
       { id: 'part', label: 'Part', icon: 'memory', shown: true },
     ];
   }

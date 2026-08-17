@@ -413,6 +413,17 @@ window.buildDiagram = function(modelJson, geo) {
           new go.Binding('text'),
           new go.Binding('stroke','titleColor'),
           new go.Binding('font','titleFont')))),
+    // A container carries a status marker too, invisible unless one is set.
+    $(go.Panel,'Spot',{ visible:false, alignment:new go.Spot(1,0.5,-13,0) },
+      new go.Binding('visible','badge',(b)=> !!b),
+      new go.Binding('alignment','badgeSpot',go.Spot.parse),
+      $(go.Shape,'Circle',{ width:18, height:18, fill:'#f5a623', stroke:null },
+        new go.Binding('fill','badgeFill'),
+        new go.Binding('desiredSize','badgeSize',go.Size.parse)),
+      $(go.TextBlock,{ font:'700 11px Roboto, sans-serif', stroke:'#ffffff' },
+        new go.Binding('text','badge'),
+        new go.Binding('stroke','badgeColor'),
+        new go.Binding('font','badgeFont'))),
     ...sidePorts(),
     pinOverlay());
   diagram.groupTemplate = group;
