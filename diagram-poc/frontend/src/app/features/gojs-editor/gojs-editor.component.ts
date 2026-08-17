@@ -1274,7 +1274,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         // anything else a colour input cannot render falls back to a swatch.
         fill: d.fill === 'transparent' ? 'transparent' : this.hexOr(d.fill, '#ffffff'),
         stroke: d.stroke === 'transparent' ? 'transparent' : this.hexOr(d.stroke, '#334155'),
-        labelColor: this.hexOr(d.labelColor, '#1f2937'),
+        labelColor: this.hexOr(d.isGroup ? d.titleColor : d.labelColor, d.isGroup ? '#f5a623' : '#1f2937'),
         titleColor: this.hexOr(d.titleColor, '#f5a623'),
         strokeWidth: d.isGroup ? (typeof d.borderWidth === 'number' ? d.borderWidth : 1.2)
           : (typeof d.strokeWidth === 'number' ? d.strokeWidth : 2),
@@ -1283,7 +1283,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         textAlign: d.textAlign ?? 'center',
         // `html` is present only on a formatted label; its absence is the flag.
         html: typeof d.html === 'string' ? d.html : undefined,
-        font: typeof d.font === 'string' ? d.font : undefined,
+        // A container's words are its title, so the Text controls read and
+        // write the title's own face and colour.
+        font: typeof (d.isGroup ? d.titleFont : d.font) === 'string' ? (d.isGroup ? d.titleFont : d.font) : undefined,
         textWidth: typeof d.textWidth === 'number' ? d.textWidth : undefined,
         underline: d.underline === true,
       };
@@ -1633,15 +1635,31 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
    *  catalogue part's card is laid out from its part data. */
   get isTextual(): boolean {
     const d = this.selectedNode?.data;
-    if (!d || d.isGroup === true) return false;
+    if (!d) return false;
+    // A container has words on it too — its title — and they deserve the same
+    // face, size and colour controls as any other label. What it does not have
+    // is a document: a title is one line, so wrapping, alignment and formatted
+    // text stay off for it (see `titleOnly`).
+    if (d.isGroup === true) return true;
     return d.category === 'shape' || d.category === 'block' || d.category == null;
   }
+  /** True when the words being styled are a container's title. */
+  get isTitleText(): boolean { return this.isContainer; }
+  /**
+   * A block rather than a container: something with a name of its own to place
+   * and a badge to hang on it. A container states both in its own words — its
+   * title's spot lives under Container style — so it is not one of these.
+   */
+  get isBlockish(): boolean { return this.isTextual && !this.isContainer; }
   /** Whether the selected block's label is HTML rather than a plain string. */
   get isFormatted(): boolean { return isRich(this.selectedNode?.data?.html); }
 
   /** Change one piece of the font shorthand, leaving the rest of it alone. */
   private setFontPart(patch: Partial<FontParts>): void {
-    this.setField('font', formatFont({ ...parseFont(this.selectedNode?.data?.font), ...patch }));
+    // A container styles its title; everything else styles its label.
+    const field = this.isContainer ? 'titleFont' : 'font';
+    const base = this.selectedNode?.data?.[field];
+    this.setField(field, formatFont({ ...parseFont(base), ...patch }));
   }
 
 /** Switch the label between a plain string and a document. Neither direction
@@ -1673,7 +1691,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'italic': this.setFontPart({ italic: b }); break;
       case 'underline': this.setField('underline', b); break;
       case 'textAlign': this.setTextAlign(t as 'left' | 'center' | 'right'); break;
-      case 'labelColor': this.setLabelColor(t); break;
+      case 'labelColor':
+        if (this.isContainer) this.setTitleColor(t); else this.setLabelColor(t);
+        break;
       case 'textWidth': this.setField('textWidth', Math.min(2000, Math.max(20, n || 150))); break;
       case 'formatted': this.setFormatted(b); break;
     }

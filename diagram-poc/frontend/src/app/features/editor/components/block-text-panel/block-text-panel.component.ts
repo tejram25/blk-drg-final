@@ -62,6 +62,9 @@ const COMMAND: Record<Mark, string> = { bold: 'bold', italic: 'italic', underlin
 })
 export class BlockTextPanelComponent implements OnDestroy {
   @Input({ required: true }) sel!: TextSelection;
+  /** The words are a container's title: one line, so no wrapping, no alignment
+   *  and no formatted document — the face, size and colour still apply. */
+  @Input() titleOnly = false;
 
   @Output() text = new EventEmitter<TextChange>();
   /** Same as double-clicking the block, for anyone who does not guess that. */

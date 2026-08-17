@@ -2,34 +2,51 @@
   <h3>{{ 'props.title' | translate }}</h3>
   <div class="prop-type"><mat-icon>category</mat-icon>{{ typeName }}</div>
 
-  <app-block-style-panel
-    [sel]="sel" [styled]="styled" [container]="container" [formatted]="formatted"
-    [titlePlacement]="titlePlacement" [titleSize]="titleSize" [pad]="pad" [corner]="corner"
-    [titleBg]="titleBg" [titleBandBorder]="titleBandBorder" [titleBandWidth]="titleBandWidth"
-    [badgeable]="badgeable" [placeable]="placeable" [labelSpot]="labelSpot" [labelX]="labelX" [labelY]="labelY"
-    [labelColor]="labelColor" [labelSize]="labelSize" [badge]="badge" [badgeFill]="badgeFill" [badgeColor]="badgeColor" [badgeSize]="badgeSize"
-    [width]="width" [height]="height" [pins]="pins"
-    (rename)="rename.emit($event)" (colorChange)="colorChange.emit($event)"
-    (style)="style.emit($event)" (toggleDashed)="toggleDashed.emit()"
-    (addPin)="addPin.emit()" (removePin)="removePin.emit($event)"
-    (pinSide)="pinSide.emit($event)" (pinAlong)="pinAlong.emit($event)"></app-block-style-panel>
+  <!-- How a block looks, how its words read, and what part it is: three
+       subjects that change for different reasons, one at a time. -->
+  <nav class="tab-strip">
+    @for (t of tabs; track t.id) {
+      @if (t.shown) {
+        <button type="button" [class.on]="activeTab === t.id" (click)="tab = t.id">
+          <mat-icon>{{ t.icon }}</mat-icon><span>{{ t.label }}</span>
+        </button>
+      }
+    }
+  </nav>
 
-  @if (textual) {
-    <app-block-text-panel [sel]="sel" (text)="text.emit($event)"
+  @if (shows('style')) {
+    <app-block-style-panel
+      [sel]="sel" [styled]="styled" [container]="container" [formatted]="formatted"
+      [titlePlacement]="titlePlacement" [titleSize]="titleSize" [pad]="pad" [corner]="corner"
+      [titleBg]="titleBg" [titleBandBorder]="titleBandBorder" [titleBandWidth]="titleBandWidth"
+      [badgeable]="badgeable" [placeable]="placeable" [labelSpot]="labelSpot" [labelX]="labelX" [labelY]="labelY"
+      [labelColor]="labelColor" [labelSize]="labelSize"
+      [badge]="badge" [badgeFill]="badgeFill" [badgeColor]="badgeColor" [badgeSize]="badgeSize"
+      [width]="width" [height]="height" [pins]="pins"
+      (rename)="rename.emit($event)" (colorChange)="colorChange.emit($event)"
+      (style)="style.emit($event)" (toggleDashed)="toggleDashed.emit()"
+      (addPin)="addPin.emit()" (removePin)="removePin.emit($event)"
+      (pinSide)="pinSide.emit($event)" (pinAlong)="pinAlong.emit($event)"></app-block-style-panel>
+  }
+
+  @if (textual && shows('text')) {
+    <app-block-text-panel [sel]="sel" [titleOnly]="titleText" (text)="text.emit($event)"
       (editText)="editText.emit()"></app-block-text-panel>
   }
 
-  <app-block-parts-panel
-    [sel]="sel" [data]="data" [defaultCategory]="defaultCategory" [box]="box"
-    [attachedParts]="attachedParts" [boxComponents]="boxComponents"
-    [boxSuggestions]="boxSuggestions" [boxSuggestLoading]="boxSuggestLoading"
-    [boxSuggestError]="boxSuggestError" [selectedSupplier]="selectedSupplier"
-    (dataChange)="dataChange.emit($event)" (quantity)="quantity.emit($event)"
-    (checkLifecycle)="checkLifecycle.emit()" (checkPos)="checkPos.emit()"
-    (attachedQty)="attachedQty.emit($event)" (removeAttached)="removeAttached.emit($event)"
-    (componentQty)="componentQty.emit($event)" (componentSupplier)="componentSupplier.emit($event)"
-    (removeComponent)="removeComponent.emit($event)" (suggest)="suggest.emit()"
-    (link)="link.emit($event)"></app-block-parts-panel>
+  @if (shows('part')) {
+    <app-block-parts-panel
+      [sel]="sel" [data]="data" [defaultCategory]="defaultCategory" [box]="box"
+      [attachedParts]="attachedParts" [boxComponents]="boxComponents"
+      [boxSuggestions]="boxSuggestions" [boxSuggestLoading]="boxSuggestLoading"
+      [boxSuggestError]="boxSuggestError" [selectedSupplier]="selectedSupplier"
+      (dataChange)="dataChange.emit($event)" (quantity)="quantity.emit($event)"
+      (checkLifecycle)="checkLifecycle.emit()" (checkPos)="checkPos.emit()"
+      (attachedQty)="attachedQty.emit($event)" (removeAttached)="removeAttached.emit($event)"
+      (componentQty)="componentQty.emit($event)" (componentSupplier)="componentSupplier.emit($event)"
+      (removeComponent)="removeComponent.emit($event)" (suggest)="suggest.emit()"
+      (link)="link.emit($event)"></app-block-parts-panel>
+  }
 
   <button class="del-btn" (click)="remove.emit()"><mat-icon>delete</mat-icon><span>Delete</span></button>
 </aside>

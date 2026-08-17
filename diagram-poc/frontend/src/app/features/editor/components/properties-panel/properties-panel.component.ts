@@ -18,6 +18,9 @@ export type { PinSideChange, PinAlongChange, StyleChange, DataFieldChange, RowCh
 /** Everything the panel shows about the selected block. */
 export type PanelSelection = StyleSelection & PartsSelection & TextSelection;
 
+/** The three subjects a block has, one tab each. */
+export type PaneId = 'style' | 'text' | 'part';
+
 /**
  * The right-hand inspector for the selected block.
  *
@@ -41,6 +44,27 @@ export class PropertiesPanelComponent {
   @Input({ required: true }) sel!: PanelSelection;
   @Input() open = true;
   @Input() typeName = '';
+
+  /** The words being styled are a container's title, not a block's label. */
+  @Input() titleText = false;
+
+  /** The tab the user last chose. It is remembered across selections, because
+   *  someone styling text goes on styling text as they move between blocks. */
+  tab: PaneId = 'style';
+
+  get tabs(): { id: PaneId; label: string; icon: string; shown: boolean }[] {
+    return [
+      { id: 'style', label: 'Style', icon: 'palette', shown: true },
+      { id: 'text', label: this.titleText ? 'Title' : 'Text', icon: 'title', shown: this.textual },
+      { id: 'part', label: 'Part', icon: 'memory', shown: true },
+    ];
+  }
+  /** The tab on screen: the chosen one, or Style when this block has no such
+   *  tab — a catalogue part has no words of its own to style. */
+  get activeTab(): PaneId {
+    return this.tabs.find((t) => t.id === this.tab)?.shown ? this.tab : 'style';
+  }
+  shows(id: PaneId): boolean { return this.activeTab === id; }
 
   // ---- style side ----
   @Input() styled = false;

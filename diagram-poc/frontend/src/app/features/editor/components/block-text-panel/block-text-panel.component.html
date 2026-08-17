@@ -1,4 +1,4 @@
-<div class="prop-section">Text</div>
+<div class="prop-section">{{ titleOnly ? 'Title text' : 'Text' }}</div>
 
 <div class="text-grid">
   <label class="wide"><span>Font</span>
@@ -20,6 +20,7 @@
     <button type="button" [class.on]="markOn('italic')" (click)="toggleMark('italic')" matTooltip="Italic"><i>I</i></button>
     <button type="button" [class.on]="markOn('underline')" (click)="toggleMark('underline')" matTooltip="Underline"><u>U</u></button>
   </div>
+  @if (!titleOnly) {
   <div class="btn-group">
     <button type="button" [class.on]="align === 'left'" (click)="set('textAlign', 'left')" matTooltip="Align left">
       <mat-icon>format_align_left</mat-icon></button>
@@ -28,6 +29,7 @@
     <button type="button" [class.on]="align === 'right'" (click)="set('textAlign', 'right')" matTooltip="Align right">
       <mat-icon>format_align_right</mat-icon></button>
   </div>
+  }
   @if (contentEditing) {
     <div class="btn-group">
       <button type="button" [class.on]="bulletOn" (click)="toggleBullet()" matTooltip="Bullet list">
@@ -36,10 +38,14 @@
   }
 </div>
 
+@if (!titleOnly) {
 <label><span>Wrap width</span>
   <input type="number" min="20" max="900" step="5"
          [ngModel]="wrapWidth" (ngModelChange)="set('textWidth', $event)" /></label>
 
+}
+
+@if (!titleOnly) {
 <!-- the label stops being a string and becomes a document -->
 <button class="secondary-btn" [class.on]="formatted" (click)="set('formatted', !formatted)">
   <mat-icon>{{ formatted ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
@@ -56,4 +62,5 @@
     </button>
     <div class="text-hint">Or double-click the block. The block grows to hold whatever you write.</div>
   }
+}
 }
