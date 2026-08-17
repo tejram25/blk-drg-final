@@ -4,6 +4,7 @@ import * as go from 'gojs';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { collabServerUrl } from '../app-config';
+import { marksGroups } from '../../features/gojs-editor/gojs-templates';
 import { NotificationService } from './notification.service';
 
 /** A remote collaborator's live pointer, in diagram-document coordinates. */
@@ -380,6 +381,9 @@ export class GojsCollabService {
 
   private emptyLike(): go.GraphLinksModel {
     const m = new go.GraphLinksModel<go.ObjectData, go.ObjectData>([], []);
+    // The same rule the editor uses for what can hold things; a model adopted
+    // from the room must agree with the one it replaces.
+    marksGroups(m);
     m.linkFromPortIdProperty = 'fromPort';
     m.linkToPortIdProperty = 'toPort';
     m.linkKeyProperty = 'key';

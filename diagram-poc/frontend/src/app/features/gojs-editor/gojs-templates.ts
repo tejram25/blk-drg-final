@@ -71,6 +71,48 @@ function bodyBounds(node: go.Node): go.Rect {
 }
 
 /**
+ * A subsystem container, as opposed to a shape that happens to hold blocks.
+ *
+ * Every shape is a GoJS Group — that is how a box can own what is dropped into
+ * it — so being a Group no longer tells the two apart. What tells them apart is
+ * what they are: a container has no category of its own and draws a title along
+ * its top, a shape has a figure and a name in the middle of it.
+ */
+export function isContainerNode(node: go.Part | null | undefined): boolean {
+  const d = node?.data;
+  return !!d && d['isGroup'] === true && !d['category'];
+}
+
+/**
+ * Take in whatever was dropped on this box.
+ *
+ * `handlesDragDropForMembers` only says the box handles the gesture; something
+ * still has to add the member.
+ */
+function holdMembers(grp: go.GraphObject): void {
+  if (!(grp instanceof go.Group) || !grp.diagram) return;
+  const diagram = grp.diagram;
+  if (!grp.addMembers(diagram.selection, true)) diagram.currentTool.doCancel();
+}
+
+/**
+ * Which node data the model treats as a box that can hold things.
+ *
+ * There is one kind of box in this editor: drop a block on a shape and it
+ * belongs to that shape. Only a GoJS Group can own members, and a model decides
+ * what is a group *before* the data is in it — the documentation is explicit
+ * that the answer must not change afterwards, and there is no setter for it. So
+ * the answer is a question about the data rather than a flag stored on it:
+ * every shape is a box that can hold things, from the moment it is drawn.
+ *
+ * Must be assigned to every model this app makes, including one read back from
+ * JSON, since a function cannot be written into JSON.
+ */
+export function marksGroups(model: go.GraphLinksModel): void {
+  model.nodeIsGroupProperty = (d: go.ObjectData) => d?.['isGroup'] === true || d?.['category'] === 'shape';
+}
+
+/**
  * Which edge the pointer is reaching for, or null when it is on the block
  * itself.
  *
@@ -89,7 +131,7 @@ export function railAt(node: go.Node, pt: go.Point): string | null {
   for (const id of Object.keys(gap)) if (gap[id] < gap[near]) near = id;
   if (gap[near] < 0) return null;
   const across = near === 'L' || near === 'R' ? b.width : b.height;
-  const reach = node instanceof go.Group ? GROUP_REACH : railThickness(across) + RAIL_REACH;
+  const reach = isContainerNode(node) ? GROUP_REACH : railThickness(across) + RAIL_REACH;
   return gap[near] <= reach ? near : null;
 }
 
@@ -497,12 +539,26 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
     );
     diagram.nodeTemplateMap.set('image', image);
 
-    const shape = $(
-      go.Node, 'Spot',
-      { locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'SHAPE', toolTip: hooks.nodeTip($),
-        portSpreading: go.PortSpreading.Evenly, ...hover, ...editLabel },
-      new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
-      new go.Binding('visible', 'hidden', (h) => !h),
+    /**
+     * A shape is a Group, and that is the whole of what makes a box able to
+     * hold things.
+     *
+     * There is one kind of box in this editor. Drop a block on a shape and it
+     * belongs to that shape: it travels with it, and deleting the box leaves it
+     * behind. Only a GoJS Group can own members, so every shape is one — but
+     * without a Placeholder, so it keeps the size you gave it rather than
+     * shrinking to hug what is inside. Nothing about how it looks changes.
+     *
+     * The subsystem container is still its own template, because a container
+     * *is* the shape of its contents: it has a title along the top and it grows
+     * as blocks are added. Which template a box uses is decided by its
+     * category, not by its being a Group — see `isContainerNode`.
+     */
+    /** Everything a shape is made of, built twice: once as a plain box and once
+     *  as a box that holds things. GoJS will not accept a Group in the node
+     *  template map, so a shape has to exist in both forms — and it is one list
+     *  of parts so the two cannot drift. */
+    const shapeParts = () => [
       $(go.Panel, 'Spot', body,
         $(go.Shape, 'Rectangle',
           { name: 'SHAPE', isPanelMain: true, strokeWidth: 2, fill: '#ffffff', stroke: '#334155',
@@ -571,8 +627,40 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       ...sidePorts(),
       pinOverlay(),
       wireDot(),
+    ];
+
+    /** What every shape has, whether or not it is holding anything. */
+    const shapeCommon = {
+      locationSpot: go.Spot.Center, resizable: true, resizeObjectName: 'SHAPE', toolTip: hooks.nodeTip($),
+      portSpreading: go.PortSpreading.Evenly, ...hover, ...editLabel,
+    };
+    const shapeBindings = () => [
+      new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
+      new go.Binding('visible', 'hidden', (h: unknown) => !h),
+    ];
+
+    /**
+     * A shape: a box that can hold things.
+     *
+     * No Placeholder, unlike the subsystem container below — a shape keeps the
+     * size it was given rather than shrinking to hug what is inside. Dropping a
+     * block on it makes that block a member: it travels with the box, and
+     * deleting the box leaves it behind.
+     */
+    const shapeHolding = $(
+      go.Group, 'Spot',
+      { ...shapeCommon,
+        handlesDragDropForMembers: true, ungroupable: true, computesBoundsAfterDrag: true,
+        mouseDrop: (_e: go.InputEvent, grp: go.GraphObject) => holdMembers(grp) },
+      ...shapeBindings(),
+      ...shapeParts(),
     );
-    diagram.nodeTemplateMap.set('shape', shape);
+    diagram.groupTemplateMap.set('shape', shapeHolding);
+    // The same shape as a plain node, for a model that has not been told shapes
+    // can hold things (`marksGroups`). It draws identically — it just cannot
+    // take members — so a diagram always renders even off that path, rather
+    // than falling back to GoJS's default box.
+    diagram.nodeTemplateMap.set('shape', $(go.Node, 'Spot', { ...shapeCommon }, ...shapeBindings(), ...shapeParts()));
 
     const rotatedSpots = (d: any): { x: number; y: number }[] => {
       const ports = Array.isArray(d?.ports) ? d.ports : [];
@@ -877,10 +965,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
         // only says the group handles the gesture; something still has to add the
         // member. GoJS routes a drop that lands on a part to that part's handler,
         // so this is where it arrives — `diagram.mouseDrop` only sees the misses.
-        mouseDrop: (_e: go.InputEvent, grp: go.GraphObject) => {
-          if (!(grp instanceof go.Group) || !grp.diagram) return;
-          if (!grp.addMembers(grp.diagram.selection, true)) grp.diagram.currentTool.doCancel();
-        } },
+        mouseDrop: (_e: go.InputEvent, grp: go.GraphObject) => holdMembers(grp) },
       new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       new go.Binding('isSubGraphExpanded', 'expanded').makeTwoWay(),
       $(go.Panel, 'Auto',

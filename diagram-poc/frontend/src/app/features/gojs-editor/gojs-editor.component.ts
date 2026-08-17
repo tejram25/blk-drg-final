@@ -63,7 +63,9 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 import { Command, CommandPaletteComponent } from '../../shared/components/command-palette/command-palette.component';
 import { WireGeometry } from './gojs-wire-geometry';
 import { Pin, PinMove, pinSide, spaced, spotOn } from './gojs-pins';
-import { RAIL_IDS, buildTemplates, fitPorts, hideRail, railAt, showRail } from './gojs-templates';
+import {
+  RAIL_IDS, buildTemplates, fitPorts, hideRail, isContainerNode, marksGroups, railAt, showRail,
+} from './gojs-templates';
 import { LabelDragTool } from './gojs-label-drag';
 import { DEFAULT_WIRE_STYLE, WireDockComponent, WireProp } from '../editor/components/wire-dock/wire-dock.component';
 import { PropertiesPanelComponent, StyleChange, TextChange } from '../editor/components/properties-panel/properties-panel.component';
@@ -615,6 +617,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private emptyModel(): go.GraphLinksModel {
     const m = new go.GraphLinksModel<go.ObjectData, go.ObjectData>([], []);
+    marksGroups(m);
     m.linkFromPortIdProperty = 'fromPort';
     m.linkToPortIdProperty = 'toPort';
     m.linkKeyProperty = 'key';
@@ -1274,9 +1277,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         // anything else a colour input cannot render falls back to a swatch.
         fill: d.fill === 'transparent' ? 'transparent' : this.hexOr(d.fill, '#ffffff'),
         stroke: d.stroke === 'transparent' ? 'transparent' : this.hexOr(d.stroke, '#334155'),
-        labelColor: this.hexOr(d.isGroup ? d.titleColor : d.labelColor, d.isGroup ? '#f5a623' : '#1f2937'),
+        labelColor: this.hexOr(this.isContainer ? d.titleColor : d.labelColor, this.isContainer ? '#f5a623' : '#1f2937'),
         titleColor: this.hexOr(d.titleColor, '#f5a623'),
-        strokeWidth: d.isGroup ? (typeof d.borderWidth === 'number' ? d.borderWidth : 1.2)
+        strokeWidth: this.isContainer ? (typeof d.borderWidth === 'number' ? d.borderWidth : 1.2)
           : (typeof d.strokeWidth === 'number' ? d.strokeWidth : 2),
         dashPattern: d.dashPattern === true,
         dashed: d.dashed,
@@ -1285,7 +1288,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         html: typeof d.html === 'string' ? d.html : undefined,
         // A container's words are its title, so the Text controls read and
         // write the title's own face and colour.
-        font: typeof (d.isGroup ? d.titleFont : d.font) === 'string' ? (d.isGroup ? d.titleFont : d.font) : undefined,
+        font: typeof (this.isContainer ? d.titleFont : d.font) === 'string' ? (this.isContainer ? d.titleFont : d.font) : undefined,
         textWidth: typeof d.textWidth === 'number' ? d.textWidth : undefined,
         underline: d.underline === true,
       };
@@ -1329,9 +1332,12 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /** A native shape or a container — the things the style controls apply to. */
   get isStyledShape(): boolean {
     const d = this.selectedNode?.data;
-    return !!d && (d.category === 'shape' || d.isGroup === true);
+    return !!d && (d.category === 'shape' || this.isContainer);
   }
-  get isContainer(): boolean { return this.selectedNode?.data?.isGroup === true; }
+  /** A subsystem container — the box with a title along its top that grows with
+   *  what is inside it. Every shape is a GoJS Group now, so being a group is not
+   *  what makes a container; having no category of its own is. */
+  get isContainer(): boolean { return isContainerNode(this.selectedNode); }
 
   /**
    * Any hand-set colour also pins it. `retheme()` rewrites fill/stroke on every
@@ -1640,7 +1646,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     // face, size and colour controls as any other label. What it does not have
     // is a document: a title is one line, so wrapping, alignment and formatted
     // text stay off for it (see `titleOnly`).
-    if (d.isGroup === true) return true;
+    if (this.isContainer) return true;
     return d.category === 'shape' || d.category === 'block' || d.category == null;
   }
   /** True when the words being styled are a container's title. */
@@ -1707,7 +1713,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   addContainer(): void {
     const d = this.diagram;
-    const sel = d.selection.filter((x) => x instanceof go.Node && !(x as go.Node).data?.isGroup);
+    const sel = d.selection.filter((x) => x instanceof go.Node && !isContainerNode(x as go.Node));
     if (sel.count > 0 && d.commandHandler.canGroupSelection()) {
       d.commandHandler.groupSelection();
       const g = d.selection.first();
@@ -2759,6 +2765,9 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.zone.runOutsideAngular(() => {
       try {
         const model = go.Model.fromJson(contentJson) as go.GraphLinksModel;
+        // A function cannot be written into JSON, so what counts as a box that
+        // holds things has to be said again on the way back in.
+        marksGroups(model);
         model.linkFromPortIdProperty = 'fromPort'; model.linkToPortIdProperty = 'toPort';
         for (const d of model.nodeDataArray as any[]) {
           if (typeof d.angle === 'number' && d.angle % 90 !== 0) d.angle = 0;
