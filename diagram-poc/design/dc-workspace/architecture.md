@@ -70,7 +70,8 @@ Solid arrows are calls. Dotted arrows are embeds or sockets.
 | Opportunity ↔ design link | **DWS** | `design.opportunity_id`, the single link |
 | Design record and its categories | **DWS** | Point 6 |
 | Artifacts, publish state, approval | **DWS** | Point 5 |
-| Artifact bytes | **DWS** | `artifact_file` |
+| Artifact metadata + entitlement | **DWS** | `artifact_file` (a `storage_key`, not the bytes) |
+| Artifact bytes | **Object store** | Private S3-compatible bucket; see [artifact-storage.md](./artifact-storage.md) |
 | Diagram JSON and versions | **BLK** | BLK never sees an opportunity id |
 | Canvas rendering, export | **BLK** | GoJS |
 | Part catalogue lookups | **Arrow catalogue** | Per region: eu / ap / ac |
@@ -83,8 +84,9 @@ The rule from the data model, restated: **each service writes only its own
 schema.** BLK registers artifacts by calling the DWS API, never by INSERT.
 
 **Databricks is not the artifact store.** The stakeholder review corrected this
-explicitly: diagram JSON, canvas objects, versions and attachment bytes stay in
-Oracle. What flows to Databricks is *linkage* (design ↔ opportunity ↔ artifact
+explicitly: diagram JSON, canvas objects and versions stay in Oracle, and
+artifact bytes in Arrow's own object store ([artifact-storage.md](./artifact-storage.md))
+— never in Databricks. What flows to Databricks is *linkage* (design ↔ opportunity ↔ artifact
 ids), *design metadata* (name, brief, customer, region, stage) and *derived
 semantics* (AI summaries, tags, embeddings). Databricks is the unified business
 context layer the agent retrieves from — aggregating Salesforce, FAST,
@@ -160,14 +162,16 @@ sequenceDiagram
   actor APR as FAE manager
   participant BLK as BLK API
   participant DWS as DWS API
+  participant OBJ as Object store
   participant ORA as Oracle (DWS)
   participant DBX as Databricks
 
   FAE->>BLK: export diagram to PDF
   BLK->>BLK: render (server-side)
   BLK->>DWS: POST /designs/42/artifacts<br/>kind DIAGRAM_EXPORT
+  DWS->>OBJ: PUT bytes → object store (key = sha256)
   DWS->>ORA: INSERT design_artifact (DRAFT, external N)
-  DWS->>ORA: INSERT artifact_file (bytes, size, sha256)
+  DWS->>ORA: INSERT artifact_file (storage_key, size, sha256)
 
   APR->>DWS: POST /artifacts/900/publish
   DWS->>ORA: check design_member.role = APPROVER

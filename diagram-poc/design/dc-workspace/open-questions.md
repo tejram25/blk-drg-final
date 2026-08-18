@@ -24,7 +24,7 @@ than deleted, so the trail stays readable.
 | ~~4~~ | ~~Does an FAE ever need to **edit** from inside Salesforce?~~ | ~~Product~~ | **Answered: no.** Embedded is a read-only summary; editing undocks to a full page. Model unchanged, risk down |
 | 5 | GoJS production licence — tier, domains, lead time, budget? | Procurement | Slow → this is the long pole, start now |
 | 6 | Do DWS and BLK teams need independent Angular versions? | Eng leads | No → use module federation for DWS→BLK instead of a nested iframe |
-| 7 | Artifact bytes in Oracle, or object storage? | DBA / Arch | Changes `artifact_file` — it currently carries both columns |
+| ~~7~~ | ~~Artifact bytes in Oracle, or object storage?~~ | ~~DBA / Arch~~ | **Answered: object storage.** Oracle keeps only metadata + a `storage_key`; bytes go to an S3-compatible store, content-addressed by sha256. See [artifact-storage.md](./artifact-storage.md) |
 | 8 | **Where on the Opportunity page does the embed live?** | Salesforce / Product | Right rail (~300 px) is unusable for a canvas → it has to be a full-width tab |
 
 Question 8 is new, and it is a direct consequence of answer 2. "Embedded view"
@@ -132,8 +132,10 @@ the embed is viable at all.
 
 - **[BLOCKER]** Two schemas in one instance, with cross-schema grants on views only?
 - Who **owns migrations**, and what is the change-approval lead time?
-- **[BLOCKER]** BLOBs in Oracle or object storage for artifact bytes? What is
-  the maximum acceptable row size?
+- ~~**[BLOCKER]** BLOBs in Oracle or object storage for artifact bytes?~~
+  **Answered: object storage** — bytes leave Oracle entirely, so there is no
+  artifact row-size question. The remaining DBA input is *which* S3-compatible
+  tier and its backup/replication policy. See [artifact-storage.md](./artifact-storage.md).
 - Can a single schema be **restored independently**, or is backup instance-wide?
 - How many **environments**, and do they map onto the Salesforce sandboxes?
 - Connection-pool sizing with two applications on one instance.

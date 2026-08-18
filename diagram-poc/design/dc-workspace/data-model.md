@@ -173,8 +173,10 @@ diagram or an FAE note to a customer.
 
 ### artifact_file
 
-Bytes, versioned. Separate from the artifact so re-exporting a diagram adds a
-version instead of overwriting history.
+Metadata, versioned. Separate from the artifact so re-exporting a diagram adds a
+version instead of overwriting history. The **bytes are not here** — they live
+in object storage, addressed by `storage_key` (open question 7, resolved in
+[artifact-storage.md](./artifact-storage.md)).
 
 ```sql
 CREATE TABLE dws.artifact_file (
@@ -184,22 +186,23 @@ CREATE TABLE dws.artifact_file (
   file_name     VARCHAR2(255 CHAR) NOT NULL,
   content_type  VARCHAR2(120 CHAR) NOT NULL,
   size_bytes    NUMBER(19)         NOT NULL,
-  sha256        VARCHAR2(64 CHAR)  NOT NULL,   -- dedupe + integrity
-  -- Keep bytes in Oracle, or store a key and put bytes in object storage.
-  -- Pick ONE and drop the other column.
-  bytes         BLOB,
-  storage_key   VARCHAR2(512 CHAR),
+  sha256        VARCHAR2(64 CHAR)  NOT NULL,   -- integrity, dedupe, AND the storage address
+  storage_key   VARCHAR2(512 CHAR) NOT NULL,   -- object-store key, derived from sha256
+  store_region  VARCHAR2(16 CHAR),             -- which regional bucket (data residency)
   source_url    VARCHAR2(1024 CHAR),           -- when fetched (e.g. a datasheet)
   created_by    VARCHAR2(320 CHAR) NOT NULL,
   created_at    TIMESTAMP(6) DEFAULT SYSTIMESTAMP NOT NULL,
   CONSTRAINT fk_file_artifact FOREIGN KEY (artifact_id) REFERENCES dws.design_artifact (id),
-  CONSTRAINT uq_file_version  UNIQUE (artifact_id, version_no),
-  CONSTRAINT ck_file_body     CHECK (bytes IS NOT NULL OR storage_key IS NOT NULL)
+  CONSTRAINT uq_file_version  UNIQUE (artifact_id, version_no)
 );
 ```
 
-`size_bytes` and `sha256` are written by the one service that also writes
-`bytes` — that is what stops the Story 3 drift.
+`size_bytes` and `sha256` are written by the one service that also stores the
+bytes — that is what stops the Story 3 drift, and it is what lets the list
+endpoint report a size without touching the store. There is no `bytes` column:
+the store holds them, and the metadata row is written **only after** the bytes
+are safely stored, so a row can never point at content that is not there
+([artifact-storage.md](./artifact-storage.md) § Write path).
 
 ### artifact_publication
 
@@ -554,9 +557,9 @@ keeps that shape so existing URLs survive.
 
 ## Open questions for the review
 
-1. **Bytes in Oracle, or object storage?** `artifact_file` has both columns —
-   pick one. BLOBs in Oracle are simpler to back up; object storage is cheaper
-   and streams better for large presentations.
+1. ~~**Bytes in Oracle, or object storage?**~~ **Resolved: object storage.**
+   `artifact_file` now carries only `storage_key`; the `bytes BLOB` is gone.
+   See [artifact-storage.md](./artifact-storage.md).
 2. **Who is `APPROVER`?** Point 5 needs a named role. Is it the design owner's
    manager, a regional FAE lead, or anyone with the Salesforce role?
 3. **Un-publishing.** If an artifact is withdrawn after a customer has seen it,
