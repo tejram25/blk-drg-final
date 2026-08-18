@@ -1,0 +1,39 @@
+server:
+  # 8091. The block diagram backend runs on 8090 on the same host, so the two
+  # sit next to each other and neither has to move.
+  port: ${PORT:8091}
+
+spring:
+  application:
+    name: dws-backend
+  jackson:
+    # Absent is absent. A null in this API means "we are not telling you",
+    # which is a different statement from "there is no value" — the embedded
+    # variant relies on that distinction.
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+dws:
+  cors:
+    # Allow every origin. The Salesforce org this embed will be served from is
+    # not known yet, and enumerating Salesforce's Lightning/Visualforce hosts up
+    # front is a losing game. This is safe *only* because credentials are off
+    # (see WebConfig): with no cookie or session to carry, a matching origin
+    # gains nothing it could not already get from a plain server-side request.
+    #
+    # Tighten this the moment the real org is known — override the env var on the
+    # host rather than editing this file:
+    #   Environment="DWS_CORS_ALLOWEDORIGINPATTERNS=https://acme.lightning.force.com,https://acme.my.salesforce.com"
+    # If authentication is ever added, this MUST become an exact list in the
+    # same change, because credentials-on plus a wildcard is a real hole.
+    allowed-origin-patterns:
+      - "*"
+
+logging:
+  level:
+    com.arrow.dws: INFO

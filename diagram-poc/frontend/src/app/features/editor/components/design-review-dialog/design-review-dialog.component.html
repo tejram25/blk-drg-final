@@ -1,0 +1,53 @@
+<div class="dr-backdrop" (click)="close.emit()">
+  <div class="dr-card" (click)="$event.stopPropagation()">
+    <div class="dr-head">
+      <div>
+        <h3 class="dr-title"><mat-icon>rule</mat-icon> Design review</h3>
+        @if (result) {
+          <span class="dr-sub">
+            <span class="dr-badge" [class.ai]="result.aiGenerated">
+              {{ result.aiGenerated ? result.model : 'Rule-based' }}
+            </span>
+            {{ result.note }}
+          </span>
+        }
+      </div>
+      <button type="button" class="dr-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="dr-body">
+      @if (loading) {
+        <p class="dr-msg">Reviewing your design…</p>
+      }
+      @if (!loading && result && !result.findings.length) {
+        <p class="dr-msg ok">
+          <mat-icon>task_alt</mat-icon> No issues found — looks solid.
+        </p>
+      }
+
+      @for (f of result?.findings; track f) {
+        <div class="dr-item" [class]="f.severity">
+          <mat-icon class="dr-ico">{{ icon(f.severity) }}</mat-icon>
+          <div class="dr-main">
+            <div class="dr-top">
+              <span class="dr-name">{{ f.title }}</span>
+              <span class="dr-cat">{{ f.category }}</span>
+            </div>
+            @if (f.detail) {
+              <p class="dr-detail">{{ f.detail }}</p>
+            }
+            @if (f.suggestion) {
+              <p class="dr-fix"><mat-icon>build</mat-icon> {{ f.suggestion }}</p>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (result?.aiGenerated) {
+      <p class="dr-disclaimer">
+        AI-assisted review — use engineering judgement; verify against your requirements.
+      </p>
+    }
+  </div>
+</div>

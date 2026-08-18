@@ -1,0 +1,98 @@
+<aside class="ps-dock">
+  <div class="ps-head">
+    <span class="ps-title"><mat-icon>travel_explore</mat-icon> Search parts</span>
+    <button type="button" class="ps-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <div class="ps-search">
+    <input #box type="text" [(ngModel)]="query" (keyup.enter)="search()"
+      placeholder="Part number or keyword…" />
+    <button type="button" class="ps-go" [disabled]="!query.trim() || loading" (click)="search()">
+      <mat-icon>search</mat-icon>
+    </button>
+  </div>
+
+  <!-- Manufacturer filter + result count -->
+  @if (!loading && results.length) {
+    <div class="ps-filter">
+      <span class="ps-count">{{ visibleResults.length }} of {{ results.length }}</span>
+      <label class="ps-supplabel">
+        <mat-icon>filter_list</mat-icon>
+        <select [(ngModel)]="supplierFilter">
+          <option value="">All manufacturers</option>
+          @for (s of suppliers; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  }
+
+  <div class="ps-results">
+    @if (loading) {
+      <p class="ps-msg">Searching…</p>
+    }
+    @if (!loading && searched && !results.length) {
+      <p class="ps-msg">No matching parts.</p>
+    }
+    @if (!loading && !searched) {
+      <p class="ps-msg">Search the catalogue, then add a part to the canvas.</p>
+    }
+
+    @for (hit of visibleResults; track hit.id) {
+      <div class="ps-item">
+        <div class="ps-info">
+          <span class="ps-pn">{{ hit.partNumber }}</span>
+          <span class="ps-supp">{{ hit.manufacturer || hit.supplier }}</span>
+          @if (hit.description) {
+            <span class="ps-desc">{{ hit.description }}</span>
+          }
+          <!-- Inventory / lifecycle -->
+          <div class="ps-meta">
+            @if (hit.status) {
+              <span class="ps-chip" [class]="statusClass(hit.status)">{{ hit.status }}</span>
+            }
+            <span class="ps-chip stock" [class.zero]="!hit.stock.totalOnHand">
+              <mat-icon>inventory_2</mat-icon>{{ hit.stock.totalOnHand | number }} in stock
+            </span>
+            @if (hit.stock.locationCount > 1) {
+              <span class="ps-chip">{{ hit.stock.inStockLocations }}/{{ hit.stock.locationCount }} sites</span>
+            }
+            @if (hit.leadTime.arrowWeeks) {
+              <span class="ps-chip">
+                <mat-icon>schedule</mat-icon>LT {{ hit.leadTime.arrowWeeks }} wk
+              </span>
+            }
+            @if (hit.pricing.unitPrice) {
+              <span class="ps-chip">{{ price(hit) }}</span>
+            }
+            @if (hit.packaging.minOrderQty) {
+              <span class="ps-chip">MOQ {{ hit.packaging.minOrderQty | number }}</span>
+            }
+            @for (c of hit.compliance.standards; track c) {
+              <span class="ps-chip">{{ c }}</span>
+            }
+            @if (hit.datasheetUrl) {
+              <a class="ps-chip link" [href]="hit.datasheetUrl" target="_blank" rel="noopener">
+                <mat-icon>description</mat-icon>Datasheet
+              </a>
+            }
+          </div>
+        </div>
+        <div class="ps-actions">
+          <input class="ps-qty" type="number" min="1"
+            [ngModel]="qtyOf(hit)" (ngModelChange)="setQty(hit, $event)"
+            title="Order quantity" />
+          @if (hasSelection) {
+            <button type="button" class="ps-attach" (click)="attach(hit)" title="Attach to selected block">
+              <mat-icon>link</mat-icon>
+            </button>
+          }
+          <button type="button" class="ps-add" (click)="add(hit)" title="Add to canvas">
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</aside>

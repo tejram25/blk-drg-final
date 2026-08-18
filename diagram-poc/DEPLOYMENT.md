@@ -83,7 +83,7 @@ server {
 
 4. **Disable the H2 web console in shared environments.** It's currently enabled at `/h2-console` (`spring.h2.console.enabled=true`) — that's a full DB admin UI. Set `spring.h2.console.enabled=false` (or firewall it) for dev/stage.
 
-5. **CORS is wide open right now.** The backend allows any origin on `/api/**` (`allowedOriginPatterns("*")`). Fine for dev, but lock it to the frontend origin before anything public. If you use the same-origin reverse proxy above, CORS doesn't apply at all (same origin).
+5. **CORS is an explicit allowlist.** The backend permits credentialed requests only from origin patterns in `app.cors.allowed-origins` — defaulting to local dev plus `https://*.arrow.com`, so the standard Arrow reverse-proxy deployment works out of the box. Note that even behind a same-origin reverse proxy the browser sends an `Origin` header on POSTs and the backend can't always detect same-origin, so the deployment origin must be allowlisted. For a host outside `*.arrow.com`, set `APP_CORS_ALLOWED_ORIGINS=https://your.host` (comma-separated; wildcards allowed). Never set it to a bare `*` — credentials + reflected any-origin lets any site read a signed-in user's data.
 
 6. **Outbound translation call (optional feature).** Chat message translation uses Chrome's private on-device engine when available; otherwise it falls back to the free **MyMemory** API, called **from the user's browser** to `https://api.mymemory.translated.net`. If you apply a Content-Security-Policy, `connect-src` must allow that host plus `'self'` (and the API/WS origins if not same-origin). No server-side egress needed. The on-device engine only activates over HTTPS.
 

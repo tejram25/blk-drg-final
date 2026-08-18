@@ -1,0 +1,65 @@
+# Design Workspace backend, run as a systemd service.
+#
+# Install once:
+#   sudo cp dws-backend.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now dws-backend
+#
+# After that a deploy is: copy the new jar, then `sudo systemctl restart dws-backend`.
+
+[Unit]
+Description=Design Workspace backend (DWS)
+Documentation=https://github.com/tejram25/blk-drg-final
+# network-online rather than network: the JVM binds a port at startup, and
+# "network" only means the stack is up, not that an address is assigned.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=oracle
+Group=oracle
+WorkingDirectory=/home/oracle/dws-backend
+
+# JVM flags go inline: systemd runs ExecStart without a shell, so $JAVA_OPTS
+# would be passed to java as a literal string rather than expanded.
+#
+# The java path is NOT assumed to be /usr/bin/java. systemd runs without the
+# login profile, so a JVM installed somewhere else — /b001/app/openJDK_17 on the
+# host this first went to — is on the operator's PATH but not on the unit's, and
+# the service dies with status=203/EXEC before it logs a single line. Set the
+# real path once in this drop-in and the unit stops caring:
+#
+#   JAVA=$(readlink -f "$(command -v java)")
+#   sudo mkdir -p /etc/systemd/system/dws-backend.service.d
+#   sudo tee /etc/systemd/system/dws-backend.service.d/java-path.conf >/dev/null <<EOF
+#   [Service]
+#   ExecStart=
+#   ExecStart=$JAVA -Xms256m -Xmx512m -jar /home/oracle/dws-backend/dws-backend-0.0.1-SNAPSHOT.jar --server.port=8091
+#   EOF
+#   sudo systemctl daemon-reload && sudo systemctl restart dws-backend
+#
+# The empty ExecStart= is required: it clears the inherited one, and without it
+# systemd refuses the unit for having two.
+ExecStart=/usr/bin/java -Xms256m -Xmx512m -jar /home/oracle/dws-backend/dws-backend-0.0.1-SNAPSHOT.jar --server.port=8091
+
+# A JVM killed by SIGTERM exits 143. Without this, every clean stop and every
+# restart is recorded as a failure, and `systemctl status` reads red when
+# nothing is wrong.
+SuccessExitStatus=143
+
+Restart=on-failure
+RestartSec=5
+
+# Give the JVM time to shut down its own way before systemd escalates to KILL.
+TimeoutStopSec=30
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dws-backend
+
+# Add environment overrides here, e.g. a CORS allowlist for a new Salesforce org:
+# Environment="DWS_CORS_ALLOWEDORIGINPATTERNS=https://arrow.my.salesforce.com,https://arrow.lightning.force.com"
+
+[Install]
+WantedBy=multi-user.target

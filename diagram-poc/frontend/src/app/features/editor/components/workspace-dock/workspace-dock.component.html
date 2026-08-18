@@ -1,0 +1,101 @@
+<div class="dock" [class.collapsed]="collapsed">
+  <div class="dock-bar">
+    <button type="button" class="dtab" [class.on]="tab === 'problems' && !collapsed"
+      (click)="select('problems')">
+      Problems
+      @if (problemCount !== null) { <span class="n">{{ problemCount }}</span> }
+    </button>
+    <button type="button" class="dtab" [class.on]="tab === 'bom' && !collapsed"
+      (click)="select('bom')">
+      Bill of materials
+      @if (bomCount !== null) { <span class="n">{{ bomCount }}</span> }
+    </button>
+    <button type="button" class="dtab" [class.on]="tab === 'collab' && !collapsed"
+      (click)="select('collab')">
+      Collaboration
+      @if (participants.length) { <span class="n">{{ participants.length }}</span> }
+    </button>
+    <span class="sp"></span>
+    <button type="button" class="dock-btn" (click)="toggleCollapsed()"
+      [attr.aria-label]="collapsed ? 'Expand panel' : 'Collapse panel'">
+      <mat-icon>{{ collapsed ? 'expand_less' : 'expand_more' }}</mat-icon>
+    </button>
+  </div>
+
+  @if (!collapsed) {
+    <div class="dock-body">
+      <!-- Problems -->
+      @if (tab === 'problems') {
+        @if (reviewLoading) {
+          <p class="dock-empty">Running design review…</p>
+        } @else if (!findings) {
+          <div class="dock-empty">
+            <p>No review has run for this diagram yet.</p>
+            <button type="button" class="dock-cta" (click)="runReview.emit()">Run design review</button>
+          </div>
+        } @else if (!findings.length) {
+          <p class="dock-empty ok"><mat-icon>check_circle</mat-icon> No issues found.</p>
+        } @else {
+          @for (f of findings; track trackFinding($index, f)) {
+            <div class="prow" [attr.data-sev]="f.severity">
+              <mat-icon class="sev">{{ severityIcon(f.severity) }}</mat-icon>
+              <span class="msg">
+                <b>{{ f.title }}</b>
+                @if (f.detail) { <span class="detail">{{ f.detail }}</span> }
+              </span>
+              <span class="rule">{{ f.category }}</span>
+            </div>
+          }
+        }
+      }
+
+      <!-- Bill of materials -->
+      @if (tab === 'bom') {
+        @if (!bomRows) {
+          <div class="dock-empty">
+            <p>The bill of materials has not been built yet.</p>
+            <button type="button" class="dock-cta" (click)="buildBom.emit()">Build BOM</button>
+          </div>
+        } @else if (!bomRows.length) {
+          <p class="dock-empty">No parts are attached to this diagram yet.</p>
+        } @else {
+          <table class="dock-table">
+            <thead>
+              <tr>
+                <th>Manufacturer part</th><th>Manufacturer</th><th>Description</th>
+                <th class="num">Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of bomRows; track trackRow($index, r)) {
+                <tr>
+                  <td class="mono">{{ r.partNumber }}</td>
+                  <td>{{ r.manufacturer }}</td>
+                  <td>{{ r.description }}</td>
+                  <td class="num">{{ r.quantity }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+
+      <!-- Collaboration -->
+      @if (tab === 'collab') {
+        @if (!participants.length) {
+          <p class="dock-empty">You are working alone. Share the diagram to collaborate live.</p>
+        } @else {
+          @for (p of participants; track trackPeer($index, p)) {
+            <div class="crow">
+              <span class="cav" [style.background]="p.color">{{ (p.name || '?').charAt(0) }}</span>
+              <span class="who">{{ p.name }}</span>
+              @if (p.isSelf) { <span class="tagme">you</span> }
+              @if (p.isHost) { <span class="taghost">host</span> }
+              <span class="live">live</span>
+            </div>
+          }
+        }
+      }
+    </div>
+  }
+</div>

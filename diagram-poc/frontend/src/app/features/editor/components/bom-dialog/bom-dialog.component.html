@@ -1,0 +1,73 @@
+<div class="bom-backdrop" (click)="close.emit()">
+  <div class="bom-card" (click)="$event.stopPropagation()">
+    <div class="bom-head">
+      <div>
+        <h3 class="bom-title">Bill of Materials</h3>
+        <span class="bom-sub">{{ rows.length }} line item{{ rows.length === 1 ? '' : 's' }} ·
+        {{ totalQuantity }} part{{ totalQuantity === 1 ? '' : 's' }}@if (hasPricing) { · est. {{ money(totalCost) }}}</span>
+      </div>
+      <button type="button" class="bom-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="bom-body">
+      <table class="bom-table">
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Part Number</th>
+            <th>Manufacturer</th>
+            <th>Supplier</th>
+            <th class="qty">Qty</th>
+            @if (hasPricing) {
+              <th class="qty">MOQ</th>
+              <th class="qty">Unit</th>
+              <th class="qty">Ext.</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows; track r; let i = $index) {
+            <tr>
+              <td class="num">{{ i + 1 }}</td>
+              <td class="pn">{{ r.partNumber }}@if (r.description) {
+                <span class="desc">{{ r.description }}</span>
+              }</td>
+              <td>{{ r.manufacturer || '—' }}</td>
+              <td>
+                @if (r.suppliers && r.suppliers.length > 1) {
+                  <select class="bom-supplier" [(ngModel)]="r.supplier">
+                    @for (s of r.suppliers; track s.name) { <option [value]="s.name">{{ s.name }}</option> }
+                  </select>
+                } @else {
+                  {{ r.supplier || '—' }}
+                }
+              </td>
+              <td class="qty">{{ r.quantity }}</td>
+              @if (hasPricing) {
+                <td class="qty">{{ r.moq || '—' }}</td>
+                <td class="qty">{{ money(r.unitPrice || 0) }}</td>
+                <td class="qty">{{ money(extPrice(r)) }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+        @if (hasPricing) {
+          <tfoot>
+            <tr class="bom-total">
+              <td colspan="5" class="qty"><b>Estimated total</b></td>
+              <td colspan="2"></td>
+              <td class="qty"><b>{{ money(totalCost) }}</b></td>
+            </tr>
+          </tfoot>
+        }
+      </table>
+    </div>
+
+    <div class="bom-actions">
+      <button type="button" mat-stroked-button (click)="close.emit()">Close</button>
+      <button type="button" mat-flat-button class="bom-download" (click)="downloadCsv()">
+        <mat-icon>download</mat-icon> Download CSV
+      </button>
+    </div>
+  </div>
+</div>

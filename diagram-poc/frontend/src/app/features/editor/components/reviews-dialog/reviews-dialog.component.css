@@ -1,0 +1,118 @@
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.review-card {
+  width: 460px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  animation: review-in 0.15s ease;
+}
+
+@keyframes review-in {
+  from { opacity: 0; transform: translateY(-5px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.review-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.review-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--text); }
+.review-sub { font-size: 12px; color: var(--muted); }
+.review-x { border: none; background: transparent; color: var(--muted); cursor: pointer; }
+.review-body { padding: 16px 20px; overflow-y: auto; }
+.review-loading { padding: 28px; text-align: center; color: var(--muted); }
+
+.review-summary { display: flex; gap: 18px; align-items: center; margin-bottom: 16px; }
+.rs-avg { text-align: center; flex: none; display: flex; flex-direction: column; align-items: center; }
+.rs-num { font-size: 34px; font-weight: 700; color: var(--accent); line-height: 1; }
+.rs-count { font-size: 11px; color: var(--muted); }
+.rs-dist { flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px; }
+.rs-bar { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.rs-bk { width: 8px; text-align: right; }
+.rs-track { flex: 1 1 auto; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--muted) 18%, transparent); overflow: hidden; }
+.rs-fill { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.rs-bn { width: 16px; text-align: right; }
+
+.review-mine {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.rm-label { font-size: 12px; font-weight: 600; color: var(--text); display: block; margin-bottom: 6px; }
+.rm-text {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: 8px;
+}
+.rm-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+.rm-submit { background: var(--accent); color: #ffffff; }
+.rm-submit[disabled] { opacity: 0.5; }
+
+.review-list { display: flex; flex-direction: column; gap: 12px; }
+.rv { display: flex; gap: 10px; }
+.rv-avatar {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rv-body { flex: 1 1 auto; min-width: 0; }
+.rv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rv-name { font-size: 13px; color: var(--text); }
+.rv-you { color: var(--muted); font-weight: 400; }
+.rv-date { font-size: 11px; color: var(--muted); flex: none; }
+.rv-comment { font-size: 12.5px; color: var(--muted); line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+.rv-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 12px 0; }
+
+/* ---- Modern polish: glass dialog ---- */
+.confirm-backdrop {
+  background: rgba(8, 9, 12, .55);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: pol-fade .15s ease;
+}
+.review-card {
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-radius: 14px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .04) inset;
+  animation: pol-pop .16s cubic-bezier(.2, .8, .25, 1);
+}
+@keyframes pol-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pol-pop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .confirm-backdrop, .review-card { animation: none; } }

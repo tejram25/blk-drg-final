@@ -1,22 +1,61 @@
-/* Angular Material base theme (dark) — component colors are
-   re-tokenized below to match the graphite/amber app theme. */
+/* Self-hosted fonts (no Google Fonts CDN dependency, so icons and text always
+   render even when that CDN is blocked/slow).
+   Roboto is deliberately not imported: --font is Arrow Display and nothing in
+   the app resolves to Roboto, so its 21 @font-face rules were pure CSS weight. */
+@import 'material-icons/iconfont/filled.css';
+
+/* Angular Material base theme — component colours are re-tokenized below so
+   they follow the Arrow palette in both themes. */
 @import '@angular/material/prebuilt-themes/purple-green.css';
+
+/* Arrow Display — the brand typeface. Medium carries headings and emphasis,
+   Regular carries body copy, per the Arrow font guidelines.
+   WOFF2 first (~31 kB each, a third of the TTF); TTF kept as the fallback for
+   anything that cannot read WOFF2. */
+@font-face {
+  font-family: 'Arrow Display';
+  src: url('assets/fonts/ArrowDisplay-Regular.woff2') format('woff2'),
+       url('assets/fonts/ArrowDisplay-Regular.ttf') format('truetype');
+  font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: 'Arrow Display';
+  src: url('assets/fonts/ArrowDisplay-Medium.woff2') format('woff2'),
+       url('assets/fonts/ArrowDisplay-Medium.ttf') format('truetype');
+  font-weight: 500 600; font-display: swap;
+}
+@font-face {
+  font-family: 'Arrow Display';
+  src: url('assets/fonts/ArrowDisplay-Bold.woff2') format('woff2'),
+       url('assets/fonts/ArrowDisplay-Bold.ttf') format('truetype');
+  font-weight: 700; font-display: swap;
+}
 
 /* Global styles */
 * { box-sizing: border-box; }
 
-/* ---- Material token overrides → graphite/amber theme ---- */
-body {
-  --mdc-outlined-button-label-text-color: #ececef;
-  --mdc-outlined-button-outline-color: #34353c;
-  --mdc-filled-button-container-color: #f5a623;
-  --mdc-filled-button-label-text-color: #1a1303;
-  --mdc-text-button-label-text-color: #ececef;
-  --mdc-icon-button-icon-color: #ececef;
-  --mat-icon-button-state-layer-color: #f5a623;
-  --mat-outlined-button-state-layer-color: #f5a623;
+/* The Material Icons font ligatures need these base styles (mat-icon sets its
+   own font-family). Ensure the class is available for plain <span> usage too. */
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal; font-style: normal; line-height: 1;
+  letter-spacing: normal; text-transform: none; white-space: nowrap;
+  word-wrap: normal; direction: ltr; -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
 }
-.mat-mdc-outlined-button:hover { background: #2f3037; }
+
+/* ---- Material token overrides → Arrow palette ---- */
+body {
+  --mat-button-outlined-label-text-color: var(--text);
+  --mat-button-outlined-outline-color: var(--border);
+  --mat-button-filled-container-color: var(--accent);
+  --mat-button-filled-label-text-color: #ffffff;
+  --mat-button-text-label-text-color: var(--text);
+  --mat-icon-button-icon-color: var(--text);
+  --mat-icon-button-state-layer-color: var(--accent);
+  --mat-button-outlined-state-layer-color: var(--accent);
+}
+.mat-mdc-outlined-button:hover { background: var(--panel-2); }
 .mdc-button { letter-spacing: normal; }
 
 /* Buttons shouldn't show a text-selection highlight when clicked (e.g. the
@@ -25,22 +64,148 @@ button { user-select: none; }
 
 /* Thin, themed scrollbars everywhere. Windows/Chrome otherwise shows chunky grey
    bars; this matches the dark UI on every scroll area (canvas, panels, menus). */
-* { scrollbar-width: thin; scrollbar-color: #3a3b42 transparent; }
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: #3a3b42; border-radius: 6px;
+  background: var(--border); border-radius: 6px;
   border: 2px solid transparent; background-clip: padding-box;
 }
-::-webkit-scrollbar-thumb:hover { background: #4c4d56; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--faint); background-clip: padding-box; }
 ::-webkit-scrollbar-corner { background: transparent; }
 
 html, body {
   margin: 0;
   height: 100%;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  background: #141518; /* graphite, not blue */
-  color: #ececef;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* =====================================================================
+   Design system — Arrow brand palette, applied app-wide.
+
+   The Arrow brand guidelines permit only these six colours and say not to
+   alter or add to the theme:
+
+     Arrow Black  #000000    White         #FFFFFF
+     Sky Blue     #0084D5    Patina Green  #47D7AC
+     Solar Orange #FF8674    Copper Yellow #FFC845
+
+   Every neutral below is a pure tint of Arrow Black / White — no hue is
+   added — which keeps the UI on-brand while still giving the surface ramp a
+   dense workspace needs.
+
+   Tokens are the single source of truth: the whole app already styles through
+   them, so re-pointing the values here re-themes every surface. Consume tokens
+   only, never a raw hex, or light mode will drift.
+
+   Light theme: set data-theme="light" on <html>.
+   ===================================================================== */
+:root {
+  /* Arrow palette (fixed in both themes) */
+  --arrow-black: #000000; --white: #ffffff;
+  --sky: #0084d5; --patina: #47d7ac; --solar: #ff8674; --copper: #ffc845;
+
+  /* surfaces — tints of Arrow Black */
+  --bg: #0a0a0a; --bg-deep: #000000;
+  --panel: #121212; --panel-2: #1c1c1c;
+  --border: #2a2a2a; --border-soft: #1f1f1f;
+
+  /* text */
+  --text: #ffffff; --muted: #a8a8a8; --faint: #808080;
+
+  /* interaction — Sky Blue is the single accent */
+  --accent: var(--sky); --accent-soft: #0084d526; --accent-ring: rgba(0, 132, 213, 0.22);
+  --accent-ink: #4db4e8;
+
+  /* status */
+  --brand: var(--sky); --ok: var(--patina); --warn: var(--copper); --danger: var(--solar);
+
+  /* canvas (GoJS reads these — see gojs-theme.ts) */
+  --canvas: #0a0a0a; --grid: #242424;
+  --node: #161616; --node-stroke: #3a3a3a;
+  --node-text: #ffffff; --node-sub: #8f8f8f;
+  --wire: var(--sky); --wire-sig: #6e6e6e;
+  --sym: #e8e8e8; --sym-fill: #00131f;
+
+  --font: 'Arrow Display', 'Segoe UI', system-ui, sans-serif;
+  --radius: 10px;
+}
+
+:root[data-theme="light"] {
+  --bg: #f2f2f2; --bg-deep: #ffffff;
+  --panel: #ffffff; --panel-2: #f7f7f7;
+  --border: #dcdcdc; --border-soft: #ebebeb;
+
+  --text: #000000; --muted: #5c5c5c; --faint: #6b6b6b;
+
+  --accent-soft: #0084d517; --accent-ring: rgba(0, 132, 213, 0.18);
+  --accent-ink: #00699f;
+
+  --canvas: #ffffff; --grid: #e6e6e6;
+  --node: #ffffff; --node-stroke: #cfcfcf;
+  --node-text: #000000; --node-sub: #6e6e6e;
+  --wire-sig: #a8a8a8;
+  --sym: #000000; --sym-fill: #e8f5fd;
+}
+
+/* Native form controls (plain inputs / textareas / selects — NOT Angular
+   Material fields, which style themselves). Gives every stray control the same
+   rounded, Sky-focus treatment as the rest of the app. */
+input:not([type=color]):not([type=checkbox]):not([type=radio]):not([type=range]):not(.mat-mdc-input-element),
+textarea:not(.mat-mdc-input-element),
+select {
+  font-family: inherit;
+  color: var(--text);
+  background-color: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+input:not([type=color]):not([type=checkbox]):not([type=radio]):not([type=range]):not(.mat-mdc-input-element):focus,
+textarea:not(.mat-mdc-input-element):focus,
+select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+input::placeholder, textarea::placeholder { color: var(--faint); }
+
+/* Themed native <select> with a custom caret (replaces the OS dropdown that
+   looked out of place next to the polished panels). */
+select {
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  padding: 6px 28px 6px 10px; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23a8a8a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 9px center;
+}
+select option { background: var(--panel); color: var(--text); }
+
+/* Native checkbox / radio / range pick up the Sky accent. */
+input[type=checkbox], input[type=radio], input[type=range] { accent-color: var(--accent); }
+
+/* Consistent text selection + link colour. */
+::selection { background: var(--accent-soft); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Reusable Design-Win primitives (opt-in utility classes). */
+.dwx-card {
+  border: 1px solid var(--border-soft); border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel-2) 55%, transparent);
+  transition: border-color .13s ease, transform .13s ease, background .13s ease;
+}
+.dwx-lift:hover { border-color: var(--accent); transform: translateY(-1px); }
+.dwx-section {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--faint); margin: 12px 0 7px;
+}
+@keyframes dwx-spin { to { transform: rotate(360deg); } }
+.dwx-spin {
+  width: 14px; height: 14px; flex: none; border-radius: 50%;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  animation: dwx-spin .7s linear infinite;
 }
 
 /* The FAST-style "flowing current" animation on connections.
@@ -133,20 +298,22 @@ html, body {
 
 /* Selected wire: local-only DOM highlight (never synced to collaborators) */
 .wire-selected path {
-  filter: drop-shadow(0 0 3px rgba(245, 166, 35, .9));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 90%, transparent));
 }
 
-/* ---- White canvas mode ----
-   Light strokes/fills (#e2e8f0) are invisible on white, so remap the
-   defaults to dark slate. Attribute selectors only match elements still
-   on their default color, so user-recolored nodes keep their color. */
-.canvas-light [stroke="#e2e8f0"] { stroke: #334155; }
-.canvas-light [fill="#e2e8f0"]   { fill: #334155; }
-.canvas-light text[fill="#94a3b8"] { fill: #475569; }
-.canvas-light [fill="#0f172a"]   { fill: #ffffff; }   /* port circles */
-.canvas-light [fill="#1e293b"]   { fill: #f1f5f9; }   /* pump volute, piston head bg */
+/* The old ".canvas-light" attribute-selector remaps lived here. Symbols now
+   draw with the theme tokens (see gojs-theme.ts), so there are no fixed default
+   colours left to rewrite. */
 
 @media (prefers-reduced-motion: reduce) {
+  /* Keep state changes instant rather than animated — but never remove them,
+     the UI must still show what happened. */
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
   .x6-edge path,
   .anim-spin, .anim-spin-slow, .anim-arm-upper,
   .anim-pulse, .anim-pulse-alt, .anim-belt,
@@ -161,13 +328,52 @@ html, body {
 .user-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 6px; border-radius: 999px; height: 34px;
-  background: #1e1f25; border: 1px solid #34353c; color: #d7d8dc;
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
   font-size: 13px; max-width: 190px; min-width: 0;
   cursor: pointer; font-family: inherit;
 }
-.user-chip:hover { background: #26282f; border-color: #44454d; }
-.user-chip.on { border-color: #f5a623; }
-.user-chip mat-icon { font-size: 18px; width: 18px; height: 18px; color: #f5a623; flex: none; }
-.user-chip .caret { color: #9aa0a8; margin-left: -2px; }
+.user-chip:hover { background: var(--panel-2); border-color: var(--faint); }
+.user-chip.on { border-color: var(--accent); }
+.user-chip mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--accent); flex: none; }
+.user-chip .caret { color: var(--muted); margin-left: -2px; }
 .user-chip .user-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 720px) { .user-chip .user-name { display: none; } }
+
+/* ============================================================
+   Mobile (≤768px): side docks and modal dialogs from child
+   components become bottom sheets / full-screen surfaces.
+   (Global on purpose — these classes live in many components.)
+   ============================================================ */
+@media (max-width: 768px), (orientation: landscape) and (max-height: 500px) {
+  /* Right-hand docks (part search, Design Win, Discussions, Comments)
+     → full-width bottom sheets above the app bar. */
+  .ps-dock, .dw-dock, .fb-dock, .cm-dock {
+    top: auto !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    width: 100% !important; max-width: 100% !important; height: 82dvh;
+    border-left: none !important; border-top: 1px solid var(--border);
+    border-radius: 18px 18px 0 0; z-index: 70 !important;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Modal dialogs → full-screen sheets with safe-area padding. */
+  .bom-card, .dr-card, .exp-card, .fb-card, .lc-card, .rc-card,
+  .review-card, .tpl-card, .ver-card {
+    width: 100vw !important; max-width: 100vw !important;
+    height: 100dvh; max-height: 100dvh !important;
+    border-radius: 0 !important;
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    box-sizing: border-box;
+  }
+  .confirm-card { width: min(92vw, 400px) !important; }
+
+  /* Zoom dock: bottom-left on phones so it clears the connect FAB (bottom-right)
+     and the contextual wire dock. */
+  .zoom-dock { bottom: 12px !important; left: 12px !important; right: auto !important; }
+
+  /* Toasts above the bottom app bar. */
+  .toast-wrap, .toast { bottom: calc(66px + env(safe-area-inset-bottom)) !important; }
+
+  /* Comfortable touch targets in lists. */
+  button, .dd-item { min-height: 34px; }
+}

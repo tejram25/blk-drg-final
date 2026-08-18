@@ -1,0 +1,207 @@
+.tpl-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.tpl-card {
+  width: 860px;
+  max-width: calc(100vw - 32px);
+  /* Fixed, stable size: the modal doesn't resize as templates are filtered. */
+  height: min(680px, calc(100vh - 64px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  animation: tpl-in 0.15s ease;
+}
+
+@keyframes tpl-in {
+  from { opacity: 0; transform: translateY(-5px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.tpl-head {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.tpl-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--text); }
+.tpl-sub { font-size: 12px; color: var(--muted); }
+.tpl-head-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.tpl-x { border: none; background: transparent; color: var(--muted); cursor: pointer; }
+.tpl-publish-btn { background: var(--accent); color: #ffffff; white-space: nowrap; }
+.tpl-publish-btn mat-icon { font-size: 18px; width: 18px; height: 18px; vertical-align: text-bottom; }
+
+/* Publish form */
+.tpl-save {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+.tpl-save-row { display: flex; gap: 8px; }
+.tpl-save input, .tpl-save textarea {
+  flex: 1 1 auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  resize: vertical;
+}
+.tpl-save input:focus, .tpl-save textarea:focus { border-color: var(--accent); }
+.tpl-save-actions { display: flex; justify-content: flex-end; }
+
+/* Search */
+.tpl-search {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.tpl-search > mat-icon { color: var(--muted); font-size: 20px; width: 20px; height: 20px; flex: none; }
+.tpl-search input {
+  flex: 1 1 auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.tpl-search input:focus { border-color: var(--accent); }
+.tpl-count { flex: none; font-size: 11.5px; color: var(--faint); white-space: nowrap; }
+
+/* Gallery — the single scroll region; min-height:0 lets it scroll inside the flex column */
+.tpl-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px 20px 20px; }
+.tpl-msg { padding: 28px; text-align: center; color: var(--muted); font-size: 13px; }
+
+.tpl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.tpl-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.tpl-item:hover { border-color: var(--accent); }
+
+.tpl-item-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tpl-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.tpl-chip {
+  flex: none;
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  white-space: nowrap;
+}
+.tpl-desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tpl-rating {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+.tpl-rating-val { font-size: 11.5px; color: var(--muted); }
+.tpl-reviews-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.tpl-reviews-link:hover { filter: brightness(1.15); }
+.tpl-unrated { color: var(--faint); font-style: italic; text-decoration: none; }
+.tpl-unrated:hover { color: var(--accent); }
+.tpl-rate { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; }
+.tpl-rate-label { font-size: 10.5px; color: var(--faint); white-space: nowrap; }
+
+.tpl-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--faint);
+  margin-top: auto;
+}
+.tpl-uses { display: inline-flex; align-items: center; gap: 2px; color: var(--muted); }
+.tpl-uses mat-icon { font-size: 14px; width: 14px; height: 14px; }
+
+.tpl-actions { display: flex; align-items: center; gap: 6px; padding-top: 4px; }
+.tpl-actions .mdc-button { height: 30px; min-width: 0; padding: 0 10px; font-size: 12.5px; }
+.tpl-actions .mat-icon { font-size: 16px; width: 16px; height: 16px; }
+.tpl-use { background: var(--accent); color: #ffffff; }
+.tpl-del {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 6px;
+}
+.tpl-del:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.tpl-del mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+/* ---- Modern polish: glass dialog ---- */
+.tpl-backdrop {
+  background: rgba(8, 9, 12, .55);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: pol-fade .15s ease;
+}
+.tpl-card {
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-radius: 14px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .04) inset;
+  animation: pol-pop .16s cubic-bezier(.2, .8, .25, 1);
+}
+@keyframes pol-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pol-pop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tpl-backdrop, .tpl-card { animation: none; } }

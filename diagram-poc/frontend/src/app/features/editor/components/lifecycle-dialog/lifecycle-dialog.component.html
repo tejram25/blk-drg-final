@@ -1,0 +1,50 @@
+<div class="lc-backdrop" (click)="close.emit()">
+  <div class="lc-card" (click)="$event.stopPropagation()">
+    <div class="lc-head">
+      <div>
+        <h3 class="lc-title">Lifecycle &amp; alternatives</h3>
+        <span class="lc-sub">SiliconExpert</span>
+      </div>
+      <button type="button" class="lc-x" (click)="close.emit()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="lc-body">
+      @if (loading) {
+        <p class="lc-msg">Checking lifecycle…</p>
+      }
+
+      @if (!loading && info; as i) {
+        <div class="lc-part">
+          <span class="lc-pn">{{ i.partNumber }}</span>
+          <span class="lc-status" [class]="statusClass(i.status)">{{ i.status }}</span>
+        </div>
+        <div class="lc-risk">Lifecycle risk: <b [class]="statusClass(i.status)">{{ i.risk }}</b></div>
+        <p class="lc-rec">{{ i.recommendation }}</p>
+        @if (i.alternatives.length) {
+          <div class="lc-alts-head">Alternatives ({{ i.alternatives.length }})</div>
+        }
+        @if (!i.alternatives.length) {
+          <p class="lc-none">No alternatives needed — part is active.</p>
+        }
+        @for (a of i.alternatives; track a) {
+          <div class="lc-alt">
+            <div class="lc-alt-main">
+              <span class="lc-apn">{{ a.partNumber }}
+                @if (a.dropIn) {
+                  <span class="lc-dropin">Drop-in</span>
+                }
+                @if (!a.dropIn) {
+                  <span class="lc-sub2">Approved sub</span>
+                }
+              </span>
+              <span class="lc-amfr">{{ a.manufacturer }} — {{ a.note }}</span>
+            </div>
+            <button type="button" class="lc-add" matTooltip="Add to canvas" (click)="addAlternative.emit(a)">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

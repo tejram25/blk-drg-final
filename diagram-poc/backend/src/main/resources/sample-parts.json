@@ -1,0 +1,103 @@
+{
+  "partserviceresult": {
+    "response": { "success": true, "errorCode": "200", "message": "ok" },
+    "numItems": 6,
+    "totalItems": 6,
+    "parts": [
+      {
+        "partKey": "104677992",
+        "arwPartNum": { "name": "INA250A3PWR" },
+        "suppPartNum": { "name": "INA250A3PWR" },
+        "supp": { "cd": "Texas Instruments|TI", "name": "Texas Instruments" },
+        "mfr": { "cd": "TI", "name": "Texas Instruments" },
+        "icc": { "tree": "Semiconductor - IC|Linear|Amplifier - Special Purpose", "name": "Amplifier - Special Purpose" },
+        "invOrgs": [ { "desc": "Current Sense Amplifier, Single, 36V, Automotive, 16-Pin TSSOP" } ],
+        "paramData": [
+          { "name": "Type", "val": "Current Sense Amplifier", "uom": " " },
+          { "name": "Number of Channels", "val": "1", "uom": " " },
+          { "name": "Single Supply Voltage (Min)", "val": "2.7", "uom": "V" },
+          { "name": "Single Supply Voltage (Max)", "val": "36", "uom": "V" },
+          { "name": "Operating Temp Range", "val": "-40C to 125C", "uom": " " },
+          { "name": "Pin Count", "val": "16", "uom": " " },
+          { "name": "Package Type", "val": "TSSOP", "uom": " " }
+        ]
+      },
+      {
+        "partKey": "200110045",
+        "arwPartNum": { "name": "DS91C176TMA/NOPB" },
+        "suppPartNum": { "name": "DS91C176TMA" },
+        "supp": { "cd": "Texas Instruments|TI", "name": "Texas Instruments" },
+        "mfr": { "cd": "TI", "name": "Texas Instruments" },
+        "icc": { "tree": "Semiconductor - IC|Interface|Transceiver", "name": "Transceiver" },
+        "invOrgs": [ { "desc": "Multipoint LVDS Transceiver, 8-Pin SOIC" } ],
+        "paramData": [
+          { "name": "Type", "val": "LVDS Transceiver", "uom": " " },
+          { "name": "Number of Channels", "val": "1", "uom": " " },
+          { "name": "Single Supply Voltage (Min)", "val": "3", "uom": "V" },
+          { "name": "Single Supply Voltage (Max)", "val": "3.6", "uom": "V" },
+          { "name": "Pin Count", "val": "8", "uom": " " },
+          { "name": "Package Type", "val": "SOIC", "uom": " " }
+        ]
+      },
+      {
+        "partKey": "300220088",
+        "arwPartNum": { "name": "LM317T" },
+        "suppPartNum": { "name": "LM317T" },
+        "supp": { "cd": "Arrow", "name": "Arrow" },
+        "mfr": { "cd": "STM", "name": "STMicroelectronics" },
+        "icc": { "tree": "Semiconductor - IC|Power Management|Linear Regulator", "name": "Linear Regulator" },
+        "invOrgs": [ { "desc": "Adjustable Positive Voltage Regulator, 1.5A, TO-220" } ],
+        "paramData": [
+          { "name": "Type", "val": "Adjustable LDO Regulator", "uom": " " },
+          { "name": "Single Supply Voltage (Min)", "val": "1.25", "uom": "V" },
+          { "name": "Single Supply Voltage (Max)", "val": "37", "uom": "V" },
+          { "name": "Pin Count", "val": "3", "uom": " " },
+          { "name": "Package Type", "val": "TO-220", "uom": " " }
+        ]
+      },
+      {
+        "partKey": "400330011",
+        "arwPartNum": { "name": "ESP32-WROOM-32" },
+        "suppPartNum": { "name": "ESP32-WROOM-32" },
+        "supp": { "cd": "Mouser", "name": "Mouser" },
+        "mfr": { "cd": "ESP", "name": "Espressif Systems" },
+        "icc": { "tree": "Semiconductor - IC|RF|Wireless Module", "name": "Wireless Module" },
+        "invOrgs": [ { "desc": "Wi-Fi + Bluetooth/BLE MCU Module, PCB Antenna" } ],
+        "paramData": [
+          { "name": "Type", "val": "Wi-Fi/BLE MCU Module", "uom": " " },
+          { "name": "Single Supply Voltage (Min)", "val": "3.0", "uom": "V" },
+          { "name": "Single Supply Voltage (Max)", "val": "3.6", "uom": "V" },
+          { "name": "Pin Count", "val": "38", "uom": " " },
+          { "name": "Package Type", "val": "SMD Module", "uom": " " }
+        ]
+      },
+      {
+        "partKey": "500440022",
+        "arwPartNum": { "name": "GRM188R71H104KA93D" },
+        "suppPartNum": { "name": "GRM188R71H104KA93D" },
+        "supp": { "cd": "Digi-Key", "name": "Digi-Key" },
+        "mfr": { "cd": "MUR", "name": "Murata" },
+        "icc": { "tree": "Passive|Capacitor|MLCC", "name": "Ceramic Capacitor" },
+        "invOrgs": [ { "desc": "0.1uF 50V X7R 0603 Ceramic Capacitor" } ],
+        "paramData": [
+          { "name": "Type", "val": "MLCC Capacitor", "uom": " " },
+          { "name": "Package Type", "val": "0603", "uom": " " }
+        ]
+      },
+      {
+        "partKey": "600550033",
+        "arwPartNum": { "name": "BAV23S" },
+        "suppPartNum": { "name": "BAV23S" },
+        "supp": { "cd": "Arrow", "name": "Arrow" },
+        "mfr": { "cd": "ONSEMI", "name": "onsemi" },
+        "icc": { "tree": "Semiconductor - Discrete|Diode|Switching", "name": "Switching Diode" },
+        "invOrgs": [ { "desc": "Dual Series Switching Diode, 200V, SOT-23" } ],
+        "paramData": [
+          { "name": "Type", "val": "Switching Diode", "uom": " " },
+          { "name": "Pin Count", "val": "3", "uom": " " },
+          { "name": "Package Type", "val": "SOT-23", "uom": " " }
+        ]
+      }
+    ]
+  }
+}

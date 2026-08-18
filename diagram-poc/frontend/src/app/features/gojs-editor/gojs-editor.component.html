@@ -1,0 +1,787 @@
+<div class="layout" [class.mobile]="isMobile">
+  <!-- Top bar. Not rendered here: the shell hosts it in the workspace header via
+       EditorChromeService (TemplatePortal), so it shows only while a diagram is
+       open. Bindings still resolve against this component. -->
+  <ng-template #editorToolbarTpl>
+  <!-- A div, not a <header>: this is a control group inside the shell's single
+       header, and nesting a second <header> would be the same duplication in
+       the accessibility tree that we just removed visually. -->
+  <div class="topbar" role="toolbar" aria-label="Diagram tools">
+    <span class="panel-toggle">
+      <button mat-icon-button [class.on]="paletteOpen" (click)="paletteOpen = !paletteOpen"
+        [matTooltip]="'palette.components' | translate"><mat-icon>widgets</mat-icon></button>
+      </span>
+
+      <!-- LEFT: brand · File menu · document -->
+      <div class="brand">
+        <span class="brand-mark"><mat-icon>schema</mat-icon></span>
+        <span class="brand-name">{{ 'app.brand' | translate }}</span>
+      </div>
+
+      <span class="menu-wrap">
+        <button type="button" class="hb-menu" [class.open]="fileMenuOpen" (click)="toggleMenu('file', $event)">
+          <mat-icon>folder_open</mat-icon><span>File</span><mat-icon class="caret">arrow_drop_down</mat-icon>
+        </button>
+        @if (fileMenuOpen) {
+          <div class="dropdown-menu hb-drop file-menu" (click)="$event.stopPropagation()">
+            <button type="button" class="menu-item" (click)="fileMenuOpen = false; newDiagram()">
+              <mat-icon>note_add</mat-icon><span>{{ 'btn.new' | translate }}</span></button>
+              <button type="button" class="menu-item" (click)="fileMenuOpen = false; save()">
+                <mat-icon>save</mat-icon><span>{{ 'btn.save' | translate }}</span><span class="menu-hint">Ctrl+S</span></button>
+                <div class="menu-sep"></div><div class="menu-label">Import</div>
+                <button type="button" class="menu-item" (click)="fileMenuOpen = false; jsonInput.click()">
+                  <mat-icon>data_object</mat-icon><span>Import JSON</span></button>
+                  <button type="button" class="menu-item" (click)="fileMenuOpen = false; drawioInput.click()">
+                    <mat-icon>account_tree</mat-icon><span>From draw.io</span></button>
+                    <div class="menu-sep"></div><div class="menu-label">Export</div>
+                    <button type="button" class="menu-item" (click)="fileMenuOpen = false; exportJson()">
+                      <mat-icon>data_object</mat-icon><span>Export JSON</span></button>
+                      <button type="button" class="menu-item" (click)="fileMenuOpen = false; exportDrawioFile()">
+                        <mat-icon>account_tree</mat-icon><span>Export to draw.io</span></button>
+                        <button type="button" class="menu-item" (click)="fileMenuOpen = false; openExport('png')">
+                          <mat-icon>image</mat-icon><span>Export as PNG…</span></button>
+                          <button type="button" class="menu-item" (click)="fileMenuOpen = false; openExport('svg')">
+                            <mat-icon>shape_line</mat-icon><span>Export as SVG…</span></button>
+                            <button type="button" class="menu-item" (click)="fileMenuOpen = false; exportBom()">
+                              <mat-icon>receipt_long</mat-icon><span>Bill of Materials (CSV)</span></button>
+                              <button type="button" class="menu-item" (click)="fileMenuOpen = false; exportNetlist()">
+                                <mat-icon>lan</mat-icon><span>Netlist + BOM (electrical)</span></button>
+                              <div class="menu-sep"></div>
+                              <button type="button" class="menu-item" (click)="fileMenuOpen = false; openVersions()">
+                                <mat-icon>history</mat-icon><span>Version history</span></button>
+                              </div>
+                            }
+                          </span>
+
+                          <span class="vsep"></span>
+
+                          <input class="doc-name" [(ngModel)]="diagramName" [placeholder]="'doc.placeholder' | translate" />
+                          <div class="dd open-dd">
+                            <button type="button" class="dd-trigger" [class.open]="openMenuOpen" (click)="toggleMenu('open', $event)">
+                              <span class="dd-val">{{ selectedDiagramId != null ? selectedDiagramName : ('open.saved' | translate) }}</span>
+                              <svg class="dd-caret" width="11" height="7" viewBox="0 0 12 8"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                            @if (openMenuOpen) {
+                              <div class="dd-menu" (click)="$event.stopPropagation()">
+                                <button type="button" class="dd-item" [class.sel]="selectedDiagramId == null"
+                                (click)="selectedDiagramId = null; openMenuOpen = false; newDiagram()">{{ 'open.saved' | translate }}</button>
+                                @for (d of savedDiagrams; track d) {
+                                  <div class="dd-row">
+                                    <button type="button" class="dd-item dd-item-grow" [class.sel]="selectedDiagramId === d.id"
+                                    (click)="selectedDiagramId = d.id; openMenuOpen = false; load()">{{ d.name }}</button>
+                                    <button type="button" class="dd-rate" matTooltip="Reviews" (click)="openReviews(d, $event)">
+                                      <mat-icon>star</mat-icon><span>{{ d.reviewCount ? (d.avgRating | number:'1.1-1') : '–' }}</span></button>
+                                      <button type="button" class="dd-del" matTooltip="Delete file" (click)="askDeleteDiagram(d, $event)">
+                                        <mat-icon>delete_outline</mat-icon></button>
+                                      </div>
+                                    }
+                                  </div>
+                                }
+                              </div>
+
+                              <button type="button" class="cls-pill" [class]="classificationClass()" (click)="cycleClassification()"
+                                matTooltip="Access classification — click to change. RESTRICTED = ITAR/export-controlled, visible only to you.">
+                                <mat-icon>{{ classification === 'RESTRICTED' ? 'lock' : 'shield' }}</mat-icon><span>{{ classification }}</span>
+                              </button>
+
+                              <span class="spacer"></span>
+
+                              <!-- CENTER: primary actions -->
+                              <div class="tool-group boxed">
+                                <button mat-icon-button [matTooltip]="'tip.undo' | translate" (click)="undo()"><mat-icon>undo</mat-icon></button>
+                                <button mat-icon-button [matTooltip]="'tip.redo' | translate" (click)="redo()"><mat-icon>redo</mat-icon></button>
+                                <button mat-icon-button [class.on]="partSearchOpen" matTooltip="Search parts catalogue" (click)="togglePartSearch()"><mat-icon>travel_explore</mat-icon></button>
+                                <button mat-icon-button [class.on]="recsOpen" matTooltip="Recommendations (AI)" (click)="openRecommendations()"><mat-icon>auto_awesome</mat-icon></button>
+                                <button mat-icon-button [class.on]="reviewOpen" matTooltip="Design review (AI)" (click)="openDesignReview()"><mat-icon>rule</mat-icon></button>
+                                <button mat-icon-button [class.on]="designWinOpen" matTooltip="Design Win explorer" (click)="openDesignWin()"><mat-icon>emoji_events</mat-icon></button>
+                              </div>
+
+                              <span class="menu-wrap">
+                                <button type="button" class="hb-menu" [class.open]="insertMenuOpen" (click)="toggleMenu('insert', $event)">
+                                  <mat-icon>add_box</mat-icon><span>Insert</span><mat-icon class="caret">arrow_drop_down</mat-icon>
+                                </button>
+                                @if (insertMenuOpen) {
+                                  <div class="dropdown-menu hb-drop" (click)="$event.stopPropagation()">
+                                    <button type="button" class="menu-item" (click)="insertMenuOpen = false; fileInput.click()">
+                                      <mat-icon>image</mat-icon><span>Insert image</span></button>
+                                      <button type="button" class="menu-item" [class.ai-off]="!aiEnabled"
+                                        [matTooltip]="aiEnabled ? '' : aiOffTip" matTooltipPosition="right"
+                                        (click)="insertMenuOpen = false; generateFromImage()">
+                                        <mat-icon>auto_fix_high</mat-icon><span>Generate from image (AI)</span>
+                                        @if (!aiEnabled) { <span class="ai-off-tag">AI off</span> }</button>
+                                      <button type="button" class="menu-item" (click)="insertMenuOpen = false; suggestAllBoxes()">
+                                        <mat-icon>auto_awesome_motion</mat-icon><span>Suggest components for all boxes</span></button>
+                                      <button type="button" class="menu-item" [class.sel]="templatesOpen" (click)="insertMenuOpen = false; openTemplates()">
+                                        <mat-icon>dashboard_customize</mat-icon><span>Template repository</span></button>
+                                        <button type="button" class="menu-item" [class.sel]="projectPanelOpen" (click)="insertMenuOpen = false; projectPanelOpen = !projectPanelOpen">
+                                          <mat-icon>work</mat-icon><span>Project workspace</span></button>
+                                        </div>
+                                      }
+                                    </span>
+
+                                    <span class="menu-wrap">
+                                      <button type="button" class="hb-menu" [class.open]="viewMenuOpen" (click)="toggleMenu('view', $event)">
+                                        <mat-icon>visibility</mat-icon><span>View</span><mat-icon class="caret">arrow_drop_down</mat-icon>
+                                      </button>
+                                      @if (viewMenuOpen) {
+                                        <div class="dropdown-menu hb-drop" (click)="$event.stopPropagation()">
+                                          <button type="button" class="menu-item" (click)="viewMenuOpen = false; toggleCanvasTheme()">
+                                            <mat-icon>{{ lightCanvas ? 'dark_mode' : 'light_mode' }}</mat-icon>
+                                            <span>{{ lightCanvas ? 'Dark canvas' : 'White canvas' }}</span></button>
+                                            <button type="button" class="menu-item" [class.sel]="minimapOpen" (click)="viewMenuOpen = false; toggleMinimap()">
+                                              <mat-icon>map</mat-icon><span>Minimap</span></button>
+                                            </div>
+                                          }
+                                        </span>
+
+                                        <span class="vsep"></span>
+
+                                        <!-- RIGHT: properties · comments · collab · language · account -->
+                                        @if (selectedNode) {
+                                          <span class="panel-toggle">
+                                            <button mat-icon-button [class.on]="propsOpen" (click)="propsOpen = !propsOpen" [matTooltip]="'props.title' | translate"><mat-icon>tune</mat-icon></button>
+                                          </span>
+                                        }
+                                        <button mat-icon-button class="badge-host" [class.on]="feedbackLoopOpen" matTooltip="Discussions (sales · engineering · customer · …)" (click)="toggleFeedbackLoop()">
+                                          <mat-icon>forum</mat-icon>
+                                          @if (feedbackLoopCount) { <span class="hdr-badge">{{ feedbackLoopCount }}</span> }
+                                        </button>
+                                        <button mat-icon-button [class.on]="commentsOpen" matTooltip="Comments" (click)="toggleComments()"><mat-icon>comment</mat-icon></button>
+
+                                        @if (collab.active) {
+                                          <div class="menu-wrap">
+                                            <button type="button" mat-stroked-button class="presence-btn" [class.live]="collab.connected"
+                                              (click)="toggleMenu('presence', $event)" [matTooltip]="collab.peers + ' viewing this file'">
+                                              <span class="live-dot"></span><mat-icon>group</mat-icon><span>{{ collab.peers }}</span>
+                                            </button>
+                                            @if (presenceOpen) {
+                                              <div class="dropdown-menu presence-menu" (click)="$event.stopPropagation()">
+                                                <div class="roster-title">Viewing this file ({{ collab.participants.length }})</div>
+                                                @for (p of collab.participants; track participantTrack($index, p)) {
+                                                  <div class="roster-row">
+                                                    <span class="roster-dot" [style.background]="p.color"></span>
+                                                    <span class="roster-name">{{ p.name }}</span>
+                                                    @if (p.isSelf) {
+                                                      <span class="roster-tag you">You</span>
+                                                    }
+                                                    @if (!p.isSelf) {
+                                                      <button type="button" class="roster-follow" [class.on]="collab.followUid === p.uid"
+                                                      (click)="collab.toggleFollow(p.uid)">{{ collab.followUid === p.uid ? 'Following' : 'Follow' }}</button>
+                                                    }
+                                                  </div>
+                                                }
+                                              </div>
+                                            }
+                                          </div>
+                                        }
+
+                                        @if (collab.active) {
+                                          <button class="chat-toggle badge-host" mat-stroked-button [class.chat-on]="chatOpen" (click)="toggleChat()"
+                                            [matTooltip]="'chat.tip' | translate"><span>{{ 'chat.label' | translate }}</span>
+                                            @if (chatUnread) { <span class="hdr-badge inline">{{ chatUnread }}</span> }
+                                          </button>
+                                          }
+
+                                          <button mat-icon-button class="mobile-keep" (click)="undo()"><mat-icon>undo</mat-icon></button>
+                                          <button mat-icon-button class="mobile-keep" (click)="redo()"><mat-icon>redo</mat-icon></button>
+
+                                          <div class="lang-wrap">
+                                            <button mat-stroked-button (click)="toggleMenu('lang', $event)" [matTooltip]="'lang.tooltip' | translate">
+                                              <mat-icon>language</mat-icon><span class="lang-label">{{ currentLangLabel }}</span><mat-icon class="lang-caret">arrow_drop_down</mat-icon>
+                                            </button>
+                                            @if (langMenuOpen) {
+                                              <div class="lang-menu" (click)="$event.stopPropagation()">
+                                                @for (l of languages; track l) {
+                                                  <button class="lang-item" [class.active]="l.code === currentLang" (click)="switchLang(l.code)">
+                                                    <span>{{ l.label }}</span>@if (l.code === currentLang) {
+                                                    <mat-icon>check</mat-icon>
+                                                  }</button>
+                                                }
+                                              </div>
+                                            }
+                                          </div>
+
+                                          @if (auth.user(); as u) {
+                                            <div class="menu-wrap user-wrap">
+                                              <button type="button" class="user-chip" [class.on]="accountMenuOpen" (click)="toggleMenu('account', $event)" [matTooltip]="u.name || u.email">
+                                                <mat-icon>account_circle</mat-icon><span class="user-name">{{ u.name || u.email }}</span><mat-icon class="caret">arrow_drop_down</mat-icon>
+                                              </button>
+                                              @if (accountMenuOpen) {
+                                                <div class="dropdown-menu account-menu" (click)="$event.stopPropagation()">
+                                                  <div class="account-head"><mat-icon>account_circle</mat-icon>
+                                                  <div class="account-id"><span class="account-name">{{ u.name || u.email }}</span>
+                                                  @if (u.name) {
+                                                    <span class="account-email">{{ u.email }}</span>
+                                                  }</div></div>
+                                                  <div class="menu-sep"></div>
+                                                  <button type="button" class="menu-item" (click)="accountMenuOpen = false; openFeedback()"><mat-icon>feedback</mat-icon><span>Send feedback</span></button>
+                                                  <button type="button" class="menu-item" (click)="accountMenuOpen = false; logout()"><mat-icon>logout</mat-icon><span>Sign out</span></button>
+                                                </div>
+                                              }
+                                            </div>
+                                          }
+                                        </div>
+                                        </ng-template>
+
+                                        <!-- Hidden pickers stay in the always-rendered view so their
+                                             ViewChild refs resolve even before the toolbar portal mounts. -->
+                                        <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
+                                        <input #imageGenInput type="file" accept="image/*" hidden (change)="onGenerateImageSelected($event)" />
+                                        <input #jsonInput type="file" accept=".json,application/json" hidden (change)="onJsonSelected($event)" />
+                                        <input #drawioInput type="file" accept=".drawio,.xml,application/xml,text/xml" hidden (change)="onDrawioSelected($event)" />
+
+                                        <!-- Linked project banner -->
+                                        @if (linkedProject; as p) {
+                                          <div class="proj-bar">
+                                            <mat-icon>work</mat-icon>
+                                            <span class="proj-text">Linked to <strong>{{ p.id }}</strong> · {{ p.customer }}</span>
+                                            <button type="button" class="proj-x" (click)="linkedProject = null" matTooltip="Unlink"><mat-icon>close</mat-icon></button>
+                                          </div>
+                                        }
+
+                                        <!-- Design Win context banner -->
+                                        @if (designWinContext) {
+                                          <div class="proj-bar dw-bar">
+                                            <mat-icon>emoji_events</mat-icon>
+                                            <span class="proj-text">Design Win · <strong>{{ designWinLabel }}</strong></span>
+                                            <button type="button" class="proj-x" (click)="clearDesignWin()" matTooltip="Detach"><mat-icon>close</mat-icon></button>
+                                          </div>
+                                        }
+
+                                        <div class="body">
+                                          <!-- Palette -->
+                                          <!-- Components palette. Like the toolbar, it renders in the shell —
+                                               as a tool window behind the activity bar's "Components" icon —
+                                               so only one left panel shows at a time. -->
+                                          <ng-template #editorPaletteTpl>
+                                          <aside class="palette" [class.open]="paletteOpen">
+                                            <div class="panel-title">{{ 'palette.components' | translate }}</div>
+                                            <div class="search-wrap">
+                                              <mat-icon>search</mat-icon>
+                                              <input class="search" [(ngModel)]="paletteQuery" [placeholder]="'palette.search' | translate" />
+                                            </div>
+
+                                            @if (!paletteQuery) {
+                                              <div class="dd cat-dd">
+                                                <button type="button" class="dd-trigger" [class.open]="catMenuOpen" (click)="catMenuOpen = !catMenuOpen; $event.stopPropagation()">
+                                                  <span class="dd-val">{{ i18n.td(activeCategory) }}</span>
+                                                  <svg class="dd-caret" width="11" height="7" viewBox="0 0 12 8"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                </button>
+                                                @if (catMenuOpen) {
+                                                  <div class="dd-menu" (click)="$event.stopPropagation()">
+                                                    @for (cat of categories; track cat) {
+                                                      <button type="button" class="dd-item" [class.sel]="cat === activeCategory"
+                                                      (click)="activeCategory = cat; catMenuOpen = false">{{ i18n.td(cat) }}</button>
+                                                    }
+                                                  </div>
+                                                }
+                                              </div>
+                                            }
+
+                                            <div class="palette-grid">
+                                              @for (b of visibleItems; track b) {
+                                                @if (b.shape && isShape(b.shape)) {
+                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)" (click)="tapPlace(b)">
+                                                    <svg viewBox="0 0 100 100" width="52" height="52" preserveAspectRatio="xMidYMid meet"
+                                                      fill="color-mix(in srgb, currentColor 14%, transparent)" stroke="currentColor" stroke-width="4"
+                                                      stroke-linejoin="round" stroke-linecap="round" [innerHTML]="shapePreview(b.shape)"></svg>
+                                                    <span>{{ i18n.td(b.label) }}</span>
+                                                  </div>
+                                                }
+                                                @if (b.shape && isElectrical(b.shape)) {
+                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)" (click)="tapPlace(b)">
+                                                    <svg [attr.viewBox]="symbolViewBox(b.shape)" width="62" [attr.height]="isIc(b.shape) ? 40 : 26">
+                                                      @for (p of symbolPaths(b.shape); track p) {
+                                                        <path [attr.d]="p.d" [attr.fill]="p.fill ? 'currentColor' : 'none'"
+                                                          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                                      }
+                                                      @for (t of symbolTitleTexts(b.shape); track t) {
+                                                        <text [attr.x]="t.x" [attr.y]="t.y" text-anchor="middle"
+                                                        fill="currentColor" font-weight="700" [attr.font-size]="t.size ? t.size * 1.6 : 16">{{ t.text }}</text>
+                                                      }
+                                                    </svg>
+                                                    <span>{{ i18n.td(b.label) }}</span>
+                                                  </div>
+                                                }
+                                                @if (b.shape && !isShape(b.shape) && !isElectrical(b.shape)) {
+                                                  <div class="symbol-item" draggable="true" (dragstart)="startDrag(b, $event)" (click)="tapPlace(b)">
+                                                    <svg [attr.viewBox]="symbolViewBox(b.shape)" width="62" height="40" [innerHTML]="animatedPreview(b.shape)"></svg>
+                                                    <span>{{ i18n.td(b.label) }}</span>
+                                                  </div>
+                                                }
+                                                @if (!b.shape) {
+                                                  <div class="block-chip" draggable="true" (dragstart)="startDrag(b, $event)" (click)="tapPlace(b)">
+                                                    <span class="chip-badge" [style.background]="b.color"><span class="material-icons">{{ b.icon || 'widgets' }}</span></span>
+                                                    <span class="chip-label">{{ i18n.td(b.label) }}</span>
+                                                  </div>
+                                                }
+                                              }
+                                              @if (paletteQuery && visibleItems.length === 0) {
+                                                <p class="empty">
+                                                  <span>{{ 'palette.noMatch' | translate }}</span> "{{ paletteQuery }}"
+                                                </p>
+                                              }
+                                            </div>
+                                            <p class="hint">{{ 'palette.hint' | translate }}</p>
+                                          </aside>
+                                          </ng-template>
+
+                                          <!-- Canvas -->
+                                          <main class="canvas-wrap">
+                                            <div #canvas class="canvas" (dragover)="$event.preventDefault()" (drop)="onCanvasDrop($event)"
+                                            (mousemove)="onCanvasMouseMove($event)" (mouseleave)="onCanvasMouseLeave()"></div>
+
+                                            @if (canvasEmpty) {
+                                              <div class="onboarding">
+                                                <mat-icon class="ob-icon">schema</mat-icon>
+                                                <h3>Start your diagram</h3>
+                                                <ul>
+                                                  <li><mat-icon>widgets</mat-icon> Drag a block or shape from the left palette</li>
+                                                  <li><mat-icon>dashboard_customize</mat-icon> Or open the <b>Template repository</b> to start from a proven layout</li>
+                                                  <li><mat-icon>travel_explore</mat-icon> <b>Search parts</b> to drop real components and build a BOM</li>
+                                                  <li><mat-icon>keyboard_command_key</mat-icon> Press <b>Ctrl/Cmd&nbsp;+&nbsp;Shift&nbsp;+&nbsp;P</b> for diagram actions, <b>Ctrl/Cmd&nbsp;+&nbsp;K</b> to search the workspace</li>
+                                                </ul>
+                                              </div>
+                                            }
+
+                                            <div #minimap class="minimap" [class.hidden]="!minimapOpen"></div>
+
+                                            @if (imageGenLoading) {
+                                              <div class="imggen-overlay">
+                                                <div class="imggen-card">
+                                                  <div class="imggen-spin"></div>
+                                                  <div class="imggen-title">{{ imageGenMessage }}</div>
+                                                  <div class="imggen-sub">This can take a moment — hang tight.</div>
+                                                </div>
+                                              </div>
+                                            }
+
+                                            @for (c of remoteCursors(); track cursorTrack($index, c)) {
+                                              <div class="remote-cursor"
+                                                [style.transform]="'translate3d(' + c.sx + 'px,' + c.sy + 'px,0)'">
+                                                <svg width="16" height="20" viewBox="0 0 16 20">
+                                                  <path d="M 1 1 L 1 15 L 4.8 11.8 L 7.4 18.4 L 10.2 17.2 L 7.6 10.8 L 12.6 10.4 Z"
+                                                    [attr.fill]="c.color" stroke="var(--panel)" stroke-width="1.2" stroke-linejoin="round"/>
+                                                </svg>
+                                                <span class="cursor-name" [style.background]="c.color">{{ c.name }}</span>
+                                              </div>
+                                            }
+
+                                            <app-zoom-dock [zoom]="zoomPct" (zoomOut)="zoomOut()" (zoomIn)="zoomIn()" (fit)="zoomFit()" (reset)="zoomReset()"></app-zoom-dock>
+
+                                            <!-- Mobile: session chat button (top-right), only in a live session -->
+                                            @if (isMobile && collab.active) {
+                                              <button type="button" class="session-fab" [class.on]="chatOpen"
+                                                (click)="toggleChat()" matTooltip="Session chat">
+                                                <mat-icon>forum</mat-icon>
+                                                @if (chatUnread) { <span class="hdr-badge">{{ chatUnread }}</span> }
+                                              </button>
+                                            }
+
+                                            <!-- Mobile: tap-to-connect (dragging thin pins with a finger is too fiddly) -->
+                                            @if (isMobile) {
+                                              @if (connectMode) {
+                                                <div class="connect-hint">
+                                                  <mat-icon>touch_app</mat-icon>
+                                                  <span>{{ connectArmed ? 'Now tap the component to wire it to.' : 'Tap a component to start a wire.' }}</span>
+                                                </div>
+                                              }
+                                              <!-- Delete the selected component (no keyboard on touch) -->
+                                              @if (selectedNode && !connectMode) {
+                                                <button type="button" class="sel-del-fab" (click)="deleteSelection()" matTooltip="Delete component">
+                                                  <mat-icon>delete</mat-icon><span>Delete</span>
+                                                </button>
+                                              }
+                                              <button type="button" class="connect-fab" [class.on]="connectMode"
+                                                (click)="toggleConnectMode()"
+                                                [matTooltip]="connectMode ? 'Exit connect mode' : 'Connect components'">
+                                                <mat-icon>{{ connectMode ? 'close' : 'polyline' }}</mat-icon>
+                                              </button>
+                                            }
+
+                                            <!-- Wire dock -->
+                                            @if (wirePop) {
+                                              <div class="dock-backdrop" (click)="wirePop = null"></div>
+                                            }
+                                            <div class="wire-dock" [class.show]="!isMobile || selectedEdge">
+                                              <span class="dock-label">
+                                                @if (selectedEdge) {
+                                                  {{ 'wire.selected' | translate }}
+                                                }
+                                                @if (!selectedEdge) {
+                                                  {{ 'wire.label' | translate }}
+                                                }
+                                              </span>
+                                              <button class="dock-trigger" [matTooltip]="'wire.tipColor' | translate" [class.active]="wirePop === 'color'" (click)="toggleWirePop('color')">
+                                                <span class="trigger-swatch" [style.background]="wireColor"></span><mat-icon class="trigger-caret">expand_more</mat-icon>
+                                              </button>
+                                              <button class="dock-trigger" [matTooltip]="'wire.tipStyle' | translate" [class.active]="wirePop === 'style'" (click)="toggleWirePop('style')">
+                                                <svg viewBox="0 0 36 12" width="26" height="9"><path d="M 1 6 H 35" stroke="currentColor" stroke-width="2"
+                                                [attr.stroke-dasharray]="wireStyle === 'solid' ? null : '5 3'"
+                                                [class.dock-flow]="wireStyle === 'flow'"/></svg>
+                                                <mat-icon class="trigger-caret">expand_more</mat-icon>
+                                              </button>
+                                              @if (selectedEdge) {
+                                                <span class="dock-sep"></span>
+                                                <input class="dock-label-input" type="text" placeholder="Label…" matTooltip="Wire label (net / signal name)"
+                                                  [ngModel]="selectedEdge.data.text || ''" (ngModelChange)="setWireLabel($event)" />
+                                                <span class="dock-sep"></span>
+                                                <button mat-icon-button [matTooltip]="'wire.delete' | translate" class="dock-del" (click)="deleteSelectedEdge()"><mat-icon>delete</mat-icon></button>
+                                              }
+
+                                              @if (wirePop === 'color') {
+                                                <div class="dock-pop">
+                                                  <span class="pop-title">{{ 'wire.popColor' | translate }}</span>
+                                                  <div class="swatches">
+                                                    @for (c of wireColors; track c) {
+                                                      <button class="swatch" [style.background]="c" [class.active]="wireColor === c" (click)="setWireColor(c); wirePop = null"></button>
+                                                    }
+                                                    <input type="color" class="swatch custom" matTooltip="Custom color" [ngModel]="wireColor" (ngModelChange)="setWireColor($event)" />
+                                                  </div>
+                                                </div>
+                                              }
+                                              @if (wirePop === 'style') {
+                                                <div class="dock-pop">
+                                                  <div class="pop-section"><span class="pop-title">{{ 'wire.popStyle' | translate }}</span>
+                                                  <div class="dock-group">
+                                                    <button class="dock-btn" [matTooltip]="'wire.flow' | translate" [class.active]="wireStyle === 'flow'" (click)="setWireStyle('flow')">
+                                                      <svg viewBox="0 0 36 12" width="30" height="10"><path d="M 1 6 H 35" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3" class="dock-flow"/></svg></button>
+                                                    <button class="dock-btn" [matTooltip]="'wire.dashed' | translate" [class.active]="wireStyle === 'dashed'" (click)="setWireStyle('dashed')">
+                                                      <svg viewBox="0 0 36 12" width="30" height="10"><path d="M 1 6 H 35" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3"/></svg></button>
+                                                      <button class="dock-btn" [matTooltip]="'wire.solid' | translate" [class.active]="wireStyle === 'solid'" (click)="setWireStyle('solid')">
+                                                        <svg viewBox="0 0 36 12" width="30" height="10"><path d="M 1 6 H 35" stroke="currentColor" stroke-width="2"/></svg></button>
+                                                      </div>
+                                                    </div>
+                                                    <div class="pop-section"><span class="pop-title">{{ 'wire.popWidth' | translate }}</span>
+                                                    <div class="dock-group">
+                                                      <button class="dock-btn" [matTooltip]="'wire.thin' | translate" [class.active]="wireWidth === 1.5" (click)="setWireWidth(1.5)">
+                                                        <svg viewBox="0 0 24 12" width="20" height="10"><path d="M 2 6 H 22" stroke="currentColor" stroke-width="1.2"/></svg></button>
+                                                        <button class="dock-btn" [matTooltip]="'wire.medium' | translate" [class.active]="wireWidth === 2" (click)="setWireWidth(2)">
+                                                          <svg viewBox="0 0 24 12" width="20" height="10"><path d="M 2 6 H 22" stroke="currentColor" stroke-width="2.4"/></svg></button>
+                                                          <button class="dock-btn" [matTooltip]="'wire.thick' | translate" [class.active]="wireWidth === 3" (click)="setWireWidth(3)">
+                                                            <svg viewBox="0 0 24 12" width="20" height="10"><path d="M 2 6 H 22" stroke="currentColor" stroke-width="4"/></svg></button>
+                                                          </div>
+                                                        </div>
+                                                        <div class="pop-section"><span class="pop-title">{{ 'wire.popRouting' | translate }}</span>
+                                                        <div class="dock-group">
+                                                          <button class="dock-btn" [matTooltip]="'wire.rightAngle' | translate" [class.active]="wireRouter === 'manhattan'" (click)="setWireRouter('manhattan')">
+                                                            <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 14 H 12 V 2 H 22" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
+                                                            <button class="dock-btn" [matTooltip]="'wire.straight' | translate" [class.active]="wireRouter === 'normal'" (click)="setWireRouter('normal')">
+                                                              <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 14 L 22 2" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
+                                                              <button class="dock-btn" [matTooltip]="'wire.curved' | translate" [class.active]="wireRouter === 'smooth'" (click)="setWireRouter('smooth')">
+                                                                <svg viewBox="0 0 24 16" width="20" height="13"><path d="M 2 14 C 10 14 14 2 22 2" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
+                                                              </div>
+                                                            </div>
+                                                          </div>
+                                                        }
+                                                      </div>
+                                                    </main>
+
+                                                    <!-- Properties -->
+                                                    @if (sel; as s) {
+                                                      <aside class="props" [class.open]="propsOpen">
+                                                        <h3>{{ 'props.title' | translate }}</h3>
+                                                        <div class="prop-type"><mat-icon>category</mat-icon>{{ nodeTypeName }}</div>
+                                                        <label><span>{{ 'props.name' | translate }}</span>
+                                                      <input [ngModel]="s.text" (ngModelChange)="setField('text', $event)" /></label>
+                                                      @if (!s.isPart) {
+                                                        <label><span>Colour</span>
+                                                      <input type="color" [ngModel]="s.color" (ngModelChange)="setColor($event)" /></label>
+                                                    }
+                                                    <label><span>{{ 'props.partNumber' | translate }}</span>
+                                                    <input [ngModel]="dataField('partNumber')" (ngModelChange)="setDataField('partNumber', $event)"
+                                                    [placeholder]="'props.partPlaceholder' | translate" /></label>
+                                                    <label><span>{{ 'props.category' | translate }}</span>
+                                                  <input [ngModel]="dataField('category') || defaultCategory" (ngModelChange)="setDataField('category', $event)" /></label>
+                                                  <label><span>{{ 'props.notes' | translate }}</span>
+                                                  <textarea rows="2" [ngModel]="dataField('notes')" (ngModelChange)="setDataField('notes', $event)"
+                                                  [placeholder]="'props.notesPlaceholder' | translate"></textarea></label>
+                                                  @if (s.isPart) {
+                                                    <label><span>Quantity</span>
+                                                  <input type="number" min="1" [ngModel]="s.quantity" (ngModelChange)="setQuantity($event)" /></label>
+                                                }
+                                                @if (s.isPart) {
+                                                  <button class="secondary-btn" (click)="checkSelectedLifecycle()"><mat-icon>fact_check</mat-icon><span>Check lifecycle</span></button>
+                                                  <button class="secondary-btn" (click)="checkSelectedPos()"><mat-icon>verified</mat-icon><span>Field-proven (POS)</span></button>
+                                                  @if (s.details.length) {
+                                                    <div class="prop-section">Catalogue details</div>
+                                                  }
+                                                  <div class="part-details">
+                                                    @for (d of s.details; track d) {
+                                                      <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
+                                                    }
+                                                  </div>
+                                                  @if (s.specs.length) {
+                                                    <div class="prop-section">Specifications</div>
+                                                  }
+                                                  <div class="part-details">
+                                                    @for (d of s.specs; track d) {
+                                                      <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
+                                                    }
+                                                  </div>
+                                                }
+                                                @if (isBox && attachedParts.length) {
+                                                  <div class="prop-section">Attached Parts ({{ attachedParts.length }})</div>
+                                                  @for (ap of attachedParts; track $index; let i = $index) {
+                                                    <details class="attached-part-details" [open]="attachedParts.length === 1">
+                                                      <summary class="attached-part-summary">
+                                                        <mat-icon>inventory_2</mat-icon>
+                                                        <span class="ap-name">{{ ap.part?.arwPartNum?.name || ap.part?.suppPartNum?.name || 'Part' }}</span>
+                                                        <span class="ap-qty">Qty: {{ ap.quantity }}</span>
+                                                      </summary>
+                                                      <div class="attached-part-content">
+                                                        <div class="part-details">
+                                                          @for (d of partDetails(ap.part); track d) {
+                                                            <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
+                                                          }
+                                                        </div>
+                                                        @if (partSpecs(ap.part).length) {
+                                                          <div class="prop-section-small">Specifications</div>
+                                                          <div class="part-details">
+                                                            @for (d of partSpecs(ap.part); track d) {
+                                                              <div class="pd-row"><span class="pd-key">{{ d.label }}</span><span class="pd-val">{{ d.value }}</span></div>
+                                                            }
+                                                          </div>
+                                                        }
+                                                        <div class="ap-controls">
+                                                          <label class="ap-qty-input">
+                                                            <span>Qty</span>
+                                                            <input type="number" min="1" [ngModel]="ap.quantity" (ngModelChange)="setAttachedPartQty(i, $event)" />
+                                                          </label>
+                                                          <button class="ap-remove" (click)="removeAttachedPart(i)" matTooltip="Remove part">
+                                                            <mat-icon>delete</mat-icon>
+                                                          </button>
+                                                        </div>
+                                                      </div>
+                                                    </details>
+                                                  }
+                                                }
+                                                @if (isBox) {
+                                                  <div class="prop-section">Components · AI + Design Win</div>
+                                                  @for (c of boxComponents; track c.partNumber; let i = $index) {
+                                                    <div class="linked-part">
+                                                      <mat-icon>memory</mat-icon>
+                                                      <div class="lp-main">
+                                                        <b>{{ c.partNumber }}</b>
+                                                        <span>{{ c.supplier }}@if (c.fieldProven) { · field-proven }@if (c.unitPrice) { · {{ money(c.unitPrice) }} }</span>
+                                                        <div class="lp-controls">
+                                                          @if (c.suppliers && c.suppliers.length > 1) {
+                                                            <select class="bs-supplier" [ngModel]="c.supplier" (ngModelChange)="setComponentSupplier(i, $event)">
+                                                              @for (sup of c.suppliers; track sup.name) { <option [value]="sup.name">{{ sup.name }}</option> }
+                                                            </select>
+                                                          }
+                                                          <input class="lp-qty" type="number" min="1" [ngModel]="c.quantity" (ngModelChange)="setComponentQty(i, $event)" title="Quantity" />
+                                                        </div>
+                                                      </div>
+                                                      <button class="lp-x" (click)="removeComponent(i)" matTooltip="Unlink component"><mat-icon>close</mat-icon></button>
+                                                    </div>
+                                                  }
+                                                  <button class="secondary-btn" (click)="suggestComponent()" [disabled]="boxSuggestLoading">
+                                                    <mat-icon>auto_awesome</mat-icon><span>{{ boxSuggestLoading ? 'Finding components…' : (boxComponents.length ? 'Add another component' : 'Suggest component') }}</span></button>
+                                                  @if (boxSuggestError) { <div class="bs-err">{{ boxSuggestError }}</div> }
+                                                  @if (boxSuggestions.length) {
+                                                    <div class="bs-list">
+                                                      @for (bs of boxSuggestions; track bs.partNumber) {
+                                                        <div class="bs-item">
+                                                          <div class="bs-head"><b>{{ bs.partNumber }}</b>
+                                                            @if (bs.customerApproved) { <span class="bs-approved"><mat-icon>emoji_events</mat-icon>Customer-approved</span> }
+                                                            @if (bs.fieldProven) { <span class="bs-proven"><mat-icon>verified</mat-icon>Field-proven</span> }</div>
+                                                          <div class="bs-desc">{{ bs.description }}</div>
+                                                          <div class="bs-meta">{{ bs.manufacturer }} · {{ bs.stock }} in stock@if (bs.status) { · {{ bs.status }} }</div>
+                                                          <div class="bs-actions">
+                                                            @if (bs.suppliers.length > 1) {
+                                                              <select class="bs-supplier" [ngModel]="selectedSupplier[bs.partNumber] || bs.suppliers[0].name" (ngModelChange)="selectedSupplier[bs.partNumber] = $event">
+                                                                @for (sup of bs.suppliers; track sup.name) { <option [value]="sup.name">{{ sup.name }}</option> }
+                                                              </select>
+                                                            } @else if (bs.suppliers.length === 1) {
+                                                              <span class="bs-onesup">{{ bs.suppliers[0].name }}</span>
+                                                            }
+                                                            <button class="bs-link" (click)="linkSuggestion(bs)"><mat-icon>link</mat-icon>Link</button>
+                                                          </div>
+                                                        </div>
+                                                      }
+                                                    </div>
+                                                  }
+                                                }
+                                                <button class="del-btn" (click)="deleteSelection()"><mat-icon>delete</mat-icon><span>Delete</span></button>
+                                              </aside>
+                                            }
+                                          </div>
+
+                                        @if (!isMobile) {
+                                          <app-workspace-dock
+                                            [findings]="reviewResult?.findings ?? null"
+                                            [reviewLoading]="reviewLoading"
+                                            [bomRows]="bomRows"
+                                            [participants]="collab.participants"
+                                            (runReview)="openDesignReview(false)"
+                                            (buildBom)="exportBom(false)"></app-workspace-dock>
+                                        }
+
+                                          <!-- Session chat -->
+                                          @if (showChat && collab.active) {
+                                            <div class="chat">
+                                              <div class="chat-head">
+                                                <span>Session chat</span>
+                                                @if (collab.participants.length) {
+                                                  <button type="button" class="chat-stack" [class.on]="rosterOpen"
+                                                    (click)="rosterOpen = !rosterOpen" [matTooltip]="collab.participants.length + ' in this session'">
+                                                    @for (p of rosterAvatars; track participantTrack($index, p)) {
+                                                      <span class="cs-av" [style.background]="p.color">{{ initials(p.name) }}</span>
+                                                    }
+                                                    @if (rosterOverflow > 0) { <span class="cs-more">+{{ rosterOverflow }}</span> }
+                                                  </button>
+                                                }
+                                                <button mat-icon-button (click)="toggleChat()"><mat-icon>close</mat-icon></button>
+                                              </div>
+                                              @if (rosterOpen && collab.participants.length) {
+                                                <div class="chat-roster-list">
+                                                  <div class="crl-title">In this session · {{ collab.participants.length }}</div>
+                                                  @for (p of collab.participants; track participantTrack($index, p)) {
+                                                    <div class="crl-row">
+                                                      <span class="crl-dot" [style.background]="p.color"></span>
+                                                      <span class="crl-name">{{ p.name }}</span>
+                                                      @if (p.isSelf) {
+                                                        <span class="crl-you">you</span>
+                                                      } @else {
+                                                        <button type="button" class="crl-follow" [class.on]="collab.followUid === p.uid"
+                                                          (click)="collab.toggleFollow(p.uid)">{{ collab.followUid === p.uid ? 'Following' : 'Follow' }}</button>
+                                                      }
+                                                    </div>
+                                                  }
+                                                </div>
+                                              }
+                                              <div class="chat-log">
+                                                @for (m of collab.messages; track m) {
+                                                  <div class="msg" [class.self]="m.isSelf">
+                                                    <span class="msg-meta"><b [style.color]="m.color">{{ m.name }}</b> · {{ fmtTime(m.ts) }}</span>
+                                                    <span class="msg-body">{{ m.text }}</span>
+                                                  </div>
+                                                }
+                                              </div>
+                                              <form class="chat-input" (ngSubmit)="sendChat()">
+                                                <input [(ngModel)]="chatDraft" name="chatDraft" placeholder="Message…" autocomplete="off" />
+                                                <button mat-icon-button type="submit"><mat-icon>send</mat-icon></button>
+                                              </form>
+                                            </div>
+                                          }
+                                        <!-- Mobile bottom app bar + "More" sheet (≤768px only) -->
+                                        @if (isMobile) {
+                                          <nav class="mobile-bar">
+                                            <button type="button" [class.on]="paletteOpen" (click)="paletteOpen = !paletteOpen">
+                                              <mat-icon>widgets</mat-icon><span>Blocks</span></button>
+                                            <button type="button" [class.on]="partSearchOpen" (click)="togglePartSearch()">
+                                              <mat-icon>travel_explore</mat-icon><span>Parts</span></button>
+                                            <button type="button" class="mb-primary" (click)="save()">
+                                              <mat-icon>save</mat-icon><span>Save</span></button>
+                                            <button type="button" class="badge-host" [class.on]="feedbackLoopOpen" (click)="toggleFeedbackLoop()">
+                                              <mat-icon>forum</mat-icon><span>Discuss</span>
+                                              @if (feedbackLoopCount) { <span class="hdr-badge">{{ feedbackLoopCount }}</span> }
+                                            </button>
+                                            <button type="button" [class.on]="mobileMoreOpen" (click)="mobileMoreOpen = true">
+                                              <mat-icon>more_horiz</mat-icon><span>More</span></button>
+                                          </nav>
+                                          @if (mobileMoreOpen) {
+                                            <div class="sheet-backdrop" (click)="mobileMoreOpen = false"></div>
+                                            <div class="more-sheet">
+                                              <div class="sheet-grab"></div>
+                                              <div class="more-title">Diagram</div>
+                                              <div class="more-grid">
+                                                <button type="button" (click)="mobileMoreOpen = false; newDiagram()"><mat-icon>note_add</mat-icon><span>New</span></button>
+                                                <button type="button" (click)="undo()"><mat-icon>undo</mat-icon><span>Undo</span></button>
+                                                <button type="button" (click)="redo()"><mat-icon>redo</mat-icon><span>Redo</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; propsOpen = !propsOpen"><mat-icon>tune</mat-icon><span>Properties</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; toggleComments()"><mat-icon>comment</mat-icon><span>Comments</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; openVersions()"><mat-icon>history</mat-icon><span>Versions</span></button>
+                                              </div>
+                                              <div class="more-title">Assistants &amp; catalogue</div>
+                                              <div class="more-grid">
+                                                <button type="button" (click)="mobileMoreOpen = false; openRecommendations()"><mat-icon>auto_awesome</mat-icon><span>AI ideas</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; openDesignReview()"><mat-icon>rule</mat-icon><span>AI review</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; openDesignWin()"><mat-icon>emoji_events</mat-icon><span>Design Win</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; openTemplates()"><mat-icon>dashboard_customize</mat-icon><span>Templates</span></button>
+                                                @if (collab.active) {
+                                                  <button type="button" class="badge-host" (click)="mobileMoreOpen = false; toggleChat()"><mat-icon>chat</mat-icon><span>Chat</span>
+                                                    @if (chatUnread) { <span class="hdr-badge">{{ chatUnread }}</span> }
+                                                  </button>
+                                                }
+                                                <button type="button" (click)="mobileMoreOpen = false; toggleCanvasTheme()"><mat-icon>{{ lightCanvas ? 'dark_mode' : 'light_mode' }}</mat-icon><span>Theme</span></button>
+                                              </div>
+                                              <div class="more-title">Export</div>
+                                              <div class="more-grid">
+                                                <button type="button" (click)="mobileMoreOpen = false; openExport('png')"><mat-icon>image</mat-icon><span>PNG</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; exportBom()"><mat-icon>receipt_long</mat-icon><span>BOM CSV</span></button>
+                                                <button type="button" (click)="mobileMoreOpen = false; exportJson()"><mat-icon>data_object</mat-icon><span>JSON</span></button>
+                                              </div>
+                                              <div class="more-title">Open a saved diagram</div>
+                                              <div class="more-files">
+                                                @for (d of savedDiagrams; track d.id) {
+                                                  <button type="button" class="more-file" [class.sel]="selectedDiagramId === d.id"
+                                                    (click)="selectedDiagramId = d.id; mobileMoreOpen = false; load()">
+                                                    <mat-icon>description</mat-icon><span>{{ d.name }}</span>
+                                                    @if (d.reviewCount) { <span class="more-rate">★ {{ d.avgRating | number:'1.1-1' }}</span> }
+                                                  </button>
+                                                }
+                                              </div>
+                                              @if (auth.user(); as u) {
+                                                <div class="more-account">
+                                                  <mat-icon>account_circle</mat-icon><span class="ma-name">{{ u.name || u.email }}</span>
+                                                  <button type="button" class="ma-logout" (click)="logout()"><mat-icon>logout</mat-icon> Sign out</button>
+                                                </div>
+                                              }
+                                            </div>
+                                          }
+                                        }
+
+                                        </div>
+
+                                        <!-- Dialogs / panels -->
+                                        @if (partSearchOpen) {
+                                          <app-part-search-panel [seedQuery]="partSearchSeed" [hasSelection]="canAttachPart" (addPart)="addPartToCanvas($event)" (attachPart)="attachPartToSelected($event)" (close)="partSearchOpen = false"></app-part-search-panel>
+                                        }
+                                        @if (designWinOpen) {
+                                          <app-designwin-panel [seedPart]="designWinSeed" [hasSelection]="canAttachPart" (close)="designWinOpen = false" (addPart)="onDesignWinAddPart($event)" (attachPart)="onDesignWinAttachPart($event)" (attach)="onAttachDesignWin($event)"></app-designwin-panel>
+                                        }
+                                        @if (feedbackLoopOpen) {
+                                          <app-feedback-loop-panel [diagramId]="diagramIdValue || null" [selectedNodeId]="selectedNodeId" [selectedNodeLabel]="selectedNodeLabel"
+                                            (close)="feedbackLoopOpen = false" (focusNode)="onFocusNode($event)" (changed)="refreshFeedbackLoopCount()"></app-feedback-loop-panel>
+                                        }
+                                        @if (recsOpen) {
+                                          <app-recommendations-dialog [result]="recsResult" [loading]="recsLoading" (addPart)="onRecAddPart($event)" (close)="recsOpen = false"></app-recommendations-dialog>
+                                        }
+                                        @if (reviewOpen) {
+                                          <app-design-review-dialog [result]="reviewResult" [loading]="reviewLoading" (close)="reviewOpen = false"></app-design-review-dialog>
+                                        }
+                                        @if (bomRows && bomDialogOpen) {
+                                          <app-bom-dialog [rows]="bomRows" [diagramName]="diagramName" (close)="closeBom()"></app-bom-dialog>
+                                        }
+                                        @if (lifecycleOpen) {
+                                          <app-lifecycle-dialog [info]="lifecycleInfo" [loading]="lifecycleLoading" (addAlternative)="onAddAlternative($event)" (close)="lifecycleOpen = false"></app-lifecycle-dialog>
+                                        }
+                                        @if (feedbackOpen) {
+                                          <app-feedback-dialog [submitting]="feedbackSubmitting" (submitFeedback)="onSubmitFeedback($event)" (close)="feedbackOpen = false"></app-feedback-dialog>
+                                        }
+                                        @if (projectPanelOpen) {
+                                          <app-project-panel (addPart)="onAddProjectPart($event)" (attach)="onAttachProject($event)" (close)="projectPanelOpen = false"></app-project-panel>
+                                        }
+                                        @if (versionsOpen) {
+                                          <app-versions-dialog [diagramId]="diagramIdValue" [diagramName]="diagramName" [currentContentJson]="currentContentJson" (restore)="onRestoreVersion($event)" (close)="versionsOpen = false"></app-versions-dialog>
+                                        }
+                                        @if (commentsOpen) {
+                                          <app-comments-panel [diagramId]="diagramIdValue" [selectedNodeId]="selectedNodeId" [selectedNodeLabel]="selectedNodeLabel" (focusNode)="onFocusNode($event)" (close)="commentsOpen = false"></app-comments-panel>
+                                        }
+                                        @if (templatesOpen) {
+                                          <app-templates-dialog [currentContentJson]="currentContentJson" [currentName]="diagramName" (use)="onUseTemplate($event)" (improve)="onImproveTemplate($event)" (close)="templatesOpen = false"></app-templates-dialog>
+                                        }
+                                        @if (exportOpen) {
+                                          <app-export-dialog [nodes]="exportNodes" [format]="exportFormat" (toggle)="onExportToggle($event)" (showAll)="showAllHidden()" (run)="runExport($event)" (close)="exportOpen = false"></app-export-dialog>
+                                        }
+                                        @if (commandPaletteOpen) {
+                                          <app-command-palette [commands]="commands" (close)="commandPaletteOpen = false"></app-command-palette>
+                                        }
+                                        @if (reviewTarget) {
+                                          <app-reviews-dialog [diagramId]="reviewTarget.id" [diagramName]="reviewTarget.name" (close)="reviewTarget = null" (saved)="refreshList()"></app-reviews-dialog>
+                                        }
+                                        @if (pendingDelete) {
+                                          <app-confirm-dialog title="Delete diagram?" [message]="deleteMessage" confirmLabel="Delete" [danger]="true" (confirm)="confirmDelete()" (cancel)="cancelDelete()"></app-confirm-dialog>
+                                        }

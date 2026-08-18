@@ -1,0 +1,84 @@
+/* Toasts follow the workspace's popover language: panel surface, token radius
+   and border, the same soft elevation as .pop, and an inset accent strip rather
+   than a border-left bar. Tokens only — no raw colours. */
+
+.toast-stack {
+  position: fixed;
+  right: 16px;
+  /* Clear the 24px status bar instead of sitting on top of it. */
+  bottom: 36px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: min(380px, calc(100vw - 32px));
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 11px 11px 13px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  /* Same elevation as the header popovers; the negative spread keeps it soft
+     in light theme, where the old flat 50% black read as a grey halo. */
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .55);
+  font-family: var(--font);
+  font-size: 12.5px;
+  line-height: 1.45;
+  animation: toast-in .18s ease;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Accent strip as an inset shadow — the same treatment the activity bar and
+   editor tabs use for their active state. */
+.toast.success { box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .55), inset 3px 0 0 var(--ok); }
+.toast.error { box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .55), inset 3px 0 0 var(--danger); }
+.toast.info { box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .55), inset 3px 0 0 var(--accent); }
+
+/* Icon carries the tone colour, at the app's icon scale (17px, not 20px). */
+.toast-icon {
+  flex: none;
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+}
+
+.toast.success .toast-icon { color: var(--ok); }
+.toast.error .toast-icon { color: var(--danger); }
+.toast.info .toast-icon { color: var(--accent-ink); }
+
+.toast-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.toast-x {
+  flex: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  padding: 1px;
+  display: inline-flex;
+  font: inherit;
+}
+
+.toast-x mat-icon {
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
+}
+
+.toast-x:hover { color: var(--text); background: var(--panel-2); }
+.toast-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }

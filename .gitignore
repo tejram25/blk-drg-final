@@ -1,0 +1,20 @@
+# Node / Angular
+node_modules/
+dist/
+coverage/
+**/.angular/cache/
+
+# Java / Maven
+target/
+
+# H2 database files (generated at runtime; never commit DB state or its lock file)
+data/
+**/data/*.db
+
+# Logs & OS cruft
+*.log
+.DS_Store
+Thumbs.db
+
+# Local secret overrides (never commit real credentials)
+**/application-local.properties

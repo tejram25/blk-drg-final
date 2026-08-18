@@ -1,0 +1,173 @@
+{
+  "_note": "Bundled sample Design Win data served when arrow.mock=true (MockDesignWinService). Lets the whole customer → project → board → registration/parts + POS flow be demoed without the live Arrow APIs.",
+  "customers": {
+    "customerServiceResult": {
+      "numItems": 2,
+      "customers": [
+        {
+          "customerName": "Tesla Motors Inc",
+          "accountNumber": "ACCT-1001",
+          "billTo": "BILL-55021",
+          "enteringBranch": "San Jose, CA",
+          "custSiteName": "Fremont Plant",
+          "fsrName": "Dana Whitfield",
+          "isrName": "Marco Ruiz",
+          "status": "Active",
+          "operatingUnit": "AMERICAS",
+          "address": "45500 Fremont Blvd, Fremont, CA 94538"
+        },
+        {
+          "customerName": "Rivian Automotive LLC",
+          "accountNumber": "ACCT-1042",
+          "billTo": "BILL-55190",
+          "enteringBranch": "Irvine, CA",
+          "custSiteName": "Normal IL Plant",
+          "fsrName": "Priya Anand",
+          "isrName": "Sam Cole",
+          "status": "Active",
+          "operatingUnit": "AMERICAS",
+          "address": "100 N Baldwin Rd, Normal, IL 61761"
+        }
+      ]
+    }
+  },
+  "projects": {
+    "projectServiceResult": {
+      "numItems": 2,
+      "projects": [
+        {
+          "projectName": "Model Y — BMS Refresh",
+          "projectId": "PRJ-88213",
+          "customerName": "Tesla Motors Inc",
+          "stage": "Design In",
+          "projectStatus": "Active",
+          "eau": "120000",
+          "fsrName": "Dana Whitfield",
+          "createDate": "2025-11-03"
+        },
+        {
+          "projectName": "Semi — Powertrain Controller",
+          "projectId": "PRJ-88320",
+          "customerName": "Tesla Motors Inc",
+          "stage": "Prototype",
+          "projectStatus": "Active",
+          "eau": "18000",
+          "fsrName": "Dana Whitfield",
+          "createDate": "2026-02-17"
+        }
+      ]
+    }
+  },
+  "boards": {
+    "boardServiceResult": {
+      "numItems": 2,
+      "boards": [
+        {
+          "boardName": "BMS Master Controller",
+          "boardNum": "BMS-REV-C",
+          "status": "Registered",
+          "registrationNum": "REG-4471209",
+          "arrowUniqueNum": "AUN-7788120",
+          "createDate": "2025-12-08"
+        },
+        {
+          "boardName": "Cell Monitor Slave",
+          "boardNum": "CM-REV-B",
+          "status": "In Design",
+          "registrationNum": "REG-4471244",
+          "arrowUniqueNum": "AUN-7788155",
+          "createDate": "2026-01-14"
+        }
+      ]
+    }
+  },
+  "registration": {
+    "registrationServiceResult": {
+      "numItems": 2,
+      "details": [
+        {
+          "partNumber": "STM32H743VIT6",
+          "mfrName": "STMicroelectronics",
+          "description": "MCU 32-bit ARM Cortex-M7, 2MB Flash, LQFP-100",
+          "eau": "120000",
+          "designStatus": "Design Win",
+          "registrationNum": "REG-4471209",
+          "arrowUniqueNum": "AUN-7788120",
+          "trackingNum": "TRK-33915",
+          "customerApproved": "Yes"
+        },
+        {
+          "partNumber": "INA228AIDGSR",
+          "mfrName": "Texas Instruments",
+          "description": "85V, 20-bit current/voltage/power monitor, I2C",
+          "eau": "120000",
+          "designStatus": "Registered",
+          "registrationNum": "REG-4471209",
+          "arrowUniqueNum": "AUN-7788120",
+          "trackingNum": "TRK-33916",
+          "customerApproved": "Pending"
+        }
+      ]
+    }
+  },
+  "custParts": {
+    "custPartServiceResult": {
+      "numItems": 2,
+      "parts": [
+        {
+          "partNumber": "LTC6811HG-1",
+          "custPartNum": "TSLA-BMS-6811",
+          "mfrName": "Analog Devices",
+          "description": "Multicell Battery Stack Monitor, 12-cell",
+          "quantity": "12",
+          "status": "Approved"
+        },
+        {
+          "partNumber": "TPS62912RPUR",
+          "custPartNum": "TSLA-PWR-62912",
+          "mfrName": "Texas Instruments",
+          "description": "Low-noise 3A synchronous buck converter",
+          "quantity": "6",
+          "status": "Approved"
+        }
+      ]
+    }
+  },
+  "sales": {
+    "posServiceResult": {
+      "numItems": 3,
+      "pos": [
+        {
+          "partNumber": "SAMPLE",
+          "mfrName": "STMicroelectronics",
+          "customerName": "Tesla Motors Inc",
+          "posAmount": "184320.00",
+          "quantity": "24000",
+          "lastShipDate": "2026-05-28",
+          "billTo": "BILL-55021",
+          "region": "AMERICAS"
+        },
+        {
+          "partNumber": "SAMPLE",
+          "mfrName": "STMicroelectronics",
+          "customerName": "Rivian Automotive LLC",
+          "posAmount": "61200.00",
+          "quantity": "8000",
+          "lastShipDate": "2026-04-11",
+          "billTo": "BILL-55190",
+          "region": "AMERICAS"
+        },
+        {
+          "partNumber": "SAMPLE",
+          "mfrName": "STMicroelectronics",
+          "customerName": "Bosch Engineering",
+          "posAmount": "42750.00",
+          "quantity": "5000",
+          "lastShipDate": "2026-03-02",
+          "billTo": "BILL-60037",
+          "region": "EMEA"
+        }
+      ]
+    }
+  }
+}

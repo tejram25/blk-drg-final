@@ -1,0 +1,68 @@
+<ws-page-header title="Block Diagram"
+  subtitle="Schematic block diagrams, shared with the team and linked to projects.">
+  <button type="button" class="btn primary" (click)="newDiagram()">
+    <mat-icon>add</mat-icon> New diagram
+  </button>
+</ws-page-header>
+
+<div class="grid stats">
+  <ws-stat label="Diagrams" [value]="diagrams().length" icon="account_tree" />
+  <ws-stat label="Shared with team" [value]="sharedCount()" icon="groups" tone="accent" />
+  <ws-stat label="Restricted" [value]="restrictedCount()" icon="lock"
+    [tone]="restrictedCount() ? 'warn' : ''" hint="export controlled" />
+  <ws-stat label="Templates" [value]="templates.length" icon="dashboard_customize" />
+</div>
+
+<div class="filters">
+  <input [ngModel]="query()" (ngModelChange)="query.set($event)"
+    placeholder="Search diagrams…" aria-label="Search diagrams" />
+  <select [ngModel]="visibility()" (ngModelChange)="visibility.set($event)" aria-label="Filter by classification">
+    <option value="">All classifications</option>
+    <option value="PUBLIC">Public</option>
+    <option value="INTERNAL">Internal</option>
+    <option value="RESTRICTED">Restricted</option>
+  </select>
+  <span class="spacer"></span>
+  <span class="link">{{ filtered().length }} of {{ diagrams().length }}</span>
+</div>
+
+@if (loading()) {
+  <p class="empty">Loading diagrams…</p>
+} @else if (!diagrams().length) {
+  <ws-panel>
+    <div class="empty">
+      <p>No diagrams yet. Start from a blank canvas or pick a template below.</p>
+      <button type="button" class="btn primary" (click)="newDiagram()">
+        <mat-icon>add</mat-icon> New diagram
+      </button>
+    </div>
+  </ws-panel>
+} @else {
+  <div class="cards" style="margin-bottom:16px">
+    @for (d of filtered(); track d.id) {
+      <a class="card" (click)="open(d.id)" tabindex="0" (keydown.enter)="open(d.id)">
+        <h3>{{ d.name }}</h3>
+        <span class="sub">Updated {{ d.updatedAt | date: 'MMM d, HH:mm' }}</span>
+        <div class="meta">
+          <ws-pill [tone]="d.classification === 'RESTRICTED' ? 'warn' : 'accent'">
+            {{ d.classification || 'INTERNAL' }}</ws-pill>
+          @if (d.ownerEmail) { <span>{{ d.ownerEmail }}</span> }
+        </div>
+      </a>
+    } @empty {
+      <p class="empty">No diagrams match “{{ query() }}”.</p>
+    }
+  </div>
+}
+
+<ws-panel heading="Quick templates">
+  <div class="cards">
+    @for (t of templates; track t.name) {
+      <a class="card" (click)="newDiagram()" tabindex="0" (keydown.enter)="newDiagram()">
+        <h3>{{ t.name }}</h3>
+        <span class="sub">{{ t.detail }}</span>
+        <div class="meta"><span>{{ t.blocks }} blocks</span><span>{{ t.category }}</span></div>
+      </a>
+    }
+  </div>
+</ws-panel>
