@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Layered Block Diagram — GoJS drill-down POC</title>
+<style>
+  :root{
+    --bg:#0e0f11; --panel:#15171b; --line:#26292f; --ink:#e6e8ea; --muted:#8b93a1;
+    --accent:#0084D5; --accent2:#47D7AC; --warn:#FFC845;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font:14px/1.4 "Segoe UI",Roboto,system-ui,sans-serif}
+  .app{display:grid;grid-template-rows:auto auto 1fr;height:100%}
+  header{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+  header .mark{width:26px;height:26px;border-radius:6px;background:var(--accent);display:grid;place-items:center;font-weight:700;color:#fff}
+  header h1{font-size:15px;margin:0;font-weight:600}
+  header .tag{margin-left:auto;color:var(--muted);font-size:12px}
+  /* breadcrumb */
+  .crumbs{display:flex;align-items:center;gap:6px;padding:8px 16px;border-bottom:1px solid var(--line);background:#101216;flex-wrap:wrap}
+  .crumbs .lvl{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+  .crumb{background:none;border:1px solid transparent;color:var(--muted);padding:4px 10px;border-radius:999px;cursor:pointer;font:inherit}
+  .crumb:hover{color:var(--ink);border-color:var(--line)}
+  .crumb.here{color:var(--ink);background:#1c2026;border-color:var(--line)}
+  .crumb .sub{color:var(--muted);font-size:11px;margin-left:6px}
+  .sep{color:#3a3f47}
+  /* body */
+  .body{display:grid;grid-template-columns:230px 1fr;min-height:0}
+  .palette{border-right:1px solid var(--line);background:var(--panel);overflow:auto;padding:10px}
+  .palette h2{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 4px 6px}
+  .palette h2:first-child{margin-top:2px}
+  .item{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin:5px 0;cursor:grab;background:#12141a}
+  .item:hover{border-color:var(--accent)}
+  .item .chip{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;font-size:14px;flex:none}
+  .item .t{font-size:12.5px}
+  .item .h{color:var(--muted);font-size:10.5px;margin-left:auto}
+  .hint{color:var(--muted);font-size:11px;padding:8px 4px;border-top:1px solid var(--line);margin-top:12px}
+  #canvas{background:var(--bg);width:100%;height:100%}
+  .empty{position:absolute;inset:auto;left:50%;top:46%;transform:translate(-50%,-50%);color:var(--muted);text-align:center;pointer-events:none}
+  .stage{position:relative;min-height:0}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <span class="mark">◧</span>
+    <h1>Layered Block Diagram — drill-down POC</h1>
+    <span class="tag">System → Subsystem → Board · one project · GoJS</span>
+  </header>
+
+  <nav class="crumbs" id="crumbs"><span class="lvl">Path</span></nav>
+
+  <div class="body">
+    <aside class="palette" id="palette"></aside>
+    <div class="stage">
+      <div id="canvas"></div>
+    </div>
+  </div>
+</div>
+
+<script src="./node_modules/gojs/release/go.js"></script>
+<script>
+const $ = go.GraphObject.make;
+
+/* ------------------------------------------------------------------ *
+ *  The whole idea in one line: a level is a GoJS model. Drilling down
+ *  is swapping which model the one diagram shows, and pushing a crumb.
+ *  A block that owns a lower level carries `child: '<levelId>'`.
+ * ------------------------------------------------------------------ */
+
+/* icon + colour vocabulary, shared by palette and canvas */
+const KIND = {
+  device:  {icon:'▤', color:'#0084D5', sub:'Device'},
+  board:   {icon:'▦', color:'#6d28d9', sub:'Board'},
+  mcu:     {icon:'⌗', color:'#1d4ed8', sub:'Processor'},
+  sensor:  {icon:'◉', color:'#15803d', sub:'Sensor'},
+  power:   {icon:'⚡', color:'#a16207', sub:'Power'},
+  comms:   {icon:'☰', color:'#0e7490', sub:'Comms'},
+  motor:   {icon:'✳', color:'#b45309', sub:'Actuation'},
+  passive: {icon:'▭', color:'#334155', sub:'Component'},
+  connector:{icon:'▥', color:'#475569', sub:'Connector'},
+};
+
+/* ---- the levels store: three pre-wired levels, connected by `child` ---- */
+const levels = {
+  root: { name:'AMR System', sub:'devices', model:{
+    class:'GraphLinksModel',
+    nodeDataArray:[
+      {key:'nav',  kind:'device', text:'Navigation Unit',   loc:'40 40',  child:'nav_boards'},
+      {key:'fcb',  kind:'device', text:'Flight/Drive Controller', loc:'40 180', child:'fcb'},
+      {key:'pay',  kind:'device', text:'Payload Bay',       loc:'40 320'},
+      {key:'pwr',  kind:'device', text:'Power System',      loc:'360 110', child:'power_sys'},
+      {key:'comm', kind:'comms',  text:'Comm & Telemetry',  loc:'360 260'},
+    ],
+    linkDataArray:[
+      {from:'pwr',to:'nav'},{from:'pwr',to:'fcb'},{from:'pwr',to:'pay'},
+      {from:'fcb',to:'comm'},{from:'nav',to:'fcb'},
+    ]}},
+
+  fcb: { name:'Flight/Drive Controller', sub:'boards', model:{
+    class:'GraphLinksModel',
+    nodeDataArray:[
+      {key:'mcu', kind:'mcu',    text:'MCU Board',       loc:'60 60',  child:'mcu_board'},
+      {key:'imu', kind:'sensor', text:'IMU / GNSS Board',loc:'60 210'},
+      {key:'esc', kind:'motor',  text:'ESC / Drivers',   loc:'340 60'},
+      {key:'io',  kind:'comms',  text:'I/O & CAN Board',  loc:'340 210'},
+    ],
+    linkDataArray:[{from:'mcu',to:'imu'},{from:'mcu',to:'esc'},{from:'mcu',to:'io'}]}},
+
+  power_sys: { name:'Power System', sub:'boards', model:{
+    class:'GraphLinksModel',
+    nodeDataArray:[
+      {key:'bms', kind:'power', text:'Battery + BMS',    loc:'60 90'},
+      {key:'pdb', kind:'power', text:'Distribution Board',loc:'320 90', child:'power_board'},
+    ],
+    linkDataArray:[{from:'bms',to:'pdb'}]}},
+
+  mcu_board: { name:'MCU Board', sub:'components', model:{
+    class:'GraphLinksModel',
+    nodeDataArray:[
+      {key:'u1', kind:'mcu',      text:'STM32H7 MCU',   loc:'60 70'},
+      {key:'x1', kind:'passive',  text:'25 MHz XTAL',   loc:'60 200'},
+      {key:'reg',kind:'power',    text:'3V3 LDO',       loc:'320 70'},
+      {key:'j1', kind:'connector',text:'SWD Header',    loc:'320 200'},
+    ],
+    linkDataArray:[{from:'reg',to:'u1'},{from:'x1',to:'u1'},{from:'u1',to:'j1'}]}},
+
+  power_board: { name:'Distribution Board', sub:'components', model:{
+    class:'GraphLinksModel',
+    nodeDataArray:[
+      {key:'q1', kind:'passive',  text:'Load Switch Q1', loc:'60 70'},
+      {key:'q2', kind:'passive',  text:'Load Switch Q2', loc:'60 200'},
+      {key:'buck',kind:'power',   text:'Buck 12→5V',     loc:'320 70'},
+      {key:'jp', kind:'connector',text:'Output Header',  loc:'320 200'},
+    ],
+    linkDataArray:[{from:'buck',to:'q1'},{from:'buck',to:'q2'},{from:'q1',to:'jp'},{from:'q2',to:'jp'}]}},
+
+  nav_boards: { name:'Navigation Unit', sub:'boards', model:{
+    class:'GraphLinksModel',
+    nodeDataArray:[
+      {key:'lidar',kind:'sensor',text:'LiDAR Board', loc:'70 90'},
+      {key:'cam',  kind:'sensor',text:'Vision Board',loc:'70 220'},
+      {key:'soc',  kind:'mcu',   text:'Compute SoM', loc:'340 150'},
+    ],
+    linkDataArray:[{from:'lidar',to:'soc'},{from:'cam',to:'soc'}]}},
+};
+
+let path = [{id:'root'}];       // breadcrumb, root first
+let currentId = 'root';
+
+/* ---------------------- the diagram ---------------------- */
+const diagram = $(go.Diagram, 'canvas', {
+  'undoManager.isEnabled': true,
+  'grid.visible': true,
+  layout: $(go.LayeredDigraphLayout, {direction:0, layerSpacing:40, columnSpacing:26, setsPortSpots:false}),
+  'animationManager.duration': 350,
+});
+diagram.grid = $(go.Panel,'Grid',{gridCellSize:new go.Size(24,24)},
+  $(go.Shape,'LineH',{stroke:'#191c21',strokeWidth:.5}),
+  $(go.Shape,'LineV',{stroke:'#191c21',strokeWidth:.5}));
+
+/* a block; a drill badge appears only when it owns a lower level */
+diagram.nodeTemplate =
+  $(go.Node,'Spot',
+    {locationSpot:go.Spot.Center, resizable:false,
+     // double-click is the drill gesture — into an existing child, or a new one
+     doubleClick:(e,node)=>drill(node),
+     toolTip:$(go.Adornment,'Auto',
+        $(go.Shape,{fill:'#1c2026',stroke:'#2b2f36'}),
+        $(go.TextBlock,{margin:6,stroke:'#e6e8ea'},
+          new go.Binding('text','',d=>d.child?'Double-click to open ▸ '+(levels[d.child]?levels[d.child].name:'new level'):'Double-click to add a lower level')))},
+    new go.Binding('location','loc',go.Point.parse).makeTwoWay(go.Point.stringify),
+    $(go.Panel,'Auto',
+      $(go.Shape,'RoundedRectangle',
+        {parameter1:9, fill:'#12141a', strokeWidth:1.6, portId:'', cursor:'pointer',
+         fromLinkable:true,toLinkable:true,fromSpot:go.Spot.AllSides,toSpot:go.Spot.AllSides},
+        new go.Binding('stroke','kind',k=>(KIND[k]||KIND.passive).color)),
+      $(go.Panel,'Horizontal',{margin:10},
+        $(go.Panel,'Auto',{width:30,height:30,margin:new go.Margin(0,9,0,0)},
+          $(go.Shape,'RoundedRectangle',{parameter1:7,strokeWidth:0},
+            new go.Binding('fill','kind',k=>(KIND[k]||KIND.passive).color)),
+          $(go.TextBlock,{stroke:'#fff',font:'15px Segoe UI Symbol'},
+            new go.Binding('text','kind',k=>(KIND[k]||KIND.passive).icon))),
+        $(go.Panel,'Vertical',{alignment:go.Spot.Left},
+          $(go.TextBlock,{font:'600 12.5px Segoe UI',stroke:'#e6e8ea',alignment:go.Spot.Left},
+            new go.Binding('text')),
+          $(go.TextBlock,{font:'10.5px Segoe UI',stroke:'#8b93a1',alignment:go.Spot.Left},
+            new go.Binding('text','kind',k=>(KIND[k]||KIND.passive).sub))))),
+    // drill affordance, top-right, only when there is a child level
+    $(go.Panel,'Auto',{alignment:new go.Spot(1,0,-4,4),alignmentFocus:go.Spot.Center,
+        click:(e,obj)=>drill(obj.part), cursor:'pointer', visible:false},
+      new go.Binding('visible','child',c=>!!c),
+      $(go.Shape,'Circle',{width:20,height:20,fill:'#47D7AC',strokeWidth:0}),
+      $(go.TextBlock,'⤢',{stroke:'#08130f',font:'700 12px Segoe UI Symbol'}))
+  );
+
+diagram.linkTemplate =
+  $(go.Link,{routing:go.Link.Orthogonal,corner:8,relinkableFrom:true,relinkableTo:true},
+    $(go.Shape,{strokeWidth:1.6,stroke:'#5b6675'}),
+    $(go.Shape,{toArrow:'Standard',fill:'#5b6675',stroke:null}));
+
+/* ---------------------- navigation ---------------------- */
+function saveCurrent(){ levels[currentId].model = JSON.parse(diagram.model.toJson()); }
+
+function show(id){
+  currentId = id;
+  const lvl = levels[id];
+  diagram.model = go.Model.fromJson(JSON.stringify(lvl.model));
+  renderCrumbs();
+}
+
+/* open a node's child level; make one on the spot if it has none */
+function drill(node){
+  if(!node || !(node instanceof go.Node)) return;
+  const d = node.data;
+  saveCurrent();
+  let childId = d.child;
+  if(!childId){
+    childId = 'lvl_'+Date.now().toString(36);
+    levels[childId] = {name:d.text, sub:'components',
+      model:{class:'GraphLinksModel',nodeDataArray:[],linkDataArray:[]}};
+    diagram.model.setDataProperty(d,'child',childId);
+    levels[currentId].model = JSON.parse(diagram.model.toJson()); // persist the new link
+  }
+  path.push({id:childId});
+  show(childId);
+}
+
+function goTo(index){
+  saveCurrent();
+  path = path.slice(0, index+1);
+  show(path[index].id);
+}
+
+function renderCrumbs(){
+  const bar = document.getElementById('crumbs');
+  bar.innerHTML = '<span class="lvl">Path</span>';
+  path.forEach((p,i)=>{
+    if(i) bar.insertAdjacentHTML('beforeend','<span class="sep">›</span>');
+    const lvl = levels[p.id];
+    const b = document.createElement('button');
+    b.className = 'crumb'+(i===path.length-1?' here':'');
+    b.innerHTML = lvl.name+' <span class="sub">'+lvl.sub+'</span>';
+    b.onclick = ()=>goTo(i);
+    bar.appendChild(b);
+  });
+}
+
+/* ---------------------- palette (extended library) ---------------------- */
+const LIB = {
+  'Systems / devices':[
+    ['device','Device / Enclosure'],['comms','Gateway'],['power','Power System'],['sensor','Sensor Pod'],['motor','Drive Unit'],
+  ],
+  'Boards / subsystems':[
+    ['board','Generic Board'],['mcu','MCU Board'],['sensor','Sensor Board'],['power','Power Board'],
+    ['comms','Comms Board'],['motor','Motor Driver'],
+  ],
+  'Board components':[
+    ['mcu','Microcontroller'],['sensor','Sensor IC'],['power','Regulator'],['motor','Motor'],
+    ['passive','Passive (R/L/C)'],['passive','Diode / MOSFET'],['connector','Connector'],['connector','Header'],
+  ],
+};
+const pal = document.getElementById('palette');
+for(const [group,items] of Object.entries(LIB)){
+  const h=document.createElement('h2'); h.textContent=group; pal.appendChild(h);
+  items.forEach(([kind,label])=>{
+    const k=KIND[kind]||KIND.passive;
+    const el=document.createElement('div'); el.className='item'; el.draggable=true;
+    el.innerHTML=`<span class="chip" style="background:${k.color}">${k.icon}</span>`+
+                 `<span class="t">${label}</span><span class="h">${k.sub}</span>`;
+    el.addEventListener('dragstart',ev=>ev.dataTransfer.setData('text/plain',JSON.stringify({kind,text:label})));
+    el.addEventListener('click',()=>addAt(kind,label,null));   // click = add at centre
+    pal.appendChild(el);
+  });
+}
+pal.insertAdjacentHTML('beforeend',
+  '<div class="hint">Double-click a block to open its lower level (or create one). '+
+  'Click the ⤢ badge to drill in. Use the breadcrumb to come back up. '+
+  'Drag or click a library item to add it to the current level.</div>');
+
+/* drop from the palette onto the canvas */
+const canvas = document.getElementById('canvas');
+canvas.addEventListener('dragover',e=>e.preventDefault());
+canvas.addEventListener('drop',e=>{
+  e.preventDefault();
+  let payload; try{ payload=JSON.parse(e.dataTransfer.getData('text/plain')); }catch{ return; }
+  const pt = diagram.transformViewToDoc(new go.Point(e.offsetX,e.offsetY));
+  addAt(payload.kind,payload.text,pt);
+});
+function addAt(kind,text,pt){
+  const p = pt || diagram.viewportBounds.center;
+  diagram.model.addNodeData({key:'n'+Date.now().toString(36),kind,text,loc:go.Point.stringify(p)});
+}
+
+/* ---------------------- go ---------------------- */
+show('root');
+window.addEventListener('resize',()=>diagram.requestUpdate());
+// expose for the headless screenshotter
+window.__poc = {show, drill, diagram, levels, path:()=>path};
+</script>
+</body>
+</html>
