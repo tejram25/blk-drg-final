@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Multi Level Diagram — SoC Die",
+    "resource": "/multilevel/soc.json",
+    "ref": "soc"
+  },
+  {
+    "name": "Multi Level Diagram — Battery Pack",
+    "resource": "/multilevel/battery.json",
+    "ref": "battery"
+  },
+  {
+    "name": "Multi Level Diagram — Compute Board",
+    "resource": "/multilevel/board-compute.json",
+    "ref": "compute"
+  },
+  {
+    "name": "Multi Level Diagram — Power Board",
+    "resource": "/multilevel/board-power.json",
+    "ref": "power"
+  },
+  {
+    "name": "Multi Level Diagram — Sensing Board",
+    "resource": "/multilevel/board-sensing.json",
+    "ref": "sensing"
+  },
+  {
+    "name": "Multi Level Diagram — Comms Board",
+    "resource": "/multilevel/board-comms.json",
+    "ref": "comms"
+  },
+  {
+    "name": "Multi Level Diagram — Motion Board",
+    "resource": "/multilevel/board-motion.json",
+    "ref": "motion"
+  },
+  {
+    "name": "Multi Level Diagram — System",
+    "resource": "/multilevel/system.json",
+    "ref": null
+  }
+]

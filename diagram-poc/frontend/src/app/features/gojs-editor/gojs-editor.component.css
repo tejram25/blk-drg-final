@@ -525,22 +525,25 @@
     }
     .drill-crumbs .dc-link:hover { background: #eff6ff; text-decoration: underline; }
     .drill-crumbs .dc-current { color: #0f172a; font-weight: 600; padding: 2px 4px; }
-    /* Drill-down action for the selected block — bottom-left of the canvas,
-       clear of the wire dock (bottom-right) and the mobile app bar. */
+    /* Drill-down action for the selected block. Bottom-centre, deliberately:
+       the wire dock owns the bottom-left and the zoom dock the bottom-right,
+       so the middle is the one strip of the canvas edge nothing else claims. */
     .drill-fab {
-      position: absolute; z-index: 46; left: 14px; bottom: 16px;
+      position: absolute; z-index: 46; left: 50%; transform: translateX(-50%); bottom: 18px;
       display: inline-flex; align-items: center; gap: 7px;
-      height: 40px; padding: 0 15px; border-radius: 20px; cursor: pointer;
+      height: 40px; padding: 0 16px; border-radius: 20px; cursor: pointer;
       border: 1px solid #bfdbfe; background: #eff6ff; color: #1d4ed8;
       font: inherit; font-size: 13px; font-weight: 600;
       box-shadow: 0 6px 18px rgba(37, 99, 235, 0.18);
     }
     .drill-fab.has-child { border-color: #2563eb; background: #2563eb; color: #fff; }
     .drill-fab:hover { filter: brightness(0.97); }
+    .drill-fab:active { transform: translateX(-50%) scale(0.97); }
     .drill-fab:disabled { opacity: 0.55; cursor: default; }
     .drill-fab mat-icon { font-size: 19px; width: 19px; height: 19px; }
+    /* On phones the delete pill takes bottom-centre at 74px, so sit above it. */
     @media (max-width: 768px) {
-      .drill-fab { bottom: 74px; left: 12px; height: 44px; }
+      .drill-fab { bottom: 122px; height: 44px; }
     }
     .canvas {
       width: 100%; height: 100%;
