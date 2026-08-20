@@ -104,7 +104,11 @@
                                         <mat-icon>auto_fix_high</mat-icon><span>Generate from image (AI)</span>
                                         @if (!aiEnabled) { <span class="ai-off-tag">AI off</span> }</button>
                                       <button type="button" class="menu-item" (click)="insertMenuOpen = false; addContainer()">
-                                        <mat-icon>select_all</mat-icon><span>Container</span><span class="menu-hint">Ctrl+G</span></button>
+                                        <mat-icon>select_all</mat-icon><span>Group into container</span><span class="menu-hint">Ctrl+G</span></button>
+                                      <button type="button" class="menu-item" (click)="insertMenuOpen = false; ungroupSelection()">
+                                        <mat-icon>call_split</mat-icon><span>Ungroup</span><span class="menu-hint">Ctrl+Shift+G</span></button>
+                                      <button type="button" class="menu-item" (click)="insertMenuOpen = false; autoArrange()">
+                                        <mat-icon>account_tree</mat-icon><span>Auto arrange</span><span class="menu-hint">Ctrl+Shift+L</span></button>
                                     <button type="button" class="menu-item" (click)="insertMenuOpen = false; suggestAllBoxes()">
                                         <mat-icon>auto_awesome_motion</mat-icon><span>Suggest components for all boxes</span></button>
                                       <button type="button" class="menu-item" [class.sel]="templatesOpen" (click)="insertMenuOpen = false; openTemplates()">
@@ -316,6 +320,16 @@
 
                                           <!-- Canvas -->
                                           <main class="canvas-wrap">
+                                            @if (drillCrumbs.length) {
+                                              <nav class="drill-crumbs" aria-label="Diagram levels">
+                                                <mat-icon class="dc-icon">layers</mat-icon>
+                                                @for (crumb of drillCrumbs; track crumb.id; let i = $index) {
+                                                  <button type="button" class="dc-link" (click)="drillUpTo(i)">{{ crumb.name }}</button>
+                                                  <mat-icon class="dc-sep">chevron_right</mat-icon>
+                                                }
+                                                <span class="dc-current">{{ diagramName }}</span>
+                                              </nav>
+                                            }
                                             <div #canvas class="canvas" (dragover)="$event.preventDefault()" (drop)="onCanvasDrop($event)"
                                             (mousemove)="onCanvasMouseMove($event)" (mouseleave)="onCanvasMouseLeave()"></div>
 
@@ -384,6 +398,16 @@
                                                 (click)="toggleConnectMode()"
                                                 [matTooltip]="connectMode ? 'Exit connect mode' : 'Connect components'">
                                                 <mat-icon>{{ connectMode ? 'close' : 'polyline' }}</mat-icon>
+                                              </button>
+                                            }
+
+                                            <!-- Drill down: open (or create) the diagram this block stands in for. -->
+                                            @if (selectedNode && !connectMode) {
+                                              <button type="button" class="drill-fab" [class.has-child]="selectedHasChild"
+                                                (click)="drillIntoSelected()" [disabled]="saving"
+                                                [matTooltip]="selectedHasChild ? 'Open the level below' : 'Add a sub-diagram one level below this block'">
+                                                <mat-icon>{{ selectedHasChild ? 'layers' : 'add_to_photos' }}</mat-icon>
+                                                <span>{{ selectedHasChild ? 'Open level below' : 'Add level below' }}</span>
                                               </button>
                                             }
 

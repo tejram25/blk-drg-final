@@ -108,6 +108,15 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedNode: go.Node | null = null;
   selectedEdge: go.Link | null = null;
   private diagramId: number | null = null;
+  /**
+   * The levels above the one on screen, oldest first — the breadcrumb trail.
+   *
+   * A block can stand in for a whole diagram a layer down (a device for its
+   * board, a board for its parts). Drilling in swaps which saved diagram the
+   * one canvas shows and pushes the level left behind here; a crumb takes you
+   * back up. Empty means we are at a top level opened from the list.
+   */
+  drillCrumbs: { id: number; name: string }[] = [];
   private autosaveTimer: any = null;
   private suppressAutosave = false;
   private draggedBlock: BlockType | null = null;
@@ -337,6 +346,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     const k = e.key.toLowerCase();
     if (k === 's') { e.preventDefault(); this.save(); }
     else if (k === 'k') { e.preventDefault(); this.commandPaletteOpen = true; this.cdr.detectChanges(); }
+    else if (e.shiftKey && k === 'l') { e.preventDefault(); this.autoArrange(); }
   }
 
   // ---- language ----
@@ -494,6 +504,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       showAllPins: (on) => this.showAllPins(on),
       updateJunctions: () => this.updateJunctions(),
       nodeTip: (mk) => this.nodeTip(mk),
+      openChild: (node) => this.zone.run(() => this.openChild(node)),
       wires: this.wires,
     });
     // Before the dragging tool, which would otherwise pick the whole block up.
@@ -1763,6 +1774,54 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  /**
+   * Break a container back into loose blocks.
+   *
+   * Every shape is a Group so it can hold members, so "ungroup" means the same
+   * thing everywhere: drop the box and leave whatever was inside it standing on
+   * its own. GoJS's own Ctrl+Shift+G does this too; the menu item makes it
+   * discoverable.
+   */
+  ungroupSelection(): void {
+    const d = this.diagram;
+    if (!d.commandHandler.canUngroupSelection()) {
+      this.notify.info('Select a container (or a box holding blocks) to ungroup.');
+      return;
+    }
+    this.zone.runOutsideAngular(() => d.commandHandler.ungroupSelection());
+    this.syncSelection();
+    this.status = 'Ungrouped';
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Tidy the whole diagram into a left-to-right layered flow.
+   *
+   * A block diagram reads as a signal path — power and data entering on the
+   * left, working across to the right — so a layered digraph is the layout that
+   * matches it. Run once on demand rather than set as the diagram's standing
+   * layout: hand placement is the norm here, and a layout that re-ran on every
+   * edit would fight the user. Our side ports are left alone (`setsPortSpots`)
+   * so wires keep leaving from the edges we chose.
+   */
+  autoArrange(): void {
+    const d = this.diagram;
+    if (d.nodes.count === 0) { this.notify.info('Nothing to arrange yet.'); return; }
+    this.zone.runOutsideAngular(() => {
+      const layout = new go.LayeredDigraphLayout();
+      layout.direction = 0;          // left → right
+      layout.layerSpacing = 55;
+      layout.columnSpacing = 30;
+      layout.setsPortSpots = false;  // keep our four side ports
+      d.startTransaction('auto arrange');
+      layout.doLayout(d);
+      d.commitTransaction('auto arrange');
+      d.commandHandler.zoomToFit();
+    });
+    this.status = 'Auto-arranged';
+    this.cdr.detectChanges();
+  }
+
   /** Open the selected block's label for editing on the block itself. */
   editSelectedText(): void {
     if (this.selectedNode && richEditing.canEdit(this.selectedNode)) richEditing.start(this.selectedNode);
@@ -1853,6 +1912,7 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.collab.leave();
     this.zone.runOutsideAngular(() => { this.diagram.model = this.emptyModel(); });
     this.diagramId = null; this.selectedDiagramId = null;
+    this.drillCrumbs = [];
     this.syncUrl();
     this.feedbackLoopCount = 0;
     this.diagramName = 'Untitled diagram';
@@ -2758,7 +2818,10 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   private onSaveError(): void { this.saving = false; this.notify.error('Could not save the diagram.'); this.cdr.detectChanges(); }
 
-  private doLoad(id: number): void {
+  private doLoad(id: number, viaDrill = false): void {
+    // Opening a diagram straight from the list or the URL starts a fresh trail;
+    // only drilling keeps the crumbs that lead back up to here.
+    if (!viaDrill) this.drillCrumbs = [];
     this.diagrams.get(id).subscribe({
       next: (dto) => {
         this.diagramName = dto.name; this.diagramId = dto.id ?? id; this.selectedDiagramId = dto.id ?? id;
@@ -2815,6 +2878,70 @@ export class GojsEditorComponent implements OnInit, AfterViewInit, OnDestroy {
    * Ctrl+Z reverts the user's first real edit, not any load-time setup. */
   private resetUndoAfterLoad(): void {
     this.zone.runOutsideAngular(() => this.diagram?.undoManager.clear());
+  }
+
+  /**
+   * Go a level down: open the diagram a block stands in for.
+   *
+   * Drilling is a model swap — the same trick the editor already does on load —
+   * so the whole feature is bookkeeping around which saved diagram is on
+   * screen. A block that has no child yet gets one made on the spot: a fresh
+   * empty diagram, linked to the block by `childDiagramId`, and the parent
+   * re-saved so the link survives a reload. Either way the level we are leaving
+   * is pushed onto the crumb trail first, so a click on it brings us back.
+   */
+  /** Whether the selected block already links to a diagram a level down. */
+  get selectedHasChild(): boolean {
+    return typeof this.selectedNode?.data?.['childDiagramId'] === 'number';
+  }
+
+  /** The FAB / inspector entry point: drill into whatever block is selected,
+   *  creating its child on first use. */
+  drillIntoSelected(): void {
+    if (this.selectedNode) this.openChild(this.selectedNode);
+  }
+
+  openChild(node: go.Node): void {
+    const data = node?.data;
+    if (!data) return;
+    // We must have saved this level before we can leave it — otherwise there is
+    // no id to return to, and nothing for the child's link to point back at.
+    if (this.diagramId == null) { this.save(() => this.openChild(node)); return; }
+    const parent = { id: this.diagramId, name: this.diagramName };
+    const existing = data['childDiagramId'];
+    if (typeof existing === 'number') {
+      this.drillCrumbs = [...this.drillCrumbs, parent];
+      this.doLoad(existing, true);
+      return;
+    }
+    const label = (typeof data['text'] === 'string' && data['text'].trim()) || 'Detail';
+    const childName = `${label} — detail`;
+    const emptyJson = this.zone.runOutsideAngular(() => this.emptyModel().toJson());
+    this.saving = true;
+    this.diagrams.create({ name: childName, contentJson: emptyJson, classification: this.classification }).subscribe({
+      next: (created) => {
+        if (created?.id == null) { this.saving = false; this.onSaveError(); return; }
+        // Link the block to its new child, then re-save this level so the link
+        // is persisted before we navigate away from it.
+        this.zone.runOutsideAngular(() =>
+          this.diagram.model.commit((m) => m.set(data, 'childDiagramId', created.id), 'link child'));
+        this.save(() => {
+          this.drillCrumbs = [...this.drillCrumbs, parent];
+          this.doLoad(created.id!, true);
+          this.notify.success(`Created "${childName}" a level down.`);
+        });
+      },
+      error: () => { this.saving = false; this.notify.error('Could not create the child diagram.'); },
+    });
+  }
+
+  /** Jump to an ancestor level via its breadcrumb. The crumbs above it stay;
+   *  the ones below (including the one we are on) fall away. */
+  drillUpTo(index: number): void {
+    const target = this.drillCrumbs[index];
+    if (!target) return;
+    this.drillCrumbs = this.drillCrumbs.slice(0, index);
+    this.doLoad(target.id, true);
   }
 
   /** Read the attached Design Win context stored in the model. */

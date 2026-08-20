@@ -22,6 +22,8 @@ export interface TemplateHooks {
   showAllPins(on: boolean): void;
   updateJunctions(): void;
   nodeTip($: typeof go.GraphObject.make): go.Adornment;
+  /** Open the diagram a block stands in for — the level below this one. */
+  openChild(node: go.Node): void;
   wires: WireGeometry;
 }
 
@@ -361,6 +363,25 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
         new go.Binding('text', 'badge'),
         new go.Binding('stroke', 'badgeColor'),
         new go.Binding('font', 'badgeFont')));
+    // A drill-down handle at the box's corner. A box may stand in for a whole
+    // diagram a level down — a device for its board, a board for its parts —
+    // and this chip is how you go there. Invisible until the box actually has a
+    // child linked (`childDiagramId`), so a plain box shows nothing extra; a
+    // single click opens that child, which the editor turns into a model swap.
+    const drillBadge = () => $(
+      go.Panel, 'Auto',
+      { name: 'DRILL', alignment: new go.Spot(1, 1, -5, -5), alignmentFocus: go.Spot.BottomRight,
+        visible: false, cursor: 'pointer',
+        click: (_e: go.InputEvent, o: go.GraphObject) => {
+          const n = o.part;
+          if (n instanceof go.Node) hooks.openChild(n);
+        },
+        toolTip: $('ToolTip', $(go.TextBlock, { margin: 5 }, 'Open the level below')) },
+      new go.Binding('visible', 'childDiagramId', (c) => c != null),
+      $(go.Shape, 'RoundedRectangle',
+        { parameter1: 5, fill: '#2563eb', stroke: '#ffffff', strokeWidth: 1.5 }),
+      $(go.TextBlock, 'layers',
+        { font: '15px Material Icons', stroke: '#ffffff', margin: new go.Margin(2, 4, 2, 4) }));
     const sideSpot = (s: string) => {
       const sp = go.Spot.parse(s);
       const dl = sp.x, dr = 1 - sp.x, dt = sp.y, db = 1 - sp.y;
@@ -502,6 +523,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       ...sidePorts(),
       pinOverlay(),
       wireDot(),
+      drillBadge(),
     );
     diagram.nodeTemplateMap.set('block', block);
     diagram.nodeTemplate = block;
@@ -641,6 +663,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       ...sidePorts(),
       pinOverlay(),
       wireDot(),
+      drillBadge(),
     ];
 
     /** What every shape has, whether or not it is holding anything. */
@@ -1029,6 +1052,7 @@ export function buildTemplates(diagram: go.Diagram, $: typeof go.GraphObject.mak
       pinOverlay(),
       wireDot(),
       badgePanel(),
+      drillBadge(),
     );
     diagram.commandHandler.archetypeGroupData = { isGroup: true, text: 'Subsystem' };
 }

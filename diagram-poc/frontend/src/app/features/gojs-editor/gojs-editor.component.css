@@ -507,6 +507,41 @@
 
     /* ---- Canvas & property panels ---- */
     .canvas-wrap { flex: 1; position: relative; min-width: 0; }
+    /* The drill-down trail, floated at the top-left of the canvas. */
+    .drill-crumbs {
+      position: absolute; top: 10px; left: 12px; z-index: 6;
+      display: flex; align-items: center; gap: 2px; flex-wrap: wrap;
+      max-width: calc(100% - 24px);
+      padding: 4px 10px 4px 8px;
+      background: rgba(255, 255, 255, 0.94); border: 1px solid #e2e8f0;
+      border-radius: 8px; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
+      font-size: 12.5px;
+    }
+    .drill-crumbs .dc-icon { color: #2563eb; font-size: 18px; width: 18px; height: 18px; margin-right: 2px; }
+    .drill-crumbs .dc-sep { color: #94a3b8; font-size: 16px; width: 16px; height: 16px; }
+    .drill-crumbs .dc-link {
+      border: 0; background: none; padding: 2px 4px; cursor: pointer;
+      color: #2563eb; font: inherit; border-radius: 4px;
+    }
+    .drill-crumbs .dc-link:hover { background: #eff6ff; text-decoration: underline; }
+    .drill-crumbs .dc-current { color: #0f172a; font-weight: 600; padding: 2px 4px; }
+    /* Drill-down action for the selected block — bottom-left of the canvas,
+       clear of the wire dock (bottom-right) and the mobile app bar. */
+    .drill-fab {
+      position: absolute; z-index: 46; left: 14px; bottom: 16px;
+      display: inline-flex; align-items: center; gap: 7px;
+      height: 40px; padding: 0 15px; border-radius: 20px; cursor: pointer;
+      border: 1px solid #bfdbfe; background: #eff6ff; color: #1d4ed8;
+      font: inherit; font-size: 13px; font-weight: 600;
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.18);
+    }
+    .drill-fab.has-child { border-color: #2563eb; background: #2563eb; color: #fff; }
+    .drill-fab:hover { filter: brightness(0.97); }
+    .drill-fab:disabled { opacity: 0.55; cursor: default; }
+    .drill-fab mat-icon { font-size: 19px; width: 19px; height: 19px; }
+    @media (max-width: 768px) {
+      .drill-fab { bottom: 74px; left: 12px; height: 44px; }
+    }
     .canvas {
       width: 100%; height: 100%;
       /* Stop iOS long-press from starting a text selection / showing the
